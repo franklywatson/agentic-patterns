@@ -103,6 +103,20 @@ A typical workflow session:
 
 The `review+` skill also integrates `test-integrity` for test file review, ensuring tests follow @L1-feedback-loops.md#pattern-16-test-integrity-rules.
 
+**Superpowers framework integration:** The [obra/superpowers](https://github.com/obra/superpowers) library provides the base skills that the chain builds on:
+
+| Skill | Role in Chain |
+|-------|--------------|
+| [brainstorming](https://github.com/obra/superpowers) | Design and requirements exploration — feeds into planning |
+| [writing-plans](https://github.com/obra/superpowers) | Creates bite-sized implementation plans with testing strategy |
+| [executing-plans](https://github.com/obra/superpowers) | Task-by-task execution with review checkpoints |
+| [test-driven-development](https://github.com/obra/superpowers) | RED-GREEN-REFACTOR with full-loop assertions |
+| [verification-before-completion](https://github.com/obra/superpowers) | Evidence-based claims — commands run, output shown, then claim |
+| [requesting-code-review](https://github.com/obra/superpowers) | Checklist-based review against plan requirements |
+| [finishing-a-development-branch](https://github.com/obra/superpowers) | Integration decisions (merge, PR, cleanup) when work is complete |
+
+Project-specific skill overlays (like `tdd+`, `verify+`, `review+`) wrap these base skills with project constraints such as constitutional rules, mock policies, and full-loop assertion requirements.
+
 ### Anti-Pattern
 
 Jumping directly to implementation without planning or testing. This produces code that may work but cannot be verified systematically. The chain only works if all links are present.

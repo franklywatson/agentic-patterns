@@ -199,22 +199,7 @@ Every referenced doc must be reachable from CLAUDE.md — it serves as the maste
 
 **In Practice**:
 
-Worktree management can be manual, but is most effective when automated through agent skills. The [obra/superpowers](https://github.com/obra/superpowers) framework provides dedicated skills for worktree-driven workflows:
-
-- **[using-git-worktrees](https://github.com/obra/superpowers)** — Automated worktree creation with smart directory selection and safety verification. Agents create isolated worktrees at the start of feature work without manual `git worktree` commands.
-- **[brainstorming](https://github.com/obra/superpowers)** — Design and planning happens inside the worktree, so the brainstorming session's design artifacts are isolated from the main branch.
-- **[writing-plans](https://github.com/obra/superpowers)** — Implementation plans are written and committed within the worktree. The plan becomes part of the feature branch's history.
-- **[executing-plans](https://github.com/obra/superpowers)** — Task-by-task execution within the worktree, with review checkpoints between tasks. Completed work stays isolated until integration.
-- **[finishing-a-development-branch](https://github.com/obra/superpowers)** — Handles integration decisions (merge, PR, cleanup) when work in the worktree is complete.
-
-The workflow this enables:
-
-```
-Create worktree → Brainstorm design → Write plan → Execute tasks → Review → Integrate
-     ↑              ↑                ↑             ↑              ↑          ↑
-  automated     isolated to       committed     task-by-task   quality    merge/
-  by skill      worktree          in worktree   with commits   gates      PR
-```
+Worktree management can be manual, but is most effective when automated through agent skills. The [obra/superpowers](https://github.com/obra/superpowers) framework provides a **[using-git-worktrees](https://github.com/obra/superpowers)** skill that automates worktree creation with smart directory selection and safety verification — agents create isolated worktrees at the start of feature work without manual `git worktree` commands.
 
 ```bash
 # Manual equivalent (agents typically use the skill instead)
@@ -229,7 +214,6 @@ Benefits:
 - **Clean slate**: No leftover artifacts from previous sessions
 - **Non-destructive**: Experiment without risking the main branch
 - **Deterministic state**: Worktrees created from a known commit
-- **Workflow integration**: Planning, execution, and review all happen within the isolated worktree context
 
 Convention: `.worktrees/<branch-name>/` directory.
 
