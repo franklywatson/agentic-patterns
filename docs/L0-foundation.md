@@ -16,30 +16,30 @@ Your codebase is the biggest influence on AI's output. Structure it so an AI wit
 
 ```typescript
 // Deep module — clean interface, complexity hidden
-// trading/bridge/index.ts
-export interface BridgeConfig {
-  sourceChain: ChainId;
-  targetChain: ChainId;
+// ecommerce/fulfillment/index.ts
+export interface FulfillmentConfig {
+  sourceWarehouse: WarehouseId;
+  targetRegion: RegionId;
   confirmations: number;
 }
 
-export async function bridgeAsset(config: BridgeConfig, amount: bigint): Promise<BridgeResult>
-export async function getBridgeStatus(txId: string): Promise<BridgeStatus>
-export function getSupportedChains(): readonly ChainId[]
+export async function fulfillOrder(config: FulfillmentConfig, items: OrderItem[]): Promise<FulfillmentResult>
+export async function getFulfillmentStatus(orderId: string): Promise<FulfillmentStatus>
+export function getSupportedRegions(): readonly RegionId[]
 ```
 
 ```typescript
 // Shallow module — leaking internals, 20+ exports
-// trading/bridge/index.ts
-export function bridgeAsset(...) { }
-export function getBridgeStatus(...) { }
-export function getSupportedChains() { }
+// ecommerce/fulfillment/index.ts
+export function fulfillOrder(...) { }
+export function getFulfillmentStatus(...) { }
+export function getSupportedRegions() { }
 export function validateConfig(...) { }           // internal
-export function parseChainId(...) { }              // internal
-export function serializeTx(...) { }               // internal
-export function deserializeTx(...) { }              // internal
-export function calculateGas(...) { }               // internal
-export function estimateFee(...) { }                // internal
+export function parseWarehouseId(...) { }              // internal
+export function serializeOrder(...) { }               // internal
+export function deserializeOrder(...) { }              // internal
+export function calculateShipping(...) { }               // internal
+export function estimateTax(...) { }                // internal
 export function formatAddress(...) { }              // internal
 export function parseAddress(...) { }               // internal
 // ... 10 more internal utilities
@@ -68,12 +68,12 @@ Good — progressive disclosure
 project/
 ├── README.md                    # Overview, entry point
 ├── CLAUDE.md                    # Agent contract
-├── trading/                     # Domain module
+├── ecommerce/                   # Domain module
 │   ├── index.ts                 # Public interface
-│   ├── bridges/                 # Sub-domain
+│   ├── fulfillment/             # Sub-domain
 │   │   ├── index.ts
-│   │   └── wormhole.ts
-│   └── swaps/                   # Sub-domain
+│   │   └── shipping.ts
+│   └── catalog/                 # Sub-domain
 │       └── index.ts
 └── testing/                     # Cross-cutting concern
     └── stack-test.ts
@@ -83,17 +83,17 @@ project/
 Bad — flat 50-file directory
 project/
 ├── README.md
-├── bridge_wormhole.ts
-├── bridge_layerzero.ts
-├── swap_uniswap.ts
-├── swap_sushiswap.ts
-├── swap_curve.ts
-├── trading_oracle.ts
-├── trading_gas.ts
-├── trading_slippage.ts
-├── trading_execution.ts
-├── trading_monitoring.ts
-├── trading_recovery.ts
+├── fulfillment_shipstation.ts
+├── fulfillment_fedex.ts
+├── catalog_shopify.ts
+├── catalog_woocommerce.ts
+├── catalog_bigcommerce.ts
+├── ecommerce_inventory.ts
+├── ecommerce_tax.ts
+├── ecommerce_pricing.ts
+├── ecommerce_checkout.ts
+├── ecommerce_monitoring.ts
+├── ecommerce_recovery.ts
 ... (40 more files)
 ```
 
@@ -105,47 +105,47 @@ project/
 
 ## Pattern 0.3 — Conceptual File Organization
 
-**Problem**: Grouping by technical layer (`services/`, `handlers/`, `utils/`, `types/`) separates related concepts. The AI can't find all trading code in one place — it's scattered across directories. File paths become meaningless navigation hints.
+**Problem**: Grouping by technical layer (`services/`, `handlers/`, `utils/`, `types/`) separates related concepts. The AI can't find all ecommerce code in one place — it's scattered across directories. File paths become meaningless navigation hints.
 
 **Solution**: Group by domain or capability. AI uses file paths as navigation hints. Co-locate related code by what it does, not what language construct it uses.
 
 **In Practice**:
-- `trading/bridges/` not `services/bridges/`
-- `trading/types.ts` inside the domain, not a global `types/` dir
+- `ecommerce/fulfillment/` not `services/fulfillment/`
+- `ecommerce/types.ts` inside the domain, not a global `types/` dir
 - One domain per directory, cross-cutting concerns at root level
 
 ```
 Before — technical layering
 src/
 ├── services/
-│   ├── trading.ts
-│   ├── bridging.ts
+│   ├── checkout.ts
+│   ├── fulfillment.ts
 │   └── monitoring.ts
 ├── handlers/
-│   ├── tradeHandler.ts
-│   └── bridgeHandler.ts
+│   ├── orderHandler.ts
+│   └── fulfillmentHandler.ts
 ├── utils/
-│   ├── gas.ts
-│   └── slippage.ts
+│   ├── tax.ts
+│   └── shipping.ts
 └── types/
-    ├── trading.ts
-    └── bridging.ts
+    ├── checkout.ts
+    └── fulfillment.ts
 ```
 
 ```
 After — conceptual organization
 src/
-├── trading/
+├── ecommerce/
 │   ├── index.ts                 # Public interface
-│   ├── execute.ts               # Implementation
+│   ├── checkout.ts              # Implementation
 │   ├── monitor.ts               # Monitoring logic
 │   ├── types.ts                 # Domain types
-│   └── utils/                   # Trading-specific utilities
-│       ├── gas.ts
-│       └── slippage.ts
-├── bridging/
+│   └── utils/                   # Ecommerce-specific utilities
+│       ├── tax.ts
+│       └── shipping.ts
+├── fulfillment/
 │   ├── index.ts
-│   ├── wormhole.ts
+│   ├── shipstation.ts
 │   └── types.ts
 └── monitoring/                  # Cross-cutting
     └── index.ts
