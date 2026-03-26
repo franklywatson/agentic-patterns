@@ -81,5 +81,5 @@ This is a living pattern library. Contributions welcome:
 ## Background and Further Reading
 
 - [Reference Telegram Trading Bot Case Study](docs/references/reference-telegram-trading-bot-case-study.md) — the production system these patterns were extracted from
-- [Further Reading](docs/references/further-reading.md) — books, articles, videos, and tools that informed this work
+- [Further Reading](docs/references/further-reading.md) — articles, videos, and tools that informed this work
 - [Glossary](docs/cross-cutting/glossary.md) — terminology reference
