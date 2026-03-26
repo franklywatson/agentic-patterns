@@ -97,11 +97,6 @@ See @README.md for detailed project overview.
 5. **No conditional test assertions** — Tests that can silently pass are forbidden
 6. **CLAUDE.md line limit** — Hard maximum 150 lines. Link to external docs beyond that.
 
-## Specification and Planning
-
-- Current design spec: @docs/specs/2026-03-26-agentic-patterns-design.md
-- Implementation plan: @docs/plans/2026-03-26-agentic-patterns.md
-
 ---
 
 **Last updated**: 2026-03-26
