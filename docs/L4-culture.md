@@ -54,7 +54,11 @@ Task: Refactor authentication flow
 
 ### Anti-Pattern
 
-❌ **"Good enough" documentation:** "The docs are roughly correct, the agent can figure it out." ❌ **Deferred updates:** Making code changes and filing a doc ticket for "later." ❌ **Orphaned content:** Writing docs that aren't linked from CLAUDE.md. ❌ **Unverified examples:** Code snippets in docs that haven't been tested against current code. ❌ **Zombie docs:** Keeping old versions around — delete superseded docs; version control is the archive.
+- **"Good enough" documentation:** "The docs are roughly correct, the agent can figure it out."
+- **Deferred updates:** Making code changes and filing a doc ticket for "later."
+- **Orphaned content:** Writing docs that aren't linked from CLAUDE.md.
+- **Unverified examples:** Code snippets in docs that haven't been tested against current code.
+- **Zombie docs:** Keeping old versions around — delete superseded docs; version control is the archive.
 
 ### Cross-References
 
@@ -139,7 +143,11 @@ Claim: The error existed before this commit. Changes in abc123 don't touch the r
 
 ### Anti-Pattern
 
-❌ **Prediction-based claims:** "Tests should pass" without running them. ❌ **Dismissive assertions:** "That's unrelated" without investigation. ❌ **Selective evidence:** Showing passing tests while hiding failing ones. ❌ **Hand-wavy verification:** "I checked it manually" with no output. ❌ **Evidence-free refutation:** "That failure is a flaky test" without logs.
+- **Prediction-based claims:** "Tests should pass" without running them.
+- **Dismissive assertions:** "That's unrelated" without investigation.
+- **Selective evidence:** Showing passing tests while hiding failing ones.
+- **Hand-wavy verification:** "I checked it manually" with no output.
+- **Evidence-free refutation:** "That failure is a flaky test" without logs.
 
 ### Cross-References
 
@@ -229,7 +237,12 @@ Cleanup:
 
 ### Anti-Pattern
 
-❌ **"Just in case" retention:** Keeping code "in case it's needed later." ❌ **Commented-out code:** Leaving code in comments instead of deleting it. ❌ **Defensive cleanup avoidance:** "Someone might be using this." ❌ **Cleanup theater:** Removing a few imports but leaving major dead code. ❌ **Deferred cleanup:** "I'll create a cleanup ticket for this." ❌ **Archive directories:** Moving stale docs to `archive/` instead of deleting them — this creates ambiguity about what's current and pollutes context for agents searching the codebase.
+- **"Just in case" retention:** Keeping code "in case it's needed later."
+- **Commented-out code:** Leaving code in comments instead of deleting it.
+- **Defensive cleanup avoidance:** "Someone might be using this."
+- **Cleanup theater:** Removing a few imports but leaving major dead code.
+- **Deferred cleanup:** "I'll create a cleanup ticket for this."
+- **Archive directories:** Moving stale docs to `archive/` instead of deleting them — this creates ambiguity about what's current and pollutes context for agents searching the codebase.
 
 ### Cross-References
 
@@ -343,7 +356,11 @@ Test drift: test_legacy_flow() references deleted function old_flow()
 
 ### Anti-Pattern
 
-❌ **"Close enough" tolerance:** Ignoring minor drift because "it's basically right." ❌ **Deferred fixes:** Filing tickets for drift instead of fixing immediately. ❌ **Partial updates:** Updating code but forgetting docs (violates 4.1). ❌ **Zombie specs:** Keeping docs around for deleted features "for reference." ❌ **Manual-only checks:** Relying on human review without automated detection.
+- **"Close enough" tolerance:** Ignoring minor drift because "it's basically right."
+- **Deferred fixes:** Filing tickets for drift instead of fixing immediately.
+- **Partial updates:** Updating code but forgetting docs (violates 4.1).
+- **Zombie specs:** Keeping docs around for deleted features "for reference."
+- **Manual-only checks:** Relying on human review without automated detection.
 
 ### Cross-References
 
@@ -440,7 +457,11 @@ Every documentation section should pass the zero-context test:
 
 ### Anti-Pattern
 
-❌ **Insider documentation:** "You know, the thing we discussed in the meeting." ❌ **Assumed knowledge:** "Just follow the pattern we always use" (without linking to it). ❌ **Incomplete onboarding:** "Read the whole docs folder" (without a guide). ❌ **Stale quick starts:** Examples that don't run because of missing steps. ❌ **Missing "why":** Explaining "how" but not "why" (agents need intent).
+- **Insider documentation:** "You know, the thing we discussed in the meeting."
+- **Assumed knowledge:** "Just follow the pattern we always use" (without linking to it).
+- **Incomplete onboarding:** "Read the whole docs folder" (without a guide).
+- **Stale quick starts:** Examples that don't run because of missing steps.
+- **Missing "why":** Explaining "how" but not "why" (agents need intent).
 
 ### Cross-References
 
