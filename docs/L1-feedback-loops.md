@@ -43,7 +43,7 @@ tests/stack/
   05-advanced-features.stack.test.ts   # Edge cases and complex flows
 ```
 
-Run sequentially, each test building confidence in layers. If `01-app-startup` fails, the agent knows immediately: don't waste time debugging trading logic — the foundation is broken.
+Run sequentially, each test building confidence in layers. If `01-app-startup` fails, the agent knows immediately: don't waste time debugging order processing logic — the foundation is broken.
 
 ### Comparison: Test Types
 
@@ -91,27 +91,26 @@ Each layer provides diagnostic signal. If primary passes but second-order fails,
 
 ### In Practice
 
-Example: Token swap test with three-layer assertions
+Example: Order placement test with three-layer assertions
 
 ```typescript
 // Primary: API response
-const swapResponse = await api.post('/swap', {
-  fromToken: 'ETH',
-  toToken: 'USDC',
-  amount: '1.0'
+const orderResponse = await api.post('/orders', {
+  items: [{ productId: 'prod_123', quantity: 2 }],
+  shippingAddress: { zip: '90210', country: 'US' }
 });
-expect(swapResponse.status).toBe(200);
-expect(swapResponse.data.txId).toBeDefined();
+expect(orderResponse.status).toBe(201);
+expect(orderResponse.data.orderId).toBeDefined();
 
 // Second-order: Database state via API
-const balances = await api.get(`/balances/${userId}`);
-expect(balances.data.ETH).toBe('0');
-expect(balances.data.USDC).toBeGreaterThan('0');
+const cart = await api.get(`/cart/${userId}`);
+expect(cart.data.items).toEqual([]);
+expect(cart.data.subtotal).toBe('0');
 
 // Third-order: Audit log via admin API
 const adminClient = createAdminClient();
-const auditLog = await adminClient.get(`/audit/${swapResponse.data.txId}`);
-expect(auditLog.data.event).toBe('TOKEN_SWAPPED');
+const auditLog = await adminClient.get(`/audit/${orderResponse.data.orderId}`);
+expect(auditLog.data.event).toBe('ORDER_PLACED');
 expect(auditLog.data.timestamp).toBeDefined();
 ```
 
@@ -142,7 +141,7 @@ Each failure mode points the agent to a specific subsystem to investigate.
 
 ### Problem
 
-Tests often run in unpredictable order, making failures hard to diagnose. If a complex trading test fails, is the bug in trading logic, authentication, or the fact that the server never started? Unordered tests waste time — agents debug symptoms instead of root causes.
+Tests often run in unpredictable order, making failures hard to diagnose. If a complex order processing test fails, is the bug in checkout logic, authentication, or the fact that the server never started? Unordered tests waste time — agents debug symptoms instead of root causes.
 
 ### Solution
 
@@ -165,17 +164,17 @@ tests/stack/
   01-app-startup.stack.test.ts
   02-authentication.stack.test.ts
   03-user-crud.stack.test.ts
-  04-trading-basic.stack.test.ts
-  05-trading-advanced.stack.test.ts
+  04-checkout-basic.stack.test.ts
+  05-checkout-advanced.stack.test.ts
   06-rate-limiting.stack.test.ts
   07-reconciliation.stack.test.ts
 ```
 
-Example: If `04-trading-basic.stack.test.ts` fails:
+Example: If `04-checkout-basic.stack.test.ts` fails:
 
 - Agent knows: Server starts (`01` ✓), auth works (`02` ✓), CRUD works (`03` ✓)
-- Agent focuses: Trading logic specifically, not auth or persistence
-- Agent skips: Advanced trading tests (`05`), rate limiting (`06`) — they'd fail anyway
+- Agent focuses: Checkout logic specifically, not auth or persistence
+- Agent skips: Advanced checkout tests (`05`), rate limiting (`06`) — they'd fail anyway
 
 ### Anti-Pattern
 
@@ -305,7 +304,7 @@ Mock system components and you test your mocks, not your system. Mocks lie: they
 
 ### Solution
 
-**Stack tests use real everything** — real PostgreSQL, real Redis, real RabbitMQ, real HTTP calls to other services. The only acceptable mocks are external services you don't control: third-party APIs where no testnet exists, payment processors where sandbox is unavailable, blockchains where testnet doesn't match mainnet behavior.
+**Stack tests use real everything** — real PostgreSQL, real Redis, real RabbitMQ, real HTTP calls to other services. The only acceptable mocks are external services you don't control: third-party APIs where no sandbox exists, payment processors where test mode is unavailable.
 
 No-mock philosophy: if you own it, run it. If you can run it in Docker, run it in Docker. If you can't, that's a deployment dependency, not a testing concern.
 
@@ -319,10 +318,8 @@ What to mock vs. not mock:
 | Redis, Memcached | No | Run in Docker — trivial setup |
 | RabbitMQ, Kafka | No | Run in Docker — handles real edge cases |
 | Internal microservices | No | Run the full stack — integration is what you're testing |
-| External APIs with testnet (Stripe, Plaid) | No | Use testnet — they provide it for this reason |
-| External APIs without testnet | Yes | Mock the client, test error handling |
-| Blockchain testnets (if behavior matches) | No | Use testnet — slower but real |
-| Blockchains with no testnet or different behavior | Yes | Mock the node, test transaction logic |
+| External APIs with sandbox (Stripe, Plaid) | No | Use sandbox — they provide it for this reason |
+| External APIs without sandbox | Yes | Mock the client, test error handling |
 | Time (for testing expiry) | Maybe | Use time-skewing libraries if system clock dependency is critical |
 
 Example: Testing a payment flow
