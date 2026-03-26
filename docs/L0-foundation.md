@@ -198,15 +198,29 @@ Every referenced doc must be reachable from CLAUDE.md — it serves as the maste
 **Solution**: Use git worktrees as the default working model. Each task or feature branch gets its own working directory — sharing the same git object store but with separate working trees.
 
 **In Practice**:
-```bash
-# Create a worktree for a feature branch
-git worktree add .worktrees/feature-x feature-x
 
-# Agent works in isolated directory
+Worktree management can be manual, but is most effective when automated through agent skills. The [obra/superpowers](https://github.com/obra/superpowers) framework provides dedicated skills for worktree-driven workflows:
+
+- **[using-git-worktrees](https://github.com/obra/superpowers)** — Automated worktree creation with smart directory selection and safety verification. Agents create isolated worktrees at the start of feature work without manual `git worktree` commands.
+- **[brainstorming](https://github.com/obra/superpowers)** — Design and planning happens inside the worktree, so the brainstorming session's design artifacts are isolated from the main branch.
+- **[writing-plans](https://github.com/obra/superpowers)** — Implementation plans are written and committed within the worktree. The plan becomes part of the feature branch's history.
+- **[executing-plans](https://github.com/obra/superpowers)** — Task-by-task execution within the worktree, with review checkpoints between tasks. Completed work stays isolated until integration.
+- **[finishing-a-development-branch](https://github.com/obra/superpowers)** — Handles integration decisions (merge, PR, cleanup) when work in the worktree is complete.
+
+The workflow this enables:
+
+```
+Create worktree → Brainstorm design → Write plan → Execute tasks → Review → Integrate
+     ↑              ↑                ↑             ↑              ↑          ↑
+  automated     isolated to       committed     task-by-task   quality    merge/
+  by skill      worktree          in worktree   with commits   gates      PR
+```
+
+```bash
+# Manual equivalent (agents typically use the skill instead)
+git worktree add .worktrees/feature-x feature-x
 cd .worktrees/feature-x
 # ... make changes, commit, test ...
-
-# Remove when done
 git worktree remove .worktrees/feature-x
 ```
 
@@ -215,12 +229,13 @@ Benefits:
 - **Clean slate**: No leftover artifacts from previous sessions
 - **Non-destructive**: Experiment without risking the main branch
 - **Deterministic state**: Worktrees created from a known commit
+- **Workflow integration**: Planning, execution, and review all happen within the isolated worktree context
 
 Convention: `.worktrees/<branch-name>/` directory.
 
 **Anti-Pattern**: Working directly on main for feature work. Agents should never modify main without explicit instruction.
 
-**Cross-References**: [L2: Skills](L2-behavioral-guardrails.md) can enforce worktree usage via hooks. [L3: Optimization](L3-optimization.md) benefits from deterministic starting states.
+**Cross-References**: [L2: Skills](L2-behavioral-guardrails.md) can enforce worktree usage via hooks. [L3: Optimization](L3-optimization.md) benefits from deterministic starting states. See [Further Reading](docs/references/further-reading.md) for the superpowers framework.
 
 ---
 

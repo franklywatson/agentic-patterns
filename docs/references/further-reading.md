@@ -50,6 +50,13 @@
 
 ## Tools
 
+### Superpowers (obra)
+- **Type:** Tool / Framework
+- **Creator:** Jesse Vincent (obra)
+- **Summary:** Skills framework for Claude Code providing automated worktree management, brainstorming, planning, TDD, code review, and verification workflows. The worktree, planning, and execution skills automate the full development lifecycle within isolated git worktrees — the pattern described in L0.5.
+- **Related to:** L0, L2
+- **URL:** https://github.com/obra/superpowers
+
 ### jcodemunch
 - **Type:** Tool
 - **Creator:** Nicolo Ribaudo
