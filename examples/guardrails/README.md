@@ -186,5 +186,5 @@ Based on real-world usage:
 
 - [L3 Optimization Documentation](../../../docs/L3-optimization.md)
 - [Damage Control Guardrails](https://github.com/anthropics/damage-control-guardrails)
-- [RTK](https://github.com/jeromedecock/rtk) — Token-optimized CLI proxy
+- [RTK](https://github.com/rtk-ai/rtk) — Token-optimized CLI proxy
 - [jcodemunch](https://github.com/jeromedecock/jcodemunch) — Codebase indexing
