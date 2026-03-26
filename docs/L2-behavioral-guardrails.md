@@ -311,4 +311,4 @@ Together, these patterns make correct behavior the path of least resistance for 
 
 ---
 
-**Next**: @L3-optimization.md — Token efficiency and smart routing patterns
+**Previous:** [L1: Feedback Loops — Closed-Loop Testing](L1-feedback-loops.md) | **Next:** [L3: Optimization — Token Efficiency & Agent Performance](L3-optimization.md) | [Back to Overview](../README.md)

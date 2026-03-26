@@ -372,3 +372,7 @@ See [examples/guardrails](../examples/guardrails/) for a complete TypeScript imp
 - [L2 — Guardrails](./L2-guardrails.md) — Enforcing behavioral rules
 - [Damage Control Guardrails](https://github.com/anthropics/damage-control-guardrails) — Full middleware implementation
 - [RTK](https://github.com/jeromedecock/rtk) — Token-optimized CLI proxy
+
+---
+
+**Previous:** [L2: Behavioral Guardrails — Skills & Extensions](L2-behavioral-guardrails.md) | **Next:** [L4: Culture — Rigor, Documentation & Maintenance](L4-culture.md) | [Back to Overview](../README.md)

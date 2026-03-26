@@ -540,3 +540,7 @@ L4 is not a one-time cleanup—it's a continuous practice:
 **The review checklist is the enforcement mechanism.** Apply it to every task, every PR, every completion.
 
 When L4 is practiced consistently, the codebase remains agentic-ready: clear, clean, and maintainable for both human and agent collaborators.
+
+---
+
+**Previous:** [L3: Optimization — Token Efficiency & Agent Performance](L3-optimization.md) | [Back to Overview](../README.md)

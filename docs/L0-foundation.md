@@ -254,3 +254,7 @@ Convention: `.worktrees/<branch-name>/` directory.
 - John Ousterhout, *A Philosophy of Software Design* — Deep modules concept
 - Matt Pocock, "Your codebase is NOT ready for AI" — Graybox modules, progressive disclosure
 - @docs/references/further-reading.md
+
+---
+
+**Next:** [L1: Feedback Loops — Closed-Loop Testing](L1-feedback-loops.md) | [Back to Overview](../README.md)

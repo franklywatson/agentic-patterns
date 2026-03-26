@@ -505,3 +505,7 @@ Configure test runners to detect these patterns:
 
 - **Pattern 1.2 (Full-Loop Assertion Layering)**: Integrity rules ensure all assertion layers run
 - **L4 Continuous Verification**: Integrity rules are enforced at the agent level, not just test runner level
+
+---
+
+**Previous:** [L0: Foundation — Project Structure for AI Accessibility](L0-foundation.md) | **Next:** [L2: Behavioral Guardrails — Skills & Extensions](L2-behavioral-guardrails.md) | [Back to Overview](../README.md)
