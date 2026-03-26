@@ -327,6 +327,13 @@ L2 behavioral guardrails automate enforcement of the discipline established in L
 
 Together, these patterns make correct behavior the path of least resistance for agentic development.
 
+## Practitioner Insight
+
+> "Spend a lot of time planning out the work the agent will do."
+> — Peter Steinberger, creator of OpenClaw
+
+The skill chain's brain+ → plan+ phase operationalizes this insight. Fleshing out a plan — challenging the agent, tweaking scope, pushing back on assumptions — before implementation begins prevents wasted tokens on wrong paths. The plan becomes the contract that tdd+, verify+, and review+ enforce.
+
 ---
 
 **Previous:** [L1: Feedback Loops — Closed-Loop Testing](L1-feedback-loops.md) | **Next:** [L3: Optimization — Token Efficiency & Agent Performance](L3-optimization.md) | [Back to Overview](../README.md)

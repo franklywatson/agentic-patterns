@@ -543,6 +543,13 @@ L4 is not a one-time cleanup—it's a continuous practice:
 
 When L4 is practiced consistently, the codebase remains agentic-ready: clear, clean, and maintainable for both human and agent collaborators.
 
+## Practitioner Insight
+
+> "Peter strikes me as a software architect who keeps the high-level structure of his project in his head, deeply cares about architecture, tech debt, extensibility, modularity, and so on."
+> — Gergely Orosz, on Peter Steinberger's workflow
+
+L4 culture ensures that agentic development doesn't degrade project quality over time. Architecture, tech debt, and modularity require continuous attention — especially when agents are doing the implementation. Documentation rigor, evidence-based claims, and aggressive cleanup are what keep a project agentic-ready as it grows.
+
 ---
 
 **Previous:** [L3: Optimization — Token Efficiency & Agent Performance](L3-optimization.md) | [Back to Overview](../README.md)

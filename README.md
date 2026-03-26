@@ -29,19 +29,7 @@ This isn't theory. These patterns are in daily production use. They've been refi
 
 Patterns are organized into five levels, each building on the previous. Adopt them in order — skipping levels creates fragile foundations.
 
-```
-            L4: Culture
-          Rigor, docs, cleanup
-        ┌─────────────────────┐
-       L3: Optimization                   Token efficiency, smart routing
-      ┌───────────────────────┐
-     L2: Behavioral Guardrails             Skills, hooks, constitutional rules
-    ┌─────────────────────────┐
-   L1: Feedback Loops                        Stack tests, full-loop assertions
-  ┌───────────────────────────┐
- L0: Foundation                               Project structure for AI accessibility
-└──────────────────────────────────────────────────────────────────────────────────┘
-```
+![The Agentic Patterns Pyramid](docs/diagrams/pyramid.png)
 
 ### Level Overviews
 

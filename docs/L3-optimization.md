@@ -377,6 +377,13 @@ See [examples/guardrails](../examples/guardrails/) for a complete TypeScript imp
 - [Damage Control Guardrails](https://github.com/anthropics/damage-control-guardrails) — Full middleware implementation
 - [RTK](https://github.com/jeromedecock/rtk) — Token-optimized CLI proxy
 
+## Practitioner Insight
+
+> "Under-prompt intentionally to discover unexpected solutions."
+> — Peter Steinberger, creator of OpenClaw
+
+The scout pattern invests tokens in structured exploration before jumping to implementation. Sometimes the best architecture decision isn't the one you expected — and agents that explore the codebase before acting discover alternatives that a blind search would miss.
+
 ---
 
 **Previous:** [L2: Behavioral Guardrails — Skills & Extensions](L2-behavioral-guardrails.md) | **Next:** [L4: Culture — Rigor, Documentation & Maintenance](L4-culture.md) | [Back to Overview](../README.md)

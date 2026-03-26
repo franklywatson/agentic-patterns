@@ -528,6 +528,13 @@ Configure test runners to detect these patterns:
 - **Pattern 1.2 (Full-Loop Assertion Layering)**: Integrity rules ensure all assertion layers run
 - **L4 Continuous Verification**: Integrity rules are enforced at the agent level, not just test runner level
 
+## Practitioner Insight
+
+> "Close the loop: AI agents must be able to verify their own work."
+> — Peter Steinberger, creator of OpenClaw
+
+This is the foundational principle behind stack tests. When an agent can spin up the full system, execute against real dependencies, and validate through the API, it gets clear binary feedback — not ambiguous partial results from mocked components. The agent either passes or fails, and when it fails, the diagnostic signal points directly to what's broken.
+
 ---
 
 **Previous:** [L0: Foundation — Project Structure for AI Accessibility](L0-foundation.md) | **Next:** [L2: Behavioral Guardrails — Skills & Extensions](L2-behavioral-guardrails.md) | [Back to Overview](../README.md)

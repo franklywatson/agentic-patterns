@@ -254,6 +254,13 @@ Convention: `.worktrees/<branch-name>/` directory.
 - Matt Pocock, "Your codebase is NOT ready for AI" — Graybox modules, progressive disclosure
 - @docs/references/further-reading.md
 
+## Practitioner Insight
+
+> "I don't think software engineering is dead with AI: in fact, quite the opposite."
+> — Peter Steinberger, creator of OpenClaw
+
+Agentic development demands more structure and discipline than traditional development, not less. L0's patterns — deep modules, progressive disclosure, a clear project constitution — exist because agents need well-defined entry points and clean interfaces even more than humans do. The overhead of getting these right pays dividends in every agent session that follows.
+
 ---
 
 **Next:** [L1: Feedback Loops — Closed-Loop Testing](L1-feedback-loops.md) | [Back to Overview](../README.md)

@@ -32,6 +32,13 @@
 - **Related to:** L1
 - **URL:** https://www.getautonoma.com/blog/what-is-agentic-testing
 
+### The Creator of Clawd — "I Ship Code"
+- **Type:** Podcast / Article
+- **Creator:** Gergely Orosz (The Pragmatic Engineer) with Peter Steinberger
+- **Summary:** Peter Steinberger (creator of OpenClaw) describes building entirely with AI agents: closing the feedback loop so agents verify their own work, investing heavily in planning before implementation, managing 5-10 parallel agents, and treating code reviews as architecture discussions. Demonstrates that agentic development requires more engineering discipline, not less.
+- **Related to:** L0, L1, L2, L3, L4
+- **URL:** https://newsletter.pragmaticengineer.com/p/the-creator-of-clawd-i-ship-code
+
 ## Videos
 
 ### Your codebase is NOT ready for AI
