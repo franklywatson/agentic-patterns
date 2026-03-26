@@ -24,6 +24,7 @@ Stack tests differ from other approaches in key ways:
 - **Isolation**: Full isolation between test runs — no shared state
 - **Mock policy**: Zero mocks for owned services — real databases, real Redis, real side-effects
 - **Failure diagnosticity**: High — failures always indicate real bugs, never test artifacts
+- **Runs on a developer machine**: The full stack must be executable locally — no cloud deployment, no staging environment, no infrastructure beyond Docker. Every member of the team (human or AI) can run the complete test suite on their own machine and get deterministic results
 
 ### In Practice
 
@@ -63,6 +64,7 @@ Run sequentially, each test building confidence in layers. If `01-app-startup` f
 | Mock Policy | Everything | Some components | Zero mocks | Zero mocks |
 | Failure Diagnosticity | Low (false positives from mocks) | Medium (mock mismatches) | High (real failures) | Low (timing, flakiness) |
 | Typical Use | Algorithm correctness | Component interaction | System behavior, user journeys | Critical paths, smoke tests |
+| Runs Locally | Always | Usually | Must — Docker only | Often requires cloud/staging |
 
 ### Anti-Pattern
 

@@ -40,11 +40,12 @@
 - **URL:** https://youtu.be/uC44zFz7JSM
 
 ### The WISC Framework: 90.2% Better AI Coding Results!
-- **Type:** Video
-- **Creator:** DIY Smart Code
-- **Summary:** Demonstrates the Scout pattern, context engineering, and input quality optimization for achieving superior AI coding results.
+- **Type:** Video / Framework
+- **Creator:** Cole Medin (original), DIY Smart Code (adaptation)
+- **Summary:** Context engineering framework — **W**rite, **I**solate, **S**elect, **C**ompress. Core thesis: ~80% of agent failures come from context management, not the model. Write externalizes memory (structured commits, progress files, separate planning/implementation sessions). Isolate splits work across sub-agents (scout pattern, research delegation). Select loads only what's needed via a 3-tier context system (global rules, on-demand rules, reference docs). Compress provides focused compaction and session handoffs. The Scout Pattern used in [Pattern 3.4](../L3-optimization.md#pattern-34--context-engineering-the-scout-pattern) maps to WISC's Isolate strategy.
 - **Related to:** L3
 - **URL:** https://youtu.be/gyo0eRgsUWk
+- **GitHub:** https://github.com/coleam00/context-engineering-intro/tree/main/use-cases/ai-coding-wisc-framework
 
 ## Tools
 

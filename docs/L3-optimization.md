@@ -234,7 +234,9 @@ Agents often "search blindly" — issuing `grep` and `find` commands without und
 
 ### Solution
 
-From the WISC framework (DIY Smart Code): **invest tokens upfront in structured exploration**. Send a lightweight "scout" agent to map the codebase first:
+From the **WISC framework** (Cole Medin, adapted by DIY Smart Code): **invest tokens upfront in structured exploration**. WISC — **W**rite, **I**solate, **S**elect, **C**ompress — is a context engineering framework based on the observation that ~80% of agent failures come from how you manage context, not from the model itself. The Scout Pattern maps to the **Isolate** strategy: keep exploration noise out of the main session by delegating to sub-agents.
+
+Send a lightweight "scout" agent to map the codebase first:
 
 1. **File tree**: Get directory structure and key files
 2. **Key exports**: Identify main entry points and exported symbols
@@ -282,7 +284,8 @@ target = map.exports.find("processPayment")  # O(1) lookup
 
 ### Cross-References
 
-- [WISC Framework](https://youtu.be/gyo0eRgsUWk) — Scout/Implementer pattern details
+- [WISC Framework](https://youtu.be/gyo0eRgsUWk) — Write, Isolate, Select, Compress context engineering strategies
+- [WISC GitHub repo](https://github.com/coleam00/context-engineering-intro/tree/main/use-cases/ai-coding-wisc-framework) — Full framework with examples
 - [jcodemunch](https://github.com/jeromedecock/jcodemunch) — Tool for indexing codebases
 
 ---
@@ -344,6 +347,61 @@ search_symbols({ kind: "function" }).map(s => s.file)
 
 ---
 
+## Pattern 3.6 — Cross-Domain Architecture Alignment
+
+### Problem
+
+Monorepos have traditionally solved a real problem: keeping architectures aligned across related services. When multiple teams own services that share contracts, protocols, or data models, a monorepo ensures a single source of truth. But monorepos extract a heavy tax: context bloat. Every agent session loads the entire repository structure, and L0 progressive disclosure breaks down when unrelated services share the same tree. A payments team's agent doesn't need the notification service's code, but in a monorepo, it's there — consuming context, creating noise, increasing the chance of false-positive search results.
+
+### Solution
+
+**AI agents can traverse multiple repositories to align architectures without requiring them to share a filesystem.** An agent can read the authentication service's API contract from `repo-a`, the notification service's event schema from `repo-b`, and the payment service's type definitions from `repo-c` — then analyze whether the three are architecturally consistent. This was impractical for human developers switching between repos, but agents do it naturally.
+
+This doesn't mean monorepos are wrong. It means the cost-benefit calculation has shifted:
+
+| Concern | Monorepo | Multi-Repo + Agentic Alignment |
+|---------|----------|-------------------------------|
+| Contract consistency | Enforced by shared types | Verified by agent analysis on change |
+| Context bloat | High — all code visible to agent | Low — each repo loads independently |
+| Build coupling | Shared build pipeline | Independent pipelines, agent checks integration |
+| Discovery | File tree navigation | Agent reads CLAUDE.md + entry points per repo |
+| Scope for errors | Cross-service breakage caught at build | Cross-service breakage caught by agent review |
+
+### In Practice
+
+**When multi-repo with agentic alignment works well:**
+- Services with clearly owned domains (payments, auth, notifications)
+- Teams that want independent deploy cycles
+- Codebases where L0 progressive disclosure matters more than shared types
+- Projects where context window usage is a bottleneck
+
+**When a monorepo is still the better choice:**
+- Services with shared internal types that change frequently
+- Teams that lack the discipline to maintain separate CLAUDE.md files per repo
+- Projects where build tooling assumes a monorepo (turborepo, nx)
+
+**The agentic alignment workflow:**
+1. Each repo maintains its own CLAUDE.md with API contracts and public interfaces
+2. When a service changes its API, the agent reads dependent repos' CLAUDE.md files to identify breakage
+3. The agent proposes coordinated changes across repos based on analysis, not assumption
+4. L4 documentation freshness ensures contracts stay current in each repo
+
+This is a **subjective trade-off, not a hard rule**. The point is that agentic development makes the multi-repo approach more viable than it was — the coordination cost that previously required a monorepo can now be handled by an agent that reads across repositories.
+
+### Anti-Pattern
+
+**Don't** split into multiple repos without maintaining CLAUDE.md and public interfaces in each. A multi-repo setup without L0 entry points is worse than a monorepo — the agent can't find anything.
+
+**Don't** treat this as a mandate to break up monorepos. If your monorepo works, keep it. This pattern is for teams where the monorepo's context tax is actively causing problems.
+
+### Cross-References
+
+- [Pattern 0.2 — Progressive Disclosure](../L0-foundation.md#pattern-02--progressive-disclosure) — Context bloat undermines progressive disclosure
+- [Pattern 0.4 — CLAUDE.md as Project Constitution](../L0-foundation.md#pattern-04-claude-md-as-project-constitution) — Each repo needs its own entry point
+- [Pattern 3.4 — The Scout Pattern](#pattern-34--context-engineering--the-scout-pattern) — Structured exploration across repos
+
+---
+
 ## Putting It All Together
 
 The complete optimization pipeline:
@@ -355,6 +413,7 @@ The complete optimization pipeline:
 5. **Execute**: Agent uses advised tool or proceeds with original command
 6. **Scout** ([3.4](#pattern-34--context-engineering--the-scout-pattern)): For complex tasks, map first
 7. **Structure** ([3.5](#pattern-35--structured-output-over-raw-text)): Prefer typed results
+8. **Align** ([3.6](#pattern-36--cross-domain-architecture-alignment)): For cross-repo changes, verify architectural consistency
 
 Result: 60-90% token savings, fewer errors, better outcomes.
 
