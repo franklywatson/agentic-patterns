@@ -6,7 +6,7 @@
     {
       "type": "text",
       "id": "title",
-      "x": 80, "y": 30,
+      "x": 30, "y": 30,
       "width": 350, "height": 30,
       "text": "Guardrail Middleware Architecture",
       "originalText": "Guardrail Middleware Architecture",
@@ -36,7 +36,7 @@
     {
       "type": "text",
       "id": "subtitle",
-      "x": 80, "y": 62,
+      "x": 30, "y": 62,
       "width": 500, "height": 20,
       "text": "Intent classification, environment detection, and smart routing",
       "originalText": "Intent classification, environment detection, and smart routing",
@@ -66,7 +66,7 @@
     {
       "type": "ellipse",
       "id": "trigger_ellipse",
-      "x": 165, "y": 110,
+      "x": 115, "y": 110,
       "width": 250, "height": 55,
       "strokeColor": "#c2410c",
       "backgroundColor": "#fed7aa",
@@ -91,7 +91,7 @@
     {
       "type": "text",
       "id": "trigger_text",
-      "x": 200, "y": 125,
+      "x": 150, "y": 125,
       "width": 180, "height": 25,
       "text": "Agent Issues Command",
       "originalText": "Agent Issues Command",
@@ -121,7 +121,7 @@
     {
       "type": "arrow",
       "id": "arrow_trigger_intent",
-      "x": 290, "y": 165,
+      "x": 240, "y": 165,
       "width": 0, "height": 50,
       "strokeColor": "#1e3a5f",
       "backgroundColor": "transparent",
@@ -148,7 +148,7 @@
     {
       "type": "rectangle",
       "id": "intent_box",
-      "x": 155, "y": 215,
+      "x": 105, "y": 215,
       "width": 270, "height": 55,
       "strokeColor": "#1e3a5f",
       "backgroundColor": "#dbeafe",
@@ -175,7 +175,7 @@
     {
       "type": "text",
       "id": "intent_text",
-      "x": 205, "y": 224,
+      "x": 155, "y": 224,
       "width": 170, "height": 36,
       "text": "Intent Classifier\n(intent.ts)",
       "originalText": "Intent Classifier\n(intent.ts)",
@@ -205,7 +205,7 @@
     {
       "type": "text",
       "id": "intent_ann_1",
-      "x": 440, "y": 222,
+      "x": 390, "y": 222,
       "width": 190, "height": 18,
       "text": "Parses command string → intent type",
       "originalText": "Parses command string → intent type",
@@ -235,7 +235,7 @@
     {
       "type": "text",
       "id": "intent_ann_2",
-      "x": 440, "y": 244,
+      "x": 390, "y": 244,
       "width": 190, "height": 18,
       "text": "Handles compound commands (&&, ||, ;, |)",
       "originalText": "Handles compound commands (&&, ||, ;, |)",
@@ -265,7 +265,7 @@
     {
       "type": "arrow",
       "id": "arrow_intent_env",
-      "x": 290, "y": 270,
+      "x": 240, "y": 270,
       "width": 0, "height": 55,
       "strokeColor": "#1e3a5f",
       "backgroundColor": "transparent",
@@ -292,7 +292,7 @@
     {
       "type": "rectangle",
       "id": "env_box",
-      "x": 155, "y": 325,
+      "x": 105, "y": 325,
       "width": 270, "height": 55,
       "strokeColor": "#1e3a5f",
       "backgroundColor": "#dbeafe",
@@ -319,7 +319,7 @@
     {
       "type": "text",
       "id": "env_text",
-      "x": 190, "y": 334,
+      "x": 140, "y": 334,
       "width": 200, "height": 36,
       "text": "Environment Detector\n(environment.ts)",
       "originalText": "Environment Detector\n(environment.ts)",
@@ -349,7 +349,7 @@
     {
       "type": "text",
       "id": "env_ann_1",
-      "x": 440, "y": 332,
+      "x": 390, "y": 332,
       "width": 190, "height": 18,
       "text": "Checks RTK, jcodemunch availability",
       "originalText": "Checks RTK, jcodemunch availability",
@@ -379,7 +379,7 @@
     {
       "type": "text",
       "id": "env_ann_2",
-      "x": 440, "y": 354,
+      "x": 390, "y": 354,
       "width": 190, "height": 18,
       "text": "Caches results for 30 minutes",
       "originalText": "Caches results for 30 minutes",
@@ -409,7 +409,7 @@
     {
       "type": "arrow",
       "id": "arrow_env_router",
-      "x": 290, "y": 380,
+      "x": 240, "y": 380,
       "width": 0, "height": 55,
       "strokeColor": "#1e3a5f",
       "backgroundColor": "transparent",
@@ -436,7 +436,7 @@
     {
       "type": "rectangle",
       "id": "router_box",
-      "x": 155, "y": 435,
+      "x": 105, "y": 435,
       "width": 270, "height": 55,
       "strokeColor": "#1e3a5f",
       "backgroundColor": "#dbeafe",
@@ -465,7 +465,7 @@
     {
       "type": "text",
       "id": "router_text",
-      "x": 205, "y": 444,
+      "x": 155, "y": 444,
       "width": 170, "height": 36,
       "text": "Router + Config\n(router.ts)",
       "originalText": "Router + Config\n(router.ts)",
@@ -495,7 +495,7 @@
     {
       "type": "text",
       "id": "router_ann_1",
-      "x": 440, "y": 442,
+      "x": 390, "y": 442,
       "width": 190, "height": 18,
       "text": "Matches intent + env to routing rules",
       "originalText": "Matches intent + env to routing rules",
@@ -525,7 +525,7 @@
     {
       "type": "text",
       "id": "router_ann_2",
-      "x": 440, "y": 464,
+      "x": 390, "y": 464,
       "width": 190, "height": 18,
       "text": "Returns: allow / advise / block",
       "originalText": "Returns: allow / advise / block",
@@ -555,7 +555,7 @@
     {
       "type": "arrow",
       "id": "arrow_to_allow",
-      "x": 290, "y": 490,
+      "x": 240, "y": 490,
       "width": 170, "height": 90,
       "strokeColor": "#047857",
       "backgroundColor": "transparent",
@@ -582,7 +582,7 @@
     {
       "type": "arrow",
       "id": "arrow_to_advise",
-      "x": 290, "y": 490,
+      "x": 240, "y": 490,
       "width": 0, "height": 90,
       "strokeColor": "#b45309",
       "backgroundColor": "transparent",
@@ -609,7 +609,7 @@
     {
       "type": "arrow",
       "id": "arrow_to_block",
-      "x": 290, "y": 490,
+      "x": 240, "y": 490,
       "width": 170, "height": 90,
       "strokeColor": "#dc2626",
       "backgroundColor": "transparent",
@@ -636,7 +636,7 @@
     {
       "type": "ellipse",
       "id": "allow_ellipse",
-      "x": 40, "y": 580,
+      "x": -10, "y": 580,
       "width": 160, "height": 50,
       "strokeColor": "#047857",
       "backgroundColor": "#a7f3d0",
@@ -661,7 +661,7 @@
     {
       "type": "text",
       "id": "allow_text",
-      "x": 88, "y": 593,
+      "x": 38, "y": 593,
       "width": 64, "height": 24,
       "text": "allow",
       "originalText": "allow",
@@ -691,7 +691,7 @@
     {
       "type": "text",
       "id": "allow_detail",
-      "x": 55, "y": 640,
+      "x": 5, "y": 640,
       "width": 130, "height": 34,
       "text": "Execute original\ncommand",
       "originalText": "Execute original\ncommand",
@@ -721,7 +721,7 @@
     {
       "type": "ellipse",
       "id": "advise_ellipse",
-      "x": 210, "y": 580,
+      "x": 160, "y": 580,
       "width": 160, "height": 50,
       "strokeColor": "#b45309",
       "backgroundColor": "#fef3c7",
@@ -746,7 +746,7 @@
     {
       "type": "text",
       "id": "advise_text",
-      "x": 255, "y": 593,
+      "x": 205, "y": 593,
       "width": 70, "height": 24,
       "text": "advise",
       "originalText": "advise",
@@ -776,7 +776,7 @@
     {
       "type": "text",
       "id": "advise_detail",
-      "x": 225, "y": 640,
+      "x": 175, "y": 640,
       "width": 130, "height": 34,
       "text": "Use suggested\ntool instead",
       "originalText": "Use suggested\ntool instead",
@@ -806,7 +806,7 @@
     {
       "type": "ellipse",
       "id": "block_ellipse",
-      "x": 380, "y": 580,
+      "x": 330, "y": 580,
       "width": 160, "height": 50,
       "strokeColor": "#dc2626",
       "backgroundColor": "#fee2e2",
@@ -831,7 +831,7 @@
     {
       "type": "text",
       "id": "block_text",
-      "x": 428, "y": 593,
+      "x": 378, "y": 593,
       "width": 64, "height": 24,
       "text": "block",
       "originalText": "block",
@@ -861,7 +861,7 @@
     {
       "type": "text",
       "id": "block_detail",
-      "x": 395, "y": 640,
+      "x": 345, "y": 640,
       "width": 130, "height": 34,
       "text": "Stop dangerous\noperation",
       "originalText": "Stop dangerous\noperation",
