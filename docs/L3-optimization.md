@@ -402,6 +402,120 @@ This is a **subjective trade-off, not a hard rule**. The point is that agentic d
 
 ---
 
+## Pattern 3.7 — TOON Serialization for MCP Response Optimization
+
+### Problem
+
+MCP (Model Context Protocol) servers return data to LLMs as JSON. For tabular responses — order lists, portfolio holdings, market data — JSON's repeating keys and structural overhead consume tokens without adding information. A list of 50 orders with 8 fields each produces a JSON payload where ~60% of the characters are structural syntax, not data. When agents consume MCP endpoints, this overhead scales linearly with every response.
+
+### Solution
+
+**TOON (Token-Oriented Object Notation)** is a compact, human-readable encoding of the JSON data model designed specifically for LLM prompts. It provides lossless round-trip serialization while eliminating redundant structure. For uniform object arrays — the most common shape of MCP tabular responses — TOON uses a header-plus-rows format that declares the schema once and omits field names from every row.
+
+**JSON vs TOON for the same data:**
+
+```json
+// JSON — 163 characters
+[{"id":1,"symbol":"ETH","balance":"2.5","usd":"8125.00"},{"id":2,"symbol":"USDC","balance":"1500.0","usd":"1500.00"}]
+```
+
+```toon
+// TOON — 61 characters (63% reduction)
+balances[2]{id,symbol,balance,usd}:
+  1,ETH,2.5,8125.00
+  2,USDC,1500.0,1500.00
+```
+
+The header `[2]{id,symbol,balance,usd}:` declares record count and field names once. Each row contains only values, separated by commas. Records are separated by pipes (or newlines). The savings compound with record count — 100 rows means 100 fewer repetitions of field names.
+
+**Key TOON format rules:**
+- Line-oriented, indentation-based syntax
+- Array length declared explicitly: `[N]`
+- Uniform object arrays use tabular format: `{field1,field2}:`
+- Values separated by commas, records by pipes or newlines
+- Nested objects encoded inline
+- Full lossless round-trip: `decode(encode(data)) === data`
+
+### In Practice
+
+Apply TOON serialization as middleware on MCP response paths:
+
+```typescript
+// Middleware: detect tabular fields, apply TOON, attach metadata
+class MCPResponseFormatter {
+  private eligibleTools = [
+    'get_positions', 'get_balances', 'get_orders',
+    'get_market_data', 'get_trade_history'
+  ];
+  private minSavingsThreshold = 20; // percent
+
+  formatResponse(data: unknown, toolName: string) {
+    if (!this.shouldAttemptTOON(toolName, data)) {
+      return { format: 'json', data };
+    }
+
+    const result = encode(data); // TOON encode
+    const savings = this.calculateSavings(data, result);
+
+    if (savings >= this.minSavingsThreshold) {
+      return {
+        format: 'toon',
+        data: result,
+        metadata: { savings, originalSize: JSON.stringify(data).length, toonSize: result.length }
+      };
+    }
+
+    return { format: 'json', data };
+  }
+
+  shouldAttemptTOON(toolName: string, data: unknown): boolean {
+    return this.eligibleTools.includes(toolName)
+      && Array.isArray(data)
+      && data.length > 0
+      && typeof data[0] === 'object'
+      && data.every(item => typeof item === 'object' && item !== null);
+  }
+}
+```
+
+**When TOON helps (apply it):**
+- Uniform object arrays returned from MCP tools (orders, balances, positions, market data)
+- Responses with 5+ records and 3+ fields — savings exceed 40%
+- High-frequency endpoints called repeatedly during agent sessions
+
+**When TOON doesn't help (skip it):**
+- Non-tabular responses (single objects, nested heterogeneous structures)
+- Responses under 20 characters — TOON header overhead exceeds savings
+- Responses where field names vary between records
+
+**Typical savings by data shape:**
+
+| Shape | Records | Fields | JSON Size | TOON Size | Savings |
+|-------|---------|--------|-----------|-----------|---------|
+| Balances | 5 | 4 | ~320 chars | ~120 chars | ~63% |
+| Orders | 20 | 8 | ~2,400 chars | ~900 chars | ~63% |
+| Market data | 100 | 6 | ~8,500 chars | ~3,200 chars | ~62% |
+| Trade history | 200 | 10 | ~28,000 chars | ~11,000 chars | ~61% |
+
+Savings stay in the 60-65% range regardless of record count because the ratio of structural overhead to data remains constant.
+
+### Anti-Pattern
+
+**Don't** apply TOON to all responses indiscriminately. A single-object response like `{"orderId": "abc", "status": "filled"}` is 46 characters in JSON — TOON's header would add overhead, not reduce it.
+
+**Don't** forget the fallback path. TOON encoding can fail on circular references or unexpected data types. Always fall back to JSON — the agent receives the same data either way, just with or without token savings.
+
+**Don't** make the savings threshold too low. Setting it to 0% forces TOON on every response, adding latency for negligible savings on small payloads. A 20% threshold ensures TOON is only used where it matters.
+
+### Cross-References
+
+- [Pattern 3.1](#pattern-31--smart-routing--tool-selection) — Command-level token optimization
+- [Pattern 3.5](#pattern-35--structured-output-over-raw-text) — Structured results from tools
+- [TOON Format](https://github.com/toon-format/toon) — Canonical specification and library
+- [L2 — Skills & Hooks](./L2-guardrails.md) — Middleware enforcement patterns
+
+---
+
 ## Putting It All Together
 
 The complete optimization pipeline:
@@ -414,6 +528,7 @@ The complete optimization pipeline:
 6. **Scout** ([3.4](#pattern-34--context-engineering--the-scout-pattern)): For complex tasks, map first
 7. **Structure** ([3.5](#pattern-35--structured-output-over-raw-text)): Prefer typed results
 8. **Align** ([3.6](#pattern-36--cross-domain-architecture-alignment)): For cross-repo changes, verify architectural consistency
+9. **Compress** ([3.7](#pattern-37--toon-serialization-for-mcp-response-optimization)): For MCP tabular responses, serialize with TOON
 
 Result: 60-90% token savings, fewer errors, better outcomes.
 
@@ -432,6 +547,7 @@ See [examples/guardrails](../examples/guardrails/) for a complete TypeScript imp
 ## Further Reading
 
 - [WISC Framework](https://youtu.be/gyo0eRgsUWk) — Scout/Implementer pattern
+- [TOON Format](https://github.com/toon-format/toon) — Token-oriented serialization for LLM prompts
 - [L2 — Guardrails](./L2-guardrails.md) — Enforcing behavioral rules
 - [RTK](https://github.com/rtk-ai/rtk) — Token-optimized CLI proxy
 

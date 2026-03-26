@@ -70,6 +70,13 @@
 - **Related to:** L3
 - **URL:** https://github.com/rtk-ai/rtk
 
+### TOON (Token-Oriented Object Notation)
+- **Type:** Tool / Format
+- **Creator:** toon-format
+- **Summary:** Compact, human-readable encoding of the JSON data model designed for LLM prompts. Eliminates redundant structure in tabular data (the most common shape of MCP API responses) by declaring field names once in a header. Provides 60-65% token reduction on uniform object arrays with lossless round-trip serialization. Applied as middleware on MCP response paths to transparently optimize token usage without changing the agent's consumption model.
+- **Related to:** L3
+- **URL:** https://github.com/toon-format/toon
+
 ### Claude Code (Anthropic)
 - **Type:** Tool
 - **Creator:** Anthropic
