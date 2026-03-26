@@ -9,7 +9,7 @@ A minimal, working example of stack tests in Python using pytest. Each test mode
 - **Unique container naming**: `{test-name}-{pid}-{random}-{service}` prevents collisions
 - **Transient volumes**: Data disappears when containers stop
 - **Per-test compose files**: `docker-compose-{test-name}-{pid}-{random}-{timestamp}.yml`
-- **Full-loop assertions**: Primary response, second-order database state, third-order audit logs
+- **Full-loop assertions**: Primary response, second-order cross-API verification, third-order audit/observability
 - **Sequential ordering**: Tests numbered `01_`, `02_` to establish dependency ladder
 
 ## File Structure
@@ -66,8 +66,8 @@ Tests are numbered `test_01_`, `test_02_` etc. Pytest runs files in alphabetical
 Each test verifies at multiple levels:
 
 - **Primary**: API response status and body
-- **Second-order**: Effects observable via API (list endpoints, database state)
-- **Third-order**: Observability data (audit logs, events)
+- **Second-order**: Derived effects verified through DIFFERENT API endpoints than the one that performed the action (cross-API verification)
+- **Third-order**: Cross-functional verification via admin/observability APIs (audit logs, email notifications, cross-endpoint consistency, auth enforcement)
 
 ### 4. Container Isolation
 
@@ -91,8 +91,11 @@ The tests reference a `./mock-app` directory that should contain a minimal FastA
 - `POST /users` — create user
 - `GET /users/:id` — get user
 - `GET /users` — list users
-- `PATCH /users/:id` — update user
+- `GET /users/me` — get current user (authenticated)
+- `POST /auth/login` — authenticate
+- `PATCH /users/:id` — update user (authenticated)
 - `GET /admin/audit/users` — audit log
+- `GET /admin/notifications` — notification/email log
 
 In real usage, point the compose file at your actual application.
 

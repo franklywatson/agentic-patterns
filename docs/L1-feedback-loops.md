@@ -32,7 +32,7 @@ A typical stack test:
 1. Generates a unique `docker-compose.{test-name}.yml` with dynamic ports
 2. Runs `docker compose up -d` and waits for health checks
 3. Executes user journeys via HTTP API
-4. Asserts on primary responses AND second-order effects (database state, logs)
+4. Asserts on primary responses AND second-order effects (cross-API verification, audit)
 5. Runs `docker compose down -v` to clean up everything
 
 Example test structure — each test is one atomic user journey:
@@ -181,8 +181,8 @@ A test that asserts only on API response status codes gives false confidence. A 
 **Full-loop assertion layering** structures checks at three levels of increasing distance from the primary action:
 
 1. **Primary assertions**: Direct response from the API (status, body structure, immediate fields)
-2. **Second-order assertions**: Effects observable via the API (database state changes, cache hits, resource creation)
-3. **Third-order assertions**: Effects observable via administrative APIs (audit logs, event streams, background job completion)
+2. **Second-order assertions**: Derived effects verified through a DIFFERENT API endpoint than the one that performed the action — e.g., create a user via POST, then verify the user exists via the list endpoint. Cross-API verification proves data was persisted, not just that the operation returned a success object.
+3. **Third-order assertions**: Cross-functional verification via administrative or observability APIs — audit logs, email notifications, cross-endpoint consistency, authentication enforcement. These prove that the system's side effects (notification pipeline, audit trail, auth middleware) are working correctly.
 
 Each layer provides diagnostic signal. If primary passes but second-order fails, the agent knows: core logic works, persistence is broken. If primary and second-order pass but third-order fails: happy path works, observability is broken.
 
@@ -200,23 +200,31 @@ const orderResponse = await api.post('/orders', {
 expect(orderResponse.status).toBe(201);
 expect(orderResponse.data.orderId).toBeDefined();
 
-// Second-order: Database state via API
+// Second-order: Cross-API verification — cart emptied via a DIFFERENT endpoint
+// than the one that created the order. This proves the order was committed,
+// not just that POST /orders returned a success object.
 const cart = await api.get(`/cart/${userId}`);
 expect(cart.data.items).toEqual([]);
 expect(cart.data.subtotal).toBe('0');
 
-// Third-order: Audit log via admin API
+// Third-order: Cross-functional verification via admin API
+// Proves the audit pipeline processed the event correctly.
 const adminClient = createAdminClient();
 const auditLog = await adminClient.get(`/audit/${orderResponse.data.orderId}`);
 expect(auditLog.data.event).toBe('ORDER_PLACED');
 expect(auditLog.data.timestamp).toBeDefined();
+
+// Third-order: Cross-endpoint consistency
+// The order summary endpoint must agree with the order creation response.
+const summary = await api.get(`/orders/${orderResponse.data.orderId}/summary`);
+expect(summary.data.total).toBe(orderResponse.data.total);
 ```
 
 Why this matters for agents:
 
 - **Primary assertion fails**: Input validation, routing, or controller logic broken
-- **Second-order fails**: Controller works but persistence layer broken
-- **Third-order fails**: Core system works but observability/audit broken
+- **Second-order fails**: Controller works but persistence or downstream effects broken
+- **Third-order fails**: Core system works but observability, audit, or cross-endpoint consistency broken
 
 Each failure mode points the agent to a specific subsystem to investigate.
 
@@ -224,7 +232,7 @@ Each failure mode points the agent to a specific subsystem to investigate.
 
 **Don't** skip second and third-order assertions "to save time." Stack tests are already slow — add a few milliseconds for complete verification. The diagnostic value is worth it.
 
-**Don't** implement third-order checks by querying databases directly. Use the API, even if it's an admin-only API. Tests should interact like users (or admins), not like developers with database access.
+**Don't** implement any assertion layer by querying databases directly. Use the API, even if it's an admin-only API. Tests should interact like users (or admins), not like developers with database access. Every assertion must go through a public API endpoint — the stack test has no direct database, Redis, or internal service access.
 
 **Don't** make assertions conditional on earlier ones passing. All layers should run and report independently. If the primary assertion fails, still check second and third — you might learn that the core logic works but response serialization is broken.
 

@@ -293,7 +293,7 @@ src/
 
 4. **Domain organization:** Code is grouped by what it does (ecommerce/orders/, ecommerce/payments/), not by file type (services/, utils/).
 
-5. **Full-loop assertions:** Tests verify primary responses, second-order effects (database state), and third-order effects (audit logs).
+5. **Full-loop assertions:** Tests verify primary responses, second-order cross-API effects, and third-order cross-functional verification (audit logs, notifications, cross-endpoint consistency).
 
 6. **Documentation sync:** Code changes and doc updates happen in the same task. Never defer documentation.
 ```
