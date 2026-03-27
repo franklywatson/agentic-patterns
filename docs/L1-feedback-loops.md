@@ -120,50 +120,11 @@ The startup test needs to verify more than "is the server running?" A production
 
 Stack tests need realistic data to exercise user journeys. A user can't place an order if the catalog is empty. A refund test can't run without a prior purchase. **Bootstrapping** is the process of loading test fixture data before domain tests begin.
 
-The bootstrap step (typically `02-bootstrap-test-data.stack.test.ts`) runs after the startup test and before domain tests:
-
-```typescript
-describe('Stack Test: Bootstrap test data', () => {
-  beforeAll(async () => {
-    await stack.start();
-    await stack.waitForReady();
-  });
-
-  test('seed catalog with products for checkout journeys', async () => {
-    // Primary: seed via API
-    const response = await adminClient.post('/test/seed-catalog', {
-      productCount: 10,
-      includeOutOfStock: true,
-      includeVariants: true
-    });
-    expect(response.status).toBe(200);
-
-    // Second-order: verify catalog is queryable
-    const catalog = await client.get('/products');
-    expect(catalog.data.products.length).toBe(10);
-  });
-
-  test('create test users with pre-configured roles', async () => {
-    const response = await adminClient.post('/test/seed-users', {
-      users: [
-        { role: 'admin', email: 'admin@test.com' },
-        { role: 'customer', email: 'customer@test.com' }
-      ]
-    });
-    expect(response.status).toBe(200);
-
-    // Verify users are queryable
-    const admin = await client.post('/auth/login', {
-      email: 'admin@test.com', password: response.data.tempPassword
-    });
-    expect(admin.status).toBe(200);
-  });
-});
-```
+The bootstrap step (typically `02-bootstrap-test-data.stack.test.ts`) runs after the startup test and before domain tests. It loads the prerequisite data that domain journeys need: products in the catalog, pre-configured users, reference data, and system settings.
 
 **Bootstrap principles:**
-- Load data via the API, not direct database inserts — this tests the seed endpoints themselves
-- Use a dedicated admin/test client — never expose seed endpoints to production
+- Use the same internal service APIs that user-facing or admin functions use — bootstrap goes through the same code paths as production, not synthetic test-only endpoints that would never exist in a real deployment
+- Direct database seeding is acceptable for bootstrapping, but it must use the same internal service layer and data access patterns the application uses — not raw SQL that bypasses validation, hooks, or business logic
 - Each bootstrap test creates one category of fixture data — products, users, configuration
 - Bootstrap tests are sequential: domain tests assume all bootstrap tests pass
 - If a bootstrap test fails, all subsequent tests are meaningless — the diagnostic signal is clear
@@ -240,7 +201,7 @@ Each failure mode points the agent to a specific subsystem to investigate.
 
 ### Anti-Pattern
 
-**Don't** skip second and third-order assertions "to save time." Stack tests are already slow — add a few milliseconds for complete verification. The diagnostic value is worth it.
+**Don't** skip second and third-order assertions "to save time." Each assertion layer catches a distinct class of failure that the previous layer cannot. Primary assertions verify the happy path; second-order assertions verify persistence and side effects; third-order assertions verify cross-functional consistency. Skipping a layer means accepting a blind spot in your diagnostic signal — a bug in that layer will surface silently in production, not in your tests.
 
 **Don't** implement any assertion layer by querying databases directly. Use the API, even if it's an admin-only API. Tests should interact like users (or admins), not like developers with database access. Every assertion must go through a public API endpoint — the stack test has no direct database, Redis, or internal service access.
 
@@ -297,9 +258,17 @@ Example: If `04-checkout-basic.stack.test.ts` fails:
 - Agent focuses: Checkout logic specifically, not auth or persistence
 - Agent skips: Advanced checkout tests (`05`), rate limiting (`06`) — they'd fail anyway
 
-### Anti-Pattern
+### Stack Tests as Vertical Slices
 
-**Don't** run tests individually during development. Run the full suite. A test that passes in isolation but fails in the suite reveals dependency bugs that individual runs hide.
+Each stack test is a **vertical slice** through the system — analogous to a user story in agile development. It cuts across every layer from API to database to external services, validating that the entire stack works together for a specific user journey. This is not a component test that checks one service in isolation; it is a slice that confirms the system delivers value end-to-end.
+
+This framing has practical implications for how tests are run during development:
+
+- **Individual test runs are essential** during feature development. When building a checkout flow, running `05-checkout-complete.stack.test.ts` in isolation is the fastest way to iterate — the agent brings up the stack, exercises the journey, and gets feedback immediately without waiting for unrelated tests.
+- **Full suite runs are for validation**, not iteration. An agent executing a plan should run the full suite before claiming completion. A human orchestrator deciding whether a feature is ready may run the full suite less frequently — the individual journey test provides sufficient signal during active development.
+- **A test that passes in isolation but fails in the suite reveals a dependency bug** — this is valuable information when it surfaces, not a reason to forbid individual runs.
+
+### Anti-Pattern
 
 **Don't** make tests depend on shared state from previous tests. Each test should still be independently valid — the sequence is about diagnostic ordering, not data dependencies. Use `beforeEach` to set up fresh state.
 
@@ -407,8 +376,6 @@ async function cleanup(composeFile: string): Promise<void> {
 **Don't** use hardcoded ports like `3000`, `5432`, `6379`. These collide on the developer's machine and in CI. Always allocate dynamically.
 
 **Don't** use shared volumes for "performance." State leakage causes flaky tests. Transient volumes are slightly slower but reliable.
-
-**Don't** forget `-v` in `docker compose down -v`. Without it, volumes persist and subsequent tests see stale data.
 
 **Don't** rely on Docker's auto-cleanup. Networks and orphaned containers accumulate. Explicit removal in every test's teardown is required.
 

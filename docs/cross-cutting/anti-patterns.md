@@ -358,35 +358,34 @@ services:
 
 ---
 
-### Running Stack Tests Individually
+### Running Only the Full Suite, Never Individual Tests
 
 **What It Looks Like**
-- Developers run one test file instead of the full suite
-- Tests pass in isolation but fail in suite
-- Dependency bugs hidden by individual runs
-- "It works on my machine" because tests run differently
+- Refusing to run individual stack tests during feature development
+- Always requiring the full suite even during active iteration
+- Treating individual test runs as a code smell
 
 **Why It's Harmful**
-- Miss dependency bugs between tests
-- Lose diagnostic power of sequential ordering
-- Shared state assumptions break
-- Can't trust test results
+- Slows iteration during feature development — individual runs are the fastest feedback loop
+- Stack tests are vertical slices (like agile user stories) — running a single slice is the natural unit of development
+- Agents need fast feedback when building a specific journey, not the entire suite
+- Humans orchestrating agents may not need full suite runs at every step
 
 **What To Do Instead**
 Apply [Pattern 1.3 — Sequential/Additive Test Design](../L1-feedback-loops.md#pattern-13--sequential--additive-test-design):
-- Always run the full suite
-- Sequential order provides diagnostic ladder
-- If test N fails, tests 1 through N-1 passed—narrow search space
+- Run individual stack tests during active feature development for fast iteration
+- Run the full suite before marking work complete or merging
+- A test that passes in isolation but fails in the suite reveals a dependency bug — valuable signal, not a reason to forbid individual runs
 
 Example workflow:
 ```bash
-# Wrong: Run single test
+# During development: run the relevant slice
 npm test -- ecommerce-basic.stack.test.ts
 
-# Correct: Run full suite
+# Before completion: run the full suite
 npm test -- tests/stack/
 
-# If 04-ecommerce-basic fails:
+# If 04-ecommerce-basic fails in the full suite:
 # - Agent knows: 01, 02, 03 passed (startup, auth, CRUD work)
 # - Agent focuses: Ecommerce logic specifically
 # - Agent skips: 05, 06, 07 (they'd fail anyway)
