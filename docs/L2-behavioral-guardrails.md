@@ -275,7 +275,7 @@ Agents don't have intuition to work around known issues. When developers tolerat
 
 ### Solution
 
-Zero-defect tolerance: every error, warning, and failure must be addressed. Not just "relevant" errors—ALL of them.
+Zero-defect tolerance: every error, warning, and failure must be addressed. Not just "relevant" errors—ALL of them. This applies to both unit tests and stack tests — dismissing a unit test failure while trusting stack test results means relying on partial feedback.
 
 **What zero-defect means:**
 - "This failure is unrelated" is never acceptable

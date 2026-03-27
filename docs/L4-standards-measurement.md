@@ -370,6 +370,9 @@ Adopt this checklist for code reviews, PR reviews, and task completion verificat
 - [ ] No catch-without-throw (except re-throw scenarios)
 - [ ] Tests are deterministic (no flaky randomness)
 - [ ] Test isolation (no shared state between tests)
+- [ ] Zero-defect tolerance: all test failures and warnings addressed, not dismissed ([Pattern 2.5](L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance))
+- [ ] Unit tests cover algorithm correctness and edge cases
+- [ ] Stack tests cover user journeys end-to-end ([L1: Stack Tests](L1-feedback-loops.md))
 
 ### Documentation
 - [ ] Code changes documented in same task
