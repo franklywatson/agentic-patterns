@@ -616,7 +616,7 @@ Apply the same standards to test infrastructure as to application code:
 - **Unit test the utilities**: Port allocators, compose generators, and health check pollers should have their own test suites. A `PortAllocator` with 99.9% availability still introduces flakiness at scale — test the edge cases (exhausted port ranges, concurrent allocation, permission errors).
 - **Error handling, not error swallowing**: Test utilities must throw on failure, not return null or log silently. An agent can't diagnose what it can't see.
 - **Code review with the same scrutiny**: Stack test utilities go through the same PR review process as application endpoints. There is no separate "lower standard" for test infrastructure.
-- **Refactor when it grows**: A 5,000-line test utility file is a god file ([L0: Pattern 0.1](L0-foundation.md#pattern-01--deep-modules)). Extract concerns — container lifecycle, authentication, assertion helpers — into focused modules with clean interfaces.
+- **Refactor when it grows**: A 5,000-line test utility file is a god file ([L0: Pattern 0.1](L0-foundation.md#pattern-01--deep-modules)). Extract concerns — container lifecycle, authentication, assertion helpers — into focused modules with clean interfaces. (Note: the reference project's `StackTestUtils` at 5,888 lines in a single class predates this principle being applied to test infrastructure — it is a known rough edge that accumulated organically and would benefit from decomposition into focused modules.)
 
 ### Cross-References
 
