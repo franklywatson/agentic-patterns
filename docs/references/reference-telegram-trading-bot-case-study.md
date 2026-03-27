@@ -78,9 +78,9 @@ The worktree at `.worktrees/tg-dash/` demonstrates feature isolation:
 
 ## L1 in Practice — Feedback Loops
 
-### StackTestUtils (236KB, 5,888 lines)
+### StackTestUtils
 
-The backbone of stack testing is `tests/config/stack-utils.js` — a 236KB utility class that provides:
+The backbone of stack testing is `tests/config/stack-utils.js` — a utility class that provides:
 
 - **Container lifecycle management** — `initialize()`, `cleanup()`, `startContainers()`, `stopContainers()`
 - **Authentication management** — `makeAuthenticatedRequest()`, `getAgentToken()`, `getUserToken()`
@@ -89,7 +89,7 @@ The backbone of stack testing is `tests/config/stack-utils.js` — a 236KB utili
 - **Log search** — `searchDockerLogs()` for debugging
 - **Chain verification** — `verifyTransactionOnChain()` for blockchain operations
 
-This is not a lightweight mock utility — it's production-grade infrastructure that spins up real Docker stacks, waits for real readiness, and verifies real effects.
+This is not a lightweight mock utility — it's production-grade infrastructure that spins up real Docker stacks, waits for real readiness, and verifies real effects. The class has grown organically over many sessions and has fallen behind the project's own refactoring principles ([L0: Deep Modules](../L0-foundation.md#pattern-01--deep-modules)) — it would benefit from decomposition into focused modules (container lifecycle, authentication, assertion helpers) with clean interfaces.
 
 ### StackContainerManager
 
@@ -419,7 +419,7 @@ Evidence-based claims (L4) catch violations of constitutional rules (L0). Docume
 
 1. **Constitutional rules must be enforceable** — The project's 9 mandates are codified in skills that activate during development, not just documented and forgotten.
 
-2. **Testing infrastructure is production code** — StackTestUtils at 236KB is not an afterthought. It's the foundation that makes agentic development possible.
+2. **Testing infrastructure is production code** — StackTestUtils is the foundation that makes agentic development possible, though it has grown beyond ideal module size and would benefit from decomposition.
 
 3. **Isolation enables parallelism** — Dynamic port allocation, unique container names, and per-test compose files allow stack tests to run concurrently without collision.
 
