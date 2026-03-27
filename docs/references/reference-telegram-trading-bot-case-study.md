@@ -430,10 +430,6 @@ Skills establish patterns that optimization (L3) can automate. Intent classifica
 
 Token optimization isn't just cheaper — it makes agents more effective. Structured search means faster discovery. Smart routing means fewer dead-end explorations. TOON serialization means more context available for actual reasoning. L3 amplifies the value of every pattern below it by making agent sessions tighter and more focused.
 
-### How L4 Maintains L0-L3
-
-Evidence-based claims (L4) catch violations of constitutional rules (L0). Documentation health tracking (L0.7) catches drift in skill definitions (L2). Metrics (L4.4) measure whether L3 optimizations are actually improving outcomes or just feeling faster. The standards layer is the feedback loop that maintains all previous layers.
-
 ---
 
 ## Key Takeaways
