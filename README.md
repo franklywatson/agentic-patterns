@@ -43,7 +43,7 @@ Patterns are organized into five levels, each building on the previous. Adopt th
 
 **[L3: Optimization](docs/L3-optimization.md)** — Agent efficiency is quality, not just speed. Smart routing redirects shell commands to specialized tools (60-80% token reduction). Intent classification, environment-aware routing, and the Scout Pattern (from the WISC context engineering framework: Write, Isolate, Select, Compress) turn exploration into structured context.
 
-**[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, spec drift detection, the new starter audit, and development metrics. The maturity layer that verifies L0-L3 are holding and measures their impact over time. Documentation freshness and aggressive cleanup are foundation-level concerns (L0), not finishing-phase practices.
+**[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, spec drift detection, the new starter audit, and development metrics. The maturity layer that verifies L0-L3 are holding and measures their impact over time.
 
 ## Getting Started
 
