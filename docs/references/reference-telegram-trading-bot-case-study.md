@@ -30,30 +30,6 @@ The project's CLAUDE.md is a 218-line contract that establishes the project's co
 
 These rules are not suggestions — they are enforced through L2 skill overlays.
 
-### Conceptual File Organization
-
-The `src/` directory groups by capability, not technical layer:
-
-```
-src/
-├── backup/           # Backup/restore domain
-├── configs/          # Configuration management
-├── constants/        # Shared constants (no hardcoded strings)
-├── core/             # ServiceRegistry, ConfigManager, security
-├── database/         # Database access layer
-├── features/         # Feature-specific implementations
-├── locales/          # Internationalization
-├── monitoring/       # Observability
-├── routes/           # API endpoints
-├── services/         # Business logic services (all extend AbstractService)
-├── shared/           # Shared services (logging, metadata)
-├── utils/            # Utilities
-├── web-pages/        # Web UI components
-└── unified-platform.js  # Entry point
-```
-
-Compare to technical layering (`services/`, `handlers/`, `utils/`, `types/`) — the project's structure lets agents find all backup code in one place, all trading code in another, without cross-referencing four directories.
-
 ### Progressive Disclosure
 
 Entry points guide agents from shallow to deep:
