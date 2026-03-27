@@ -134,15 +134,22 @@ No hardcoded ports, no conflicts, true parallel test execution.
 
 ### Health Endpoint with Bootstrap Status
 
-The health endpoint runs in test mode, decorating responses with real service diagnostics. Tests poll this endpoint until bootstrap completes:
+The health endpoint runs in test mode, decorating responses with real service diagnostics and dependency connectivity. Tests poll this endpoint until bootstrap completes:
 
 ```javascript
-// GET /health (test mode response)
+// GET /health?mode=test
 {
   "status": "healthy",
   "timestamp": "2026-03-26T10:00:00Z",
   "version": "2.4.1",
   "uptime": 42.5,
+  "services": {
+    "postgres": { "connected": true, "latency_ms": 3 },
+    "redis": { "connected": true, "latency_ms": 1 },
+    "email_relay": { "configured": true, "smtp_verified": true },
+    "message_queue": { "connected": true, "pending_jobs": 0 },
+    "secrets_manager": { "connected": true, "resolved_secrets": 14 }
+  },
   "bootstrap": {
     "completed": true,
     "completedAt": "2026-03-26T10:00:01Z",
@@ -155,7 +162,9 @@ The health endpoint runs in test mode, decorating responses with real service di
 }
 ```
 
-The `bootstrap.completed` flag is the gate: no domain test runs until this is `true`. This replaces synthetic health-check endpoints with enriched responses on the existing health route — no test-only code leaks into production.
+The `services` block reports real-time dependency health — each external service's connectivity, latency, and configuration status. This is the richer signal: bootstrap might report `completed: true` but a critical dependency (email relay, blockchain node) could be down. Tests check `services` to ensure the full dependency graph is healthy, not just that initialization ran.
+
+The `bootstrap.completed` flag is the gate: no domain test runs until this is `true`. The `services` block is the diagnostic signal: if bootstrap succeeds but a service is down, the agent knows exactly which dependency to investigate.
 
 ### Test Fixture Bootstrapping
 
@@ -185,7 +194,7 @@ Domain tests need realistic data: a user can't place a trade without a funded wa
 }
 ```
 
-Bootstrapping loads via the canonical service interfaces used by the system — not direct database inserts. The startup test sequence is: (1) containers come up, (2) health endpoint reports `bootstrap.completed: true`, (3) test users exist and wallets are funded. Only then do domain tests begin.
+Bootstrapping loads via the canonical service interfaces used by the system — not direct database inserts. The startup test sequence is: (1) containers come up, (2) health endpoint reports all services connected, (3) bootstrap reports `completed: true`, (4) test users exist and wallets are funded. Only then do domain tests begin.
 
 Tests are ordered by natural dependency:
 
