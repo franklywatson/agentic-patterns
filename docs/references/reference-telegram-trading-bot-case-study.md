@@ -462,7 +462,7 @@ The December spike reflects the upfront investment in testing infrastructure (St
 
 ### Development Velocity
 
-February 2026 was the busiest period: 623 non-merge commits across 17 active days (36.6 commits/day average). The project was developed primarily by two authors (franklywatson: 1,443 commits, j pimmel: 54 commits), with AI agents responsible for the vast majority of commits.
+February 2026 was the busiest period: 623 non-merge commits across 17 active days (36.6 commits/day average).
 
 ### What the Data Shows
 
