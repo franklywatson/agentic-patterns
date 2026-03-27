@@ -347,6 +347,30 @@ When `tdd+` is invoked, it knows to reject mocked loggers and mocked ethers beca
 
 ---
 
+## L3 in Practice — Optimization
+
+### Intent-Based Command Routing
+
+The project implements L3's smart routing pattern ([Pattern 3.1](../L3-optimization.md#pattern-31--smart-routing-tool-selection)) through a combination of skills and hooks. Raw shell commands — `grep`, `cat`, `find` — are intercepted by PostToolUse hooks that classify intent ([Pattern 3.2](../L3-optimization.md#pattern-32--intent-classification)) and redirect to structured tools. `grep -r "export.*function" .` becomes a symbol search; `cat file.ts` becomes a targeted read; `find . -name "*.ts"` becomes a glob query. Environment-aware routing ([Pattern 3.3](../L3-optimization.md#pattern-33--environment-aware-routing)) detects whether jcodemunch indexes are available and degrades gracefully to raw tools when they aren't.
+
+### RTK Integration
+
+The [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk) CLI proxy filters noisy git output — `git status`, `git diff`, `git log` — stripping line noise and returning structured results. This is the simplest L3 win: install RTK, configure it as a hook, and git commands become ~60% cheaper in token usage with no behavior change.
+
+### jcodemunch for Structured Code Search
+
+When the repository is indexed by [jcodemunch](https://github.com/nicolo-ribaudo/jcodemunch), agent searches bypass raw grep entirely. `search_symbols` returns typed results with file locations and summaries — the same information as `grep -r` output but at ~15% of the token cost. The scout pattern ([Pattern 3.4](../L3-optimization.md#pattern-34--context-engineering-the-scout-pattern)) applies here: a sub-agent maps the codebase structure first, then the implementer works with a concise index instead of re-deriving file locations each session.
+
+### TOON Serialization for MCP Responses
+
+The project's MCP server uses [TOON (Token-Oriented Object Notation)](https://github.com/toon-format/toon) to serialize tabular responses ([Pattern 3.7](../L3-optimization.md#pattern-37--toon-serialization-for-mcp-response-optimization)). Order lists, portfolio holdings, and market data — uniform object arrays returned to agents from internal tools — are compressed to ~35-40% of their JSON size by declaring field names once in a header row. The agent receives the same data; it just costs fewer tokens to consume.
+
+### Structured Output Over Raw Text
+
+Across the agent-facing tool surface, structured output ([Pattern 3.5](../L3-optimization.md#pattern-35--structured-output-over-raw-text)) replaces raw text commands wherever possible. The result: agents reason about typed data structures instead of parsing unstructured text — faster, fewer errors, less wasted context.
+
+---
+
 ## L4 in Practice — Standards & Measurement
 
 ### Evidence-Based Verification
@@ -402,9 +426,13 @@ Stack tests provide the verification targets that skills (L2) enforce. The `tdd+
 
 Skills establish patterns that optimization (L3) can automate. Intent classification started as a manual pattern, then became codified in the project's intent routing system.
 
-### How L4 Maintains L0-L2
+### How L3 Amplifies L0-L2
 
-Evidence-based claims (L4) catch violations of constitutional rules (L0). Documentation health tracking (L0.7) catches drift in skill definitions (L2). The standards layer is the feedback loop that maintains all previous layers.
+Token optimization isn't just cheaper — it makes agents more effective. Structured search means faster discovery. Smart routing means fewer dead-end explorations. TOON serialization means more context available for actual reasoning. L3 amplifies the value of every pattern below it by making agent sessions tighter and more focused.
+
+### How L4 Maintains L0-L3
+
+Evidence-based claims (L4) catch violations of constitutional rules (L0). Documentation health tracking (L0.7) catches drift in skill definitions (L2). Metrics (L4.4) measure whether L3 optimizations are actually improving outcomes or just feeling faster. The standards layer is the feedback loop that maintains all previous layers.
 
 ---
 
@@ -420,7 +448,7 @@ Evidence-based claims (L4) catch violations of constitutional rules (L0). Docume
 
 5. **Documentation is a contract** — 92% coverage tracking and continuous reorganization treat docs as living artifacts. Superseded docs are deleted, not archived — version control preserves history.
 
-6. **All levels integrate** — L0 constitutional rules enable L1 stack tests, which provide targets for L2 skills, which L4 standards & measurement maintains.
+6. **All levels integrate** — L0 constitutional rules enable L1 stack tests, which provide targets for L2 skills, which L3 amplifies through token optimization, which L4 standards & measurement maintains.
 
 ---
 
