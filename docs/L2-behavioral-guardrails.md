@@ -2,6 +2,8 @@
 
 Prose instructions are insufficient for agentic development. Skills and hooks enforce discipline through the tool layer, making correct behavior the path of least resistance.
 
+**A note on skills frameworks:** The skills referenced throughout this document (brainstorming, test-driven-development, verification-before-completion, etc.) are primarily drawn from the [superpowers](https://github.com/obra/superpowers) framework by Jesse Vincent (obra). However, the patterns described here are framework-agnostic. Equivalent skill sets exist in [gstack](https://github.com/garrytan/gstack), [OpenSpec](https://github.com/openspec-dev/openspec), and other agent skill frameworks. The important thing is the pattern — overlaying project-specific constraints on base agent capabilities — not which specific framework provides the skills.
+
 ## Overview
 
 L1 established testing discipline. L2 automates enforcement of that discipline through behavioral guardrails. These guardrails operate at the tool layer rather than the instruction layer, ensuring consistent behavior regardless of context or prompt complexity.
