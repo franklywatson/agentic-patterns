@@ -35,7 +35,7 @@ Patterns are organized into five levels, each building on the previous. Adopt th
 
 ### Level Overviews
 
-**[L0: Foundation](docs/L0-foundation.md)** — Structure your codebase so an AI with zero prior context can navigate, understand, and contribute. Deep modules, progressive disclosure, conceptual file organization, and CLAUDE.md as project constitution. The "can a new starter figure this out?" test.
+**[L0: Foundation](docs/L0-foundation.md)** — Structure your codebase so an AI with zero prior context can navigate, understand, and contribute. Deep modules, progressive disclosure, conceptual file organization, CLAUDE.md as project constitution, documentation as contract, and aggressive cleanup. The "can a new starter figure this out?" test.
 
 **[L1: Feedback Loops](docs/L1-feedback-loops.md)** — Replace the traditional test pyramid with closed-loop testing. Stack tests bring up the full application stack and test through APIs only — no mocks, no partial integration, no ambiguous results. Full-loop assertion layering catches regressions at primary, secondary, and tertiary levels.
 
