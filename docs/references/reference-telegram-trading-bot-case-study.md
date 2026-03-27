@@ -183,7 +183,7 @@ Domain tests need realistic data: a user can't place a trade without a funded wa
 }
 ```
 
-Bootstrapping loads via the ConfigManager — not direct database inserts. The startup test sequence is: (1) containers come up, (2) health endpoint reports `bootstrap.completed: true`, (3) test users exist and wallets are funded. Only then do domain tests begin.
+Bootstrapping loads via the canonical service interfaces used by the system — not direct database inserts. The startup test sequence is: (1) containers come up, (2) health endpoint reports `bootstrap.completed: true`, (3) test users exist and wallets are funded. Only then do domain tests begin.
 
 Tests are ordered by natural dependency:
 
