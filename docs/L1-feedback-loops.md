@@ -42,7 +42,7 @@ This leads to a **defining insight for closed-loop testing** (closely related to
 
 **Turn brittle agent-side orchestration into deterministic tooling.** The first time trusting the agent to manually manage Docker operations causes a problem, invest in writing the tooling to fully automate that problem. Drive the agent to build a toolkit that encapsulates container lifecycle, port allocation, health check polling, authentication, and cleanup into a deterministic interface the agent invokes simply — `await stack.start()`, `await stack.cleanup()` — instead of re-deriving each operation every session.
 
-In the [reference project](references/reference-telegram-trading-bot-case-study.md), this pattern produced `StackTestUtils` (236KB, 5,888 lines) — a single class providing container lifecycle management, dynamic port allocation, authentication helpers, health check polling, database access for verification, log search for debugging, and blockchain transaction verification. The agent didn't write this in one pass. It accumulated over sessions as each brittle manual operation was automated into a reliable method. Once the toolkit existed, every subsequent agent session could run stack tests deterministically without re-deriving infrastructure logic.
+In the [reference project](references/reference-telegram-trading-bot-case-study.md), this pattern produced `StackTestUtils` — a single class providing container lifecycle management, dynamic port allocation, authentication helpers, health check polling, database access for verification, log search for debugging, and blockchain transaction verification. The agent didn't write this in one pass. It accumulated over sessions as each brittle manual operation was automated into a reliable method. Once the toolkit existed, every subsequent agent session could run stack tests deterministically without re-deriving infrastructure logic.
 
 The test structure remains the same — each test is one atomic user journey:
 
@@ -599,9 +599,6 @@ Configure test runners to detect these patterns:
 ## Testing Infrastructure Is Production Code
 
 The tooling that enables stack tests — port allocators, compose file generators, container managers, health check pollers, authentication utilities — is not test scaffolding. It is application code that happens to serve a testing purpose. Treat it with the same rigor as any production module: unit tests, error handling, edge case coverage, and code review.
-
-> "Testing infrastructure is production code — StackTestUtils at 236KB is not an afterthought. It's the foundation that makes agentic development possible."
-> — [Reference Case Study](references/reference-telegram-trading-bot-case-study.md), Key Takeaway #2
 
 ### Why This Matters
 
