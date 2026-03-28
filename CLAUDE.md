@@ -77,7 +77,7 @@ See @README.md for detailed project overview.
 
 ## Cross-Cutting Guides
 
-- @docs/cross-cutting/anti-patterns.md — Common mistakes to avoid
+- @docs/cross-cutting/anti-patterns.md — Pattern diagnostic catalog
 - @docs/cross-cutting/migration-guide.md — Adopting agentic practices incrementally
 - @docs/cross-cutting/faq.md — Deployment, operations, and SDLC concerns beyond the patterns
 - @docs/cross-cutting/glossary.md — Shared terminology
