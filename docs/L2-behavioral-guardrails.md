@@ -338,5 +338,5 @@ The skill chain's brain+ → plan+ phase operationalizes this insight. Fleshing 
 
 ---
 
-**Previous:** [L1: Feedback Loops — Closed-Loop Testing](L1-feedback-loops.md) | **Next:** [L3: Optimization — Token Efficiency & Agent Performance](L3-optimization.md) | [Back to Overview](../README.md)
+**Previous:** [L1: Closed Loop Design and Verification](L1-feedback-loops.md) | **Next:** [L3: Optimization — Token Efficiency & Agent Performance](L3-optimization.md) | [Back to Overview](../README.md)
 

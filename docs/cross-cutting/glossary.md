@@ -7,12 +7,12 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ## A
 
 ### Agentic Testing
-**Level**: L1 - Feedback Loops
+**Level**: L1 - Closed Loop Design
 **Definition**: Full-system, no-mock testing approach that enables AI agents to self-diagnose and self-correct during system development.
-**See**: [L1 Feedback Loops](../L1-feedback-loops.md)
+**See**: [L1 Closed Loop Design](../L1-feedback-loops.md)
 
 ### Assertion Layering (Full-Loop)
-**Level**: L1 - Feedback Loops
+**Level**: L1 - Closed Loop Design
 **Definition**: Three-level assertion structure (primary, second-order, third-order) that provides diagnostic signal at increasing distance from the primary action.
 **See**: [Pattern 1.2 - Full-Loop Assertion Layering](../L1-feedback-loops.md#pattern-12--full-loop-assertion-layering)
 
@@ -21,7 +21,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ## C
 
 ### Conditional Assertion (Anti-Pattern)
-**Level**: L1 - Feedback Loops
+**Level**: L1 - Closed Loop Design
 **Definition**: Forbidden test pattern where assertions are wrapped in conditional statements, allowing tests to pass silently without running any checks.
 **See**: [Pattern 1.6 - Test Integrity Rules](../L1-feedback-loops.md#pattern-16--test-integrity-rules)
 
@@ -31,7 +31,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **See**: [Pattern 2.4 - Constitutional Rules](../L2-behavioral-guardrails.md#pattern-24--constitutional-rules)
 
 ### Container Isolation
-**Level**: L1 - Feedback Loops
+**Level**: L1 - Closed Loop Design
 **Definition**: Four mechanisms (unique container names, dynamic port allocation, transient volumes, per-test compose files) ensuring tests never interfere with each other.
 **See**: [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation)
 
@@ -50,12 +50,12 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **See**: [Pattern 0.1 - Deep Modules](../L0-foundation.md#pattern-01--deep-modules)
 
 ### Docker Resource Limits
-**Level**: L1 - Feedback Loops
+**Level**: L1 - Closed Loop Design
 **Definition**: Hard constraints in Docker (~31 networks per bridge driver, finite containers and volumes) that require aggressive cleanup hygiene to prevent exhaustion during concurrent testing.
 **See**: [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation)
 
 ### Dynamic Port Allocation
-**Level**: L1 - Feedback Loops
+**Level**: L1 - Closed Loop Design
 **Definition**: Runtime assignment of confirmed-free ports from available range (10000-65535) to prevent port conflicts during concurrent test execution.
 **See**: [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation)
 
@@ -119,7 +119,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **See**: [Pattern 0.9 - AI-as-New-Starter Standard](../L0-foundation.md#pattern-09--ai-as-new-starter-standard) | [Pattern 4.3 - New Starter Standard](../L4-standards-measurement.md#pattern-43--new-starter-standard)
 
 ### No-Mock Philosophy
-**Level**: L1 - Feedback Loops
+**Level**: L1 - Closed Loop Design
 **Definition**: Testing approach using real everything (PostgreSQL, Redis, etc.) for owned services; only external services without testnet should be mocked.
 **See**: [Pattern 1.5 - No-Mock Philosophy](../L1-feedback-loops.md#pattern-15--no-mock-philosophy)
 
@@ -133,7 +133,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ## R
 
 ### Resource Hygiene
-**Level**: L1 - Feedback Loops
+**Level**: L1 - Closed Loop Design
 **Definition**: Aggressive cleanup practices (docker compose down -v, volume removal, network pruning) required to prevent Docker resource exhaustion during concurrent testing.
 **See**: [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation)
 
@@ -177,7 +177,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **See**: [Pattern 4.2 - Spec Drift Detection](../L4-standards-measurement.md#pattern-42--spec-drift-detection)
 
 ### Stack Test
-**Level**: L1 - Feedback Loops
+**Level**: L1 - Closed Loop Design
 **Definition**: Full-system test running complete Docker stack with API-level verification, zero mocks for owned services, and high failure diagnosticity.
 **See**: [Pattern 1.1 - Stack Tests](../L1-feedback-loops.md#pattern-11--stack-tests)
 
@@ -191,7 +191,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ## T
 
 ### Test Integrity
-**Level**: L1 - Feedback Loops
+**Level**: L1 - Closed Loop Design
 **Definition**: Rules eliminating escape hatches (conditional assertions, catch without rethrow, optional chaining) that allow tests to silently skip assertions.
 **See**: [Pattern 1.6 - Test Integrity Rules](../L1-feedback-loops.md#pattern-16--test-integrity-rules)
 
@@ -201,7 +201,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **See**: [L3 Optimization Overview](../L3-optimization.md)
 
 ### Transient Volume
-**Level**: L1 - Feedback Loops
+**Level**: L1 - Closed Loop Design
 **Definition**: Docker named volume that disappears with `docker compose down -v`, preventing state leakage between test runs.
 **See**: [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation)
 
@@ -219,7 +219,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ## Cross-References
 
 - **L0 Foundation**: Project structure and entry points
-- **L1 Feedback Loops**: Stack testing and assertion patterns
+- **L1 Closed Loop Design**: Design-led verification and closed-loop testing
 - **L2 Behavioral Guardrails**: Skills, hooks, and enforcement
 - **L3 Optimization**: Token efficiency and routing
 - **L4 Standards & Measurement**: Evidence, drift detection, metrics, maturity

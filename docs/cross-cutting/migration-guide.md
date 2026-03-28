@@ -2,7 +2,7 @@
 
 This guide helps teams transition from traditional software development practices to agentic development patterns. The migration is organized into **6 phases**, each independently valuable. You don't need L4 to benefit from L0. Start where you are, implement what you can, and iterate.
 
-**Core principle:** Each phase delivers immediate value. L0 Foundation alone dramatically improves agent performance. L1 Feedback Loops reduce debugging time. L2 Guardrails prevent common errors. Implement incrementally based on your team's capacity and needs.
+**Core principle:** Each phase delivers immediate value. L0 Foundation alone dramatically improves agent performance. L1 Closed Loop Design reduces debugging time. L2 Guardrails prevent common errors. Implement incrementally based on your team's capacity and needs.
 
 ---
 
@@ -12,7 +12,7 @@ This guide helps teams transition from traditional software development practice
 |-------|----------------|-----------|-----------------|
 | Phase 0: Assessment | 1-2 days | 1-2 people | Clear roadmap, prioritized gaps |
 | Phase 1: L0 Foundation | 1-2 weeks | Whole team | 50-70% improvement in agent navigation |
-| Phase 2: L1 Feedback Loops | 2-4 weeks | 2-3 engineers | Reduced debugging, faster iteration |
+| Phase 2: L1 Closed Loop Design | 2-4 weeks | 2-3 engineers | Reduced debugging, faster iteration |
 | Phase 3: L2 Guardrails | 2-3 weeks | 1-2 engineers | Fewer errors, consistent patterns |
 | Phase 4: L3 Optimization | 1-2 weeks | 1 engineer | 60-90% token savings |
 | Phase 5: L4 Culture | Ongoing | Whole team | Sustained quality, reduced tech debt |
@@ -96,7 +96,7 @@ Use the agentic patterns pyramid as a framework:
 | Level | Focus | Common Gaps | Quick Wins |
 |-------|-------|-------------|------------|
 | **L0 Foundation** | Project structure, CLAUDE.md, doc freshness, cleanup | No CLAUDE.md, layer-based organization, stale docs, dead code | Write CLAUDE.md, restructure by domain, establish doc/cleanup practices |
-| **L1 Feedback Loops** | Stack tests, full-loop assertions | Mock-heavy integration tests, shallow assertions | Add app-startup test, implement sequential tests |
+| **L1 Closed Loop Design** | Design-led verification with stack tests | Mock-heavy integration tests, shallow assertions | Add app-startup test, implement sequential tests |
 | **L2 Guardrails** | Skills, hooks, behavioral rules | No enforcement, agents make common errors | Add test-integrity skill, implement PreToolUse hooks |
 | **L3 Optimization** | Smart routing, structured search | Raw grep/cat commands, token waste | Set up jcodemunch, implement routing guardrails |
 | **L4 Standards & Measurement** | Evidence-based claims, drift detection, metrics | Claims without evidence, spec drift, no measurement | Establish evidence standard, automate drift checks, define metrics |
@@ -335,8 +335,8 @@ find docs -name "*.md" -exec grep -l "\[.*\](.*\.md)" {} \; | \
 ### Foundation (L0)
 - @docs/L0-foundation.md — Project structure for AI accessibility
 
-### Feedback Loops (L1)
-- @docs/L1-feedback-loops.md — Stack tests and full-loop assertions
+### Closed Loop Design and Verification (L1)
+- @docs/L1-feedback-loops.md — Context harvesting, stack tests, and full-loop assertions
 
 ### Guardrails (L2)
 - @docs/L2-behavioral-guardrails.md — Skills, hooks, and enforcement
@@ -437,7 +437,7 @@ git worktree remove .worktrees/feature-branch-name
 
 ---
 
-## Phase 2: L1 Feedback Loops
+## Phase 2: L1 Closed Loop Design
 
 **Goal:** Implement stack tests that give agents clear signals about what's broken and why.
 
@@ -1398,7 +1398,7 @@ pytest --collect-only --quiet
 - Establish aggressive cleanup practice (remove dead code as you find it)
 - Audit: Can a new starter navigate?
 
-**Weeks 4-7: Phase 2 (L1 Feedback Loops)**
+**Weeks 4-7: Phase 2 (L1 Closed Loop Design)**
 - Add stack test infrastructure
 - Implement app-startup test
 - Add sequential tests for core flows
@@ -1451,7 +1451,7 @@ pytest --collect-only --quiet
 ## Further Reading
 
 - [L0 Foundation](../L0-foundation.md) — Project structure patterns
-- [L1 Feedback Loops](../L1-feedback-loops.md) — Stack tests and assertions
+- [L1 Closed Loop Design](../L1-feedback-loops.md) — Design-led verification with closed-loop testing
 - [L2 Behavioral Guardrails](../L2-behavioral-guardrails.md) — Skills and hooks
 - [L3 Optimization](../L3-optimization.md) — Token efficiency
 - [L4 Standards & Measurement](../L4-standards-measurement.md) — Evidence, drift detection, metrics

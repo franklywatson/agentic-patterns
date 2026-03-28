@@ -1,8 +1,53 @@
-# L1 Feedback Loops — Closed-Loop Testing
+# L1 Closed Loop Design and Verification
 
-**Level 1** in the agentic patterns hierarchy: the foundational patterns that enable agents to self-diagnose and self-correct during system development. These patterns replace traditional integration testing with **stack tests** — full-system, no-mock, high-diagnosticity tests that give agents clear signals about what's broken and why.
+**Level 1** in the agentic patterns hierarchy: the level where agents stop guessing and start designing. L0 provides navigable structure — deep modules, progressive disclosure, CLAUDE.md as constitution. L1 is where the agent uses that structure to gather evidence, form hypotheses, propose architectural changes, and validate the result through closed-loop verification.
+
+The "closed loop" is design→implement→verify→confirm, not just test→fix→test. Stack tests are the validation mechanism that closes the loop — they confirm that the design intent was implemented correctly. But the design comes first. Every plan, every bugfix, every investigation begins with harvesting the right context: understanding what the system does, what it should do, and what evidence supports the proposed change.
 
 ---
+
+## Context Harvesting — From Understanding to Design
+
+Every agent interaction with the system — a new feature, a bug fix, an architectural investigation — starts with context, not code. The agent harvests targeted information from documentation (intent), code (contract), tests (expected behavior), and logs (what actually happened) to construct a mental model before proposing changes. This section describes the workflow that turns context into design, and design into verified implementation.
+
+### The Design-First Workflow
+
+The workflow for driving an architectural change through the system:
+
+1. **Explain the problem** — Describe what's broken or what needs to change. Be specific: which component, which behavior, which user journey is affected.
+
+2. **Provide evidence** — Give the agent pointers to the relevant context: log excerpts showing the failure, reference code that models the preferred solution, test output that demonstrates the current behavior. The agent needs concrete evidence, not vague descriptions.
+
+3. **State the goal** — Define the desired end state with precision. For example: "Right now the system only stores the order status when the order is sent. We also need confidence that the order was triggered into the upstream ERP and that system has acknowledged receipt."
+
+4. **Invoke the right skill** — Use `systematic-debugging` for investigations (analyzing failures, tracing root causes) or `plan+` for design proposals (new features, architectural changes). The skill structures the agent's analysis and prevents undisciplined exploration.
+
+5. **Iterate on the plan** — The design must include unit and stack test changes that provide end-to-end confidence. Review the plan, challenge assumptions, refine scope. The plan is a contract between human intent and agent execution.
+
+6. **Save the refined plan** — Persist the converged plan to the filesystem after Q&A is complete. Future sessions can reference the plan; the agent can verify implementation against it.
+
+7. **Execute** — Use the `executing-tasks` skill to implement the plan as documented. Run tests, fix issues found, verify against the plan's acceptance criteria.
+
+### Why Context Harvesting Precedes Testing
+
+Stack tests validate design intent. But if the design is wrong, perfect tests just confirm the wrong thing with high confidence. The agent needs to understand the system before changing it.
+
+This is why L0 exists as a prerequisite: deep modules make code contracts discoverable, progressive disclosure makes structure navigable, and CLAUDE.md makes rules explicit. L1 is where the agent activates those foundations — reading the map before charting the course, then verifying the destination was reached.
+
+### Targeted Context, Not Exhaustive Reading
+
+Don't read everything. The agent constructs a mental model from targeted slices:
+
+- **Docs for intent** — What is this module supposed to do? What are the constraints?
+- **Code for contract** — What does the interface promise? What types flow in and out?
+- **Tests for expected behavior** — What does the system actually do today? What edge cases are covered?
+- **Logs for what happened** — What went wrong in this specific instance? What was the observable behavior?
+
+Each source answers a different question. Reading a 500-line file to find one assertion wastes context. Reading the test for that assertion gives the answer in 20 lines.
+
+### From Design to Verification
+
+The following patterns (1.1–1.6) describe the verification mechanisms that close the loop on design intent. Stack tests validate end-to-end user journeys. Full-loop assertion layering catches missing side effects. Sequential ordering provides diagnostic signal. Together, they confirm that the context harvesting produced the right design, and the implementation delivered it.
 
 ## Pattern 1.1 — Stack Tests
 
@@ -13,6 +58,8 @@ Integration tests occupy a painful middle ground: too slow for rapid iteration, 
 ### Solution
 
 **Stack tests** run the complete Docker stack (app, databases, caches, queues) and verify behavior through the API only. No internal mocks, no backend shortcuts. The test treats the system as a black box: it spins up the stack, waits for readiness, makes API calls, and asserts on observable effects.
+
+Stack tests are the primary verification mechanism for the design intent established through context harvesting. When the agent has harvested context, framed a problem, and designed a solution, stack tests validate that the solution works end-to-end — not just that individual functions return correct values, but that the full user journey behaves as designed.
 
 The defining characteristic of a stack test is that it models an **atomic user journey** — a single, complete interaction from the user's perspective. Not "does the order service work?" but "a user places an order, pays, and sees their balance update." The test verifies the entire journey end-to-end, not individual components in isolation.
 
@@ -267,6 +314,24 @@ This framing has practical implications for how tests are run during development
 - **Individual test runs are essential** during feature development. When building a checkout flow, running `05-checkout-complete.stack.test.ts` in isolation is the fastest way to iterate — the agent brings up the stack, exercises the journey, and gets feedback immediately without waiting for unrelated tests.
 - **Full suite runs are for validation**, not iteration. An agent executing a plan should run the full suite before claiming completion. A human orchestrator deciding whether a feature is ready may run the full suite less frequently — the individual journey test provides sufficient signal during active development.
 - **A test that passes in isolation but fails in the suite reveals a dependency bug** — this is valuable information when it surfaces, not a reason to forbid individual runs.
+
+### Additive Tests as Comparative Ground Truth
+
+Even with guardrails, skills, and stack tests, agents will sometimes produce undesirable changes that slip through. A skill might have a gap, a hook might not cover a specific mutation, or the agent might introduce subtly wrong internals that pass on the surface but cause problems later. The additive test structure provides a recovery mechanism: use a known-good, passing foundational stack test as executable ground truth to diagnose a failing new test.
+
+**Example scenario:**
+
+1. A `user-order-completion` stack test exists and passes. It verifies: user logs in → navigates to item → places in basket → pays → stack test asserts order state in `/user/orders` list API, email notifications sent, payment processor debit for correct amount.
+
+2. Some time later, you instruct the agent to implement a label-printing capability for order returns. It writes code and a new stack test. The test runs and fails — for odd reasons, and things don't look quite right.
+
+3. Instead of visual debugging, task the agent to do a **comparative analysis**: diff the passing `user-order-completion` test against the failing new test. Focus on logs, code, and tests as they relate to order creation and terminal state assertion expectations.
+
+4. The comparison surfaces convention misalignments: the new test used a different bootstrap user than expected, used the wrong service to create the order, or the terminal state assertions only verify label existence — not label content legibility.
+
+5. The agent fixes the in-progress solution to align with the conventions established by the foundational test.
+
+This pattern — employing a foundational, fully passing stack test against a formative, broken one — gives the agent a structured way to discover what's wrong by comparing against what's right. The additive structure means earlier tests represent stable conventions; later tests inherit and extend those conventions. When inheritance breaks, the diff against the parent test reveals where and why.
 
 ### Anti-Pattern
 

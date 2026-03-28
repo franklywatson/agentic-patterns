@@ -37,7 +37,7 @@ Patterns are organized into five levels, each building on the previous. Adopt th
 
 **[L0: Foundation](docs/L0-foundation.md)** — Structure your codebase so an AI with zero prior context can navigate, understand, and contribute. Deep modules, progressive disclosure, conceptual file organization, CLAUDE.md as project constitution, unit tests as contract, documentation as system map, and aggressive cleanup. The "can a new starter figure this out?" test.
 
-**[L1: Feedback Loops](docs/L1-feedback-loops.md)** — Replace the traditional test pyramid with closed-loop testing. Stack tests bring up the full application stack and test through APIs only — no mocks, no partial integration, no ambiguous results. Full-loop assertion layering catches regressions at primary, secondary, and tertiary levels.
+**[L1: Closed Loop Design and Verification](docs/L1-feedback-loops.md)** — The level where agents stop guessing and start designing. Context harvesting gathers targeted evidence before implementation. Stack tests validate design intent end-to-end through the full application stack — no mocks, no partial integration, no ambiguous results. Full-loop assertion layering catches regressions at primary, secondary, and tertiary levels.
 
 **[L2: Behavioral Guardrails](docs/L2-behavioral-guardrails.md)** — Rules written in prose are suggestions. Skills and hooks are enforcement. Overlay skills on top of base agent capabilities, chain them into a complete development lifecycle, and automate discipline through the tool layer.
 
@@ -48,7 +48,7 @@ Patterns are organized into five levels, each building on the previous. Adopt th
 ## Getting Started
 
 1. **New to agentic development?** Start with [L0: Foundation](docs/L0-foundation.md). The structural changes there are the highest-impact, lowest-effort starting point.
-2. **Already using AI coding tools?** Jump to [L1: Feedback Loops](docs/L1-feedback-loops.md) to understand why your tests might be giving your agent incomplete feedback.
+2. **Already using AI coding tools?** Jump to [L1: Closed Loop Design and Verification](docs/L1-feedback-loops.md) to understand how context harvesting and closed-loop verification improve agent outcomes.
 3. **Building team practices?** [L2: Behavioral Guardrails](docs/L2-behavioral-guardrails.md) and [L4: Standards & Measurement](docs/L4-standards-measurement.md) together establish the discipline layer.
 4. **Want a phased adoption plan?** See the [Migration Guide](docs/cross-cutting/migration-guide.md) for a step-by-step path from traditional to agentic practices.
 
@@ -66,7 +66,7 @@ examples/           # Working code examples (TypeScript + Python)
   stack-test/       # Minimal stack test setups in both languages
   guardrails/       # Token optimization middleware example
   project-structure/ # Before/after directory layouts
-docs/cross-cutting/ # Anti-patterns, migration guide, glossary
+docs/cross-cutting/ # Anti-patterns, migration guide, FAQ, glossary
 docs/references/    # Case study and further reading
 ```
 
@@ -81,5 +81,6 @@ This is a living pattern library. Contributions welcome:
 ## Background and Further Reading
 
 - [Reference Telegram Trading Bot Case Study](docs/references/reference-telegram-trading-bot-case-study.md) — the production system these patterns were extracted from
+- [FAQ](docs/cross-cutting/faq.md) — deployment, operations, and other SDLC concerns beyond the patterns
 - [Further Reading](docs/references/further-reading.md) — articles, videos, and tools that informed this work
 - [Glossary](docs/cross-cutting/glossary.md) — terminology reference

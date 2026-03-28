@@ -412,7 +412,7 @@ Cleanup:
 
 ## Related Patterns
 
-- **L1: Feedback Loops** — Testing at module boundaries validates deep module design
+- **L1: Closed Loop Design** — Testing at module boundaries validates deep module design
 - **L2: Behavioral Guardrails** — Skills enforce structural conventions during implementation
 - **L3: Optimization** — Good structure reduces token overhead for navigation
 - **L4: Standards & Measurement** — Maturity practices: evidence-based discipline, drift detection, metrics
@@ -425,4 +425,4 @@ Cleanup:
 
 ---
 
-**Next:** [L1: Feedback Loops — Closed-Loop Testing](L1-feedback-loops.md) | [Back to Overview](../README.md)
+**Next:** [L1: Closed Loop Design and Verification](L1-feedback-loops.md) | [Back to Overview](../README.md)

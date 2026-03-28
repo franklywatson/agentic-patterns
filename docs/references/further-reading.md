@@ -83,3 +83,10 @@
 - **Summary:** AI coding CLI with skills, hooks, and agentic capabilities that enhances developer productivity through intelligent code assistance and automation.
 - **Related to:** L2, L3
 - **URL:** https://claude.ai/code
+
+### Excalidraw Diagram Skill
+- **Type:** Tool / Skill
+- **Creator:** Cole Medin (coleam00)
+- **Summary:** Skill for generating Excalidraw diagram JSON files to visualize workflows, architectures, and concepts directly from agent sessions.
+- **Related to:** L0, L1
+- **URL:** https://github.com/coleam00/excalidraw-diagram-skill

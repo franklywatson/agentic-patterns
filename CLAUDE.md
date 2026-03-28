@@ -12,7 +12,7 @@ agentic-patterns/
 ├── CLAUDE.md                    # This file — agent contract + master index
 ├── docs/
 │   ├── L0-foundation.md         # Deep modules, progressive disclosure
-│   ├── L1-feedback-loops.md     # Stack tests, full-loop assertions
+│   ├── L1-feedback-loops.md     # Closed loop design and verification
 │   ├── L2-behavioral-guardrails.md  # Skills, hooks, constitutional rules
 │   ├── L3-optimization.md       # Token efficiency, smart routing
 │   ├── L4-standards-measurement.md # Evidence, drift detection, metrics
@@ -63,8 +63,8 @@ See @README.md for detailed project overview.
 **Foundation:**
 - @docs/L0-foundation.md — Deep modules, progressive disclosure, CLAUDE.md patterns
 
-**Feedback Loops:**
-- @docs/L1-feedback-loops.md — Stack tests, full-loop assertions, sequential design
+**Closed Loop Design and Verification:**
+- @docs/L1-feedback-loops.md — Context harvesting, stack tests, full-loop assertions, sequential design
 
 **Behavioral Guardrails:**
 - @docs/L2-behavioral-guardrails.md — Skills, hooks, constitutional rules
@@ -79,6 +79,7 @@ See @README.md for detailed project overview.
 
 - @docs/cross-cutting/anti-patterns.md — Common mistakes to avoid
 - @docs/cross-cutting/migration-guide.md — Adopting agentic practices incrementally
+- @docs/cross-cutting/faq.md — Deployment, operations, and SDLC concerns beyond the patterns
 - @docs/cross-cutting/glossary.md — Shared terminology
 
 ## References
