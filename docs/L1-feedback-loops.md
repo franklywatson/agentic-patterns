@@ -24,6 +24,8 @@ This REPL exists at multiple scales:
 
 Each higher-level REPL absorbs but doesn't replace the lower ones. Unit tests don't go away when you add stack tests — they become the contract that stack tests verify against. The fractal pattern means every interaction follows the same structure: gather context, act, verify, iterate.
 
+This fractal view of the REPL — where agents handle code-level loops so engineers can operate at the intent layer — is explored further in Brandon Waselnuk's article [REPL is dead, long live REPL](https://getunblocked.com/blog/repl-is-dead-long-live-repl/).
+
 ---
 
 ## Context Harvesting — From Understanding to Design
@@ -45,6 +47,8 @@ Every agent interaction with the system — a new feature, a bug fix, an archite
 6. **Save the refined plan** — Persist the converged plan to the filesystem after Q&A is complete. Future sessions can reference the plan; the agent can verify implementation against it.
 
 7. **Execute** — Use the `executing-tasks` skill to implement the plan as documented. Run tests, fix issues found, verify against the plan's acceptance criteria.
+
+The [rig](https://github.com/franklywatson/claude-rig) framework automates this workflow through its skill chain — enforcing the transition from planning to implementation to verification. The `plan+` skill structures the design-first approach; the phase tracker prevents jumping to `tdd+` without a prior plan. See [L2: Behavioral Guardrails](L2-behavioral-guardrails.md) for the full skill chain architecture.
 
 ### Why Context Harvesting Precedes Testing
 

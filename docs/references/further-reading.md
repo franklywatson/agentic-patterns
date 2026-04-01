@@ -34,6 +34,14 @@
 - **Related to:** L0, L1, L2, L3, L4
 - **URL:** <https://newsletter.pragmaticengineer.com/p/the-creator-of-clawd-i-ship-code>
 
+### REPL is dead, long live REPL
+
+- **Type:** Article
+- **Author:** Brandon Waselnuk (Unblocked)
+- **Summary:** Argues that the Read-Eval-Print Loop hasn't died with agentic coding — it's been promoted. Engineers now operate the REPL at the intent layer (read agent output, evaluate against intent, print next instruction, loop) while agents handle the code-level REPL. The article demonstrates that context curation and intent-level evaluation produce drastically better outcomes than naive code-level REPL, and that the skill shift is learnable but real: from writing code to writing instructions and reviewing diffs.
+- **Related to:** L1
+- **URL:** <https://getunblocked.com/blog/repl-is-dead-long-live-repl/>
+
 ## Videos
 
 ### Your codebase is NOT ready for AI

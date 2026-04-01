@@ -23,7 +23,7 @@ The patterns were extracted from a [production-grade Telegram trading bot](docs/
 
 Peter Steinberger, creator of OpenClaw, has described a similar approach — managing 5-10 parallel agents, closing the feedback loop so agents verify their own work, investing heavily in planning before implementation, and treating code reviews as architecture discussions. His core insight: *"I don't think software engineering is dead with AI: in fact, quite the opposite."* Agentic development demands more engineering discipline, not less.
 
-Other frameworks approach similar problems from different angles. [gstack](https://github.com/garrytan/gstack) provides a skill framework with resolver pipelines. [superpowers](https://github.com/obra/superpowers) provides base skills for brainstorming, planning, TDD, and code review. [rig](https://github.com/franklywatson/claude-rig) implements the L2-L3 patterns from this repo as a working agent harness with enforcement pipelines, tool routing, and session management. These systems informed this work — the best available ideas at the time, applied and refined in production.
+Other frameworks approach similar problems from different angles. [gstack](https://github.com/garrytan/gstack) provides a skill framework with resolver pipelines. [superpowers](https://github.com/obra/superpowers) provides base skills for brainstorming, planning, TDD, and code review. [rig](https://github.com/franklywatson/claude-rig) is a baseline guardrails framework built on the L2-L3 patterns from this repo — an opinionated, configurable implementation that automates enforcement pipelines, tool routing, scout agents, and session management. Install with `rig init`. These systems informed this work — the best available ideas at the time, applied and refined in production.
 
 The lineage: patterns were extracted from the reference project, organized into this library, then used to build rig — which now serves as both a reference implementation and a development tool for improving this very repo.
 
@@ -31,7 +31,7 @@ The lineage: patterns were extracted from the reference project, organized into 
 
 | System | What it implements | Language |
 |--------|-------------------|----------|
-| [rig](https://github.com/franklywatson/claude-rig) | L2 enforcement pipeline, L3 tool routing + scout agent, skill chain with phase transitions, CLI installer, CI guardrails | TypeScript |
+| [rig](https://github.com/franklywatson/claude-rig) | Baseline guardrails framework: L2 enforcement pipeline, L3 tool routing + scout agent, skill chain with phase transitions, CI guardrails. Configurable via `.harness.yaml`. | TypeScript |
 | [gstack](https://github.com/garrytan/gstack) | L2 skill framework with resolver pipeline, preamble system | TypeScript |
 | [superpowers](https://github.com/obra/superpowers) | L2 base skills (brainstorming, TDD, verification, review), automated worktree management | Markdown/JS |
 
