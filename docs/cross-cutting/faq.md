@@ -41,4 +41,4 @@ This separation is a preference, not a rule. Some teams prefer a single repo wit
 
 ---
 
-**Related:** [Migration Guide](migration-guide.md) | [Anti-Patterns](anti-patterns.md) | [Glossary](glossary.md) | [Back to Overview](../../README.md)
+**Related:** [Adoption Guide](adoption-guide.md) | [Anti-Patterns](anti-patterns.md) | [Glossary](glossary.md) | [Back to Overview](../../README.md)

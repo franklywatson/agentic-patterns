@@ -137,6 +137,10 @@ Jumping directly to implementation without planning or testing. This produces co
 - @L1-feedback-loops.md#pattern-12-full-loop-assertion-layering — Assertion requirements
 - @docs/cross-cutting/glossary.md — Skill chain terminology
 
+### Reference Implementation
+
+The [rig](https://github.com/franklywatson/claude-rig) repo implements this pattern with [`SkillPhaseTracker`](https://github.com/franklywatson/claude-rig/blob/main/src/skills/phase-tracker.ts) for tracking which phases the agent has visited and validating transitions between skill phases.
+
 ---
 
 ## Pattern 2.3 — Hook Automation
@@ -230,6 +234,10 @@ Writing hooks that are too permissive or too restrictive. Permissive hooks fail 
 - @L3-optimization.md#pattern-31-smart-routing--tool-selection — Command routing patterns
 - @docs/examples/guardrails/ — Hook implementation examples
 
+### Reference Implementation
+
+The [rig](https://github.com/franklywatson/claude-rig) repo implements composable hooks in [`src/enforcement/`](https://github.com/franklywatson/claude-rig/tree/main/src/enforcement) with a `handlePostToolUse` orchestrator that runs multiple checks and resolves to the most severe enforcement level.
+
 ---
 
 ## Pattern 2.4 — Constitutional Rules
@@ -276,7 +284,11 @@ Writing "soft" rules with exceptions. Constitutional rules must have no escape h
 ### Cross-References
 
 - @L0-foundation.md#pattern-04-claude-md-as-project-constitution — CLAUDE.md format
-- @L1-feedback-loops.md#pattern-15-no-mock-philosophy — Mock avoidance rationale
+- @L1-patterns/1.5-no-mock-philosophy.md — Mock avoidance rationale
+
+### Reference Implementation
+
+The [rig](https://github.com/franklywatson/claude-rig) repo implements constitutional rule checking with [`checkConstitutional()`](https://github.com/franklywatson/claude-rig/blob/main/src/enforcement/checks/constitutional.ts) which uses regex detection to identify mock patterns in edited files and blocks violations.
 
 ---
 
@@ -337,6 +349,120 @@ Classifying errors as "relevant" or "irrelevant" without evidence. Unless you ca
 
 - @L1-feedback-loops.md#pattern-13-sequential--additive-test-design — Sequential test ordering
 - @L4-standards-measurement.md#pattern-41--evidence-based-claims — Evidence standards
+
+### Reference Implementation
+
+The [rig](https://github.com/franklywatson/claude-rig) repo implements zero-defect enforcement with [`checkZeroDefect()`](https://github.com/franklywatson/claude-rig/blob/main/src/enforcement/checks/zero-defect.ts) which parses test runner output for failures, errors, and warnings and surfaces them as enforcement results.
+
+---
+
+## Pattern 2.6 — Enforcement Pipeline Composition
+
+### Problem
+
+Individual enforcement checks (stale tests, zero-defect, constitutional rules) are useful in isolation, but a production guardrail system needs to compose multiple checks into a single hook response. Without a composition pattern, each check runs independently with no unified severity resolution.
+
+### Solution
+
+A composable enforcement pipeline where each check is an independent function returning `{ level, message }`. The pipeline runs all checks and resolves to the most severe level (block > advise > silent). Checks are configurable per-rule via a config file (`.harness.yaml`).
+
+**Key concepts:**
+
+- Each check has one responsibility (stale test detection, scope control, mock detection, failure parsing)
+- Checks compose through a single orchestrator (`handlePostToolUse`)
+- Severity resolution: most severe level wins
+- Configurable: each rule can be block/advise/silent independently
+
+### In Practice
+
+```typescript
+// Each check returns a result with severity level
+type CheckResult = { level: 'block' | 'advise' | 'silent'; message: string };
+
+// The pipeline runs all checks and resolves to the most severe
+async function handlePostToolUse(tool: string, args: unknown): Promise<EnforcementResponse> {
+  const checks = [
+    checkStaleTests(tool, args),
+    checkConstitutional(tool, args),
+    checkZeroDefect(tool, args),
+    checkScope(tool, args),
+  ];
+
+  const results = await Promise.all(checks);
+  const maxSeverity = results.reduce((max, r) =>
+    severityOrder(r.level) > severityOrder(max.level) ? r : max
+  );
+
+  return { level: maxSeverity.level, messages: results.map(r => r.message) };
+}
+```
+
+### Reference Implementation
+
+The [rig](https://github.com/franklywatson/claude-rig) repo implements this in [`src/enforcement/`](https://github.com/franklywatson/claude-rig/tree/main/src/enforcement) with composable checks and a `handlePostToolUse` orchestrator that resolves severity.
+
+### Anti-Pattern
+
+Running checks independently without severity resolution. If one check returns "block" and another returns "advise," the agent needs a single clear signal, not conflicting messages.
+
+### Cross-References
+
+- [Pattern 2.3 — Hook Automation](#pattern-23--hook-automation) — Hooks fire checks; the pipeline composes them
+- [Pattern 2.7 — Phase Transition Validation](#pattern-27--phase-transition-validation) — Phase-aware checks change behavior by skill phase
+
+---
+
+## Pattern 2.7 — Phase Transition Validation
+
+### Problem
+
+The skill chain (brain+ → plan+ → tdd+ → verify+ → review+) is described as a conceptual pipeline, but without enforcement agents can skip phases. Skipping plan+ before tdd+ means unstructured implementation. Skipping tdd+ before verify+ means unverified code.
+
+### Solution
+
+A state machine that tracks which phases the agent has visited and validates transitions. Each phase records its visit with a timestamp. Transition validation checks that prerequisites are met before allowing entry to the next phase.
+
+**Key concepts:**
+
+- Phase history with timestamps
+- Transition validation: `tdd+` requires prior `plan+` visit, `verify+` requires prior `tdd+` visit
+- Query methods: `isTddPhase()`, `isVerifyPhase()` for conditional behavior
+- Reset capability for new workflows
+
+### In Practice
+
+```typescript
+class PhaseTracker {
+  private history = new Map<string, Date>();
+
+  enter(phase: string): void {
+    this.validateTransition(phase);
+    this.history.set(phase, new Date());
+  }
+
+  private validateTransition(phase: string): void {
+    if (phase === 'tdd+' && !this.history.has('plan+')) {
+      throw new Error('Cannot enter tdd+ without prior plan+ visit');
+    }
+    if (phase === 'verify+' && !this.history.has('tdd+')) {
+      throw new Error('Cannot enter verify+ without prior tdd+ visit');
+    }
+  }
+}
+```
+
+### Reference Implementation
+
+The [rig](https://github.com/franklywatson/claude-rig) repo implements this in [`src/skills/phase-tracker.ts`](https://github.com/franklywatson/claude-rig/blob/main/src/skills/phase-tracker.ts) with transition validation, query methods, and reset capability.
+
+### Anti-Pattern
+
+Treating phase tracking as advisory. If the tracker warns but allows invalid transitions, agents learn to ignore it. Phase enforcement must be blocking.
+
+### Cross-References
+
+- [Pattern 2.2 — The Skill Chain](#pattern-22--the-skill-chain) — The chain that phase validation enforces
+- [Pattern 2.3 — Hook Automation](#pattern-23--hook-automation) — Hooks can check phase state before allowing operations
 
 ---
 

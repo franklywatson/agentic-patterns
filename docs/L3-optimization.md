@@ -1,7 +1,7 @@
 # L3 Optimization — Token Efficiency & Agent Performance
 
 **Level**: Optimization (L3)
-**Prerequisites**: [L2 Guardrails](./L2-guardrails.md)
+**Prerequisites**: [L2 Guardrails](./L2-behavioral-guardrails.md)
 **Related Patterns**: Scout Pattern
 
 ---
@@ -74,9 +74,11 @@ Raw grep returns line noise. Structured search returns typed symbols with file l
 
 - [Pattern 3.2](#pattern-32--intent-classification) — Detecting intent from commands
 - [Pattern 3.3](#pattern-33--environment-aware-routing) — Checking available tools
-- [L2 Guardrails](./L2-guardrails.md) — Enforcing routing decisions
+- [L2 Guardrails](./L2-behavioral-guardrails.md) — Enforcing routing decisions
 
----
+### Reference Implementation
+
+The [rig](https://github.com/franklywatson/claude-rig) repo implements this in [`src/router/`](https://github.com/franklywatson/claude-rig/tree/main/src/router) with a resolver chain that routes commands to optimal tools based on intent and environment.
 
 ## Pattern 3.2 — Intent Classification
 
@@ -403,8 +405,8 @@ This is a **subjective trade-off, not a hard rule**. The point is that agentic d
 
 ### Cross-References
 
-- [Pattern 0.2 — Progressive Disclosure](../L0-foundation.md#pattern-02--progressive-disclosure) — Context bloat undermines progressive disclosure
-- [Pattern 0.4 — CLAUDE.md as Project Constitution](../L0-foundation.md#pattern-04-claude-md-as-project-constitution) — Each repo needs its own entry point
+- [Pattern 0.2 — Progressive Disclosure](L0-foundation.md#pattern-02--progressive-disclosure) — Context bloat undermines progressive disclosure
+- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04-claude-md-as-project-constitution) — Each repo needs its own entry point
 - [Pattern 3.4 — The Scout Pattern](#pattern-34--context-engineering--the-scout-pattern) — Structured exploration across repos
 
 ---
@@ -522,7 +524,59 @@ Savings stay in the 60-65% range regardless of record count because the ratio of
 - [Pattern 3.1](#pattern-31--smart-routing--tool-selection) — Command-level token optimization
 - [Pattern 3.5](#pattern-35--structured-output-over-raw-text) — Structured results from tools
 - [TOON Format](https://github.com/toon-format/toon) — Canonical specification and library
-- [L2 — Skills & Hooks](./L2-guardrails.md) — Middleware enforcement patterns
+- [L2 — Skills & Hooks](./L2-behavioral-guardrails.md) — Middleware enforcement patterns
+
+---
+
+## Pattern 3.8 — Session Lifecycle
+
+### Problem
+
+Pattern 3.3 describes environment detection (RTK, jcodemunch) but doesn't address when detection happens or how long results are valid. In practice, detection should happen once at session start and cache for the session's duration. Without session lifecycle management, every tool call re-detects the environment — wasting tokens on redundant checks.
+
+### Solution
+
+A session start hook that detects the environment, auto-indexes the project, and caches results with a TTL. The cache prevents redundant detection on every tool call while allowing refresh if the session is long-running.
+
+**Key concepts:**
+
+- Session start hook fires once when Claude Code starts
+- `detectEnvironment()` checks for rtk, jcodemunch, stack-test via injectable `ExecFn`
+- `SessionCache` with 30-minute TTL
+- Auto-indexing: if jcodemunch is available and the project isn't indexed, index it
+- Injectable `ExecFn` for testability (don't call `execSync` directly)
+
+### In Practice
+
+```typescript
+interface SessionCache {
+  get(key: string): CacheEntry | null;
+  set(key: string, value: unknown, ttlMs: number): void;
+  isExpired(key: string): boolean;
+}
+
+async function onSessionStart(projectDir: string, exec: ExecFn): Promise<void> {
+  const env = await detectEnvironment(projectDir, exec);
+  sessionCache.set('environment', env, 30 * 60 * 1000); // 30-minute TTL
+
+  if (env.jcodemunchAvailable && !env.jcodemunchIndexed) {
+    await exec('jcodemunch', ['index', projectDir]);
+  }
+}
+```
+
+### Reference Implementation
+
+The [rig](https://github.com/franklywatson/claude-rig) repo implements this in [`src/session/`](https://github.com/franklywatson/claude-rig/tree/main/src/session) with environment detection, session caching, and auto-indexing.
+
+### Anti-Pattern
+
+Detecting the environment on every tool call. This is wasteful — the environment doesn't change within a session (except in rare cases like installing new tools mid-session, which the TTL handles).
+
+### Cross-References
+
+- [Pattern 3.3 — Environment-Aware Routing](#pattern-33--environment-aware-routing) — The detection that session lifecycle manages
+- [L2 — Hook Automation](L2-behavioral-guardrails.md#pattern-23--hook-automation) — Session start hooks fire the detection
 
 ---
 
@@ -559,7 +613,7 @@ See [examples/guardrails](../examples/guardrails/) for a complete TypeScript imp
 
 - [WISC Framework](https://youtu.be/gyo0eRgsUWk) — Scout/Implementer pattern
 - [TOON Format](https://github.com/toon-format/toon) — Token-oriented serialization for LLM prompts
-- [L2 — Guardrails](./L2-guardrails.md) — Enforcing behavioral rules
+- [L2 — Guardrails](./L2-behavioral-guardrails.md) — Enforcing behavioral rules
 - [RTK](https://github.com/rtk-ai/rtk) — Token-optimized CLI proxy
 
 ## Practitioner Insight

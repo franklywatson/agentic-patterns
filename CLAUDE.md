@@ -12,13 +12,14 @@ agentic-patterns/
 ├── CLAUDE.md                    # This file — agent contract + master index
 ├── docs/
 │   ├── L0-foundation.md         # Deep modules, progressive disclosure
-│   ├── L1-feedback-loops.md     # Closed loop design and verification
+│   ├── L1-feedback-loops.md     # Closed loop design and verification (overview)
+│   ├── L1-patterns/             # Individual L1 patterns (1.1-1.6 + testing infra)
 │   ├── L2-behavioral-guardrails.md  # Skills, hooks, constitutional rules
 │   ├── L3-optimization.md       # Token efficiency, smart routing
 │   ├── L4-standards-measurement.md # Evidence, drift detection, metrics
 │   ├── cross-cutting/
 │   │   ├── anti-patterns.md
-│   │   ├── migration-guide.md
+│   │   ├── adoption-guide.md
 │   │   └── glossary.md
 │   └── references/
 │       ├── reference-telegram-trading-bot-case-study.md
@@ -70,7 +71,8 @@ See @README.md for detailed project overview.
 
 **Closed Loop Design and Verification:**
 
-- @docs/L1-feedback-loops.md — Context harvesting, stack tests, full-loop assertions, sequential design
+- @docs/L1-feedback-loops.md — REPL fractal loop concept, context harvesting, pattern index
+- @docs/L1-patterns/1.1-stack-tests.md through 1.6 + testing-infrastructure.md — Individual L1 patterns
 
 **Behavioral Guardrails:**
 
@@ -87,7 +89,7 @@ See @README.md for detailed project overview.
 ## Cross-Cutting Guides
 
 - @docs/cross-cutting/anti-patterns.md — Pattern diagnostic catalog
-- @docs/cross-cutting/migration-guide.md — Adopting agentic practices incrementally
+- @docs/cross-cutting/adoption-guide.md — Suggested adoption paths for agentic practices
 - @docs/cross-cutting/faq.md — Deployment, operations, and SDLC concerns beyond the patterns
 - @docs/cross-cutting/glossary.md — Shared terminology
 

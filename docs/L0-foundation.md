@@ -264,7 +264,7 @@ Convention: `.worktrees/<branch-name>/` directory.
 
 **Anti-Pattern**: Working directly on main for feature work. Agents should never modify main without explicit instruction.
 
-**Cross-References**: [L2: Skills](L2-behavioral-guardrails.md) can enforce worktree usage via hooks. [L3: Optimization](L3-optimization.md) benefits from deterministic starting states. See [Further Reading](docs/references/further-reading.md) for the superpowers framework.
+**Cross-References**: [L2: Skills](L2-behavioral-guardrails.md) can enforce worktree usage via hooks. [L3: Optimization](L3-optimization.md) benefits from deterministic starting states. See [Further Reading](references/further-reading.md) for the superpowers framework.
 
 ---
 

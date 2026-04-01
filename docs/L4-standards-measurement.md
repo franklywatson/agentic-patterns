@@ -2,6 +2,8 @@
 
 L4 is the maturity layer. Where L0 establishes foundations and L1-L3 provide execution patterns, L4 ensures those standards hold over time through evidence-based discipline, automated monitoring, periodic audits, and measurable outcomes.
 
+> **Scope note:** The reference project that these patterns were extracted from did not implement formal L4 practices. The production system operated successfully at L0-L3 — constitutional rules, stack tests, skills, and optimization were in daily use. The L4 patterns here (evidence-based claims, spec drift detection, development metrics) describe the maturity layer that enterprise adopters or larger teams would add. They are informed by the reference project's informal practices and by industry standards for measurement and governance, but they have not been validated in that project's production context.
+
 ---
 
 ## Pattern 4.1 — Evidence-Based Claims
@@ -368,6 +370,56 @@ Each stage has observable gates — not arbitrary timelines:
 
 ---
 
+## Pattern 4.5 — CI Guardrails
+
+### Problem
+
+L4 describes standards and measurement but doesn't address CI enforcement. Enforcement in hooks is session-scoped — it only works when the agent is running. CI provides non-negotiable enforcement that runs regardless of whether hooks are active.
+
+### Solution
+
+GitHub Actions workflows for docs quality and test coverage, paired with project config for threshold definitions.
+
+**Key concepts:**
+
+- Coverage gate: test coverage thresholds (e.g., 80% statements, 75% branches) defined in project config, not CI workflow
+- Docs lint: markdownlint-cli2 with permissive rules + link checking
+- Separate workflows: `docs.yml` for documentation, `coverage.yml` for test coverage
+- Thresholds in project config, not CI — anyone can see and adjust them
+
+### In Practice
+
+```yaml
+# .github/workflows/docs.yml
+name: Documentation Quality
+on: [push, pull_request]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm run lint:md
+      - run: ./scripts/check-claude-md-lines.sh  # Verify CLAUDE.md under 150 lines
+      - run: ./scripts/check-doc-links.sh         # Internal link integrity
+      - run: ./scripts/check-doc-reachability.sh  # All docs reachable from CLAUDE.md
+      - run: ./scripts/check-writing-conventions.sh # No filler words
+```
+
+### Reference Implementation
+
+The [rig](https://github.com/franklywatson/claude-rig) repo implements this in [`.github/workflows/`](https://github.com/franklywatson/claude-rig/tree/main/.github/workflows) with separate docs and coverage workflows.
+
+### Anti-Pattern
+
+Putting thresholds in CI workflow files rather than project config. When thresholds live in `.github/workflows/`, developers must dig through YAML to find them. When they live in `vitest.config.ts` or `.harness.yaml`, they're visible and adjustable alongside the code they govern.
+
+### Cross-References
+
+- [Pattern 4.2 — Spec Drift Detection](#pattern-42--spec-drift-detection) — CI automates drift checks
+- [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — CI output is the evidence
+
+---
+
 ## Review Checklist Template
 
 Adopt this checklist for code reviews, PR reviews, and task completion verification. A PR should not merge until all applicable items pass.
@@ -439,6 +491,7 @@ L4 is the maturity layer — the practices that verify L0-L3 are holding and mea
 2. **Pattern 4.2 (Spec Drift Detection):** Automate drift checks, fix immediately
 3. **Pattern 4.3 (New Starter Standard):** Audit entry points, fix gaps
 4. **Pattern 4.4 (Agentic Development Metrics):** Measure outcomes, close the feedback loop
+5. **Pattern 4.5 (CI Guardrails):** Non-negotiable enforcement through CI workflows
 
 **The review checklist is the enforcement mechanism.** Apply it to every task, every PR, every completion.
 

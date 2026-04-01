@@ -148,6 +148,6 @@ Based on real-world usage:
 
 ## Further Reading
 
-- [L3 Optimization Documentation](../../../docs/L3-optimization.md)
+- [L3 Optimization Documentation](../../docs/L3-optimization.md)
 - [RTK](https://github.com/rtk-ai/rtk) — Token-optimized CLI proxy
 - [jcodemunch](https://github.com/jeromedecock/jcodemunch) — Codebase indexing

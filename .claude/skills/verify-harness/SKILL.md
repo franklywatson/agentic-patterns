@@ -1,0 +1,78 @@
+---
+name: verify-harness
+description: "Run after `rig init` to verify all hooks, skills, and agents are installed and working correctly in the live session."
+user-invocable: true
+---
+
+# verify-harness — Post-Install Verification
+
+Run this skill after `rig init` to confirm everything is working.
+
+## Procedure
+
+Run each check and report PASS/FAIL with evidence.
+
+### Session Start Hook
+
+- [ ] **S1**: Session started without hook errors
+- [ ] **S2**: Run `which rtk` — report if available
+- [ ] **S3**: Run `which jcodemunch` — report if available
+- [ ] **S4**: Check if CWD is indexed: run `jcodemunch list_repos` if available
+- [ ] **S5**: Check `.harness.yaml` exists and parses
+
+### Tool Router (PreToolUse Hook)
+
+- [ ] **TR1**: Run `grep -r test .` in a test call — does the hook intercept it?
+- [ ] **TR2**: Run `find . -name '*.ts'` — does the hook intercept it?
+- [ ] **TR3**: Run `sed -i 's/old/new/g' file` — does the hook BLOCK it?
+- [ ] **TR4**: Run `git status` — does the hook advise rtk (if available)?
+- [ ] **TR5**: Run `Read` on a specific file — does it pass through?
+- [ ] **TR6**: Run `Grep` tool — does it advise jcodemunch (if indexed)?
+- [ ] **TR7**: Run `Glob` tool — does it advise jcodemunch (if indexed)?
+- [ ] **TR8**: Reference an external directory — does it trigger auto-index?
+
+### Enforcement (PostToolUse Hook)
+
+- [ ] **E1**: Edit a source file — does it warn about missing test update?
+- [ ] **E2**: Write a test with `jest.mock()` — does constitutional check fire?
+- [ ] **E3**: Run a test that fails — does zero-defect check fire?
+- [ ] **E4**: Edit source without test — does stale test warning appear?
+- [ ] **E5**: During tdd+ phase, run full suite — does scope redirect fire?
+- [ ] **E6**: During verify+ phase, run full suite — is it allowed?
+
+### Skills
+
+- [ ] **SK1**: `/brain+` shows in skill list
+- [ ] **SK2**: `/plan+` shows in skill list
+- [ ] **SK3**: `/tdd+` shows in skill list
+- [ ] **SK4**: `/verify+` shows in skill list
+- [ ] **SK5**: `/review+` shows in skill list
+
+### Agents
+
+- [ ] **AG1**: Scout agent definition exists
+- [ ] **AG2**: Scout can be invoked with `Agent(subagent_type="scout")`
+
+### Configuration
+
+- [ ] **CF1**: Change a rule in `.harness.yaml` — does behavior change?
+- [ ] **CF2**: Default config was generated correctly
+
+## Report Format
+
+```
+Session Verification Report
+============================
+Session Start:  X/5 passed
+Tool Router:    X/8 passed
+Enforcement:    X/6 passed
+Skills:         X/5 passed
+Agents:         X/2 passed
+Configuration:  X/2 passed
+
+TOTAL: XX/28 passed
+
+Failures:
+- [ID]: [what happened]. Expected: [expected]. Got: [actual].
+  Remediation: [how to fix]
+```

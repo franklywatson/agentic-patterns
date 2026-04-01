@@ -171,7 +171,7 @@ git worktree remove .worktrees/feature-x
 
 **Why This Happens**: Partial-stack tests feel like a reasonable compromise - faster than full stack, more realistic than mocks. In practice they deliver the worst of both: slow tests that still miss integration failures. Mock mismatches create false signals the agent cannot diagnose.
 
-**Pattern**: Apply [Pattern 1.1 - Stack Tests](../L1-feedback-loops.md#pattern-11--stack-tests):
+**Pattern**: Apply [Pattern 1.1 - Stack Tests](../L1-patterns/1.1-stack-tests.md):
 
 - Test at unit level (fast, isolated) OR stack level (complete, real)
 - Stack tests run the complete Docker stack
@@ -206,7 +206,7 @@ After 2: Stack test (seconds, complete confidence)
 
 **Why This Happens**: Mocks start as a convenience - faster setup, deterministic results. But mocks drift from reality as real services evolve. The test suite gains false confidence: green tests, broken system. Real edge cases (timeouts, unexpected error formats, connection drops) never appear.
 
-**Pattern**: Apply [Pattern 1.5 - No-Mock Philosophy](../L1-feedback-loops.md#pattern-15--no-mock-philosophy):
+**Pattern**: Apply [Pattern 1.5 - No-Mock Philosophy](../L1-patterns/1.5-no-mock-philosophy.md):
 
 - If you own it, run it - real PostgreSQL, real Redis, real services
 - Only mock external services you genuinely cannot run (and no testnet exists)
@@ -236,7 +236,7 @@ await db.migrate();
 
 **Why This Happens**: Conditional assertions often start as a workaround for flaky data - "sometimes the response is undefined, so guard against it." But a test that silently passes when it should fail is worse than no test. The agent trusts the green suite and ships broken code.
 
-**Pattern**: Apply [Pattern 1.6 - Test Integrity Rules](../L1-feedback-loops.md#pattern-16--test-integrity-rules):
+**Pattern**: Apply [Pattern 1.6 - Test Integrity Rules](../L1-patterns/1.6-test-integrity.md):
 
 - Every assertion must run unconditionally
 - Tests must either pass or fail explicitly
@@ -263,7 +263,7 @@ expect(response.status).toBe(200);
 
 **Why This Happens**: Hardcoded ports work fine when only one test runs at a time. But the moment tests run concurrently - or a developer already has PostgreSQL running locally - collisions surface as flaky failures that waste diagnostic time.
 
-**Pattern**: Apply [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation):
+**Pattern**: Apply [Pattern 1.4 - Container Isolation](../L1-patterns/1.4-container-isolation.md):
 
 - Dynamic port allocation from range (10000-65535)
 - Verify ports are available before assigning
@@ -300,7 +300,7 @@ services:
 
 **Why This Happens**: Running individual tests feels incomplete - "what if it passes alone but fails in the suite?" This caution becomes counterproductive. Stack tests are vertical slices (like agile user stories) - running a single slice is the natural unit of development feedback.
 
-**Pattern**: Apply [Pattern 1.3 - Sequential/Additive Test Design](../L1-feedback-loops.md#pattern-13--sequential--additive-test-design):
+**Pattern**: Apply [Pattern 1.3 - Sequential/Additive Test Design](../L1-patterns/1.3-sequential-design.md):
 
 - Run individual stack tests during active feature development for fast iteration
 - Run the full suite before marking work complete or merging

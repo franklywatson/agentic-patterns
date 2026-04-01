@@ -22,6 +22,12 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 ## C
 
+### CI Guardrails
+
+**Level**: L4 - Standards & Measurement
+**Definition**: GitHub Actions workflows for docs quality and test coverage, providing non-negotiable enforcement independent of session-scoped hooks. Thresholds defined in project config, not CI workflow.
+**See**: [Pattern 4.5 - CI Guardrails](../L4-standards-measurement.md#pattern-45--ci-guardrails)
+
 ### Conditional Assertion (Anti-Pattern)
 
 **Level**: L1 - Closed Loop Design
@@ -71,6 +77,12 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ---
 
 ## E
+
+### Enforcement Pipeline
+
+**Level**: L2 - Behavioral Guardrails
+**Definition**: Composable pipeline where independent enforcement checks return severity levels, resolved to the most severe result (block > advise > silent).
+**See**: [Pattern 2.6 - Enforcement Pipeline Composition](../L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition)
 
 ### Evidence-Based Claim
 
@@ -146,6 +158,12 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **Definition**: Directory structure that mirrors mental models, allowing AI to discover complexity gradually (README → CLAUDE.md → module interfaces → implementation).
 **See**: [Pattern 0.2 - Progressive Disclosure](../L0-foundation.md#pattern-02--progressive-disclosure)
 
+### Phase Transition Validation
+
+**Level**: L2 - Behavioral Guardrails
+**Definition**: State machine that tracks which skill chain phases the agent has visited and validates transitions, preventing phase-skipping (e.g., tdd+ without prior plan+).
+**See**: [Pattern 2.7 - Phase Transition Validation](../L2-behavioral-guardrails.md#pattern-27--phase-transition-validation)
+
 ---
 
 ## R
@@ -171,6 +189,12 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **Level**: L3 - Optimization
 **Definition**: Lightweight agent that maps codebase structure (file tree, key exports, dependencies) before implementation, reducing blind searches and token waste.
 **See**: [Pattern 3.4 - Context Engineering](../L3-optimization.md#pattern-34--context-engineering-the-scout-pattern)
+
+### Session Lifecycle
+
+**Level**: L3 - Optimization
+**Definition**: Session start hook that detects environment, auto-indexes project, and caches results with TTL to prevent redundant detection on every tool call.
+**See**: [Pattern 3.8 - Session Lifecycle](../L3-optimization.md#pattern-38--session-lifecycle)
 
 ### Shallow Module
 

@@ -1,10 +1,10 @@
 # Agentic Patterns
 
-Practical patterns for building software that works as well with AI agents as it does with humans — and recognizing that the gap between those two audiences is wider than most teams think.
+A toolkit of patterns for making codebases work effectively with AI coding agents — gathered from production use, organized by increasing capability, and designed to adopt incrementally.
 
 ## Why This Exists
 
-AI coding agents are becoming standard tools. But most codebases weren't built for them. They were built for humans who can mentally bridge gaps, tolerate partial feedback, rely on intuition to navigate messy directories, and instinctively know which warnings to ignore.
+AI coding agents are becoming standard tools. But most codebases were built for humans — humans who can mentally bridge gaps, tolerate partial feedback, rely on intuition to navigate messy directories, and instinctively know which warnings to ignore.
 
 AI agents can't do any of that. They need:
 
@@ -13,23 +13,31 @@ AI agents can't do any of that. They need:
 - **Enforced discipline** — rules that are impossible to bypass, not just written in a wiki
 - **Deterministic environments** — no "it works on my machine," no shared state leaking between tests
 
-These aren't new ideas. Deep modules, progressive disclosure, and evidence-based engineering are decades old. What's new is how critical they become when your coworker is an AI with no memory of your codebase and no intuition to fall back on.
+None of these ideas are new. Deep modules, progressive disclosure, and evidence-based engineering are decades old — drawn from John Ousterhout's work on software design, Matt Pocock's graybox module concept, and well-established testing discipline. What's new is how critical they become when your coworker is an AI with no memory of your codebase and no intuition to fall back on.
 
-Traditional software engineering optimizes for human developers. **Agentic development** optimizes for AI agents — and it turns out the practices that make codebases agent-friendly also make them better for humans. The discipline is higher, but the payoff is a codebase that any contributor (human or AI) can work in effectively from day one.
+These patterns stand on the shoulders of those established ideas. They reframe practices that excellent engineers already use — making them explicit, composable, and enforceable so that agents and humans alike benefit from the structure.
 
 ## Where These Patterns Come From
 
-Peter Steinberger, creator of OpenClaw, has described building production software entirely with AI agents — managing 5-10 parallel agents, closing the feedback loop so agents verify their own work, investing heavily in planning before implementation, and treating code reviews as architecture discussions. His core insight: *"I don't think software engineering is dead with AI: in fact, quite the opposite."* Agentic development demands more engineering discipline, not less.
+The patterns were extracted from a [production-grade Telegram trading bot](docs/references/reference-telegram-trading-bot-case-study.md) — a financial application handling real blockchain transactions, built fully agentically with Claude Code as the primary development tool. That project developed **Stack-First Development**: bringing up the entire application stack in Docker and testing through API endpoints only, where each stack test is an atomic user journey that passes or fails as a whole.
 
-These patterns extract and structure the thinking behind that approach. They come from a [production-grade Telegram trading bot](docs/references/reference-telegram-trading-bot-case-study.md) built fully agentically with Claude Code as the primary development tool. That project developed **Stack-First Development** — bringing up the entire application stack in Docker and testing through API endpoints only. Each stack test is an atomic user journey — the stack must pass or fail as a whole, with no partial results or mocked components to hide behind.
+Peter Steinberger, creator of OpenClaw, has described a similar approach — managing 5-10 parallel agents, closing the feedback loop so agents verify their own work, investing heavily in planning before implementation, and treating code reviews as architecture discussions. His core insight: *"I don't think software engineering is dead with AI: in fact, quite the opposite."* Agentic development demands more engineering discipline, not less.
 
-The patterns here generalize that approach — and the supporting practices around project structure, skills, guardrails, optimization, and documentation rigor — into a framework any team can adopt.
+Other frameworks approach similar problems from different angles. [gstack](https://github.com/garrytan/gstack) provides a skill framework with resolver pipelines. [superpowers](https://github.com/obra/superpowers) provides base skills for brainstorming, planning, TDD, and code review. [rig](https://github.com/franklywatson/claude-rig) implements the L2-L3 patterns from this repo as a working agent harness with enforcement pipelines, tool routing, and session management. These systems informed this work — the best available ideas at the time, applied and refined in production.
 
-This isn't theory. These patterns are in daily production use. They've been refined through hundreds of agent sessions building real features, fixing real bugs, and passing real tests.
+The lineage: patterns were extracted from the reference project, organized into this library, then used to build rig — which now serves as both a reference implementation and a development tool for improving this very repo.
+
+### Reference Implementations
+
+| System | What it implements | Language |
+|--------|-------------------|----------|
+| [rig](https://github.com/franklywatson/claude-rig) | L2 enforcement pipeline, L3 tool routing + scout agent, skill chain with phase transitions, CLI installer, CI guardrails | TypeScript |
+| [gstack](https://github.com/garrytan/gstack) | L2 skill framework with resolver pipeline, preamble system | TypeScript |
+| [superpowers](https://github.com/obra/superpowers) | L2 base skills (brainstorming, TDD, verification, review), automated worktree management | Markdown/JS |
 
 ## The Pattern Pyramid
 
-Patterns are organized into five levels, each building on the previous. Adopt them in order — skipping levels creates fragile foundations.
+Patterns are organized into five levels, each building on the previous. The levels suggest an adoption order — earlier levels provide the foundation that later levels depend on — but teams should start where their gaps are and adopt what helps.
 
 ![The Agentic Patterns Pyramid](docs/diagrams/pyramid.png)
 
@@ -50,25 +58,34 @@ Patterns are organized into five levels, each building on the previous. Adopt th
 1. **New to agentic development?** Start with [L0: Foundation](docs/L0-foundation.md). The structural changes there are the highest-impact, lowest-effort starting point.
 2. **Already using AI coding tools?** Jump to [L1: Closed Loop Design and Verification](docs/L1-feedback-loops.md) to understand how context harvesting and closed-loop verification improve agent outcomes.
 3. **Building team practices?** [L2: Behavioral Guardrails](docs/L2-behavioral-guardrails.md) and [L4: Standards & Measurement](docs/L4-standards-measurement.md) together establish the discipline layer.
-4. **Want a phased adoption plan?** See the [Migration Guide](docs/cross-cutting/migration-guide.md) for a step-by-step path from traditional to agentic practices.
+4. **Looking for adoption paths?** See the [Adoption Guide](docs/cross-cutting/adoption-guide.md) for suggested approaches — not a rigid plan, but a set of paths teams have found useful.
 
 ## Audience
 
 - **Solo developers and small teams** using Claude Code, Cursor, or similar tools — adopt patterns incrementally starting at L0
-- **Team leads and architects** establishing agentic development practices across an organization
-- **Anyone** curious about what "agentic-friendly" software engineering actually looks like in practice
+- **Team leads and architects** exploring agentic development practices for their organization
+- **Anyone** curious about what "agentic-friendly" software engineering looks like in practice
 
 ## What's in This Repo
 
 ```
 docs/               # Pattern documentation (L0-L4) and guides
 examples/           # Working code examples (TypeScript + Python)
-  stack-test/       # Minimal stack test setups in both languages
-  guardrails/       # Token optimization middleware example
+  stack-test/
+    typescript/     # Jest-based stack tests + Playwright browser tests
+                    #   Demonstrates: API-level AND browser-driven verification
+                    #   Stack: Node.js + PostgreSQL + Redis in Docker
+    python/         # pytest-based stack tests (API-level only)
+                    #   Demonstrates: API-level verification, Python conventions
+                    #   Stack: Python + PostgreSQL + Redis in Docker
+  guardrails/       # L3 token optimization middleware (TypeScript)
+                    #   Intent classification, smart routing, environment detection
   project-structure/ # Before/after directory layouts
-docs/cross-cutting/ # Anti-patterns, migration guide, FAQ, glossary
+docs/cross-cutting/ # Anti-patterns, adoption guide, FAQ, glossary
 docs/references/    # Case study and further reading
 ```
+
+The TypeScript and Python stack-test examples cover the same core pattern (Docker-based stack tests with full-loop assertions) but differ in scope: the TypeScript example extends to browser-based testing with Playwright, while the Python example demonstrates API-level testing with pytest conventions. Both are self-contained and runnable independently.
 
 ## Contributing
 
