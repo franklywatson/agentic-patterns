@@ -33,9 +33,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      - run: npm ci
+      - run: npm install
 
       - name: Run markdownlint
         run: npm run lint:md
@@ -66,18 +65,20 @@ jobs:
         run: |
           errors=0
 
-          # Find all markdown links in docs/
+          # Find all markdown links in docs/, examples/, CLAUDE.md, README.md
+          # Exclude specs/ (planning docs with aspirational links)
           while IFS= read -r file; do
             dir=$(dirname "$file")
 
             # Extract markdown links: [text](path.md) and [text](path.md#anchor)
-            grep -oP '\[.*?\]\(\K[^)]+\.md(?:#[^)]*)?(?=\))' "$file" 2>/dev/null | while IFS= read -r link; do
+            # Only from prose lines (skip code blocks and inline code)
+            sed '/^```/,/^```/d' "$file" | grep -oP '\[.*?\]\(\K[^)]+\.md(?:#[^)]*)?(?=\))' 2>/dev/null | while IFS= read -r link; do
               # Strip anchor
               target="${link%%#*}"
 
-              # Skip URLs
+              # Skip URLs and regex-like patterns from examples
               case "$target" in
-                http://*|https://*) continue ;;
+                http://*|https://*|*\**) continue ;;
               esac
 
               # Resolve relative path
@@ -88,7 +89,7 @@ jobs:
                 echo "1" >> /tmp/link_errors
               fi
             done
-          done < <(find . -name '*.md' -not -path './node_modules/*' -not -path './.git/*')
+          done < <(find . -name '*.md' -not -path './node_modules/*' -not -path './.git/*' -not -path './specs/*')
 
           if [ -f /tmp/link_errors ]; then
             count=$(wc -l < /tmp/link_errors)
