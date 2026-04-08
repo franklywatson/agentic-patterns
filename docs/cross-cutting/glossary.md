@@ -84,6 +84,13 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **Definition**: Composable pipeline where independent enforcement checks return severity levels, resolved to the most severe result (block > advise > silent).
 **See**: [Pattern 2.6 - Enforcement Pipeline Composition](../L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition)
 
+### Focused Integration Test
+
+**Level**: L1 - Closed Loop Design
+**Definition**: Narrow-scope test that exercises a single external dependency's real API (testnet or sandbox) with exhaustive edge-case coverage. No mocks, no full system stack — just the adapter code plus the real external service. Used for complex dependencies like payment providers where each error code, timeout scenario, and rate limit behavior needs individual verification.
+**See**: [Pattern 1.5 - Real Dependencies in E2E/Integration and Stack Tests](../L1-feedback-loops.md#pattern-15--real-dependencies-in-e2eintegration-and-stack-tests)
+**See**: [Pattern 2.6 - Enforcement Pipeline Composition](../L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition)
+
 ### Evidence-Based Claim
 
 **Level**: L4 - Standards & Measurement

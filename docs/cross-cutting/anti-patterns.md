@@ -173,9 +173,9 @@ git worktree remove .worktrees/feature-x
 
 **Pattern**: Apply [Pattern 1.1 - Stack Tests](../L1-patterns/1.1-stack-tests.md):
 
-- Test at unit level (fast, isolated) OR stack level (complete, real)
+- Test at unit level (fast, isolated), use focused integration tests for external dependency edge cases, or test at the stack level (complete, real)
 - Stack tests run the complete Docker stack
-- No middle ground - either test behavior (unit) or system (stack)
+- The third option — focused integration tests — provides exhaustive edge-case coverage of a single external dependency's real API without running the full system. See [Pattern 1.5 - Focused Integration Tests](../L1-patterns/1.5-no-mock-philosophy.md#focused-integration-tests-for-external-dependencies).
 
 Example refactor:
 
@@ -190,7 +190,11 @@ Before: Integration test (3 services, 2 mocked)
 After 1: Unit test (milliseconds)
 +- Test order processing logic in isolation, no containers
 
-After 2: Stack test (seconds, complete confidence)
+After 2: Focused integration test (seconds, narrow scope)
++- Test Stripe adapter against real testnet
++- Exhaustive edge cases: declined cards, rate limits, idempotency
+
+After 3: Stack test (seconds, complete confidence)
 |- App container (real)
 |- Database (real)
 |- Redis (real)
@@ -211,6 +215,7 @@ After 2: Stack test (seconds, complete confidence)
 - If you own it, run it - real PostgreSQL, real Redis, real services in stack tests
 - Only mock external services you genuinely cannot run (and no testnet exists) in stack tests
 - Use Docker for owned services - free, fast, realistic
+- For complex external dependencies, use focused integration tests against real testnet/sandbox — see [Focused Integration Tests](../L1-patterns/1.5-no-mock-philosophy.md#focused-integration-tests-for-external-dependencies)
 - Mocks are appropriate in unit tests — this pattern applies to stack and E2E tests only
 
 Example refactor:

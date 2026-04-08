@@ -75,31 +75,31 @@ The following patterns describe the verification mechanisms that close the loop 
 
 ### [Pattern 1.1 — Stack Tests](L1-patterns/1.1-stack-tests.md)
 
-Full-system tests running the complete Docker stack with API-level verification, zero mocks for owned services, and high failure diagnosticity. Each test models an atomic user journey — a single, complete interaction from the user's perspective. Includes health endpoint test mode, test fixture bootstrapping, and the "Beyond API Testing" extension to browser-driven verification with Playwright.
+Full-system tests running the complete Docker stack with API-level verification, zero mocks for owned services, and high failure diagnosticity. Each test models an atomic user journey — a single, complete interaction from the user's perspective. Includes health endpoint test mode, test fixture bootstrapping, and the "Beyond API Testing" extension to browser-driven verification with Playwright. **Why it matters:** Stack tests close the feedback loop — the agent gets binary confirmation that the system works end-to-end, not that individual functions return correct values.
 
 ### [Pattern 1.2 — Full-Loop Assertion Layering](L1-patterns/1.2-full-loop-assertions.md)
 
-Three-level assertion structure (primary, second-order, third-order) that provides diagnostic signal at increasing distance from the primary action. Primary verifies the direct response, second-order verifies side effects through a different API endpoint, third-order verifies cross-functional consistency (audit logs, notifications, cross-endpoint agreement).
+Three-level assertion structure (primary, second-order, third-order) that provides diagnostic signal at increasing distance from the primary action. Primary verifies the direct response, second-order verifies side effects through a different API endpoint, third-order verifies cross-functional consistency (audit logs, notifications, cross-endpoint agreement). **Why it matters:** A `200 OK` response proves nothing about side effects. Second-order assertions catch missing persistence; third-order assertions catch broken observability. Each failure mode points to a specific subsystem.
 
 ### [Pattern 1.3 — Sequential / Additive Test Design](L1-patterns/1.3-sequential-design.md)
 
-Tests ordered by dependency so that if test N fails, the agent knows tests 1 through N-1 passed. The sequence acts as a diagnostic ladder narrowing the search space. Stack tests as vertical slices — each test is one atomic user journey that can be run individually during development or as a full suite before completion.
+Tests ordered by dependency so that if test N fails, the agent knows tests 1 through N-1 passed. The sequence acts as a diagnostic ladder narrowing the search space. Stack tests as vertical slices — each test is one atomic user journey that can be run individually during development or as a full suite before completion. **Why it matters:** Without ordering, a checkout failure could mean broken auth, broken database, or broken checkout logic — ordering tells the agent exactly which subsystem to investigate.
 
 ### [Pattern 1.4 — Container Isolation](L1-patterns/1.4-container-isolation.md)
 
-Four mechanisms ensuring tests never interfere: unique container names, dynamic port allocation, transient volumes, and per-test compose files. Aggressive cleanup prevents Docker resource exhaustion during concurrent test execution.
+Four mechanisms ensuring tests never interfere: unique container names, dynamic port allocation, transient volumes, and per-test compose files. Aggressive cleanup prevents Docker resource exhaustion during concurrent test execution. **Why it matters:** Hardcoded ports and shared state produce flaky, non-deterministic test failures that waste agent tokens on false investigations. Isolation makes every test run deterministic.
 
 ### [Pattern 1.5 — Real Dependencies in E2E/Integration and Stack Tests](L1-patterns/1.5-no-mock-philosophy.md)
 
-Stack tests and E2E/integration tests use real everything — real PostgreSQL, real Redis, real message queues. The only acceptable mocks in these tests are external services without test environments. If you own it, run it. If you can run it in Docker, run it in Docker. Mocks are appropriate and encouraged in unit tests, which validate module contracts in isolation.
+Stack tests and E2E/integration tests use real everything — real PostgreSQL, real Redis, real message queues. If you own it, run it. If you can run it in Docker, run it in Docker. Also covers **focused integration tests** — a niche pattern for exhaustive edge-case coverage of complex external dependencies (payment providers, blockchain RPCs) against their real APIs, without running the full stack. **Why it matters:** Mocks create a fantasy system that passes tests but fails in production. Mocks are appropriate and encouraged in unit tests, which validate module contracts in isolation.
 
 ### [Pattern 1.6 — Test Integrity Rules](L1-patterns/1.6-test-integrity.md)
 
-Six forbidden patterns that allow tests to silently pass: conditional assertions, catch without rethrow, optional chaining on expect, early returns before assertions, try-catch wrapped expectations, and soft assertions. Every test must either pass or fail explicitly.
+Six forbidden patterns that allow tests to silently pass: conditional assertions, catch without rethrow, optional chaining on expect, early returns before assertions, try-catch wrapped expectations, and soft assertions. Every test must either pass or fail explicitly. **Why it matters:** A test that can silently pass is worse than no test — it gives false confidence. Every test must provide unambiguous signal to the agent.
 
 ### [Testing Infrastructure Is Production Code](L1-patterns/testing-infrastructure.md)
 
-The tooling that enables stack tests — port allocators, compose file generators, container managers — is application code, not scaffolding. Treat it with the same rigor: unit tests, error handling, edge case coverage, and code review.
+The tooling that enables stack tests — port allocators, compose file generators, container managers — is application code, not scaffolding. Treat it with the same rigor: unit tests, error handling, edge case coverage, and code review. **Why it matters:** Brittle test infrastructure wastes more agent tokens than any other source — the agent debugs test tooling instead of application logic.
 
 ---
 
