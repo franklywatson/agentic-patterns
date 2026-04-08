@@ -178,7 +178,7 @@ One-sentence summary of what this project does.
 Tree diagram showing major directories and their purposes.
 
 ## Constitutional Rules (Never Violate)
-1. No mocking core system components
+1. Real dependencies in E2E/integration and stack tests
 2. Evidence-based claims only
 3. Zero-defect tolerance
 
@@ -227,7 +227,7 @@ During a refactoring session:
 5. Tests document what the code actually does → docs stay accurate
 ```
 
-**Unit tests and stack tests are complementary, not competing concerns.** Stack tests ([L1](L1-feedback-loops.md#pattern-11--stack-tests)) validate end-to-end user journeys through the full system. Unit tests validate individual module contracts in isolation. A codebase needs both: stack tests catch integration failures; unit tests catch logic errors within modules. Dismissing a unit test failure while trusting stack test results means relying on partial feedback.
+**Unit tests and stack tests are complementary, not competing concerns.** Stack tests ([L1](L1-feedback-loops.md#pattern-11--stack-tests)) validate end-to-end user journeys through the full system with real dependencies ([Pattern 1.5](L1-patterns/1.5-no-mock-philosophy.md)). Unit tests validate individual module contracts in isolation, where mocks provide the necessary isolation to test logic without standing up infrastructure. Mocks are appropriate and encouraged in unit tests — they enable fast, focused, diagnostic tests of module behavior. A codebase needs both: stack tests catch integration failures; unit tests catch logic errors within modules. Dismissing a unit test failure while trusting stack test results means relying on partial feedback.
 
 **Anti-Pattern**: Relying on documentation as the primary contract. Documentation drifts. Tests execute. Treating unit tests as subordinate to stack tests — both layers provide distinct, necessary signals. Writing tests for coverage metrics rather than diagnostic value.
 

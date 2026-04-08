@@ -236,9 +236,9 @@ tests/stack/
 
 If `app-startup-dependencies` fails, agents know: don't debug trading logic — the foundation is broken.
 
-### No-Mock Policy
+### Real Dependencies in Stack Tests
 
-Constitutional mandate #1: "No Mock System Components"
+Constitutional mandate #1: "No Mock System Components in Stack Tests"
 
 Stack tests use:
 

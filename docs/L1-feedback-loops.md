@@ -89,9 +89,9 @@ Tests ordered by dependency so that if test N fails, the agent knows tests 1 thr
 
 Four mechanisms ensuring tests never interfere: unique container names, dynamic port allocation, transient volumes, and per-test compose files. Aggressive cleanup prevents Docker resource exhaustion during concurrent test execution.
 
-### [Pattern 1.5 — No-Mock Philosophy](L1-patterns/1.5-no-mock-philosophy.md)
+### [Pattern 1.5 — Real Dependencies in E2E/Integration and Stack Tests](L1-patterns/1.5-no-mock-philosophy.md)
 
-Stack tests use real everything — real PostgreSQL, real Redis, real message queues. The only acceptable mocks are external services without test environments. If you own it, run it. If you can run it in Docker, run it in Docker.
+Stack tests and E2E/integration tests use real everything — real PostgreSQL, real Redis, real message queues. The only acceptable mocks in these tests are external services without test environments. If you own it, run it. If you can run it in Docker, run it in Docker. Mocks are appropriate and encouraged in unit tests, which validate module contracts in isolation.
 
 ### [Pattern 1.6 — Test Integrity Rules](L1-patterns/1.6-test-integrity.md)
 

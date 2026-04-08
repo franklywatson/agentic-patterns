@@ -19,7 +19,7 @@ Before choosing a path, assess your current state. Run through this checklist to
 
 ### Testing
 
-- [ ] Integration tests use real components (no mocks for owned services)
+- [ ] Stack tests and E2E/integration tests use real components (no mocks for owned services)
 - [ ] Tests run in isolated environments (no shared state)
 - [ ] Test failures provide clear diagnostic signals
 - [ ] Tests assert on side effects, not just responses
@@ -56,7 +56,7 @@ Document every assumption they had to make. Each assumption is a gap.
 | Level | Focus | Common Gaps | Quick Win |
 |-------|-------|-------------|-----------|
 | **L0 Foundation** | Structure, CLAUDE.md, doc freshness, cleanup | No CLAUDE.md, layer-based organization, stale docs | Write CLAUDE.md, restructure by domain |
-| **L1 Closed Loop Design** | Design-led verification with stack tests | Mock-heavy integration tests, shallow assertions | Add app-startup stack test |
+| **L1 Closed Loop Design** | Design-led verification with stack tests | Mock-heavy stack/E2E tests, shallow assertions | Add app-startup stack test |
 | **L2 Guardrails** | Skills, hooks, behavioral rules | No enforcement, agents make common errors | Add test-integrity skill |
 | **L3 Optimization** | Smart routing, structured search | Raw grep/cat commands, token waste | Set up jcodemunch indexing |
 | **L4 Standards & Measurement** | Evidence, drift detection, metrics | Claims without evidence, spec drift | Establish evidence standard |
@@ -81,13 +81,13 @@ Start with L0, the highest-impact, lowest-effort starting point. Then build upwa
 
 If your integration tests are the biggest pain point, start at L1.
 
-1. **L1** — Add stack tests for your most brittle integration test areas. Remove mocks for owned services. See [Pattern 1.1 — Stack Tests](../L1-feedback-loops.md#pattern-11--stack-tests) and [examples/stack-test/](../../examples/stack-test/).
+1. **L1** — Add stack tests for your most brittle integration test areas. Remove mocks for owned services in stack tests (mocks are fine in unit tests). See [Pattern 1.1 — Stack Tests](../L1-feedback-loops.md#pattern-11--stack-tests) and [examples/stack-test/](../../examples/stack-test/).
 2. **L0** — Once stack tests are working, structure the project to make them maintainable. Deep modules, CLAUDE.md, progressive disclosure.
 3. **L2-L4** — Continue upward as in Path A.
 
 ### Path C: Guardrails-First (Teams with Agent Errors)
 
-If agents are making consistent errors (wrong mocking, missing tests, ignoring rules), start at L2.
+If agents are making consistent errors (wrong mocking in stack tests, missing tests, ignoring rules), start at L2.
 
 1. **L2** — Add skills for your most violated rules, hooks to block destructive patterns. See [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md).
 2. **L0** — Structure the project so agents have clear context to work with.

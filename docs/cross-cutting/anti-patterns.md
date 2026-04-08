@@ -200,17 +200,18 @@ After 2: Stack test (seconds, complete confidence)
 
 ---
 
-### Real Dependencies in Tests
+### Real Dependencies in E2E/Integration and Stack Tests
 
-**Symptom**: Tests have more mock setup code than test code. Tests pass but production fails because mocks behave differently. Mocks return perfect data, never timeout, never throw unexpected errors.
+**Symptom**: Stack tests or E2E tests have more mock setup code than test code. Tests pass but production fails because mocks behave differently. Mocks return perfect data, never timeout, never throw unexpected errors.
 
 **Why This Happens**: Mocks start as a convenience - faster setup, deterministic results. But mocks drift from reality as real services evolve. The test suite gains false confidence: green tests, broken system. Real edge cases (timeouts, unexpected error formats, connection drops) never appear.
 
-**Pattern**: Apply [Pattern 1.5 - No-Mock Philosophy](../L1-patterns/1.5-no-mock-philosophy.md):
+**Pattern**: Apply [Pattern 1.5 - Real Dependencies in E2E/Integration and Stack Tests](../L1-patterns/1.5-no-mock-philosophy.md):
 
-- If you own it, run it - real PostgreSQL, real Redis, real services
-- Only mock external services you genuinely cannot run (and no testnet exists)
+- If you own it, run it - real PostgreSQL, real Redis, real services in stack tests
+- Only mock external services you genuinely cannot run (and no testnet exists) in stack tests
 - Use Docker for owned services - free, fast, realistic
+- Mocks are appropriate in unit tests — this pattern applies to stack and E2E tests only
 
 Example refactor:
 

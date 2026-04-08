@@ -54,8 +54,8 @@ Skills are the mechanism by which a project's constitution (@L0-foundation.md#pa
 
 A TDD skill for an ecommerce project might extend `superpowers:test-driven-development` and add:
 
-- No mocking database drivers (constitutional rule)
-- No mocking payment processor libraries (Stripe, PayPal) (constitutional rule)
+- Real dependencies in E2E/integration and stack tests — no mocking database drivers in stack tests (constitutional rule)
+- Real dependencies in E2E/integration and stack tests — no mocking payment processor libraries in stack tests (constitutional rule)
 - Full-loop assertion requirements (project convention)
 - Hook to track test file changes (integration with workflow)
 
@@ -252,7 +252,7 @@ Constitutional rules are hard constraints declared in CLAUDE.md that never relax
 
 **Example constitutional rules from a production ecommerce platform:**
 
-- **Never mock core system components** — logger, payment processor libraries (Stripe, PayPal), database drivers, HTTP clients for first-party services. Use real components in stack tests.
+- **Real dependencies in E2E/integration and stack tests** — logger, payment processor libraries (Stripe, PayPal), database drivers, HTTP clients for first-party services. Use real components in stack tests. Mocks are appropriate in unit tests.
 - **Full accounting for every state change** — every inventory change, every order, every transaction fee must be logged and queryable.
 - **Evidence-based claims only** — show command output before claiming done. "Tests pass" is not evidence; show the test output.
 - **Docker-first development** — no local OS execution. Everything runs in containers.
@@ -263,7 +263,7 @@ Constitutional rules are hard constraints declared in CLAUDE.md that never relax
 ```
 CLAUDE.md declares constitutional rules
     +-> plan+ includes rules in plan template (what must this plan respect?)
-            +-> tdd+ rejects mocked components in test generation
+            +-> tdd+ rejects mocked components in stack test generation
                     +-> review+ checks constitutional compliance (did this violate any rules?)
 ```
 
@@ -272,10 +272,10 @@ CLAUDE.md declares constitutional rules
 Constitutional rule enforcement in the skill chain:
 
 1. **plan+** reads CLAUDE.md and adds a "Constitutional compliance" section to each plan
-2. **tdd+** checks that proposed tests don't mock protected components
+2. **tdd+** checks that proposed stack tests don't mock protected components
 3. **review+** runs a checklist that includes "No constitutional rules violated"
 
-When the agent attempts to mock a database driver, the tdd+ skill blocks it with a reference to the constitutional rule.
+When the agent attempts to mock a database driver in a stack test, the tdd+ skill blocks it with a reference to the constitutional rule.
 
 ### Anti-Pattern
 
@@ -284,7 +284,7 @@ Writing "soft" rules with exceptions. Constitutional rules must have no escape h
 ### Cross-References
 
 - @L0-foundation.md#pattern-04-claude-md-as-project-constitution — CLAUDE.md format
-- @L1-patterns/1.5-no-mock-philosophy.md — Mock avoidance rationale
+- @L1-patterns/1.5-no-mock-philosophy.md — Real dependencies in E2E/integration and stack tests
 
 ### Reference Implementation
 

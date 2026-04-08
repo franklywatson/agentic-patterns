@@ -100,7 +100,7 @@ See @README.md for detailed project overview.
 
 ## Constitutional Rules (Never Violate)
 
-1. **No mocking core system components** — Use real databases, real services, real blockchains
+1. **Real dependencies in E2E/integration and stack tests** — Use real databases, services, and caches; mocks are appropriate in unit tests
 2. **Evidence-based claims only** — "Tests pass" must show test output
 3. **Zero-defect tolerance** — Every error/warning must be addressed
 4. **Doc freshness mandatory** — Code changes require doc updates in same session

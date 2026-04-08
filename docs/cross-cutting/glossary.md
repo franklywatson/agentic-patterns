@@ -146,11 +146,11 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **Definition**: Ultimate test where someone with zero context must be able to understand the project from CLAUDE.md + README + file structure alone.
 **See**: [Pattern 0.9 - AI-as-New-Starter Standard](../L0-foundation.md#pattern-09--ai-as-new-starter-standard) | [Pattern 4.3 - New Starter Standard](../L4-standards-measurement.md#pattern-43--new-starter-standard)
 
-### No-Mock Philosophy
+### Real Dependencies (No-Mock in Stack Tests)
 
 **Level**: L1 - Closed Loop Design
-**Definition**: Testing approach using real everything (PostgreSQL, Redis, etc.) for owned services; only external services without testnet should be mocked.
-**See**: [Pattern 1.5 - No-Mock Philosophy](../L1-feedback-loops.md#pattern-15--no-mock-philosophy)
+**Definition**: Stack tests and E2E/integration tests use real dependencies (PostgreSQL, Redis, etc.) for owned services; only external services without testnet should be mocked. Mocks are appropriate and encouraged in unit tests for isolation.
+**See**: [Pattern 1.5 - Real Dependencies in E2E/Integration and Stack Tests](../L1-feedback-loops.md#pattern-15--real-dependencies-in-e2eintegration-and-stack-tests)
 
 ### Progressive Disclosure
 
