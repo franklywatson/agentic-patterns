@@ -466,9 +466,79 @@ Treating phase tracking as advisory. If the tracker warns but allows invalid tra
 
 ---
 
+## Pattern 2.8 — Compound Engineering
+
+### Problem
+
+Traditional development accumulates complexity. Each feature adds surface area, each bugfix patches over a gap, and each session starts from roughly the same knowledge baseline as the one before. Agents compound this problem: without persistent memory, every session re-derives the same lessons. The first time an agent solves an N+1 query problem, it takes research. The next session facing the same problem starts from zero.
+
+### Solution
+
+**Each unit of engineering work should make subsequent units easier, not harder.** Compound engineering extends the skill chain ([Pattern 2.2](#pattern-22--the-skill-chain)) with a feedback loop: after each cycle of brainstorm → plan → work → review, explicitly capture learnings back into the system so future sessions — by the same agent or different ones — start from a higher knowledge baseline.
+
+The core cycle:
+
+```
+brainstorm → plan → work → review → compound → repeat
+    ^                                     |
+    └─── knowledge feeds back ────────────┘
+```
+
+**The compounding principle:** 80% planning and review, 20% execution. Thorough planning prevents wasted implementation. Review catches issues while context is fresh. Codified learnings prevent re-deriving solutions. Quality is not a separate phase — it is the mechanism that makes future work easier.
+
+**What compounds:**
+
+- **Documented solutions** — When a bug is fixed, document the symptoms, root cause, and prevention strategy. Next time the same symptom appears, the lookup takes minutes instead of research.
+- **Refined plans** — Plans that survived review become templates for similar features. Each planning cycle sharpens the next.
+- **Captured patterns** — Architecture decisions, trade-off analyses, and failure modes recorded during review become reference material for future design sessions.
+- **Constitutional amendments** — When a review catches a novel violation, the constitutional rules ([Pattern 2.4](#pattern-24--constitutional-rules)) expand to cover it.
+
+**What does NOT compound:**
+
+- Undocumented fixes that live only in conversation history
+- Plans that are discarded after implementation without extracting lessons
+- Reviews that approve or reject without recording *why*
+- Errors dismissed as "unrelated" rather than investigated and catalogued
+
+### In Practice
+
+The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin implements this pattern with `/ce:compound` — a skill that captures solved problems into structured documentation (`docs/solutions/`) with YAML frontmatter for searchability. Each documented solution reduces the cost of the next occurrence from research to lookup.
+
+The my-claw project's design rinsing lineage ([my-claw case study](../references/reference-my-claw-case-study.md)) demonstrates compounding across sessions: each rinsing phase extracted patterns that the next phase built on, producing more value because it started from a richer foundation.
+
+**Compounding across the pattern pyramid:**
+
+| Level | What Compounds | Mechanism |
+|-------|---------------|-----------|
+| L0 | Clean structure, current docs | [Pattern 0.8 — Aggressive Cleanup](L0-foundation.md#pattern-08--aggressive-cleanup) removes noise each session |
+| L1 | Test coverage, verification infrastructure | Stack tests accumulate; each new test catches regressions permanently |
+| L2 | Constitutional rules, skills, learnings | Each review that catches a novel violation strengthens the guardrail system |
+| L3 | Codebase index, routing rules | Session caching ([Pattern 3.8](L3-optimization.md#pattern-38--session-lifecycle)) carries detection forward |
+| L4 | Metrics, drift corrections | Measurement creates a tightening feedback loop |
+
+### Anti-Pattern
+
+- **Disposable sessions** — Work that produces code but no learnings. The feature ships, the bug is fixed, but nothing is captured for next time.
+- **Knowledge silos** — Learnings stored in conversation history, personal notes, or tribal memory instead of discoverable documentation.
+- **Review without extraction** — Code reviews that approve or reject without recording the reasoning, missing the opportunity to compound the architectural insight.
+- **Premature abstraction** — Compounding knowledge is not the same as building frameworks. Document the *why*, not just the *what*. Let patterns emerge from documented solutions before promoting them into abstractions.
+
+### Cross-References
+
+- [Pattern 2.2 — The Skill Chain](#pattern-22--the-skill-chain) — The workflow pipeline that compound engineering extends
+- [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — Rules that grow through compounding
+- [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) — Compounding requires evidence, not assumptions
+- [Reference my-claw Case Study](../references/reference-my-claw-case-study.md) — Design rinsing lineage demonstrates compounding across three phases
+
+### Reference Implementation
+
+The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin provides the `/ce:compound` skill for capturing solved problems into structured, searchable documentation. The [rig](https://github.com/franklywatson/claude-rig) framework's skill chain implements the brainstorm → plan → work → review portion; compound engineering closes the loop by feeding learnings back.
+
+---
+
 ## Summary
 
-L2 behavioral guardrails automate enforcement of the discipline established in L1. Skills extend base capabilities with project-specific rules. Hooks enforce rules through the tool layer. Constitutional rules declare hard constraints. Zero-defect tolerance ensures systematic self-diagnosis.
+L2 behavioral guardrails automate enforcement of the discipline established in L1. Skills extend base capabilities with project-specific rules. Hooks enforce rules through the tool layer. Constitutional rules declare hard constraints. Zero-defect tolerance ensures systematic self-diagnosis. Compound engineering closes the loop — each cycle of work feeds learnings back into the system, making subsequent cycles more effective.
 
 Together, these patterns make correct behavior the path of least resistance for agentic development.
 
