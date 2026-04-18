@@ -504,7 +504,7 @@ brainstorm → plan → work → review → compound → repeat
 
 The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin implements this pattern with `/ce:compound` — a skill that captures solved problems into structured documentation (`docs/solutions/`) with YAML frontmatter for searchability. Each documented solution reduces the cost of the next occurrence from research to lookup.
 
-The my-claw project's design rinsing lineage ([my-claw case study](../references/reference-my-claw-case-study.md)) demonstrates compounding across sessions: each rinsing phase extracted patterns that the next phase built on, producing more value because it started from a richer foundation.
+The my-claw project's design rinsing lineage ([my-claw case study](references/reference-my-claw-case-study.md)) demonstrates compounding across sessions: each rinsing phase extracted patterns that the next phase built on, producing more value because it started from a richer foundation.
 
 **Compounding across the pattern pyramid:**
 
@@ -528,7 +528,7 @@ The my-claw project's design rinsing lineage ([my-claw case study](../references
 - [Pattern 2.2 — The Skill Chain](#pattern-22--the-skill-chain) — The workflow pipeline that compound engineering extends
 - [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — Rules that grow through compounding
 - [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) — Compounding requires evidence, not assumptions
-- [Reference my-claw Case Study](../references/reference-my-claw-case-study.md) — Design rinsing lineage demonstrates compounding across three phases
+- [Reference my-claw Case Study](references/reference-my-claw-case-study.md) — Design rinsing lineage demonstrates compounding across three phases
 
 ### Reference Implementation
 

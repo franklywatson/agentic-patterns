@@ -125,11 +125,12 @@ Documentation-only plan — no code, no tests, no mocks.
 **Changes:**
 
 1. Add my-claw row to Reference Implementations table (after superpowers):
+
 ```
 | [my-claw](https://github.com/[user]/my-claw) | L1 design rinsing reference: voice assistant whose architecture evolved through 3 phases of cross-domain design rinsing (transcript → architecture, external codebases → agent design, agentic-patterns → development approach) | Python |
 ```
 
-2. In L1 overview paragraph, add sentence about design rinsing:
+1. In L1 overview paragraph, add sentence about design rinsing:
 "Design rinsing extends context harvesting beyond the current project — agents extract distilled architectural understanding from external sources (codebases, transcripts, articles) and translate it into design decisions for the target project."
 
 - [ ] Add my-claw to Reference Implementations table
@@ -149,6 +150,7 @@ Documentation-only plan — no code, no tests, no mocks.
 **Changes:**
 
 1. Add to References section:
+
 ```
 - @docs/references/reference-my-claw-case-study.md — Design rinsing reference implementation
 ```
