@@ -82,7 +82,7 @@ Design rinsing is not copying code. It is extracting the *why* behind architectu
 | Targeted slices (docs, code, tests, logs) | Cross-domain distillation (different language, purpose, or medium) |
 | Agent reads to understand current state | Agent reads to extract transferable patterns |
 
-![Design Rinsing Workflow](../diagrams/1.8-design-rinsing-workflow.png)
+![Design Rinsing Workflow](diagrams/1.8-design-rinsing-workflow.png)
 
 #### The Design Rinsing Workflow
 
