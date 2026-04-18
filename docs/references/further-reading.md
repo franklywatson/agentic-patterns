@@ -34,6 +34,30 @@
 - **Related to:** L0, L1, L2, L3, L4
 - **URL:** <https://newsletter.pragmaticengineer.com/p/the-creator-of-clawd-i-ship-code>
 
+### Andrej Karpathy's LLM Coding Principles
+
+- **Type:** Behavioral specification
+- **Author:** Forrest Chang (forrestchang)
+- **Summary:** Codifies Andrej Karpathy's observations about LLM coding pitfalls into four behavioral principles: Think Before Coding, Simplicity First, Surgical Changes, and Goal-Driven Execution. Installable as a Claude Code plugin or per-project CLAUDE.md overlay. The principles reduce the most common costly mistakes LLMs make when writing code — wrong assumptions, overcomplicated abstractions, and unnecessary refactoring.
+- **Related to:** L2
+- **URL:** <https://github.com/forrestchang/andrej-karpathy-skills>
+
+### Claw Code — Autonomous Agent Coordination
+
+- **Type:** Tool / Framework
+- **Creator:** UltraWorkers
+- **Summary:** Rust reimplementation of a multi-agent coding coordination system. Demonstrates three-part architecture: OmX (workflow layer converting human directives into structured execution), clawhip (event and notification router keeping monitoring outside the agent's context window), and OmO (multi-agent coordination with planning, handoffs, and verification loops). Features token-based routing, a 9-lane parallel development model, and a mock parity harness for behavioral validation against a deterministic Anthropic-compatible service.
+- **Related to:** L1, L2, L3
+- **URL:** <https://github.com/ultraworkers/claw-code>
+
+### Compound Engineering Plugin
+
+- **Type:** Tool / Framework
+- **Creator:** Every Inc.
+- **Summary:** AI-agent plugin providing a structured development workflow built on the principle that each unit of engineering work should make subsequent units easier, not harder. The core cycle is ideate -> brainstorm -> plan -> work -> review -> compound -> repeat, with 80% planning and review, 20% execution. Knowledge is codified as "learnings" via `/ce:compound` so it compounds across the team over time. Available for Claude Code and convertible to 10+ other agent platforms.
+- **Related to:** L2, L3
+- **URL:** <https://github.com/EveryInc/compound-engineering-plugin>
+
 ### REPL is dead, long live REPL
 
 - **Type:** Article

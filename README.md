@@ -34,6 +34,7 @@ The lineage: patterns were extracted from the reference project, organized into 
 | [rig](https://github.com/franklywatson/claude-rig) | Baseline guardrails framework: L2 enforcement pipeline, L3 tool routing + scout agent, skill chain with phase transitions, CI guardrails. Configurable via `.harness.yaml`. | TypeScript |
 | [gstack](https://github.com/garrytan/gstack) | L2 skill framework with resolver pipeline, preamble system | TypeScript |
 | [superpowers](https://github.com/obra/superpowers) | L2 base skills (brainstorming, TDD, verification, review), automated worktree management | Markdown/JS |
+| [my-claw](docs/references/reference-my-claw-case-study.md) | L1 design rinsing reference: voice assistant whose architecture evolved through three phases of cross-domain design rinsing — transcript to architecture, external codebases to agent design, agentic-patterns to development approach | Python |
 
 ## The Pattern Pyramid
 
@@ -45,7 +46,7 @@ Patterns are organized into five levels, each building on the previous. The leve
 
 **[L0: Foundation](docs/L0-foundation.md)** — Structure your codebase so an AI with zero prior context can navigate, understand, and contribute. Deep modules, progressive disclosure, conceptual file organization, CLAUDE.md as project constitution, unit tests as contract, documentation as system map, and aggressive cleanup. The "can a new starter figure this out?" test.
 
-**[L1: Closed Loop Design and Verification](docs/L1-feedback-loops.md)** — The level where agents stop guessing and start designing. Context harvesting gathers targeted evidence before implementation. Stack tests validate design intent end-to-end through the full application stack — real dependencies (no mocks in stack tests), no partial integration, no ambiguous results. Mocks are appropriate in unit tests for isolation. Full-loop assertion layering catches regressions at primary, secondary, and tertiary levels.
+**[L1: Closed Loop Design and Verification](docs/L1-feedback-loops.md)** — The level where agents stop guessing and start designing. Context harvesting gathers targeted evidence before implementation. Design rinsing extends this beyond the current project — extracting distilled architectural understanding from external sources (codebases, transcripts, articles) and translating it into design decisions for the target project. Stack tests validate design intent end-to-end through the full application stack — real dependencies (no mocks in stack tests), no partial integration, no ambiguous results. Mocks are appropriate in unit tests for isolation. Full-loop assertion layering catches regressions at primary, secondary, and tertiary levels.
 
 **[L2: Behavioral Guardrails](docs/L2-behavioral-guardrails.md)** — Rules written in prose are suggestions. Skills and hooks are enforcement. Overlay skills on top of base agent capabilities, chain them into a complete development lifecycle, and automate discipline through the tool layer.
 
@@ -82,7 +83,7 @@ examples/           # Working code examples (TypeScript + Python)
                     #   Intent classification, smart routing, environment detection
   project-structure/ # Before/after directory layouts
 docs/cross-cutting/ # Anti-patterns, adoption guide, FAQ, glossary
-docs/references/    # Case study and further reading
+docs/references/    # Case studies (trading bot + my-claw) and further reading
 ```
 
 The TypeScript and Python stack-test examples cover the same core pattern (Docker-based stack tests with full-loop assertions) but differ in scope: the TypeScript example extends to browser-based testing with Playwright, while the Python example demonstrates API-level testing with pytest conventions. Both are self-contained and runnable independently.
@@ -99,6 +100,7 @@ This is a living pattern library. Contributions welcome:
 ## Background and Further Reading
 
 - [Reference Telegram Trading Bot Case Study](docs/references/reference-telegram-trading-bot-case-study.md) — the production system these patterns were extracted from
+- [Reference my-claw Case Study](docs/references/reference-my-claw-case-study.md) — design rinsing in practice: voice assistant architecture evolved through cross-domain extraction
 - [FAQ](docs/cross-cutting/faq.md) — deployment, operations, and other SDLC concerns beyond the patterns
 - [Further Reading](docs/references/further-reading.md) — articles, videos, and tools that informed this work
 - [Glossary](docs/cross-cutting/glossary.md) — terminology reference

@@ -96,6 +96,7 @@ See @README.md for detailed project overview.
 ## References
 
 - @docs/references/reference-telegram-trading-bot-case-study.md — Production reference implementation
+- @docs/references/reference-my-claw-case-study.md — Design rinsing reference implementation
 - @docs/references/further-reading.md — External resources
 
 ## Constitutional Rules (Never Violate)
@@ -109,5 +110,5 @@ See @README.md for detailed project overview.
 
 ---
 
-**Last updated**: 2026-03-26
-**Status**: Initial constitution — v0.1.0
+**Last updated**: 2026-04-18
+**Status**: v0.2.0 — added design rinsing, my-claw case study

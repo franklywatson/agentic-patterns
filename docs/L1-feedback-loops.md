@@ -67,6 +67,69 @@ Don't read everything. The agent constructs a mental model from targeted slices:
 
 Each source answers a different question. Reading a 500-line file to find one assertion wastes context. Reading the test for that assertion gives the answer in 20 lines.
 
+### Design Rinsing — Cross-Domain Architectural Extraction
+
+Context harvesting typically draws from the *current* project — docs, code, tests, logs. But agents can also extract architectural insight from *external* sources: other codebases (possibly in different languages, designed for different purposes), YouTube transcripts, articles, or design notes. **Design rinsing** is the structured process of directing an agent to analyze an external source, distill transferable patterns, and translate them into design decisions for the target project.
+
+Design rinsing is not copying code. It is extracting the *why* behind architectural decisions — the structural reasoning, the failure modes that shaped a design, the trade-offs that were considered. The agent then translates those abstracted principles into the target project's language, constraints, and purpose. The result is never a direct port; it is an adaptation informed by cross-domain insight.
+
+**How design rinsing differs from internal context harvesting:**
+
+| Context Harvesting | Design Rinsing |
+|-------------------|----------------|
+| Internal — current codebase | External — outside sources |
+| Before a specific change | Before a design direction or architectural evolution |
+| Targeted slices (docs, code, tests, logs) | Cross-domain distillation (different language, purpose, or medium) |
+| Agent reads to understand current state | Agent reads to extract transferable patterns |
+
+![Design Rinsing Workflow](../diagrams/1.8-design-rinsing-workflow.png)
+
+#### The Design Rinsing Workflow
+
+1. **Identify the source** — What external material contains architectural insight relevant to your design challenge? A codebase in a different language, a YouTube talk, a design document from another domain.
+
+2. **Scope the rinse** — What specific aspects are you looking for? Architecture, testing, agent coordination, error handling, progressive disclosure, state management.
+
+3. **Direct the agent** — Point the agent at the source with specific analysis questions. "How does this system handle multi-agent coordination?" not "Read this entire codebase."
+
+4. **Distill** — The agent extracts essential patterns, not surface-level code. What decisions were made, why, and what trade-offs they represent.
+
+5. **Translate** — Adapt extracted patterns to the target project's language, constraints, and purpose. A Rust project's ownership model doesn't port to Python, but its approach to resource lifecycle management might.
+
+6. **Document** — Record what was rinsed, what was extracted, and how it was translated. This becomes the design rationale that future sessions can reference.
+
+#### Sources and Targets
+
+Design rinsing works with diverse source materials:
+
+| Source Type | What You Extract | Example |
+|-------------|-----------------|---------|
+| Codebase (different language) | Architecture, design patterns, testing strategy, module boundaries | Rust multi-agent system → Python voice assistant agent coordination |
+| Codebase (same ecosystem) | Implementation patterns, tool choices, configuration conventions | Node.js trading bot stack tests → Python testing infrastructure |
+| YouTube transcript / talk | Core concepts, design principles, mental models | UC Berkeley talk on autonomous system design → agent room architecture |
+| Article / blog post | Distilled observations, failure modes, trade-off analysis | Karpathy's LLM coding pitfalls → runtime behavioral skills |
+
+#### When to Use Design Rinsing
+
+Design rinsing is valuable when:
+
+- The target project faces architectural questions that another project has already solved
+- The team is exploring a new domain and needs mental models from established systems
+- Cross-domain insight would prevent not-invented-here reinvention
+- The design needs to evolve beyond the current codebase's accumulated patterns
+
+Design rinsing is overkill when:
+
+- The target project's existing patterns already solve the problem
+- The external source is too distant to provide relevant insight (a game engine's architecture rarely informs a CRUD API)
+- The rinse would take more context than building the solution from scratch
+
+#### Design Rinsing and the REPL Fractal
+
+Design rinsing operates at the **system-level** of the REPL fractal described earlier. It extends the Read phase beyond the current project — the agent reads external architecture to inform its mental model before acting. This is context harvesting at its broadest scope: not "what does this function do?" but "what design philosophy produced this system?"
+
+The [my-claw project](references/reference-my-claw-case-study.md) demonstrates design rinsing across three phases: a YouTube transcript rinsed into core architecture, two external codebases rinsed for agent design principles, and the agentic-patterns repository itself rinsed to establish the project's development approach.
+
 ---
 
 ## Pattern Index
