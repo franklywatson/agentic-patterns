@@ -34,7 +34,7 @@ The lineage: patterns were extracted from the reference project, organized into 
 | [rig](https://github.com/franklywatson/claude-rig) | Baseline guardrails framework: L2 enforcement pipeline, L3 tool routing + scout agent, skill chain with phase transitions, CI guardrails. Configurable via `.harness.yaml`. | TypeScript |
 | [gstack](https://github.com/garrytan/gstack) | L2 skill framework with resolver pipeline, preamble system | TypeScript |
 | [superpowers](https://github.com/obra/superpowers) | L2 base skills (brainstorming, TDD, verification, review), automated worktree management | Markdown/JS |
-| [my-claw](docs/references/reference-my-claw-case-study.md) | L1 design rinsing reference: voice assistant whose architecture evolved through three phases of cross-domain design rinsing — transcript to architecture, external codebases to agent design, agentic-patterns to development approach | Python |
+| [my-claw](docs/references/reference-my-claw-case-study.md) | L1 design rinsing reference: multi-agent war room whose architecture evolved through three phases of cross-domain design rinsing — YouTube demo to architecture, academic talk + codebases to agent design, agentic-patterns + compound engineering to development approach | Python |
 
 ## The Pattern Pyramid
 
@@ -100,7 +100,7 @@ This is a living pattern library. Contributions welcome:
 ## Background and Further Reading
 
 - [Reference Telegram Trading Bot Case Study](docs/references/reference-telegram-trading-bot-case-study.md) — the production system these patterns were extracted from
-- [Reference my-claw Case Study](docs/references/reference-my-claw-case-study.md) — design rinsing in practice: voice assistant architecture evolved through cross-domain extraction
+- [Reference my-claw Case Study](docs/references/reference-my-claw-case-study.md) — design rinsing in practice: multi-agent war room architecture evolved through cross-domain extraction across three phases
 - [FAQ](docs/cross-cutting/faq.md) — deployment, operations, and other SDLC concerns beyond the patterns
 - [Further Reading](docs/references/further-reading.md) — articles, videos, and tools that informed this work
 - [Glossary](docs/cross-cutting/glossary.md) — terminology reference

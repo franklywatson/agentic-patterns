@@ -1,9 +1,11 @@
 ---
 name: tdd+
-description: "Invoke AFTER plan+ is approved. Wraps superpowers:test-driven-development with full-loop assertions, no-mock enforcement, zero-defect, stale test detection, and scoped test runs. Implements plan tasks with RED-GREEN-REFACTOR discipline."
+description: "Invoke AFTER plan+ is approved. Wraps superpowers:test-driven-development with full-loop assertions, real-dependency enforcement for stack tests, zero-defect, stale test detection, and scoped test runs. Implements plan tasks with RED-GREEN-REFACTOR discipline."
 argument-hint: "[plan file path or task range]"
 user-invocable: true
 ---
+
+<!-- rig-generated -->
 
 # tdd+ — Disciplined Implementation
 
@@ -13,7 +15,7 @@ Wraps `superpowers:test-driven-development`. Requires superpowers to be installe
 
 - Full test suite runs are redirected (use scoped tests only)
 - Stale test warnings fire when source edits lack test updates
-- Constitutional no-mock rules are enforced
+- Active enforcement rules from session context are enforced (see session-start output; real dependencies in stack/E2E tests by default)
 
 ## Procedure
 
@@ -67,7 +69,7 @@ Wraps `superpowers:test-driven-development`. Requires superpowers to be installe
    - [ ] Test was written first and shown to fail
    - [ ] Implementation makes the test pass
    - [ ] Scoped test run passes (not full suite)
-   - [ ] No constitutional rules violated
+   - [ ] Active enforcement rules followed (see session-start output)
    - [ ] Commit made with descriptive message
 
 2. Proceed to next task or exit tdd+ phase when all plan tasks complete.
@@ -93,3 +95,12 @@ Full suite runs happen during `verify+` phase, not here.
 After completing all plan tasks with tdd+:
 
 - Invoke `/verify+` to run full suite and verify against plan acceptance criteria
+
+## Completion
+
+Report one of these states when the skill finishes:
+
+- **DONE** — All plan tasks implemented with passing scoped tests. No constitutional violations.
+- **DONE_WITH_CONCERNS** — All tasks implemented but some tests need attention or minor deviations exist.
+- **BLOCKED** — Tests failing, cannot proceed without fixing. Return to RED phase.
+- **NEEDS_CONTEXT** — Need user input to resolve an implementation ambiguity or design question.

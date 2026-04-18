@@ -17,12 +17,12 @@
     },
 
     {
-      "type": "line", "id": "timeline_line", "x": 80, "y": 80, "width": 0, "height": 400,
+      "type": "line", "id": "timeline_line", "x": 80, "y": 80, "width": 0, "height": 490,
       "strokeColor": "#1e3a5f", "backgroundColor": "transparent",
       "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid",
       "roughness": 0, "opacity": 100, "angle": 0, "seed": 301001, "version": 1, "versionNonce": 301002,
       "isDeleted": false, "groupIds": [], "boundElements": null, "link": null, "locked": false,
-      "points": [[0, 0], [0, 400]]
+      "points": [[0, 0], [0, 445]]
     },
 
     {
@@ -35,8 +35,8 @@
     {
       "type": "text", "id": "p1_label", "x": 110, "y": 90,
       "width": 250, "height": 30,
-      "text": "Phase 1: Transcript to Architecture",
-      "originalText": "Phase 1: Transcript to Architecture",
+      "text": "Phase 1: Demo Video to Architecture",
+      "originalText": "Phase 1: Demo Video to Architecture",
       "fontSize": 18, "fontFamily": 3, "textAlign": "left", "verticalAlign": "top",
       "strokeColor": "#1e40af", "backgroundColor": "transparent",
       "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
@@ -56,8 +56,8 @@
     {
       "type": "text", "id": "p1_source_text", "x": 120, "y": 138,
       "width": 200, "height": 25,
-      "text": "YouTube Transcript",
-      "originalText": "YouTube Transcript",
+      "text": "YouTube Demo Video",
+      "originalText": "YouTube Demo Video",
       "fontSize": 14, "fontFamily": 3, "textAlign": "center", "verticalAlign": "middle",
       "strokeColor": "#374151", "backgroundColor": "transparent",
       "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
@@ -101,8 +101,8 @@
     {
       "type": "text", "id": "p1_result_text", "x": 420, "y": 138,
       "width": 240, "height": 25,
-      "text": "Room architecture + voice pipeline",
-      "originalText": "Room architecture + voice pipeline",
+      "text": "War room + pipeline + routing",
+      "originalText": "War room + pipeline + routing",
       "fontSize": 14, "fontFamily": 3, "textAlign": "center", "verticalAlign": "middle",
       "strokeColor": "#374151", "backgroundColor": "transparent",
       "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
@@ -121,8 +121,8 @@
     {
       "type": "text", "id": "p2_label", "x": 110, "y": 210,
       "width": 350, "height": 30,
-      "text": "Phase 2: Codebases to Agent Design",
-      "originalText": "Phase 2: Codebases to Agent Design",
+      "text": "Phase 2: Multi-Source Agent Design",
+      "originalText": "Phase 2: Multi-Source Agent Design",
       "fontSize": 18, "fontFamily": 3, "textAlign": "left", "verticalAlign": "top",
       "strokeColor": "#1e40af", "backgroundColor": "transparent",
       "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
@@ -171,6 +171,37 @@
       "isDeleted": false, "groupIds": [], "boundElements": null, "link": null, "locked": false,
       "containerId": "p2_src2", "lineHeight": 1.25
     },
+    {
+      "type": "rectangle", "id": "p2_src3", "x": 110, "y": 340, "width": 200, "height": 35,
+      "strokeColor": "#6d28d9", "backgroundColor": "#ddd6fe",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid",
+      "roughness": 0, "opacity": 100, "angle": 0, "seed": 306201, "version": 1, "versionNonce": 306202,
+      "isDeleted": false, "groupIds": [], "boundElements": [{"id": "p2_src3_text", "type": "text"}, {"id": "p2_arrow3", "type": "arrow"}],
+      "link": null, "locked": false, "roundness": {"type": 3}
+    },
+    {
+      "type": "text", "id": "p2_src3_text", "x": 120, "y": 345,
+      "width": 180, "height": 25,
+      "text": "Krantz Talk (UC Berkeley)",
+      "originalText": "Krantz Talk (UC Berkeley)",
+      "fontSize": 13, "fontFamily": 3, "textAlign": "center", "verticalAlign": "middle",
+      "strokeColor": "#374151", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
+      "roughness": 0, "opacity": 100, "angle": 0, "seed": 306203, "version": 1, "versionNonce": 306204,
+      "isDeleted": false, "groupIds": [], "boundElements": null, "link": null, "locked": false,
+      "containerId": "p2_src3", "lineHeight": 1.25
+    },
+    {
+      "type": "arrow", "id": "p2_arrow3", "x": 314, "y": 355, "width": 56, "height": 0,
+      "strokeColor": "#6d28d9", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid",
+      "roughness": 0, "opacity": 100, "angle": 0, "seed": 307021, "version": 1, "versionNonce": 307022,
+      "isDeleted": false, "groupIds": [], "boundElements": null, "link": null, "locked": false,
+      "points": [[0, 0], [56, 0]],
+      "startBinding": {"elementId": "p2_src3", "focus": 0, "gap": 4},
+      "endBinding": {"elementId": "p2_result", "focus": 0, "gap": 4},
+      "startArrowhead": null, "endArrowhead": "arrow"
+    },
 
     {
       "type": "arrow", "id": "p2_arrow1", "x": 314, "y": 265, "width": 56, "height": 0,
@@ -206,8 +237,8 @@
     {
       "type": "text", "id": "p2_result_text", "x": 400, "y": 275,
       "width": 260, "height": 25,
-      "text": "Token routing + behavioral skills",
-      "originalText": "Token routing + behavioral skills",
+      "text": "Token routing + autonomy + skills",
+      "originalText": "Token routing + autonomy + skills",
       "fontSize": 14, "fontFamily": 3, "textAlign": "center", "verticalAlign": "middle",
       "strokeColor": "#374151", "backgroundColor": "transparent",
       "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
@@ -217,17 +248,17 @@
     },
 
     {
-      "type": "ellipse", "id": "dot_p3", "x": 74, "y": 384, "width": 12, "height": 12,
+      "type": "ellipse", "id": "dot_p3", "x": 74, "y": 429, "width": 12, "height": 12,
       "strokeColor": "#3b82f6", "backgroundColor": "#3b82f6",
       "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
       "roughness": 0, "opacity": 100, "angle": 0, "seed": 309001, "version": 1, "versionNonce": 309002,
       "isDeleted": false, "groupIds": [], "boundElements": null, "link": null, "locked": false
     },
     {
-      "type": "text", "id": "p3_label", "x": 110, "y": 370,
+      "type": "text", "id": "p3_label", "x": 110, "y": 415,
       "width": 400, "height": 30,
-      "text": "Phase 3: Agentic Patterns to Dev Approach",
-      "originalText": "Phase 3: Agentic Patterns to Dev Approach",
+      "text": "Phase 3: Patterns + Compounding to Dev Approach",
+      "originalText": "Phase 3: Patterns + Compounding to Dev Approach",
       "fontSize": 18, "fontFamily": 3, "textAlign": "left", "verticalAlign": "top",
       "strokeColor": "#1e40af", "backgroundColor": "transparent",
       "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
@@ -237,7 +268,7 @@
     },
 
     {
-      "type": "rectangle", "id": "p3_source", "x": 110, "y": 405, "width": 260, "height": 40,
+      "type": "rectangle", "id": "p3_source", "x": 110, "y": 450, "width": 260, "height": 40,
       "strokeColor": "#1e3a5f", "backgroundColor": "#93c5fd",
       "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid",
       "roughness": 0, "opacity": 100, "angle": 0, "seed": 310001, "version": 1, "versionNonce": 310002,
@@ -245,10 +276,10 @@
       "link": null, "locked": false, "roundness": {"type": 3}
     },
     {
-      "type": "text", "id": "p3_source_text", "x": 115, "y": 413,
+      "type": "text", "id": "p3_source_text", "x": 115, "y": 458,
       "width": 240, "height": 25,
-      "text": "Agentic Patterns + Trading Bot",
-      "originalText": "Agentic Patterns + Trading Bot",
+      "text": "Agentic Patterns + Trading Bot + Compound Eng",
+      "originalText": "Agentic Patterns + Trading Bot + Compound Eng",
       "fontSize": 13, "fontFamily": 3, "textAlign": "center", "verticalAlign": "middle",
       "strokeColor": "#374151", "backgroundColor": "transparent",
       "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
@@ -258,7 +289,7 @@
     },
 
     {
-      "type": "arrow", "id": "p3_arrow", "x": 374, "y": 425, "width": 56, "height": 0,
+      "type": "arrow", "id": "p3_arrow", "x": 374, "y": 470, "width": 56, "height": 0,
       "strokeColor": "#1e3a5f", "backgroundColor": "transparent",
       "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid",
       "roughness": 0, "opacity": 100, "angle": 0, "seed": 311001, "version": 1, "versionNonce": 311002,
@@ -270,7 +301,7 @@
     },
 
     {
-      "type": "rectangle", "id": "p3_result", "x": 380, "y": 405, "width": 300, "height": 40,
+      "type": "rectangle", "id": "p3_result", "x": 380, "y": 450, "width": 300, "height": 40,
       "strokeColor": "#047857", "backgroundColor": "#a7f3d0",
       "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid",
       "roughness": 0, "opacity": 100, "angle": 0, "seed": 312001, "version": 1, "versionNonce": 312002,
@@ -278,10 +309,10 @@
       "link": null, "locked": false, "roundness": {"type": 3}
     },
     {
-      "type": "text", "id": "p3_result_text", "x": 400, "y": 413,
+      "type": "text", "id": "p3_result_text", "x": 400, "y": 458,
       "width": 260, "height": 25,
-      "text": "Stack tests + L0-L4 dev practices",
-      "originalText": "Stack tests + L0-L4 dev practices",
+      "text": "Stack tests + learnings + L0-L4",
+      "originalText": "Stack tests + learnings + L0-L4",
       "fontSize": 14, "fontFamily": 3, "textAlign": "center", "verticalAlign": "middle",
       "strokeColor": "#374151", "backgroundColor": "transparent",
       "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
@@ -292,9 +323,9 @@
 
     {
       "type": "text", "id": "compound_note", "x": 720, "y": 120,
-      "width": 200, "height": 80,
-      "text": "Each phase builds\non the previous:\nPhase 1 produces\narchitecture that\nPhase 2 extends.",
-      "originalText": "Each phase builds\non the previous:\nPhase 1 produces\narchitecture that\nPhase 2 extends.",
+      "width": 200, "height": 100,
+      "text": "Each phase builds\non the previous:\nPhase 1 produces\narchitecture that\nPhase 2 extends,\nPhase 3 compounds.",
+      "originalText": "Each phase builds\non the previous:\nPhase 1 produces\narchitecture that\nPhase 2 extends,\nPhase 3 compounds.",
       "fontSize": 12, "fontFamily": 3, "textAlign": "left", "verticalAlign": "top",
       "strokeColor": "#64748b", "backgroundColor": "transparent",
       "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid",
@@ -316,7 +347,7 @@
     },
 
     {
-      "type": "text", "id": "footer", "x": 110, "y": 475,
+      "type": "text", "id": "footer", "x": 110, "y": 520,
       "width": 580, "height": 25,
       "text": "Design rinsing compounds: later phases produce more value because they build on a richer foundation.",
       "originalText": "Design rinsing compounds: later phases produce more value because they build on a richer foundation.",

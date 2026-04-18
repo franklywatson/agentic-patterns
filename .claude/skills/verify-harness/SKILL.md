@@ -4,6 +4,8 @@ description: "Run after `rig init` to verify all hooks, skills, and agents are i
 user-invocable: true
 ---
 
+<!-- rig-generated -->
+
 # verify-harness — Post-Install Verification
 
 Run this skill after `rig init` to confirm everything is working.

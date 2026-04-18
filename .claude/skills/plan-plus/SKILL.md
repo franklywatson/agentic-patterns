@@ -5,6 +5,8 @@ argument-hint: "[plan description]"
 user-invocable: true
 ---
 
+<!-- rig-generated -->
+
 # plan+ — Disciplined Planning
 
 Wraps `superpowers:writing-plans`. Requires superpowers to be installed.
@@ -19,22 +21,23 @@ This skill runs after `brain+` has produced a validated design. It creates the i
 
 1. Read the design output from `brain+` (from the current session or saved spec).
 
-2. Load constitutional rules from CLAUDE.md. Add a **Constitutional Compliance** section to the plan:
+2. Load active enforcement rules from session context (see session-start output). If active enforcement rules are configured, add a **Constitutional Compliance** section to the plan:
 
    ```
    ## Constitutional Rules for This Plan
-   - Use real [database/payment/logger] connections — never mock protected components
+   [List active enforcement rules from session-start output — these are configurable via .harness.yaml]
+   - Use real [database/payment/logger] connections in stack/E2E tests — mocks are appropriate in unit tests
    - Show command output before claiming done
    - Every source file change requires corresponding test changes
    - Full-loop assertions: verify primary + second-order + third-order effects
    ```
 
-3. Identify the mock policy for this plan:
+3. Identify the mock policy for this plan based on active enforcement rules:
 
    ```
    ## Mock Policy
-   Protected (never mock): [list from constitutional rules]
-   Allowed: [external third-party services not yet containerized]
+   Stack/E2E (real deps): [list from active enforcement rules]
+   Unit tests (mocks ok): [all components] / External without sandbox: [third-party services]
    ```
 
 ### Phase B: Create Plan (delegate to superpowers:writing-plans)
@@ -43,7 +46,7 @@ This skill runs after `brain+` has produced a validated design. It creates the i
 
 2. For each task in the plan, ensure it includes:
    - **Test strategy**: which tests cover this task's requirements
-   - **Mock check**: does this task need to interact with protected components?
+   - **Mock check**: does this task need to interact with protected components (per active enforcement rules)?
    - **Evidence criteria**: what output proves this task is done
 
 3. Every task must follow the pattern:
@@ -67,7 +70,7 @@ This skill runs after `brain+` has produced a validated design. It creates the i
    - [ ] No task mocks a protected component
    - [ ] Plan references exact file paths (no TBDs)
    - [ ] Evidence criteria defined for each task
-   - [ ] Constitutional rules section present
+   - [ ] Active enforcement rules section present (if rules are configured)
 
 ## Output
 
@@ -78,3 +81,12 @@ Save the plan to `docs/plans/` and feed into `tdd+` for implementation.
 After completing plan+, the next step is:
 
 - Invoke `/tdd+` to implement the plan task-by-task with RED-GREEN-REFACTOR
+
+## Completion
+
+Report one of these states when the skill finishes:
+
+- **DONE** — Plan saved to `docs/plans/`, all validation checklist items in Phase C confirmed.
+- **DONE_WITH_CONCERNS** — Plan complete but has open questions or tasks needing refinement.
+- **BLOCKED** — Cannot proceed (missing design from brain+, unclear requirements).
+- **NEEDS_CONTEXT** — Need user input to resolve a task scope or dependency question.

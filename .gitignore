@@ -1,1 +1,6 @@
 node_modules/
+
+# --- rig-managed (do not edit below) ---
+.harness.yaml.local
+*.session-cache.json
+# --- end rig-managed ---

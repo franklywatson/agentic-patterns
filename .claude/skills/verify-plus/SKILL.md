@@ -5,6 +5,8 @@ argument-hint: "[plan file path]"
 user-invocable: true
 ---
 
+<!-- rig-generated -->
+
 # verify+ — Evidence-Based Verification
 
 Wraps `superpowers:verification-before-completion`. Requires superpowers to be installed.
@@ -72,8 +74,8 @@ Wraps `superpowers:verification-before-completion`. Requires superpowers to be i
    ### Spec Drift
    - [No deviations / List deviations with reasons]
 
-   ### Constitutional Compliance
-   - [ ] No protected components mocked
+   ### Enforcement Compliance
+   - [ ] Active enforcement rules followed (see session-start output; real dependencies in stack/E2E tests by default)
    - [ ] Evidence shown for all claims
    - [ ] All source changes have test coverage
    ```
@@ -86,3 +88,12 @@ Wraps `superpowers:verification-before-completion`. Requires superpowers to be i
 After verify+ passes:
 
 - Invoke `/review+` to run the compliance review agent
+
+## Completion
+
+Report one of these states when the skill finishes:
+
+- **DONE** — Full test suite passes, all acceptance criteria met with evidence, no spec drift.
+- **DONE_WITH_CONCERNS** — All tests pass but minor spec deviations exist (documented).
+- **BLOCKED** — Tests failing, cannot proceed without fixing regressions.
+- **NEEDS_CONTEXT** — Need user input to resolve an acceptance criterion or spec drift question.

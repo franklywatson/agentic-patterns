@@ -5,6 +5,8 @@ argument-hint: "[plan file path]"
 user-invocable: true
 ---
 
+<!-- rig-generated -->
+
 # review+ — Compliance Review
 
 Wraps `superpowers:requesting-code-review`. Requires superpowers to be installed.
@@ -39,8 +41,8 @@ Wraps `superpowers:requesting-code-review`. Requires superpowers to be installed
    - For each changed source file, verify a corresponding test file was also changed
    - Flag any source edits without test updates as stale test violations
 
-3. Check constitutional compliance:
-   - [ ] No protected components are mocked in any test file
+3. Check enforcement compliance (see active enforcement rules from session-start output):
+   - [ ] Active enforcement rules followed in all test and source files (real dependencies in stack/E2E tests; mocks appropriate in unit tests)
    - [ ] All claims of success are backed by command output
    - [ ] Full-loop assertions present where applicable
    - [ ] No conditional test assertions (`if (condition) assert(...)`)
@@ -69,7 +71,7 @@ Wraps `superpowers:requesting-code-review`. Requires superpowers to be installed
    - [ ] All plan tasks implemented
    - [ ] Implementation matches plan specification
    - [ ] No stale test violations
-   - [ ] Constitutional rules followed
+   - [ ] Active enforcement rules followed (see session-start output)
 
    ### Stage 2: Code Quality
    - [ ] Files are focused and well-structured
@@ -90,3 +92,12 @@ After review+ passes:
 
 - The implementation is complete
 - Proceed to merge/PR decision (superpowers:finishing-a-development-branch)
+
+## Completion
+
+Report one of these states when the skill finishes:
+
+- **DONE** — Review passed (PASS verdict). All spec compliance and code quality checks confirmed.
+- **DONE_WITH_CONCERNS** — Review passed with minor items noted for follow-up.
+- **BLOCKED** — Review failed (FAIL verdict). Items must be fixed before proceeding.
+- **NEEDS_CONTEXT** — Need user input to resolve a review question or accept a deviation.

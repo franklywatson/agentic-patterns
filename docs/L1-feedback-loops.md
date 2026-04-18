@@ -106,7 +106,8 @@ Design rinsing works with diverse source materials:
 |-------------|-----------------|---------|
 | Codebase (different language) | Architecture, design patterns, testing strategy, module boundaries | Rust multi-agent system → Python voice assistant agent coordination |
 | Codebase (same ecosystem) | Implementation patterns, tool choices, configuration conventions | Node.js trading bot stack tests → Python testing infrastructure |
-| YouTube transcript / talk | Core concepts, design principles, mental models | UC Berkeley talk on autonomous system design → agent room architecture |
+| YouTube demo / walkthrough | Concrete architecture, agent roles, pipeline design, routing logic | Multi-agent command center demo → war room with 5 agents, Pipecat pipeline, 3-tier routing |
+| YouTube talk / lecture | Core concepts, design principles, mental models | UC Berkeley talk on autonomous system design → graduated autonomy, context bundling |
 | Article / blog post | Distilled observations, failure modes, trade-off analysis | Karpathy's LLM coding pitfalls → runtime behavioral skills |
 
 #### When to Use Design Rinsing
@@ -128,7 +129,7 @@ Design rinsing is overkill when:
 
 Design rinsing operates at the **system-level** of the REPL fractal described earlier. It extends the Read phase beyond the current project — the agent reads external architecture to inform its mental model before acting. This is context harvesting at its broadest scope: not "what does this function do?" but "what design philosophy produced this system?"
 
-The [my-claw project](references/reference-my-claw-case-study.md) demonstrates design rinsing across three phases: a YouTube transcript rinsed into core architecture, two external codebases rinsed for agent design principles, and the agentic-patterns repository itself rinsed to establish the project's development approach.
+The [my-claw project](references/reference-my-claw-case-study.md) demonstrates design rinsing across three phases: a YouTube demo video rinsed into concrete architecture (war room, agents, pipeline, routing), multiple external sources (academic talk, Rust codebase, behavioral specification) rinsed for agent design principles and autonomy models, and the agentic-patterns repository plus compound engineering plugin rinsed to establish the project's development approach.
 
 ---
 
