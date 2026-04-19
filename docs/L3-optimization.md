@@ -593,6 +593,7 @@ The complete optimization pipeline:
 7. **Structure** ([3.5](#pattern-35--structured-output-over-raw-text)): Prefer typed results
 8. **Align** ([3.6](#pattern-36--cross-domain-architecture-alignment)): For cross-repo changes, verify architectural consistency
 9. **Compress** ([3.7](#pattern-37--toon-serialization-for-mcp-response-optimization)): For MCP tabular responses, serialize with TOON
+10. **Evaluate** ([L4: Context Eval](L4-standards-measurement.md#pattern-46--context-eval)): Score routing decisions against expected outcomes to catch regressions
 
 Result: 60-90% token savings, fewer errors, better outcomes.
 
@@ -614,6 +615,7 @@ See [examples/guardrails](../examples/guardrails/) for a complete TypeScript imp
 - [WISC Framework](https://youtu.be/gyo0eRgsUWk) — Scout/Implementer pattern
 - [TOON Format](https://github.com/toon-format/toon) — Token-oriented serialization for LLM prompts
 - [L2 — Guardrails](./L2-behavioral-guardrails.md) — Enforcing behavioral rules
+- [L4 — Context Eval](L4-standards-measurement.md#pattern-46--context-eval) — Evaluating routing effectiveness
 - [RTK](https://github.com/rtk-ai/rtk) — Token-optimized CLI proxy
 
 ## Practitioner Insight

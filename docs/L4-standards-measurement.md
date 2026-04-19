@@ -2,7 +2,7 @@
 
 L4 is the maturity layer. Where L0 establishes foundations and L1-L3 provide execution patterns, L4 ensures those standards hold over time through evidence-based discipline, automated monitoring, periodic audits, and measurable outcomes.
 
-> **Scope note:** The reference project that these patterns were extracted from did not implement formal L4 practices. The production system operated successfully at L0-L3 — constitutional rules, stack tests, skills, and optimization were in daily use. The L4 patterns here (evidence-based claims, spec drift detection, development metrics) describe the maturity layer that enterprise adopters or larger teams would add. They are informed by the reference project's informal practices and by industry standards for measurement and governance, but they have not been validated in that project's production context.
+> **Scope note:** Patterns 4.1-4.5 were not implemented in the reference project, which operated at L0-L3. They describe the maturity layer that enterprise adopters or larger teams would add, informed by the reference project's informal practices and industry standards. Pattern 4.6 (Context Eval) is an exception — it is implemented and validated in the [rig](https://github.com/franklywatson/claude-rig) reference implementation, with 18 scenarios across 5 environment presets and graduated scoring.
 
 ---
 
@@ -420,6 +420,160 @@ Putting thresholds in CI workflow files rather than project config. When thresho
 
 ---
 
+## Pattern 4.6 — Context Eval
+
+### Problem
+
+L3 defines routing and optimization patterns — smart routing, intent classification, environment-aware tool selection. But without systematic evaluation, there is no evidence that the routing logic makes correct decisions. Changes to routing rules, new environment presets, or updated intent patterns can introduce regressions that go undetected until an agent session wastes tokens on a wrong tool choice. L4 requires evidence-based claims ([Pattern 4.1](#pattern-41--evidence-based-claims)); routing effectiveness needs the same rigor.
+
+### Solution
+
+**Context eval** is a structured evaluation pattern that scores an agent's routing and tool-selection decisions against expected outcomes across multiple scenarios and environments. Each scenario defines a tool call (command, tool name) and the expected routing decision for each environment preset. The evaluation runs the actual routing logic, compares results to expectations, and produces a scored report with category and environment breakdowns.
+
+**The closed loop:**
+
+```
+Define scenarios (tool call + expected outcome per environment)
+    ↓
+Run scenarios against actual routing logic
+    ↓
+Score each result (1.0 exact, 0.5 partial, 0.0 miss)
+    ↓
+Generate report (overall score, per-category, per-environment, failures)
+    ↓
+Fail build if overall score below threshold (e.g., 0.7)
+    ↓
+Fix routing logic or update scenarios → re-evaluate
+```
+
+**Why context eval matters:** Routing decisions are the highest-frequency agent actions. Every `grep`, `cat`, `find`, or `git status` passes through the routing layer. A 5% regression in routing accuracy translates to thousands of wasted tokens per session. Context eval catches regressions before they reach production sessions.
+
+**Key concepts:**
+
+- **Scenarios**: Each scenario specifies a tool call (the command the agent issues) and the expected outcome (action + optional tool) for each environment preset
+- **Environment presets**: Different tool availability combinations (e.g., both RTK and jcodemunch available, RTK only, neither). Routing that works in one environment may fail in another
+- **Graduated scoring**: 1.0 for exact match (correct action and tool), 0.5 for partial match (correct action, wrong tool), 0.0 for miss
+- **Category coverage**: Scenarios organized by category (bash, native, agent, pipe, edge) with per-category score reporting
+- **Threshold gate**: Minimum overall score that must be met; build fails if unmet, with detailed failure output
+- **Bidirectional coverage**: Not just "does the right tool get selected?" but also "does the wrong command get blocked?" — destructive operations (`sed -i`) must produce a `block` action regardless of environment
+
+### In Practice
+
+```typescript
+// Scenario definition — what should happen for each environment
+const scenario: EvalScenario = {
+  id: 'grep-should-route-to-rtk-or-grep-tool',
+  category: 'bash',
+  description: 'grep command routes to rtk grep (if available) or Grep tool',
+  toolCall: { tool: 'Bash', command: 'grep -r "processOrder" src/' },
+  expected: {
+    full:       { action: 'rewrite', tool: 'rtk grep' },
+    rtk_only:   { action: 'rewrite', tool: 'rtk grep' },
+    jm_only:    { action: 'advise',  tool: 'Grep' },
+    neither:    { action: 'advise',  tool: 'Grep' },
+    jm_not_indexed: { action: 'advise', tool: 'Grep' },
+  }
+};
+
+// Scoring: graduated, not binary
+function scoreResult(expected: ExpectedOutcome, actual: ActualOutcome): number {
+  if (expected.action === actual.action) {
+    if (!expected.tool || expected.tool === actual.tool) return 1.0; // exact
+    return 0.5; // correct action, wrong tool
+  }
+  return 0.0; // miss
+}
+
+// Evaluation loop: every scenario × every environment
+describe('Context Eval: routing effectiveness', () => {
+  const results: EvalResult[] = [];
+  const MIN_OVERALL_SCORE = 0.7;
+
+  for (const scenario of ALL_SCENARIOS) {
+    for (const preset of ENV_PRESETS) {
+      it(`${scenario.id} [${preset.name}]`, () => {
+        const actual = handlePreToolUse(scenario.toolCall, preset.env);
+        const expected = scenario.expected[preset.name];
+        const score = scoreResult(expected, actual);
+        results.push({ scenario, preset: preset.name, score, actual, expected });
+        expect(score).toBeGreaterThanOrEqual(0.5);
+      });
+    }
+  }
+
+  it('overall score meets minimum threshold', () => {
+    const report = buildReport(results);
+    if (report.overallScore < MIN_OVERALL_SCORE) {
+      // Detailed failure output for diagnosis
+      console.log(`Overall: ${report.overallScore} (min: ${MIN_OVERALL_SCORE})`);
+      for (const [cat, score] of Object.entries(report.byCategory)) {
+        console.log(`  ${cat}: ${score}`);
+      }
+      for (const f of report.failures) {
+        console.log(`  FAIL: ${f.scenario} [${f.preset}] — ${f.reason}`);
+      }
+    }
+    expect(report.overallScore).toBeGreaterThanOrEqual(MIN_OVERALL_SCORE);
+  });
+});
+```
+
+**Report structure** — the eval produces a structured report, not just pass/fail:
+
+```
+{
+  overallScore: 0.83,
+  totalScenarios: 90,    // 18 scenarios × 5 environments
+  passCount: 75,
+  byCategory: {
+    bash: 0.89,
+    native: 1.0,
+    agent: 0.78,
+    pipe: 0.80,
+    edge: 0.67           ← edge cases need attention
+  },
+  byEnvironment: {
+    full: 0.94,
+    rtk_only: 0.83,
+    jm_only: 0.78,
+    neither: 0.72,
+    jm_not_indexed: 0.89
+  },
+  failures: [
+    { scenario: 'sed-i-blocks', preset: 'neither', expected: 'block', actual: 'allow', reason: 'Destructive edit not blocked' }
+  ]
+}
+```
+
+The category and environment breakdowns direct attention: a low `edge` score says "improve edge-case handling"; a low `neither` score says "test the degraded path more carefully."
+
+### Reference Implementation
+
+The [rig](https://github.com/franklywatson/claude-rig) repo implements context eval in [`tests/eval/`](https://github.com/franklywatson/claude-rig/tree/main/tests/eval) with:
+
+- [`eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/eval.test.ts) — Main evaluation loop: iterates all scenarios across all environment presets
+- [`scenarios.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/scenarios.ts) — 18 scenarios across 5 categories with 5 environment presets
+- [`score.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/score.ts) — Graduated scoring logic and report generation
+- [`score.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/score.test.ts) — Unit tests for the scoring functions themselves
+
+### Anti-Pattern
+
+- **Binary pass/fail**: Routing decisions have nuance — suggesting `Grep` when `rtk grep` is unavailable is correct, not a failure. Graduated scoring captures this.
+- **Single-environment testing**: Routing that works when all tools are present may fail when tools are missing. Test across environment presets.
+- **Evaluating mocked routing**: Running eval against a mock of the routing logic tests the mock, not the routing. Context eval exercises the actual `handlePreToolUse` function — the same code that runs in production sessions.
+- **Threshold too low**: A threshold of 0.0 means every routing decision can be wrong and the build still passes. A meaningful threshold (0.7+) forces routing quality to improve or the build fails.
+- **Scenarios that never change**: As routing logic evolves, scenarios must evolve with it. Stale scenarios test a routing system that no longer exists.
+
+### Cross-References
+
+- [Pattern 3.1 — Smart Routing](L3-optimization.md#pattern-31--smart-routing--tool-selection) — The routing logic that context eval verifies
+- [Pattern 3.2 — Intent Classification](L3-optimization.md#pattern-32--intent-classification) — Intent parsing correctness is eval'd through scenarios
+- [Pattern 3.3 — Environment-Aware Routing](L3-optimization.md#pattern-33--environment-aware-routing) — Environment presets in eval ensure degraded paths work
+- [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — Context eval produces evidence for routing effectiveness claims
+- [Pattern 4.5 — CI Guardrails](#pattern-45--ci-guardrails) — Context eval runs in CI as a non-negotiable quality gate
+
+---
+
 ## Review Checklist Template
 
 Adopt this checklist for code reviews, PR reviews, and task completion verification. A PR should not merge until all applicable items pass.
@@ -492,6 +646,7 @@ L4 is the maturity layer — the practices that verify L0-L3 are holding and mea
 3. **Pattern 4.3 (New Starter Standard):** Audit entry points, fix gaps
 4. **Pattern 4.4 (Agentic Development Metrics):** Measure outcomes, close the feedback loop
 5. **Pattern 4.5 (CI Guardrails):** Non-negotiable enforcement through CI workflows
+6. **Pattern 4.6 (Context Eval):** Score routing decisions against expected outcomes across environments
 
 **The review checklist is the enforcement mechanism.** Apply it to every task, every PR, every completion.
 

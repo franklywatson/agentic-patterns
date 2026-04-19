@@ -31,7 +31,7 @@ The lineage: patterns were extracted from the reference project, organized into 
 
 | System | What it implements | Language |
 |--------|-------------------|----------|
-| [rig](https://github.com/franklywatson/claude-rig) | Baseline guardrails framework: L2 enforcement pipeline, L3 tool routing + scout agent, skill chain with phase transitions, CI guardrails. Configurable via `.harness.yaml`. | TypeScript |
+| [rig](https://github.com/franklywatson/claude-rig) | Baseline guardrails framework: L2 enforcement pipeline, L3 tool routing + scout agent, L4 context eval, skill chain with phase transitions, CI guardrails. Configurable via `.harness.yaml`. | TypeScript |
 | [gstack](https://github.com/garrytan/gstack) | L2 skill framework with resolver pipeline, preamble system | TypeScript |
 | [superpowers](https://github.com/obra/superpowers) | L2 base skills (brainstorming, TDD, verification, review), automated worktree management | Markdown/JS |
 | [my-claw](docs/references/reference-my-claw-case-study.md) | L1 design rinsing reference: autonomous multi-agent system whose architecture evolved through three phases of cross-domain design rinsing — YouTube demo to architecture, academic talk + codebases to agent design, agentic-patterns + compound engineering to development approach | Python |
@@ -52,7 +52,7 @@ Patterns are organized into five levels, each building on the previous. The leve
 
 **[L3: Optimization](docs/L3-optimization.md)** — Agent efficiency is quality, not just speed. Smart routing redirects shell commands to specialized tools (60-80% token reduction). Intent classification, environment-aware routing, and the Scout Pattern (from the WISC context engineering framework: Write, Isolate, Select, Compress) turn exploration into structured context.
 
-**[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, spec drift detection, the new starter audit, and development metrics. The maturity layer that verifies L0-L3 are holding and measures their impact over time.
+**[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, spec drift detection, the new starter audit, development metrics, CI guardrails, and context eval for routing effectiveness. The maturity layer that verifies L0-L3 are holding and measures their impact over time.
 
 ## Getting Started
 

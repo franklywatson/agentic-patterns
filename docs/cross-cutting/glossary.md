@@ -28,6 +28,12 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **Definition**: GitHub Actions workflows for docs quality and test coverage, providing non-negotiable enforcement independent of session-scoped hooks. Thresholds defined in project config, not CI workflow.
 **See**: [Pattern 4.5 - CI Guardrails](../L4-standards-measurement.md#pattern-45--ci-guardrails)
 
+### Context Eval
+
+**Level**: L4 - Standards & Measurement
+**Definition**: Structured evaluation pattern that scores an agent's routing and tool-selection decisions against expected outcomes across multiple scenarios and environment presets. Uses graduated scoring (1.0 exact, 0.5 partial, 0.0 miss) and fails the build if overall score falls below a threshold.
+**See**: [Pattern 4.6 - Context Eval](../L4-standards-measurement.md#pattern-46--context-eval)
+
 ### Conditional Assertion (Anti-Pattern)
 
 **Level**: L1 - Closed Loop Design
@@ -285,4 +291,4 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 - **L1 Closed Loop Design**: Design-led verification and closed-loop testing
 - **L2 Behavioral Guardrails**: Skills, hooks, and enforcement
 - **L3 Optimization**: Token efficiency and routing
-- **L4 Standards & Measurement**: Evidence, drift detection, metrics, maturity
+- **L4 Standards & Measurement**: Evidence, drift detection, metrics, context eval, maturity
