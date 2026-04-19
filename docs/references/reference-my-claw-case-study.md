@@ -1,10 +1,10 @@
 # Reference my-claw Project — Design Rinsing in Practice
 
-**Project:** my-claw — Multi-agent war room command center with voice, Telegram, Discord, and WebSocket interfaces
+**Project:** my-claw — Autonomous, self-managing, multi-agent AI system with voice, Telegram, Discord, and WebSocket interfaces
 
 **Tech Stack:** Python 3.11+, Pipecat (real-time frame-processing pipeline), litellm (provider-agnostic LLM gateway), FastAPI, SQLite
 
-**Scale:** 5-agent architecture with 3-tier routing, voice integration via Deepgram STT + Cartesia TTS, 31 test files with 473 test functions (unit + stack + Docker stack + browser stack), room-based isolation with 3 templates, 10 worker roles, behavioral constitution, trust tiers, memory system, heartbeat, and scheduling
+**Scale:** 5-agent architecture with 3-tier routing, voice integration via Deepgram STT + Cartesia TTS, 32 test files with 492 test functions (unit + stack + Docker stack + browser stack + Discord stack), room-based isolation with 3 templates, 10 worker roles, behavioral constitution, trust tiers, memory system, heartbeat, and scheduling
 
 This case study demonstrates design rinsing — the structured practice of extracting distilled architectural understanding from external sources and translating it into a project's design. The my-claw project evolved through three distinct rinsing phases, each building on the last. That compounding — where each rinsing phase leveraged and extended the previous — is itself an example of [compound engineering](https://github.com/EveryInc/compound-engineering-plugin): each unit of work making subsequent units easier.
 
@@ -178,14 +178,15 @@ The testing infrastructure demonstrates rinsing at the practice level — the tr
 | Trading Bot Pattern | my-claw Translation |
 |---|---|
 | StackTestUtils class | Per-test session management with real services |
-| Sequential test ordering | ST1-ST12 ordered by dependency (startup → auth → routing → voice → rooms) |
+| Sequential test ordering | ST1-ST11 ordered by dependency (startup → routing → voice → rooms → tools → trust → heartbeat) |
 | Real dependencies | Zero mocks in integration tests; real Deepgram, Cartesia, litellm APIs |
 | Full-loop assertions | Tests verify entire user journeys, not individual functions |
-| Docker stack tests | ST-D1-ST-D11 against Docker container |
+| Docker stack tests | ST-D1-ST-D10 against Docker container |
 | Browser stack tests | ST-B1-ST-B8 via Playwright against running container |
+| Discord stack tests | ST-DS1-ST-DS6 against real Discord bot |
 | Health endpoint test mode | Container readiness checks before domain tests |
-| Room isolation tests | 4 tests verifying isolated pipelines don't interfere |
-| Tool stack tests | 5 tests verifying delegation and tool execution |
+| Room isolation tests | ST-R1-ST-R4 verifying isolated pipelines don't interfere |
+| Tool stack tests | ST-T1-ST-T6 verifying delegation and tool execution with real LLM |
 
 Test markers: `pytest -m "not integration"` for unit (no network), `pytest -m integration` for real API tests (auto-skip if no .env). Unit tests use no mocks — they test against the module interfaces directly.
 
