@@ -112,7 +112,7 @@ The pattern docs contain the detailed guidance. This guide links to them rather 
 
 | System | What it implements | Language |
 |--------|-------------------|----------|
-| [rig](https://github.com/franklywatson/claude-rig) | L2 enforcement pipeline, L3 tool routing + scout agent, L4 context eval, skill chain with phase transitions, CLI installer | TypeScript |
+| [rig](https://github.com/franklywatson/claude-rig) | L2 enforcement pipeline, L3 tool routing + token-optimized scout agent, L4 context eval, skill chain with phase transitions, CI guardrails | TypeScript |
 | [gstack](https://github.com/garrytan/gstack) | L2 skill framework with resolver pipeline, preamble system | TypeScript |
 | [superpowers](https://github.com/obra/superpowers) | L2 base skills (brainstorming, TDD, verification, review), worktree management | Markdown/JS |
 
