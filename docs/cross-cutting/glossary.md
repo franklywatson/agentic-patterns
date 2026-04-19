@@ -31,7 +31,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Context Eval
 
 **Level**: L4 - Standards & Measurement
-**Definition**: Structured evaluation pattern that scores an agent's routing and tool-selection decisions against expected outcomes across multiple scenarios and environment presets. Uses graduated scoring (1.0 exact, 0.5 partial, 0.0 miss) and fails the build if overall score falls below a threshold.
+**Definition**: Structured evaluation pattern that scores an agent's decisions against expected outcomes across multiple scenarios and configurations. Applies to any decision layer (tool routing, enforcement pipelines, skill selection, constitutional compliance). Uses graduated scoring (1.0 exact, 0.5 partial, 0.0 miss) and fails the build if overall score falls below a threshold.
 **See**: [Pattern 4.6 - Context Eval](../L4-standards-measurement.md#pattern-46--context-eval)
 
 ### Conditional Assertion (Anti-Pattern)

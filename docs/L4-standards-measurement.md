@@ -424,40 +424,53 @@ Putting thresholds in CI workflow files rather than project config. When thresho
 
 ### Problem
 
-L3 defines routing and optimization patterns — smart routing, intent classification, environment-aware tool selection. But without systematic evaluation, there is no evidence that the routing logic makes correct decisions. Changes to routing rules, new environment presets, or updated intent patterns can introduce regressions that go undetected until an agent session wastes tokens on a wrong tool choice. L4 requires evidence-based claims ([Pattern 4.1](#pattern-41--evidence-based-claims)); routing effectiveness needs the same rigor.
+Agent behavior is governed by layers of decision logic — routing rules, intent classifiers, skill selection, enforcement pipelines, guardrail checks. Without systematic evaluation, there is no evidence that any of these layers make correct decisions. Changes to rules, new environment configurations, or updated patterns can introduce regressions that go undetected until an agent session wastes tokens, violates a constitutional rule, or takes a wrong path. L4 requires evidence-based claims ([Pattern 4.1](#pattern-41--evidence-based-claims)); agent decision-making needs the same rigor.
 
 ### Solution
 
-**Context eval** is a structured evaluation pattern that scores an agent's routing and tool-selection decisions against expected outcomes across multiple scenarios and environments. Each scenario defines a tool call (command, tool name) and the expected routing decision for each environment preset. The evaluation runs the actual routing logic, compares results to expectations, and produces a scored report with category and environment breakdowns.
+**Context eval** is a structured evaluation pattern that scores an agent's decisions against expected outcomes across multiple scenarios and configurations. The pattern is general — it applies to any agent decision layer where correctness can be defined as a mapping from input to expected output. The evaluation runs actual decision logic (not mocks), compares results to expectations, and produces a scored report that catches regressions before they reach production sessions.
+
+**Evaluation targets — where context eval applies:**
+
+| Agent Decision Layer | What Gets Evaluated | Example Scenarios |
+|---------------------|--------------------|--------------------|
+| Tool routing | Does the agent select the right tool for each command? | `grep` routes to structured search; `sed -i` gets blocked |
+| Intent classification | Does the classifier correctly identify operation type? | `cat file` → `file_read`; `sed -i` → `file_modify` |
+| Enforcement pipeline | Do guardrails fire at the right severity? | Mock in stack test → `block`; mock in unit test → `allow` |
+| Skill selection | Does the agent activate the right skill for the task? | Bug report → `debug+`; new feature → `plan+` |
+| Environment detection | Does the system adapt when tools are missing? | No RTK → degrade to `Grep`; no jcodemunch → raw search |
+| Constitutional compliance | Do rules hold across edge cases? | `sed -i` always blocked regardless of environment |
 
 **The closed loop:**
 
 ```
-Define scenarios (tool call + expected outcome per environment)
+Define scenarios (input + expected outcome per configuration)
     ↓
-Run scenarios against actual routing logic
+Run scenarios against actual decision logic
     ↓
 Score each result (1.0 exact, 0.5 partial, 0.0 miss)
     ↓
-Generate report (overall score, per-category, per-environment, failures)
+Generate report (overall score, per-category, per-configuration, failures)
     ↓
 Fail build if overall score below threshold (e.g., 0.7)
     ↓
-Fix routing logic or update scenarios → re-evaluate
+Fix decision logic or update scenarios → re-evaluate
 ```
 
-**Why context eval matters:** Routing decisions are the highest-frequency agent actions. Every `grep`, `cat`, `find`, or `git status` passes through the routing layer. A 5% regression in routing accuracy translates to thousands of wasted tokens per session. Context eval catches regressions before they reach production sessions.
+**Why context eval matters:** Agent decisions are high-frequency and compound — a tool-routing error on every `grep` call wastes thousands of tokens per session; a misfiring enforcement pipeline lets violations through or blocks legitimate work. Context eval provides the evidence that these decision layers work correctly and continue to work as they evolve.
 
 **Key concepts:**
 
-- **Scenarios**: Each scenario specifies a tool call (the command the agent issues) and the expected outcome (action + optional tool) for each environment preset
-- **Environment presets**: Different tool availability combinations (e.g., both RTK and jcodemunch available, RTK only, neither). Routing that works in one environment may fail in another
-- **Graduated scoring**: 1.0 for exact match (correct action and tool), 0.5 for partial match (correct action, wrong tool), 0.0 for miss
-- **Category coverage**: Scenarios organized by category (bash, native, agent, pipe, edge) with per-category score reporting
+- **Scenarios**: Each scenario specifies an input (command, context, tool call) and the expected outcome for each configuration variant
+- **Configuration variants**: Different environmental conditions (tool availability, project type, agent phase, rule set). Logic that works in one configuration may fail in another
+- **Graduated scoring**: 1.0 for exact match, 0.5 for partial match (correct category, wrong detail), 0.0 for miss. Binary scoring misses nuance — suggesting `Grep` when `rtk grep` is unavailable is correct behavior, not a failure
+- **Category coverage**: Scenarios organized by category with per-category score reporting, directing attention to weak areas
 - **Threshold gate**: Minimum overall score that must be met; build fails if unmet, with detailed failure output
-- **Bidirectional coverage**: Not just "does the right tool get selected?" but also "does the wrong command get blocked?" — destructive operations (`sed -i`) must produce a `block` action regardless of environment
+- **Bidirectional coverage**: Not just "does the right thing happen?" but also "does the wrong thing get prevented?" — destructive operations must be blocked, violations must be caught, regardless of configuration
 
-### In Practice
+### In Practice — Tool Routing Example
+
+The following example shows context eval applied to tool routing — evaluating whether the routing layer selects the correct tool for each command across different environment configurations.
 
 ```typescript
 // Scenario definition — what should happen for each environment
@@ -484,8 +497,8 @@ function scoreResult(expected: ExpectedOutcome, actual: ActualOutcome): number {
   return 0.0; // miss
 }
 
-// Evaluation loop: every scenario × every environment
-describe('Context Eval: routing effectiveness', () => {
+// Evaluation loop: every scenario × every configuration
+describe('Context Eval: tool routing', () => {
   const results: EvalResult[] = [];
   const MIN_OVERALL_SCORE = 0.7;
 
@@ -518,12 +531,34 @@ describe('Context Eval: routing effectiveness', () => {
 });
 ```
 
+### In Practice — Enforcement Pipeline Example
+
+The same pattern applies to evaluating guardrail behavior. Here, scenarios test whether the enforcement pipeline fires at the correct severity for different code changes.
+
+```typescript
+const enforcementScenario: EvalScenario = {
+  id: 'mock-in-stack-test-should-block',
+  category: 'constitutional',
+  description: 'Mock pattern in stack test file triggers block',
+  input: {
+    filePath: 'tests/stack/04-checkout.stack.test.ts',
+    editContent: 'const mockDb = { getUser: () => ({}) }',
+  },
+  expected: {
+    default: { action: 'block', reason: 'constitutional_rule_1_no_mocks_in_stack_tests' },
+    unit_test_file: { action: 'allow' },  // mocks allowed in unit tests
+  }
+};
+```
+
+The evaluation structure is the same — scenarios define inputs and expected outputs, the actual enforcement logic runs, results are scored and reported.
+
 **Report structure** — the eval produces a structured report, not just pass/fail:
 
 ```
 {
   overallScore: 0.83,
-  totalScenarios: 90,    // 18 scenarios × 5 environments
+  totalScenarios: 90,    // 18 scenarios × 5 configurations
   passCount: 75,
   byCategory: {
     bash: 0.89,
@@ -532,7 +567,7 @@ describe('Context Eval: routing effectiveness', () => {
     pipe: 0.80,
     edge: 0.67           ← edge cases need attention
   },
-  byEnvironment: {
+  byConfiguration: {
     full: 0.94,
     rtk_only: 0.83,
     jm_only: 0.78,
@@ -540,16 +575,16 @@ describe('Context Eval: routing effectiveness', () => {
     jm_not_indexed: 0.89
   },
   failures: [
-    { scenario: 'sed-i-blocks', preset: 'neither', expected: 'block', actual: 'allow', reason: 'Destructive edit not blocked' }
+    { scenario: 'sed-i-blocks', configuration: 'neither', expected: 'block', actual: 'allow', reason: 'Destructive edit not blocked' }
   ]
 }
 ```
 
-The category and environment breakdowns direct attention: a low `edge` score says "improve edge-case handling"; a low `neither` score says "test the degraded path more carefully."
+The category and configuration breakdowns direct attention: a low `edge` score says "improve edge-case handling"; a low `neither` score says "test the degraded path more carefully."
 
 ### Reference Implementation
 
-The [rig](https://github.com/franklywatson/claude-rig) repo implements context eval in [`tests/eval/`](https://github.com/franklywatson/claude-rig/tree/main/tests/eval) with:
+The [rig](https://github.com/franklywatson/claude-rig) repo implements context eval for tool routing in [`tests/eval/`](https://github.com/franklywatson/claude-rig/tree/main/tests/eval) with:
 
 - [`eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/eval.test.ts) — Main evaluation loop: iterates all scenarios across all environment presets
 - [`scenarios.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/scenarios.ts) — 18 scenarios across 5 categories with 5 environment presets
@@ -558,18 +593,21 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements context e
 
 ### Anti-Pattern
 
-- **Binary pass/fail**: Routing decisions have nuance — suggesting `Grep` when `rtk grep` is unavailable is correct, not a failure. Graduated scoring captures this.
-- **Single-environment testing**: Routing that works when all tools are present may fail when tools are missing. Test across environment presets.
-- **Evaluating mocked routing**: Running eval against a mock of the routing logic tests the mock, not the routing. Context eval exercises the actual `handlePreToolUse` function — the same code that runs in production sessions.
-- **Threshold too low**: A threshold of 0.0 means every routing decision can be wrong and the build still passes. A meaningful threshold (0.7+) forces routing quality to improve or the build fails.
-- **Scenarios that never change**: As routing logic evolves, scenarios must evolve with it. Stale scenarios test a routing system that no longer exists.
+- **Binary pass/fail**: Agent decisions have nuance — degrading gracefully when a tool is unavailable is correct, not a failure. Graduated scoring captures this.
+- **Single-configuration testing**: Logic that works in one environment may fail in another. Test across configuration variants.
+- **Evaluating mocked logic**: Running eval against a mock of the decision layer tests the mock, not the logic. Context eval exercises the actual production code path.
+- **Threshold too low**: A threshold of 0.0 means every decision can be wrong and the build still passes. A meaningful threshold (0.7+) forces quality to improve or the build fails.
+- **Scenarios that never change**: As decision logic evolves, scenarios must evolve with it. Stale scenarios test a system that no longer exists.
+- **Evaluating only one layer**: Tool routing is the most obvious evaluation target, but enforcement pipelines, skill selection, and constitutional compliance all benefit from the same structured eval approach.
 
 ### Cross-References
 
-- [Pattern 3.1 — Smart Routing](L3-optimization.md#pattern-31--smart-routing--tool-selection) — The routing logic that context eval verifies
+- [Pattern 3.1 — Smart Routing](L3-optimization.md#pattern-31--smart-routing--tool-selection) — Tool routing is one context eval application
 - [Pattern 3.2 — Intent Classification](L3-optimization.md#pattern-32--intent-classification) — Intent parsing correctness is eval'd through scenarios
-- [Pattern 3.3 — Environment-Aware Routing](L3-optimization.md#pattern-33--environment-aware-routing) — Environment presets in eval ensure degraded paths work
-- [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — Context eval produces evidence for routing effectiveness claims
+- [Pattern 3.3 — Environment-Aware Routing](L3-optimization.md#pattern-33--environment-aware-routing) — Configuration variants in eval ensure degraded paths work
+- [Pattern 2.4 — Constitutional Rules](L2-behavioral-guardrails.md#pattern-24--constitutional-rules) — Constitutional compliance can be eval'd through scenarios
+- [Pattern 2.6 — Enforcement Pipeline](L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition) — Pipeline behavior can be eval'd through scenarios
+- [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — Context eval produces evidence for decision-layer effectiveness claims
 - [Pattern 4.5 — CI Guardrails](#pattern-45--ci-guardrails) — Context eval runs in CI as a non-negotiable quality gate
 
 ---
