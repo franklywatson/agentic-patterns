@@ -2,7 +2,7 @@
 
 L4 is the maturity layer. Where L0 establishes foundations and L1-L3 provide execution patterns, L4 ensures those standards hold over time through evidence-based discipline, automated monitoring, periodic audits, and measurable outcomes.
 
-> **Scope note:** Patterns 4.1-4.5 were not implemented in the reference project, which operated at L0-L3. They describe the maturity layer that enterprise adopters or larger teams would add, informed by the reference project's informal practices and industry standards. Pattern 4.6 (Context Eval) is an exception — it is implemented and validated in the [rig](https://github.com/franklywatson/claude-rig) reference implementation, with 18 scenarios across 5 environment presets and graduated scoring.
+> **Scope note:** Patterns 4.1-4.5 were not implemented in the reference project, which operated at L0-L3. They describe the maturity layer that enterprise adopters or larger teams would add, informed by the reference project's informal practices and industry standards. Pattern 4.6 (Context Eval) is an exception — it is implemented and validated in the [rig](https://github.com/franklywatson/claude-rig) reference implementation, with 6 evaluation suites covering tool routing, enforcement pipelines, Python environment detection, session state, config overrides, and determinism.
 
 ---
 
@@ -440,6 +440,10 @@ Agent behavior is governed by layers of decision logic — routing rules, intent
 | Skill selection | Does the agent activate the right skill for the task? | Bug report → `debug+`; new feature → `plan+` |
 | Environment detection | Does the system adapt when tools are missing? | No RTK → degrade to `Grep`; no jcodemunch → raw search |
 | Constitutional compliance | Do rules hold across edge cases? | `sed -i` always blocked regardless of environment |
+| Language environment routing | Does the system detect and route to venv/uv? | Python `.venv/bin/pytest` rewrite when venv detected |
+| Config overrides | Do per-rule overrides change behavior correctly? | `native_read: block` blocks Read; `native_read: silent` suppresses advice |
+| Session state | Does cached state affect routing correctly? | Stale environment (5h old) clears cache; phase-aware routing still works |
+| Determinism | Does the same input always produce the same output? | Repeated `grep` routing produces identical result |
 
 **The closed loop:**
 
@@ -584,12 +588,20 @@ The category and configuration breakdowns direct attention: a low `edge` score s
 
 ### Reference Implementation
 
-The [rig](https://github.com/franklywatson/claude-rig) repo implements context eval for tool routing in [`tests/eval/`](https://github.com/franklywatson/claude-rig/tree/main/tests/eval) with:
+The [rig](https://github.com/franklywatson/claude-rig) repo implements context eval across multiple decision layers in [`tests/eval/`](https://github.com/franklywatson/claude-rig/tree/main/tests/eval):
 
-- [`eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/eval.test.ts) — Main evaluation loop: iterates all scenarios across all environment presets
-- [`scenarios.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/scenarios.ts) — 18 scenarios across 5 categories with 5 environment presets
-- [`score.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/score.ts) — Graduated scoring logic and report generation
-- [`score.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/score.test.ts) — Unit tests for the scoring functions themselves
+**Shared infrastructure:**
+- [`scenarios.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/scenarios.ts) — Scenario definitions: 21 base routing scenarios (5 env presets), 6 Python scenarios (4 Python env presets), mock rtk rewrite
+- [`score.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/score.ts) — Graduated scoring, report generation with per-category and per-environment breakdowns
+- [`score.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/score.test.ts) — Unit tests for scoring functions
+
+**Evaluation suites (each runs independently with its own threshold):**
+- [`eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/eval.test.ts) — Tool routing: 21 scenarios × 5 environment presets
+- [`python-eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/python-eval.test.ts) — Python environment routing: 6 scenarios × 4 Python env presets (venv, uv, both, none)
+- [`enforcement-eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/enforcement-eval.test.ts) — Enforcement pipeline: stale test detection, constitutional compliance, zero-defect parsing
+- [`determinism-eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/determinism-eval.test.ts) — Idempotency verification: same input produces identical output across routing and enforcement
+- [`session-state-eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/session-state-eval.test.ts) — Session state routing: cached Python env, stale environment, phase-aware routing, edited file tracking
+- [`config-override-eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/config-override-eval.test.ts) — Configurable override routing: block/silent modes for native Read, Grep, and path expansion
 
 ### Anti-Pattern
 
