@@ -1,0 +1,26 @@
+{
+  "image": "python:3.12-slim",
+  "writeCases": [
+    { "id": "sed-in-place", "command": "sed -i s/old/new/ target.txt", "policy": "deny" },
+    { "id": "absolute-sed", "command": "/usr/bin/sed -i s/old/new/ target.txt", "policy": "allow" },
+    { "id": "sed-extended", "command": "sed -E -i s/old/new/ target.txt", "policy": "allow" },
+    { "id": "sed-long-flag", "command": "sed --in-place s/old/new/ target.txt", "policy": "allow" },
+    { "id": "perl-pi", "command": "perl -pi -e 's/old/new/' target.txt", "policy": "allow" },
+    { "id": "python-write", "command": "python3 -c \"open('target.txt','w').write('new')\"", "policy": "allow" },
+    { "id": "bash-c", "command": "bash -c \"echo new > target.txt\"", "policy": "allow" },
+    { "id": "command-substitution", "command": "$(echo sed) -i s/old/new/ target.txt", "policy": "allow" },
+    { "id": "runtime-assembled", "command": "s=sed; $s -i s/old/new/ target.txt", "policy": "allow" }
+  ],
+  "networkCases": [
+    {
+      "id": "python-urllib",
+      "command": "python3 -c \"import urllib.request as u;print(u.urlopen('http://{SERVER}:8000/',timeout=5).read().decode())\"",
+      "policy": "allow"
+    },
+    {
+      "id": "runtime-assembled-python",
+      "command": "p=python3; $p -c \"import urllib.request as u;print(u.urlopen('http://{SERVER}:8000/',timeout=5).read().decode())\"",
+      "policy": "allow"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "containment-example",
+  "version": "0.1.0",
+  "description": "Policy layer and container boundary, with tests showing which one is the control",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "pretest": "npm run build",
+    "test": "node --test \"dist/**/*.test.js\""
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=21"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}
