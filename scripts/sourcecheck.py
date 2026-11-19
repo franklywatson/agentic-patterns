@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Check that every reference ID cited in docs/refresh resolves in docs/refresh/sources.md.
+"""Check that every reference ID cited in docs/ resolves in docs/references/sources.md.
 
-Usage: python3 docs/refresh/tools/sourcecheck.py [repo_root]
+Usage: python3 scripts/sourcecheck.py [repo_root]
 Exits 1 and lists the IDs if any cited ID has no row in sources.md.
 """
 import re
@@ -23,11 +23,11 @@ def cited_ids(text):
 
 def main():
     root = Path(sys.argv[1] if len(sys.argv) > 1 else ".")
-    refresh = root / "docs/refresh"
-    sources = refresh / "sources.md"
+    docs = root / "docs"
+    sources = docs / "references/sources.md"
     listed = {f"{p}-{n}" for p, n in ROW_RE.findall(sources.read_text())}
     cited = set()
-    for path in sorted(refresh.rglob("*")):
+    for path in sorted(docs.rglob("*")):
         if path.suffix in {".md", ".html"} and path != sources:
             cited |= cited_ids(path.read_text())
     missing = sorted(cited - listed, key=lambda s: (s.split("-")[0], int(s.split("-")[1])))

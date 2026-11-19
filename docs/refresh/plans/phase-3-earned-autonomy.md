@@ -2,7 +2,7 @@
 
 - **Status:** Not started
 - **Depends on:** Phase 2 (identity, register as a concept, risk-tiered review)
-- **Gated by decisions:** D2 (autonomy axis adopted), D7 (tooling ships as an example in this repo)
+- **Gated by decisions:** D2 (autonomy axis adopted), D7 (tooling ships as an example in this repo); both decided 2026-11-19
 - **Suggested branch:** `refresh/phase-3-earned-autonomy`
 
 ## Goal

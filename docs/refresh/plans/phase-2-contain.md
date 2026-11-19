@@ -2,7 +2,7 @@
 
 - **Status:** Not started
 - **Depends on:** Phase 1 (layered-enforcement thesis and evidence labels in place)
-- **Gated by decisions:** D5 (vendor posture: neutral contract plus bindings)
+- **Gated by decisions:** D5 (vendor posture: neutral contract plus bindings); decided 2026-11-19
 - **Suggested branch:** `refresh/phase-2-contain`
 
 ## Goal

@@ -1,6 +1,6 @@
 # L1 Closed Loop Design and Verification
 
-**Level 1** in the agentic patterns hierarchy: the level where agents stop guessing and start designing. L0 provides navigable structure — deep modules, progressive disclosure, CLAUDE.md as constitution, unit tests as contract. L1 is where the agent uses that structure to gather evidence, form hypotheses, propose architectural changes, and validate the result through closed-loop verification.
+**Layer 1** of the agentic patterns: the layer where agents stop guessing and start designing. L0 provides navigable structure — deep modules, progressive disclosure, the agent instruction file as constitution, unit tests as contract. L1 is where the agent uses that structure to gather evidence, form hypotheses, propose architectural changes, and validate the result through closed-loop verification.
 
 The "closed loop" is design→implement→verify→confirm, not just test→fix→test. Stack tests are the validation mechanism that closes the loop — they confirm that the design intent was implemented correctly. But the design comes first. Every plan, every bugfix, every investigation begins with harvesting the right context: understanding what the system does, what it should do, and what evidence supports the proposed change.
 
@@ -54,7 +54,7 @@ The [rig](https://github.com/franklywatson/claude-rig) framework automates this 
 
 Stack tests validate design intent. But if the design is wrong, perfect tests just confirm the wrong thing with high confidence. The agent needs to understand the system before changing it.
 
-This is why L0 exists as a prerequisite: deep modules make code contracts discoverable, progressive disclosure makes structure navigable, and CLAUDE.md makes rules explicit. L1 is where the agent activates those foundations — reading the map before charting the course, then verifying the destination was reached.
+This is why L0 exists as a prerequisite: deep modules make code contracts discoverable, progressive disclosure makes structure navigable, and the agent instruction file makes rules explicit. L1 is where the agent activates those foundations — reading the map before charting the course, then verifying the destination was reached.
 
 ### Targeted Context, Not Exhaustive Reading
 
@@ -131,6 +131,8 @@ Design rinsing is overkill when:
 
 Design rinsing operates at the **system-level** of the REPL fractal described earlier. It extends the Read phase beyond the current project — the agent reads external architecture to inform its mental model before acting. This is context harvesting at its broadest scope: not "what does this function do?" but "what design philosophy produced this system?"
 
+**Evidence:** Thin — a reasoned technique from first-party use; no study of cross-domain extraction (first-party, n=1)
+
 ---
 
 ## Pattern Index
@@ -151,7 +153,7 @@ Tests ordered by dependency so that if test N fails, the agent knows tests 1 thr
 
 ### [Pattern 1.4 — Container Isolation](L1-patterns/1.4-container-isolation.md)
 
-Four mechanisms ensuring tests never interfere: unique container names, dynamic port allocation, transient volumes, and per-test compose files. Aggressive cleanup prevents Docker resource exhaustion during concurrent test execution. **Why it matters:** Hardcoded ports and shared state produce flaky, non-deterministic test failures that waste agent tokens on false investigations. Isolation makes every test run deterministic.
+Four mechanisms ensuring tests never interfere: compose project scoping (`docker compose -p <unique project>`), dynamic port allocation, transient volumes, and per-run compose files. Aggressive cleanup prevents Docker resource exhaustion during concurrent test execution. **Why it matters:** Hardcoded ports and shared state produce flaky, non-deterministic test failures that waste agent tokens on false investigations. Isolation makes every test run deterministic.
 
 ### [Pattern 1.5 — Real Dependencies in E2E/Integration and Stack Tests](L1-patterns/1.5-no-mock-philosophy.md)
 

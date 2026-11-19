@@ -1,8 +1,11 @@
 # L4: Standards & Measurement
 
-L4 is the maturity layer. Where L0 establishes foundations and L1-L3 provide execution patterns, L4 ensures those standards hold over time through evidence-based discipline, automated monitoring, periodic audits, and measurable outcomes.
+L4 covers evidence-based claims, development metrics, CI guardrails, and context eval. Where L0 establishes foundations and L1-L3 provide execution patterns, L4 checks that those standards hold and measures what they change. Drift detection and the new-starter audit are in L0 ([Pattern 0.7](L0-foundation.md#pattern-07--documentation-as-system-map) and [Pattern 0.9](L0-foundation.md#pattern-09--ai-as-new-starter-standard)).
 
-> **Scope note:** Patterns 4.1-4.5 were not implemented in the reference project, which operated at L0-L3. They describe the maturity layer that enterprise adopters or larger teams would add, informed by the reference project's informal practices and industry standards. Pattern 4.6 (Context Eval) is an exception — it is implemented and validated in the [rig](https://github.com/franklywatson/claude-rig) reference implementation, with 6 evaluation suites covering tool routing, enforcement pipelines, Python environment detection, session state, config overrides, and determinism.
+> **Scope note:** Patterns 4.1, 4.4 and 4.5 were not used in the reference project. The rig implements Pattern 4.6
+> (Context Eval) as first-party code, with 6 evaluation suites covering tool routing, enforcement pipelines, Python
+> environment detection, session state, config overrides, and determinism. L4 contains patterns 4.1, 4.4, 4.5 and 4.6.
+> The [rig](https://github.com/franklywatson/claude-rig) repository holds the 4.6 implementation.
 
 ---
 
@@ -97,172 +100,9 @@ Claim: The error existed before this commit. Changes in abc123 don't touch the r
 
 - [Pattern 1.2 — Full-Loop Assertion Layering](L1-patterns/1.2-full-loop-assertions.md): Evidence is part of tertiary assertions
 - [Pattern 0.8 — Aggressive Cleanup](L0-foundation.md#pattern-08--aggressive-cleanup): Remove dead code that wastes verification tokens
-- **Pattern 4.2 — Spec Drift Detection:** Automated checks replace manual verification
+- [Pattern 0.7 — Documentation as System Map](L0-foundation.md#pattern-07--documentation-as-system-map): Automated checks replace manual verification
 
----
-
-## Pattern 4.2 — Spec Drift Detection
-
-![Spec Drift Detection Layers](diagrams/4.2-spec-drift-detection-layers.png)
-
-### Problem
-
-Documentation, tests, and code drift apart over time. A pattern documented in L1 may be renamed in the code. A test may reference a function that was deleted. Documentation may describe behavior that changed months ago. This drift creates confusion and wastes tokens as agents chase outdated specifications.
-
-### Solution
-
-**Implement automated and manual checks to detect drift between specs and implementation.** When drift is found, fix it immediately—don't let it compound.
-
-**Detection layers:**
-
-**1. Link integrity (automated)**
-
-```bash
-# Check all docs linked from CLAUDE.md are reachable
-$ find docs -name "*.md" -exec grep -l "\[.*\](.*\.md)" {} \; | \
-  while read f; do
-    grep -o '\[.*\]([^)]*\.md)' "$f" | \
-    while read link; do
-      target=$(echo "$link" | sed 's/.*(\(.*\))/\1/')
-      if [ ! -f "docs/$target" ]; then
-        echo "Broken link in $f: $target"
-      fi
-    done
-  done
-```
-
-**2. Stale file detection (automated)**
-
-```bash
-# Find docs not updated in 6+ months
-$ find docs -name "*.md" -mtime +180 -ls
-
-# Find docs with old date markers
-$ grep -r "Last updated: 202[0-9]" docs/
-```
-
-**3. Test-to-code alignment (automated)**
-
-```bash
-# Tests reference non-existent functions
-$ pytest --collect-only | while read line; do
-  func=$(echo "$line" | grep -o "test_[a-z_]*" | sed 's/test_//')
-  if ! grep -q "def $func" src/**/*.py; then
-    echo "Test for missing function: $func"
-  fi
-done
-```
-
-**4. Doc-to-code consistency (manual checklist)**
-
-- Code examples in docs match actual code syntax
-- Pattern names match current implementation
-- File paths referenced in docs exist
-- Behavior descriptions match current implementation
-
-### In Practice
-
-**Continuous monitoring:**
-
-```bash
-# Add to pre-commit hook or CI
-#!/bin/bash
-echo "Checking for spec drift..."
-
-# 1. Broken links in docs
-./scripts/check_docs_links.sh
-# Fail on broken links
-
-# 2. Stale docs (warning only)
-./scripts/check_stale_docs.sh
-# Warn but don't fail
-
-# 3. Test coverage
-pytest --collect-only --quiet
-# Fail if tests reference missing code
-```
-
-**Manual review checklist (per PR):**
-
-- [ ] Updated documentation for all changed code
-- [ ] All new docs linked from CLAUDE.md
-- [ ] Code examples tested against current code
-- [ ] Tests reference existing functions
-- [ ] No orphaned docs (deleted code → deleted docs)
-
-**Drift remediation workflow:**
-
-1. Detection tool identifies drift
-2. Categorize: code drift (code changed, docs didn't) or doc drift (docs changed, code didn't)
-3. Fix: Either update code or update docs
-4. Verify: Run detection again
-5. Commit: "Fix spec drift in [component]"
-
-**Example findings:**
-
-```
-Broken link: L1/testing.md references L3/deprecated-mocking.md (deleted)
-→ Action: Remove reference, link to current L3/mocking.md
-
-Stale doc: L2/api.md last updated 2024-06, api.py changed 2025-01
-→ Action: Review api.py changes, update L2/api.md
-
-Test drift: test_legacy_flow() references deleted function old_flow()
-→ Action: Delete test, it's testing non-existent code
-```
-
-### Anti-Pattern
-
-- **"Close enough" tolerance:** Ignoring minor drift because "it's basically right."
-- **Deferred fixes:** Filing tickets for drift instead of fixing immediately.
-- **Partial updates:** Updating code but forgetting docs (violates [Pattern 0.7](L0-foundation.md#pattern-07--documentation-as-system-map)).
-- **Zombie specs:** Keeping docs around for deleted features "for reference."
-- **Manual-only checks:** Relying on human review without automated detection.
-
-### Cross-References
-
-- [Pattern 0.7 — Documentation as System Map](L0-foundation.md#pattern-07--documentation-as-system-map): Drift breaks the map
-- **Pattern 4.1 — Evidence-Based Claims:** Automated checks provide evidence
-- **Pattern 4.3 — New Starter Standard:** Drift breaks new starter experience
-
----
-
-## Pattern 4.3 — New Starter Standard
-
-### Problem
-
-Projects accumulate implicit knowledge that exists only in team members' heads. New contributors — human or AI — struggle because onboarding documents assume context they don't have.
-
-### Solution
-
-**The test: Can someone with zero context understand your project from CLAUDE.md + README + file structure alone?** If the answer is no to any of these — what it does, how to run it, where to add features, what patterns to follow, how to test changes — the entry points need work.
-
-This is the practical application of [Pattern 0.9](L0-foundation.md#pattern-09--ai-as-new-starter-standard), maintained as a periodic audit in L4.
-
-### In Practice
-
-**Audit checklist (quarterly or per major change):**
-
-- [ ] README explains the project in under 30 seconds
-- [ ] Quick start runs without reading beyond README
-- [ ] CLAUDE.md is a clear map, not a wall of links
-- [ ] Pattern docs have examples that run out of the box
-- [ ] Directory structure communicates intent
-
-**The "zero context" rule:** Every doc section must pass this test — no undefined terms, no assumed prior knowledge, no "we" language implying existing team membership, no examples relying on unstated setup.
-
-### Anti-Pattern
-
-- **Insider documentation:** "You know, the thing we discussed in the meeting."
-- **Assumed knowledge:** "Just follow the pattern we always use" (without linking to it).
-- **Stale quick starts:** Examples that don't run because of missing steps.
-- **Missing "why":** Explaining "how" but not "why" (agents need intent).
-
-### Cross-References
-
-- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claudemd-as-project-constitution): The foundation of discoverability
-- [Pattern 0.7 — Documentation as System Map](L0-foundation.md#pattern-07--documentation-as-system-map): Entry points ARE the map
-- **Pattern 4.2 — Spec Drift Detection:** Audits catch entry point drift
+**Evidence:** Strong — developers believed AI sped them up 20% after a measured 19% slowdown, so self-report cannot stand in for output (IS-6, MV-8, MC-22)
 
 ---
 
@@ -270,26 +110,15 @@ This is the practical application of [Pattern 0.9](L0-foundation.md#pattern-09--
 
 ### Problem
 
-Teams adopt agentic practices based on intuition and anecdote. Without measurement, they can't tell if the investment is paying off, where to focus next, or whether maturity is progressing. "We feel faster" is not evidence — it's optimism bias. Teams that don't measure can't improve systematically.
+Teams adopt agentic practices based on intuition and anecdote. Without measurement, they can't tell if the investment is paying off or where to focus next. "We feel faster" is not evidence — it's optimism bias. Teams that don't measure can't improve systematically.
 
 ### Solution
 
-**Establish metrics that measure the outcomes agentic practices are designed to improve.** Metrics serve three purposes: validate that practices are working, identify where to focus next, and close the feedback loop on the practices themselves.
+**Establish metrics that measure the outcomes agentic practices are designed to improve.** Metrics serve three purposes: check whether practices are working, identify where to focus next, and close the feedback loop on the practices themselves.
 
 This is not about tracking agent activity for its own sake. Tokens consumed, commands executed, and sessions started are activity metrics — they measure effort, not outcomes. The metrics that matter measure whether the codebase is getting better and whether agents are becoming more effective over time.
 
-**Maturity progression:**
-
-Agentic development matures through four stages. Each stage maps to the pattern pyramid:
-
-| Stage | Description | Pattern Foundation |
-|-------|-------------|-------------------|
-| **Foundational** | Agents handle bounded tasks with human oversight. Single-file changes, clear instructions, manual verification. No production data in prompts. | L0: Structure is navigable. Agent can find what it needs. |
-| **Orchestrated** | Multi-agent workflows: task decomposition, cross-file changes, test-first development, evidence-based completion. Cross-repo awareness. Governance policies in place. | L1-L2: Feedback loops catch errors. Guardrails prevent violations. |
-| **Self-optimizing** | Agents critique and revise their own work. Plan-execute-observe cycles. Memory of prior decisions and failure modes. Propose refactors with architectural alignment. | L3: Efficient token use. Structured exploration. Smart routing. |
-| **Autonomous** | End-to-end delivery with governance guardrails. Multi-agent coordination across domains. Metrics-driven process refinement. Continuous improvement loops. | L4: Standards hold over time. Drift is detected. Outcomes are measured. |
-
-A team doesn't "arrive" at a stage — different parts of the codebase may be at different maturity levels. The metrics framework identifies where to invest next.
+**Autonomy is a separate axis.** These metrics measure outcomes. They do not say how much autonomy an agent should hold for a given workflow. That is a per-workflow grant, capped by the weakest control around it. See [How Far a Team Can Let Go](../README.md#how-far-a-team-can-let-go).
 
 **Key metric categories:**
 
@@ -307,14 +136,14 @@ A team doesn't "arrive" at a stage — different parts of the codebase may be at
 
 **3. Agent autonomy**
 
-- Human intervention rate — how often a human must redirect or correct an agent mid-task
+- Human intervention rate — how often a human must redirect or correct an agent mid-task. Treat it as an input to the grant decision, never as a target: driving it down by shrinking tasks or skipping review lowers the number without improving the work
 - Task completion without handoff — percentage of tasks completed in a single agent session
 - Review rejection rate — percentage of agent PRs requiring significant revision
 
 **4. Governance**
 
 - Constitutional rule violations caught by guardrails vs. caught in review
-- Spec drift detected — broken links, stale docs, orphaned tests — tracked over time via [Pattern 4.2](#pattern-42--spec-drift-detection)
+- Spec drift detected — broken links, stale docs, orphaned tests — tracked over time with the checks in [Pattern 0.7](L0-foundation.md#pattern-07--documentation-as-system-map)
 - Rollback frequency — how often agent changes must be reverted
 - Audit completeness — percentage of agent changes with full evidence trail
 
@@ -336,7 +165,7 @@ Starter set (one per category):
 
 - **Per-task:** Cycle time, intervention rate, plan revision count
 - **Per-week:** Defect rate, review rejection rate, drift detection counts
-- **Per-quarter:** Maturity stage assessment, metric trend analysis, process refinement
+- **Per-quarter:** Metric trend analysis, review of each workflow's autonomy grant, process refinement
 
 **Closing the loop:**
 
@@ -346,19 +175,12 @@ Metrics that don't drive action are waste. For each metric, define:
 - **Action:** What do you do when the threshold is hit? (e.g., invest in better task scoping)
 - **Owner:** Who is responsible for acting on it?
 
-**Gate criteria for maturity stage transitions:**
-
-Each stage has observable gates — not arbitrary timelines:
-
-- **Foundational → Orchestrated:** A medium-sized feature (2-5 files) completes end-to-end with agent-driven flow and passes CI
-- **Orchestrated → Self-optimizing:** Agents autonomously propose and run safe plans, requiring human review only for critical-path or security changes
-- **Self-optimizing → Autonomous:** Organization-wide adoption in at least one major product area, with documented safety nets, rollback plans, and cost governance
-
 ### Anti-Pattern
 
 - **Vanity metrics:** Tracking tokens consumed or commands executed — these measure activity, not outcomes.
 - **Measuring without acting:** Collecting data but not defining thresholds, actions, or owners.
 - **Gaming the metrics:** Optimizing for the metric rather than the outcome (e.g., reducing intervention rate by making tasks so trivial the agent never needs help).
+- **Intervention rate as a target:** It is an input. A low rate can mean good work or no oversight.
 - **All-or-nothing:** Trying to measure everything from day one. Start with one metric per category.
 
 ### Cross-References
@@ -367,6 +189,8 @@ Each stage has observable gates — not arbitrary timelines:
 - [L2: Behavioral Guardrails](L2-behavioral-guardrails.md): Guardrail violation rates are a governance signal
 - [L3: Optimization](L3-optimization.md): Token efficiency gains are measurable
 - **Pattern 4.1 — Evidence-Based Claims**: The evidence standard applies to metrics claims themselves
+
+**Evidence:** Strong — for avoiding activity and throughput metrics; the example thresholds are house values (MV-1, MV-2, MV-5, AN-26, AN-48)
 
 ---
 
@@ -400,10 +224,10 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm run lint:md                       # markdownlint-cli2, config in .markdownlint-cli2.jsonc
       - run: python3 scripts/check-doc-links.py .  # links and anchors, exits 1 on any broken one
-      - run: test "$(wc -l < CLAUDE.md)" -le 150   # CLAUDE.md line limit
+      - run: test "$(wc -l < AGENTS.md)" -le 200 || echo "::warning::AGENTS.md is over 200 lines"  # warning only
 ```
 
-Each check exists in this repository: `npm run lint:md` is defined in `package.json`, `scripts/check-doc-links.py` is the link and anchor checker, and the line-limit check is an inline shell step in the `claude-md-line-limit` job of `.github/workflows/docs.yml` (the `wc -l` line above is its one-line equivalent). The same workflow also runs a doc-reachability job (all docs referenced from CLAUDE.md) and a writing-conventions job (filler words) as inline shell steps.
+Each check exists in this repository: `npm run lint:md` is defined in `package.json`, `scripts/check-doc-links.py` is the link and anchor checker, and the line-count check is an inline shell step in the `instruction-file-length` job of `.github/workflows/docs.yml` (the `wc -l` line above is its one-line equivalent). It warns above about 200 lines for AGENTS.md and CLAUDE.md and never fails the build. The same workflow also runs a doc-reachability job (all docs referenced from AGENTS.md) and a writing-conventions job (filler words) as inline shell steps.
 
 ### Reference Implementation
 
@@ -415,8 +239,10 @@ Putting thresholds in CI workflow files rather than project config. When thresho
 
 ### Cross-References
 
-- [Pattern 4.2 — Spec Drift Detection](#pattern-42--spec-drift-detection) — CI automates drift checks
+- [Pattern 0.7 — Documentation as System Map](L0-foundation.md#pattern-07--documentation-as-system-map) — CI automates drift checks
 - [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — CI output is the evidence
+
+**Evidence:** Partial — automated checks on every change are an independent practice; the scripts and thresholds are first-party, n=1 (PL-3)
 
 ---
 
@@ -616,13 +442,14 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements context e
 
 ### Cross-References
 
-- [Pattern 3.1 — Smart Routing](L3-optimization.md#pattern-31--smart-routing--tool-selection) — Tool routing is one context eval application
-- [Pattern 3.2 — Intent Classification](L3-optimization.md#pattern-32--intent-classification) — Intent parsing correctness is eval'd through scenarios
-- [Pattern 3.3 — Environment-Aware Routing](L3-optimization.md#pattern-33--environment-aware-routing) — Configuration variants in eval ensure degraded paths work
+- [Pattern 3.1 — Prefer Native Structured Tools](L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits) — Tool routing and intent classification are context eval applications
+- [Pattern 3.3 — Environment-Aware Routing](L3-optimization.md#pattern-33--environment-aware-routing-and-session-lifecycle) — Configuration variants in eval ensure degraded paths work
 - [Pattern 2.4 — Constitutional Rules](L2-behavioral-guardrails.md#pattern-24--constitutional-rules) — Constitutional compliance can be eval'd through scenarios
 - [Pattern 2.6 — Enforcement Pipeline](L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition) — Pipeline behavior can be eval'd through scenarios
 - [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — Context eval produces evidence for decision-layer effectiveness claims
 - [Pattern 4.5 — CI Guardrails](#pattern-45--ci-guardrails) — Context eval runs in CI as a non-negotiable quality gate
+
+**Evidence:** Partial — task banks, repeated trials and reading transcripts are documented practice from two vendors; no independent outcome evidence that scored routing improves results (MV-9, MV-10)
 
 ---
 
@@ -632,7 +459,7 @@ Adopt this checklist for code reviews, PR reviews, and task completion verificat
 
 ### Constitutional Compliance
 
-- [ ] CLAUDE.md rules followed (if applicable)
+- [ ] AGENTS.md rules followed (if applicable)
 - [ ] No hardcoded paths or secrets
 - [ ] No blocking I/O without timeout
 - [ ] Error handling covers all branches
@@ -658,8 +485,8 @@ Adopt this checklist for code reviews, PR reviews, and task completion verificat
 ### Documentation
 
 - [ ] Code changes documented in same task
-- [ ] CLAUDE.md updated if structure changed
-- [ ] New docs linked from CLAUDE.md (no orphans)
+- [ ] AGENTS.md updated if structure changed
+- [ ] New docs linked from AGENTS.md (no orphans)
 - [ ] Code examples tested and verified
 - [ ] Deprecated features marked as such
 
@@ -691,14 +518,12 @@ Adopt this checklist for code reviews, PR reviews, and task completion verificat
 
 ## Summary: L4 as Standards & Measurement
 
-L4 is the maturity layer — the practices that verify L0-L3 are holding and measure their impact:
+L4 holds the practices that check L0-L3 and measure their impact:
 
 1. **Pattern 4.1 (Evidence-Based Claims):** Verify before claiming, show output
-2. **Pattern 4.2 (Spec Drift Detection):** Automate drift checks, fix immediately
-3. **Pattern 4.3 (New Starter Standard):** Audit entry points, fix gaps
-4. **Pattern 4.4 (Agentic Development Metrics):** Measure outcomes, close the feedback loop
-5. **Pattern 4.5 (CI Guardrails):** Non-negotiable enforcement through CI workflows
-6. **Pattern 4.6 (Context Eval):** Score routing decisions against expected outcomes across environments
+2. **Pattern 4.4 (Agentic Development Metrics):** Measure outcomes, close the feedback loop
+3. **Pattern 4.5 (CI Guardrails):** Non-negotiable enforcement through CI workflows
+4. **Pattern 4.6 (Context Eval):** Score routing decisions against expected outcomes across environments
 
 **The review checklist is the enforcement mechanism.** Apply it to every task, every PR, every completion.
 
@@ -713,4 +538,4 @@ Architecture, tech debt, and modularity require continuous attention — especia
 
 ---
 
-**Previous:** [L3: Optimization — Token Efficiency & Agent Performance](L3-optimization.md) | [Back to Overview](../README.md)
+**Previous:** [L3: Optimization (Optional)](L3-optimization.md) | [Back to Overview](../README.md)

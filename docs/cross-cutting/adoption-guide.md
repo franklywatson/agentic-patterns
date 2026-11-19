@@ -2,7 +2,7 @@
 
 Suggested approaches for teams adopting agentic development patterns incrementally. Not a rigid plan — a set of paths teams have found useful.
 
-**Core principle:** Each pattern level delivers value independently. L0 Foundation alone dramatically improves agent navigation. You don't need L4 to benefit from L0. Start where your gaps are, adopt what helps.
+**Core principle:** Each pattern layer delivers value independently. L0 Foundation alone gives agents a navigable structure and a documented entry point (evidence: first-party experience, no controlled comparison). You don't need L4 to benefit from L0. Start where your gaps are, adopt what helps.
 
 ---
 
@@ -12,9 +12,9 @@ Before choosing a path, assess your current state. Run through this checklist to
 
 ### Entry Points
 
-- [ ] CLAUDE.md exists and is under 150 lines
+- [ ] An agent instruction file (AGENTS.md, imported by CLAUDE.md) exists, has a named owner and a reviewed date, and is short enough that every line earns its place
 - [ ] README.md clearly explains what the project does
-- [ ] CLAUDE.md links to all relevant documentation
+- [ ] The instruction file links to all relevant documentation
 - [ ] File structure is grouped by domain, not layer
 
 ### Testing
@@ -29,8 +29,8 @@ Before choosing a path, assess your current state. Run through this checklist to
 
 - [ ] Every pattern is documented with examples
 - [ ] Code examples in docs match current codebase
-- [ ] Documentation is linked from CLAUDE.md
-- [ ] No orphaned docs (all reachable from master index)
+- [ ] Documentation is linked from the agent instruction file (AGENTS.md)
+- [ ] No orphaned docs (all reachable from the master index)
 
 ### Tooling
 
@@ -41,7 +41,7 @@ Before choosing a path, assess your current state. Run through this checklist to
 
 ### The New Starter Test
 
-The ultimate assessment: give someone (or an agent) with zero context your CLAUDE.md + README + file structure. Can they answer these questions without asking for help?
+The ultimate assessment: give someone (or an agent) with zero context your AGENTS.md + README + file structure. Can they answer these questions without asking for help?
 
 1. What does this project do?
 2. How do I run it locally?
@@ -52,15 +52,15 @@ The ultimate assessment: give someone (or an agent) with zero context your CLAUD
 
 Document every assumption they had to make. Each assumption is a gap.
 
-### Gap Identification by Pyramid Level
+### Gap Identification by Layer
 
-| Level | Focus | Common Gaps | Quick Win |
+| Layer | Focus | Common Gaps | Quick Win |
 |-------|-------|-------------|-----------|
-| **L0 Foundation** | Structure, CLAUDE.md, doc freshness, cleanup | No CLAUDE.md, layer-based organization, stale docs | Write CLAUDE.md, restructure by domain |
+| **L0 Foundation** | Structure, AGENTS.md, doc freshness, cleanup | No AGENTS.md, technical-layer organization, stale docs | Write AGENTS.md, restructure by domain |
 | **L1 Closed Loop Design** | Design-led verification with stack tests and focused integration tests | No stack tests, shallow assertions, no edge-case coverage for complex external deps | Add app-startup stack test |
 | **L2 Guardrails** | Skills, hooks, behavioral rules | No enforcement, agents make common errors | Add test-integrity skill |
-| **L3 Optimization** | Smart routing, structured search | Raw grep/cat commands, token waste | Set up jcodemunch indexing |
-| **L4 Standards & Measurement** | Evidence, drift detection, metrics, context eval | Claims without evidence, spec drift | Establish evidence standard |
+| **L3 Optimization (optional)** | Native structured tools, context isolation | Raw grep/cat commands, token waste | Route grep and cat to native tools |
+| **L4 Standards & Measurement** | Evidence, metrics, CI guardrails, context eval | Claims without evidence, no outcome metrics | Establish evidence standard |
 
 ---
 
@@ -72,18 +72,18 @@ Three paths teams have used. Choose based on your situation.
 
 Start with L0, the highest-impact, lowest-effort starting point. Then build upward.
 
-1. **L0 Foundation** — Restructure by domain, write CLAUDE.md, establish doc freshness and cleanup practices. See [L0-foundation.md](../L0-foundation.md).
+1. **L0 Foundation** — Restructure by domain, write AGENTS.md, establish doc freshness and cleanup practices. See [L0-foundation.md](../L0-foundation.md).
 2. **L1 Closed Loop Design** — Add stack tests for your most critical user journeys. See [L1-feedback-loops.md](../L1-feedback-loops.md) and the working examples in [examples/stack-test/](../../examples/stack-test/).
 3. **L2 Guardrails** — Add skills and hooks for your project's most common errors. See [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md).
-4. **L3 Optimization** — Set up structured search and routing. See [L3-optimization.md](../L3-optimization.md) and the working example in [examples/guardrails/](../../examples/guardrails/).
-5. **L4 Standards & Measurement** — Add drift detection, metrics, and context eval when the earlier levels are stable. See [L4-standards-measurement.md](../L4-standards-measurement.md).
+4. **L3 Optimization (optional)** — Reduce token spend with structured tools and context isolation, when token cost is a measured problem. See [L3-optimization.md](../L3-optimization.md) and the working example in [examples/guardrails/](../../examples/guardrails/).
+5. **L4 Standards & Measurement** — Add metrics, CI guardrails, and context eval when the earlier layers are stable. Drift detection and the new-starter audit are in [Pattern 0.7](../L0-foundation.md#pattern-07--documentation-as-system-map) and [Pattern 0.9](../L0-foundation.md#pattern-09--ai-as-new-starter-standard). See [L4-standards-measurement.md](../L4-standards-measurement.md).
 
 ### Path B: Testing-First (Teams with Testing Gaps)
 
 If your testing is the biggest pain point — no stack tests, shallow assertions, or missing edge-case coverage for external dependencies — start at L1.
 
 1. **L1** — Ensure that there exists a stack test to cover all user journeys, avoiding duplicated testing as much as possible. For complex external dependencies (payment processors, blockchain RPCs), add focused integration tests against real testnet/sandbox. See [Pattern 1.1 — Stack Tests](../L1-feedback-loops.md#pattern-11--stack-tests), [Pattern 1.5 — Real Dependencies](../L1-feedback-loops.md#pattern-15--real-dependencies-in-e2eintegration-and-stack-tests), and [examples/stack-test/](../../examples/stack-test/).
-2. **L0** — Once stack tests are working, structure the project to make them maintainable. Deep modules, CLAUDE.md, progressive disclosure.
+2. **L0** — Once stack tests are working, structure the project to make them maintainable. Deep modules, AGENTS.md, progressive disclosure.
 3. **L2-L4** — Continue upward as in Path A.
 
 ### Path C: Guardrails-First (Teams with Agent Errors)
@@ -92,21 +92,21 @@ If agents are making consistent errors (missing tests, ignoring rules, skipping 
 
 1. **L2** — Add skills for your most violated rules, hooks to block destructive patterns. See [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md).
 2. **L0** — Structure the project so agents have clear context to work with.
-3. **L1, L3-L4** — Fill in remaining levels as capacity allows.
+3. **L1, L3-L4** — Fill in remaining layers as capacity allows.
 
 ---
 
-## What to Read for Each Level
+## What to Read for Each Layer
 
 The pattern docs contain the detailed guidance. This guide links to them rather than duplicating content.
 
-| Level | Start With | Working Example |
+| Layer | Start With | Working Example |
 |-------|-----------|-----------------|
-| L0 | [L0-foundation.md](../L0-foundation.md) — Deep modules, CLAUDE.md, progressive disclosure | [examples/project-structure/](../../examples/project-structure/) |
+| L0 | [L0-foundation.md](../L0-foundation.md) — Deep modules, AGENTS.md, progressive disclosure | [examples/project-structure/](../../examples/project-structure/) |
 | L1 | [L1-feedback-loops.md](../L1-feedback-loops.md) — Context harvesting, stack tests, full-loop assertions | [examples/stack-test/typescript/](../../examples/stack-test/typescript/) or [examples/stack-test/python/](../../examples/stack-test/python/) |
 | L2 | [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md) — Skills, hooks, constitutional rules | [superpowers](https://github.com/obra/superpowers) or [rig](https://github.com/franklywatson/claude-rig) |
-| L3 | [L3-optimization.md](../L3-optimization.md) — Smart routing, structured search, scout pattern | [examples/guardrails/](../../examples/guardrails/) |
-| L4 | [L4-standards-measurement.md](../L4-standards-measurement.md) — Evidence, drift detection, metrics, context eval | — |
+| L3 | [L3-optimization.md](../L3-optimization.md) — Native structured tools, context isolation | [examples/guardrails/](../../examples/guardrails/) |
+| L4 | [L4-standards-measurement.md](../L4-standards-measurement.md) — Evidence, metrics, CI guardrails, context eval | — |
 
 ### Reference Implementations
 
@@ -119,11 +119,11 @@ The pattern docs contain the detailed guidance. This guide links to them rather 
 
 ## Key Success Factors
 
-1. **Incremental adoption** — Each level delivers value independently. Don't try to implement everything at once.
-2. **Start with L0 if unsure** — Structure and CLAUDE.md have the highest ROI for the least effort.
+1. **Incremental adoption** — Each layer delivers value independently. Don't try to implement everything at once.
+2. **Start with L0 if unsure** — Structure and AGENTS.md cost little and the later layers depend on them (evidence: first-party experience, not a measured ROI).
 3. **Update docs in the same task as code** — Deferred documentation is stale documentation. See [Pattern 0.7 — Documentation as System Map](../L0-foundation.md#pattern-07--documentation-as-system-map).
 4. **Remove dead code as you find it** — Cleanup is continuous, not periodic. See [Pattern 0.8 — Aggressive Cleanup](../L0-foundation.md#pattern-08--aggressive-cleanup).
-5. **Use the New Starter Test regularly** — It catches gaps that code review misses. See [Pattern 4.3 — New Starter Standard](../L4-standards-measurement.md#pattern-43--new-starter-standard).
+5. **Use the New Starter Test regularly** — It catches gaps that code review misses. See [Pattern 0.9 — AI-as-New-Starter Standard](../L0-foundation.md#pattern-09--ai-as-new-starter-standard).
 
 ### Common Pitfalls
 
@@ -139,7 +139,7 @@ The pattern docs contain the detailed guidance. This guide links to them rather 
 - [L0 Foundation](../L0-foundation.md) — Project structure patterns
 - [L1 Closed Loop Design](../L1-feedback-loops.md) — Design-led verification
 - [L2 Behavioral Guardrails](../L2-behavioral-guardrails.md) — Skills and hooks
-- [L3 Optimization](../L3-optimization.md) — Token efficiency
-- [L4 Standards & Measurement](../L4-standards-measurement.md) — Evidence, drift detection, metrics
+- [L3 Optimization](../L3-optimization.md) — Optional token efficiency
+- [L4 Standards & Measurement](../L4-standards-measurement.md) — Evidence, metrics, CI guardrails, context eval
 - [Anti-Patterns](./anti-patterns.md) — Common mistakes to avoid
-- [Reference Implementation Case Study](../references/reference-telegram-trading-bot-case-study.md) — Production validation
+- [Reference Implementation Case Study](../references/reference-telegram-trading-bot-case-study.md) — Project walkthrough with commit statistics (descriptive, not evidence)

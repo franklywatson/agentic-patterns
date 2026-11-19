@@ -1,12 +1,14 @@
 # Reference Telegram Trading Bot Project — Agentic Patterns in Production
 
+This case study is first-party, n=1: one project by the author of these patterns, with no independent replication.
+
 **Project:** Telegram trading bot — Trading automation platform (DEX swaps, bridges, limit orders, DCA strategies, stop-loss, trailing stops)
 
 **Tech Stack:** Node.js, PostgreSQL/TimescaleDB, Redis, Docker, Ethereum testnets
 
 **Scale:** Production-grade with comprehensive test coverage, real testnet blockchain trading
 
-This case study demonstrates how all five levels of the agentic patterns pyramid manifest in a production codebase. The project handles real blockchain transactions, manages user funds, and operates with financial-grade reliability requirements.
+This case study demonstrates how all five layers of the agentic patterns manifest in a production codebase. The project handles real blockchain transactions, manages user funds, and operates with financial-grade reliability requirements.
 
 ---
 
@@ -52,7 +54,7 @@ The worktree at `.worktrees/tg-dash/` demonstrates feature isolation:
 
 ### Documentation as System Map
 
-The project treats documentation as the system map — the navigational layer that keeps structure, intent, and conventions current. When code changes, docs update in the same task. DOCS commits at 13.5% of the total (172 of 1,276 non-merge commits) confirm this is not aspirational — it is practiced daily.
+The project treats documentation as the system map — the navigational layer that keeps structure, intent, and conventions current. When code changes, docs update in the same task. DOCS commits are 13.5% of the total (172 of 1,276 non-merge commits). A commit count does not show whether the docs were accurate.
 
 ### Documentation Health Tracking
 
@@ -74,7 +76,7 @@ The docs structure evolves with the codebase. When `06-chat-system/` was added f
 
 ### Aggressive Cleanup
 
-Dead code, stale comments, and superseded documentation are removed as they are encountered — not deferred to cleanup sprints. REFACTOR commits at 8.5% (108 of 1,276) show continuous quality maintenance distributed across the project's lifetime rather than concentrated in dedicated sprints.
+Dead code, stale comments, and superseded documentation are removed as they are encountered — not deferred to cleanup sprints. REFACTOR commits are 8.5% (108 of 1,276) and appear throughout the project's lifetime rather than in dedicated sprints.
 
 ---
 
@@ -355,7 +357,7 @@ When `tdd+` is invoked, it knows to reject mocked loggers and mocked ethers beca
 
 ### Intent-Based Command Routing
 
-The project implements L3's smart routing pattern ([Pattern 3.1](../L3-optimization.md#pattern-31--smart-routing--tool-selection)) through a combination of skills and hooks. Raw shell commands — `grep`, `cat`, `find` — are handled by hooks that classify intent ([Pattern 3.2](../L3-optimization.md#pattern-32--intent-classification)) and redirect to structured tools. Redirection requires a hook that runs before the command (PreToolUse); a hook that runs after the command cannot redirect it. `grep -r "export.*function" .` becomes a symbol search; `cat file.ts` becomes a targeted read; `find . -name "*.ts"` becomes a glob query. Environment-aware routing ([Pattern 3.3](../L3-optimization.md#pattern-33--environment-aware-routing)) detects whether jcodemunch indexes are available and degrades gracefully to raw tools when they aren't.
+The project implements L3's smart routing pattern ([Pattern 3.1](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)) through a combination of skills and hooks. Raw shell commands — `grep`, `cat`, `find` — are handled by hooks that classify intent ([Pattern 3.1](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)) and redirect to structured tools. Redirection requires a hook that runs before the command (PreToolUse); a hook that runs after the command cannot redirect it. `grep -r "export.*function" .` becomes a symbol search; `cat file.ts` becomes a targeted read; `find . -name "*.ts"` becomes a glob query. Environment-aware routing ([Pattern 3.3](../L3-optimization.md#pattern-33--environment-aware-routing-and-session-lifecycle)) detects whether jcodemunch indexes are available and degrades gracefully to raw tools when they aren't.
 
 ### RTK Integration
 
@@ -363,7 +365,7 @@ The [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk) CLI proxy filters n
 
 ### jcodemunch for Structured Code Search
 
-When the repository is indexed by [jcodemunch](https://github.com/jgravelle/jcodemunch-mcp), agent searches bypass raw grep entirely. `search_symbols` returns typed results with file locations and summaries — the same information as `grep -r` output in fewer tokens. The scout pattern ([Pattern 3.4](../L3-optimization.md#pattern-34--context-engineering--the-scout-pattern)) applies here: a sub-agent maps the codebase structure first, then the implementer works with a concise index instead of re-deriving file locations each session.
+When the repository is indexed by [jcodemunch](https://github.com/jgravelle/jcodemunch-mcp), agent searches bypass raw grep entirely. `search_symbols` returns typed results with file locations and summaries — the same information as `grep -r` output in fewer tokens. The scout pattern ([Pattern 3.2](../L3-optimization.md#pattern-32--context-isolation-scout)) applies here: a sub-agent maps the codebase structure first, then the implementer works with a concise index instead of re-deriving file locations each session.
 
 ### TOON Serialization for MCP Responses
 
@@ -371,7 +373,7 @@ In this project, the MCP server used [TOON (Token-Oriented Object Notation)](htt
 
 ### Structured Output Over Raw Text
 
-Across the agent-facing tool surface, structured output ([Pattern 3.5](../L3-optimization.md#pattern-35--structured-output-over-raw-text)) replaces raw text commands wherever possible. The result: agents reason about typed data structures instead of parsing unstructured text — faster, fewer errors, less wasted context.
+Across the agent-facing tool surface, structured output ([Pattern 3.1](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)) replaces raw text commands wherever possible. The result: agents reason about typed data structures instead of parsing unstructured text — faster, fewer errors, less wasted context.
 
 ---
 
@@ -416,7 +418,7 @@ Every error, warning, and failure must be addressed. Not "relevant" errors — A
 
 ---
 
-## Cross-Level Integration
+## Cross-Layer Integration
 
 ### How L0 Enables L1
 
@@ -448,13 +450,13 @@ In this project, L3 added structured search, smart routing and compact MCP seria
 
 5. **Documentation is the system map** — 92% coverage tracking and continuous reorganization treat docs as living artifacts. Superseded docs are deleted, not archived — version control preserves history.
 
-6. **All levels integrate** — L0 constitutional rules enable L1 stack tests, which provide targets for L2 skills, which L3 amplifies through token optimization, which L4 standards & measurement maintains.
+6. **All layers integrate** — L0 constitutional rules enable L1 stack tests, which provide targets for L2 skills, which L3 amplifies through token optimization, which L4 standards & measurement maintains.
 
 ---
 
 ## Commit History Analysis
 
-The reference project's git history provides empirical evidence for how agentic development operates at scale. The analysis covers 1,497 commits from 2025-10-31 to 2026-03-10 (~5 months), classified by type.
+These are descriptive statistics for one project; they are not evidence that any pattern caused an outcome. The analysis covers 1,497 commits from 2025-10-31 to 2026-03-10 (~5 months), classified by type.
 
 ![Commit Analysis Dashboard](../diagrams/commit-analysis-dashboard.png)
 
@@ -486,16 +488,16 @@ The November-December spike reflects the upfront investment in testing infrastru
 
 February 2026 was the busiest period: 629 non-merge commits across 17 active days (37.0 commits/day average).
 
-### What the Data Shows
+### What the Statistics Show
 
-1. **Testing is a first-class output, not an afterthought** — 12.5% of commits are TEST, comparable to DOCS (13.5%). Test infrastructure received dedicated investment in November-December before the feature acceleration in January-February.
+1. **Testing is a large share of commits** — 12.5% of commits are TEST, comparable to DOCS (13.5%). Test infrastructure received dedicated investment in November-December before the feature acceleration in January-February.
 
-2. **Documentation keeps pace with code** — DOCS commits at 13.5% indicate continuous documentation updates, consistent with the L0 documentation-as-system-map pattern. Docs are not deferred to a separate phase.
+2. **Documentation commits are frequent** — DOCS commits at 13.5% are consistent with the L0 documentation-as-system-map pattern. The count says nothing about doc accuracy.
 
-3. **Refactoring is continuous** — 8.5% REFACTOR commits show ongoing code quality maintenance rather than periodic cleanup sprints. This aligns with L0 aggressive cleanup as a continuous practice.
+3. **Refactoring is spread across the project** — 8.5% REFACTOR commits, consistent with the L0 aggressive cleanup pattern.
 
-4. **Bugfix rate is high but expected** — 15.8% BUGFIX commits reflect iterative development where bugs are found and fixed rapidly through the stack test feedback loop. The high diagnosticity of stack tests means bugs are caught early and fixed immediately (L2 zero-defect tolerance), rather than accumulating.
+4. **BUGFIX is 15.8% of commits** — the project's own account attributes early detection to stack tests; the commit count cannot separate that from other causes.
 
-5. **Security is a significant concern** — 8.6% SECURITY commits reflect continuous attention to security in a financial application handling real funds and blockchain transactions. This is a domain-specific requirement that compounds with the zero-defect tolerance pattern.
+5. **SECURITY is 8.6% of commits** — the application handles real funds and blockchain transactions, so the share reflects the domain.
 
-6. **CHORE commits reveal infrastructure investment** — 17.2% CHORE commits cover Docker configuration, dependency management, CI pipeline setup, and environment configuration. This overhead is the cost of running a full Docker stack for every test — the investment that makes stack tests possible.
+6. **CHORE is 17.2% of commits** — these cover Docker configuration, dependency management, CI pipeline setup, and environment configuration, which includes the cost of running a full Docker stack for tests.

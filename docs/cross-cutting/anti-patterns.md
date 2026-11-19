@@ -16,7 +16,7 @@ Use this catalog when agents encounter friction. Match the symptom, apply the pa
 
 **Pattern**: Apply [Pattern 0.1 - Deep Modules](../L0-foundation.md#pattern-01--deep-modules):
 
-- Export 3-5 functions maximum per module
+- Keep the public interface small (heuristic: 3-5 exports per module)
 - Put complex logic behind a simple facade
 - Split by domain concern
 - Let tests specify behavior, not implementation
@@ -71,28 +71,29 @@ After: src/
 
 ### Concise Project Constitution
 
-**Symptom**: CLAUDE.md has grown past 500 lines, contains detailed tutorials and inline examples, or reads like a documentation site rather than a contract.
+**Symptom**: The agent instruction file has grown past 500 lines, contains detailed tutorials and inline examples, or reads like a documentation site rather than a contract. It has no owner or reviewed date, and no one has re-tested its rules since the last model upgrade.
 
 **Why This Happens**: Every important insight feels like it belongs in the file agents read first. But each line of constitution displaces context the agent needs for its actual task. Critical rules get buried in prose. The agent spends tokens reading the map instead of navigating the territory.
 
-**Pattern**: Apply [Pattern 0.4 - CLAUDE.md as Project Constitution](../L0-foundation.md#pattern-04--claudemd-as-project-constitution):
+**Pattern**: Apply [Pattern 0.4 - Agent instruction file as project constitution](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution):
 
-- Hard limit: **150 lines maximum**
+- Keep the file short; CI warns at about 200 lines
+- Name an owner, record a reviewed date, and re-test the rules at each model upgrade
 - Link to external docs for detailed explanations
-- Keep CLAUDE.md focused on: what is this, structure, constitutional rules, doc links
+- Keep the file focused on: what is this, structure, constitutional rules, doc links
 - Move tutorials, examples, and extended guides to dedicated docs
 
 Example refactor:
 
 ```
-Before: CLAUDE.md (500 lines)
+Before: AGENTS.md (500 lines)
 |- 50 lines: project description
 |- 200 lines: detailed pattern explanations
 |- 100 lines: inline examples
 |- 50 lines: constitutional rules
 +- 100 lines: setup instructions
 
-After: CLAUDE.md (140 lines)
+After: AGENTS.md (140 lines)
 |- 10 lines: project description
 |- 30 lines: structure overview
 |- 20 lines: constitutional rules
@@ -107,13 +108,13 @@ Plus: docs/patterns/*.md (moved from inline)
 
 ### Linked Documentation
 
-**Symptom**: Documentation files exist that are unreachable from CLAUDE.md. README files sit in subdirectories with no links to them. Multiple documentation files cover overlapping content.
+**Symptom**: Documentation files exist that are unreachable from AGENTS.md. README files sit in subdirectories with no links to them. Multiple documentation files cover overlapping content.
 
 **Why This Happens**: Documentation grows organically - someone writes a useful doc and commits it, but never links it from the master index. Over time, docs duplicate each other as different authors explain the same thing. Agents can only discover what's linked; everything else is invisible.
 
-**Pattern**: Apply [Pattern 0.4 - CLAUDE.md as Project Constitution](../L0-foundation.md#pattern-04--claudemd-as-project-constitution):
+**Pattern**: Apply [Pattern 0.4 - Agent instruction file as project constitution](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution):
 
-- CLAUDE.md is the master index - every doc must be reachable from it
+- AGENTS.md is the master index (CLAUDE.md imports it) - every doc must be reachable from it
 - Use plain relative markdown links (`[title](path.md)`), not `@` imports, which load the linked doc into every session
 - Run link validation to find orphans
 - Consolidate overlapping docs into single sources
@@ -124,11 +125,11 @@ Example audit:
 # Find all markdown files
 find docs -name "*.md"
 
-# Verify each is reachable from CLAUDE.md
-grep -r "filename.md" docs/CLAUDE.md
+# Verify each is reachable from AGENTS.md
+grep -F "filename.md" AGENTS.md
 
 # If not found, either:
-# - Add link to CLAUDE.md
+# - Add link to AGENTS.md
 # - Delete the orphan file
 # - Merge into existing doc
 ```
@@ -273,7 +274,7 @@ expect(response.status).toBe(200);
 
 - Dynamic port allocation from range (10000-65535)
 - Verify ports are available before assigning
-- Unique container names with test name + PID + random
+- Unique compose project name (`docker compose -p`) with test name + PID + random
 
 Example refactor:
 
@@ -333,90 +334,82 @@ npm test -- tests/stack/
 
 ### Enforce Rules Through Skills and Hooks
 
-**Symptom**: Rules written in CLAUDE.md have no enforcement mechanism. Guidelines are phrased as "should" rather than "must." Agents forget or ignore the rules when context shifts or prompts get complex.
+**Symptom**: Rules written in AGENTS.md have no enforcement mechanism. Guidelines are phrased as "should" rather than "must." Agents forget or ignore the rules when context shifts or prompts get complex. Or the opposite: a safety rule ("never touch production") is held only by a hook.
 
-**Why This Happens**: Writing a rule feels like enforcing it. But prose rules are unreliable - agents drop them between phases of work, especially under complex prompts. Without tool-layer enforcement, rules are suggestions that erode under pressure.
+**Why This Happens**: Writing a rule feels like enforcing it. Prose rules are guidance; agents drop them between phases of work, especially under complex prompts. A hook is stronger, but it runs inside the agent's environment: it gates tool calls, not what a permitted tool does once running, and the agent can often edit project hook files. Rules are only as strong as the layer that holds them.
 
-**Pattern**: Apply [Pattern 2.1 - Skill Overlay Architecture](../L2-behavioral-guardrails.md#pattern-21--skill-overlay-architecture):
+**Pattern**: Apply [Pattern 2.4 - Constitutional Rules](../L2-behavioral-guardrails.md#pattern-24--constitutional-rules) and [Pattern 2.1 - Skill Overlay Architecture](../L2-behavioral-guardrails.md#pattern-21--skill-overlay-architecture):
 
-- Encapsulate rules in skills
-- Skills enforce rules automatically when activated
-- Hooks block violations at tool layer
-- Constitutional rules are hardcoded, not soft suggestions
+- Name each rule's enforcement point: prompt, hook, CI, sandbox or downstream
+- What must never happen goes to the sandbox, credential scope or downstream authorisation
+- What must always happen goes to a hook plus a required CI check
+- Prompts and skills carry everything else
 
 Example refactor:
 
 ```
-Before: Rule in CLAUDE.md
-"Never mock database drivers in tests"
-(No enforcement - agent may mock anyway)
+Before: Rule in AGENTS.md
+"Never mock database drivers in stack tests"
+(Enforcement point: prompt only. The agent may mock anyway.)
 
-After: Skill with hook activation
-tdd+ skill:
-  - Reads CLAUDE.md constitutional rules
-  - Rejects mock generation for protected components
-  - Hook: blocks Edit tool if mock code detected
+After: Rule with named enforcement points
+Prompt: tdd+ skill states the rule
+Hook: PreToolUse blocks an Edit that adds a mock import to a stack-test file
+CI: required check searches stack-test directories for mock libraries
 ```
 
 ---
 
-### Complete the Skill Chain
+### Scale the Skill Chain to Risk
 
-**Symptom**: Work jumps straight from planning to implementation without test-driven development. Changes ship without verification. Review happens after the fact, if at all.
+**Symptom**: Every change, including a typo fix, runs through five phases. Agents and reviewers skip phases in bulk. Or the opposite: changes ship without verification evidence or review because they "looked small".
 
-**Why This Happens**: Skipping steps feels faster. But each link in the skill chain enforces a guardrail - skip TDD and code ships without tests; skip verification and claims go unverified; skip review and constitutional rules go unchecked.
+**Why This Happens**: A chain that applies uniformly is simple to state. Applied to every change, it adds ceremony to small changes, and people learn to bypass it. Visiting a phase also does not show that the phase did its job.
 
-**Pattern**: Apply [Pattern 2.2 - The Skill Chain](../L2-behavioral-guardrails.md#pattern-22--the-skill-chain):
+**Pattern**: Apply [Pattern 2.2 - The Skill Chain](../L2-behavioral-guardrails.md#pattern-22--the-skill-chain) as an optional pipeline:
 
-- Complete chain: brain+ -> plan+ -> tdd+ -> verify+ -> review+
-- Each skill validates input and produces structured output for next
-- Every link catches what the previous link cannot
+- Scale ceremony to risk: reversibility and blast radius set how many phases a change needs
+- Verification (evidence before claims) and review stay outcome gates for every change
+- Hold those gates in CI and the merge process, not in whether the agent visited a phase
+- Use [phase tracking](../L2-behavioral-guardrails.md#pattern-27--phase-transition-validation) only where an audit trail of phases is wanted, with strictness set per risk tier
 
 Example workflow:
 
 ```
-brain+ -> plan+ -> tdd+ -> verify+ -> review+
-- brain+: Design with stack testing considerations
-- plan+: Create plan with test coverage matrix
-- tdd+: RED-GREEN-REFACTOR with full-loop assertions
-- verify+: Show command output before claiming done
-- review+: Checklist-based compliance check
+Typo fix:           edit -> CI checks -> review
+Small code change:  tdd+ -> verify+ -> review
+Feature:            brain+ -> plan+ -> tdd+ -> verify+ -> review+
+Irreversible:       full chain + approver who is not the requester
 ```
 
 ---
 
-### Hooks That Block, Not Just Log
+### Match the Hook to the Job
 
-**Symptom**: Hook scripts warn but allow the operation to proceed. Warnings accumulate in output that agents learn to ignore. Rules that were important enough to hook are bypassed routinely.
+**Symptom**: Hook scripts warn but allow the operation to proceed, and agents learn to ignore the warnings. Or a PostToolUse check is described as "blocking" a violation that has already happened. Or a hook is the only control for something that must never happen.
 
-**Why This Happens**: Advisory hooks feel safer - "we'll log it and let them decide." But agents treat warnings as noise. If a rule is important enough to hook, it's important enough to enforce. An advisory hook is a rule that's been written down and then abandoned.
+**Why This Happens**: One mechanism gets used for three jobs: nudging (advise is fine), enforcing a workflow rule (needs a block or a required CI check), and preventing harm (needs a sandbox or downstream authorisation, with a hook as defence in depth). Advisory hooks on rules that must hold are rules written down and abandoned. A PostToolUse hook runs after the tool call, so it is detective: it reports and records, and cannot prevent the call.
 
-**Pattern**: Apply [Pattern 2.3 - Hook Automation](../L2-behavioral-guardrails.md#pattern-23--hook-automation):
+**Pattern**: Apply [Pattern 2.3 - Hook Automation](../L2-behavioral-guardrails.md#pattern-23--hook-automation) and [Pattern 2.6 - Enforcement Pipeline Composition](../L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition):
 
-- Hooks should either allow, advise with clear action, or block
-- Critical rules must block, not warn
-- Clear narrow purposes with documented behavior
+- Use advise for ergonomic nudges
+- Use PreToolUse blocks on structured arguments (a file path in an Edit call) for workflow rules
+- Use a required CI check for invariants on every change
+- Use the sandbox, credential scope and downstream authorisation for what must never happen
+- Do not rely on PostToolUse to prevent anything
 
 Example refactor:
 
-```typescript
-// Advisory: Warning only (agent ignores it)
-hook.on('PreToolUse', (tool, args) => {
-  if (tool === 'Bash' && args.command.includes('sed -i')) {
-    console.warn('Prefer Edit tool over sed -i');
-    return; // operation proceeds anyway
-  }
-});
+```bash
+# Advisory only for a rule that must hold: the agent ignores the message.
+echo "Prefer the Edit tool for protected files" >&2
+exit 0
 
-// Enforcement: Block with explanation
-hook.on('PreToolUse', (tool, args) => {
-  if (tool === 'Bash' && args.command.includes('sed -i')) {
-    throw new Error(
-      'Use Edit tool instead of sed -i. ' +
-      'sed -i is destructive and bypasses undo history.'
-    );
-  }
-});
+# PreToolUse block on a structured argument (Edit tool, file_path).
+# Fail closed: exit 2 if the path cannot be parsed. Match absolute paths.
+case "$path" in
+  */.github/workflows/*) echo "Blocked: protected path" >&2; exit 2 ;;
+esac
 ```
 
 ---
@@ -429,7 +422,7 @@ hook.on('PreToolUse', (tool, args) => {
 
 **Why This Happens**: grep is familiar and always available. Reaching for it is muscle memory. But when the repository is indexed by a tool like jcodemunch, raw grep returns more tokens for the same information - and misses symbols that match text patterns inexactly.
 
-**Pattern**: Apply [Pattern 3.1 - Smart Routing](../L3-optimization.md#pattern-31--smart-routing--tool-selection):
+**Pattern**: Apply [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits):
 
 - Route to structured search when available
 - Use `search_symbols` for typed results
@@ -454,7 +447,7 @@ search_symbols(query="function", kind="function")
 
 **Why This Happens**: Reading the whole file feels thorough. But context window space is finite - every irrelevant line displaces something useful. With large codebases, this scales into a real constraint on what the agent can reason about simultaneously.
 
-**Pattern**: Apply [Pattern 3.5 - Structured Output over Raw Text](../L3-optimization.md#pattern-35--structured-output-over-raw-text):
+**Pattern**: Apply [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits):
 
 - Use targeted reads with line ranges
 - Use `get_symbol` to extract specific functions
@@ -482,7 +475,7 @@ get_file_outline(file_path="src/ecommerce/orders/execute.ts")
 
 **Why This Happens**: Without environment detection, the agent defaults to the lowest common denominator. It has no way to know that better tools are available unless someone tells it - and that knowledge does not persist between sessions.
 
-**Pattern**: Apply [Pattern 3.3 - Environment-Aware Routing](../L3-optimization.md#pattern-33--environment-aware-routing):
+**Pattern**: Apply [Pattern 3.3 - Environment-Aware Routing and Session Lifecycle](../L3-optimization.md#pattern-33--environment-aware-routing-and-session-lifecycle):
 
 - Detect available tools before routing
 - Use RTK when installed for git operations
@@ -602,7 +595,7 @@ function currentFeature() {
 
 ## Using This Catalog
 
-This catalog is organized by pyramid level for quick diagnosis:
+This catalog is organized by layer for quick diagnosis:
 
 1. **Identify the symptom** - what friction is the agent encountering?
 2. **Match to an entry** - which description fits your situation?

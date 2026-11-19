@@ -1,10 +1,10 @@
 # Phase 1: Reframe and Prune
 
-- **Status:** Not started
+- **Status:** In progress (branch `refresh/phase-1-reframe`)
 - **Depends on:** Phase 0
-- **Gated by decisions:** D2, D3, D4, D5, D6 (see [../decisions.md](../decisions.md)). Confirm each
-  with the maintainer first. The tasks below assume the recommended option, and each task names the
-  decision it depends on.
+- **Gated by decisions:** D2, D3, D4, D5, D6, all decided 2026-11-19 (see
+  [../decisions.md](../decisions.md)). The tasks below follow the chosen options, and each task
+  names the decision it depends on.
 - **Suggested branch:** `refresh/phase-1-reframe`, split into one PR per task group if the diff
   grows large
 
@@ -34,8 +34,8 @@ that has aged, so the core of the library is verification.
   - Adoption starts where the gaps are.
   - Introduce the curve (C1-C5) and the autonomy grant (A1-A5) in one paragraph each, linking to
     the baseline and to the future `docs/earned-autonomy.md`.
-- Add a new diagram, `docs/diagrams/dimension-grid.excalidraw` plus a `.png` export: seven
-  dimensions as columns with the cap line. Keep the pyramid as "layer dependencies".
+- Diagram deferred to the final diagrams pass (decision 2026-11-19); describe the dimension grid
+  in prose.
 
 ### T2. State what the library does not cover
 
@@ -138,9 +138,7 @@ Update `docs/L1-patterns/1.4-container-isolation.md` to name compose project sco
 ### T10. Guardrails example is TypeScript-only
 
 `examples/guardrails/` has no Python version. This is a known exception to the CLAUDE.md rule
-"TypeScript and Python versions for each pattern". Resolve it in Phase 1 together with D3
-(prune, merge and demote): either demote the example with its patterns, add a Python version, or
-amend the rule.
+"TypeScript and Python versions for each pattern". Resolved: keep the example; amend the writing rule (Task 3).
 
 ## Acceptance checks
 

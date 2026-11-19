@@ -10,7 +10,7 @@ Your codebase is the biggest influence on AI's output. Structure it so an AI wit
 
 **In Practice**:
 
-- Export 3-5 functions maximum per module
+- Keep the public interface small. As a heuristic, 3-5 exports per module; more is a prompt to check whether the module has more than one job
 - Put complex logic behind a simple facade
 - Let tests specify behavior, not implementation
 - Keep types focused — avoid "kitchen sink" interfaces
@@ -50,17 +50,19 @@ export function parseAddress(...) { }               // internal
 
 **Cross-References**: See [L2: Skills Framework](L2-behavioral-guardrails.md) for how skills enforce deep module boundaries during implementation. [Pattern 0.8 — Aggressive Cleanup](#pattern-08--aggressive-cleanup) covers maintaining depth through continuous cleanup.
 
+**Evidence:** Thin — the 3-5 export limit is a rule of thumb; Ousterhout gives no number (first-party, n=1)
+
 ---
 
 ## Pattern 0.2 — Progressive Disclosure
 
 **Problem**: A flat directory with 50 files forces the AI to read everything to understand relationships. Deep nesting hides important files behind many clicks. Both extremes waste context — the agent can't discover structure incrementally.
 
-**Solution**: Directory structure mirrors mental models. AI discovers complexity gradually: README → CLAUDE.md → module interfaces → implementation. Each layer gives enough context to decide whether to go deeper.
+**Solution**: Directory structure mirrors mental models. AI discovers complexity gradually: README → AGENTS.md → module interfaces → implementation. Each layer gives enough context to decide whether to go deeper.
 
 **In Practice**:
 
-- Put entry points at the root: `README.md`, `CLAUDE.md`
+- Put entry points at the root: `README.md`, `AGENTS.md`
 - Group related files into directories by domain
 - Keep depth to 3-4 levels maximum
 - Each directory should have a clear purpose
@@ -69,7 +71,8 @@ export function parseAddress(...) { }               // internal
 Good — progressive disclosure
 project/
 ├── README.md                    # Overview, entry point
-├── CLAUDE.md                    # Agent contract
+├── AGENTS.md                    # Agent contract
+├── CLAUDE.md                    # Imports AGENTS.md
 ├── ecommerce/                   # Domain module
 │   ├── index.ts                 # Public interface
 │   ├── fulfillment/             # Sub-domain
@@ -101,7 +104,9 @@ project/
 
 **Anti-Pattern**: "Treasure hunt" structures where understanding one file requires reading 10 others scattered across the tree.
 
-**Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) expands on grouping by domain. [L4: New Starter Standard](L4-standards-measurement.md) tests whether disclosure works for zero-context agents.
+**Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) expands on grouping by domain. [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether disclosure works for zero-context agents.
+
+**Evidence:** Partial — vendor guidance on loading context just in time, no measured comparison (SC-1, AN-2)
 
 ---
 
@@ -158,18 +163,27 @@ src/
 
 **Cross-References**: [Pattern 0.1](#pattern-01--deep-modules) shows how deep modules reinforce conceptual organization. [Pattern 0.7](#pattern-07--documentation-as-system-map) — file structure is the physical map; documentation is the conceptual map. [L1: Stack Tests](L1-feedback-loops.md) demonstrates testing at domain boundaries.
 
+**Evidence:** Thin — reasoned from how agents use paths; no study (first-party, n=1)
+
 ---
 
-## Pattern 0.4 — CLAUDE.md as Project Constitution
+## Pattern 0.4 — Agent instruction file as project constitution
 
 **Problem**: An agent entering a project needs to know: what is this, how is it structured, what must I never do, what patterns must I follow. Scattering this across READMEs, CONTRIBUTING files, and wiki pages forces the agent to hunt for rules it may violate before finding them.
 
-**Solution**: CLAUDE.md is the single source of truth — a contract, not a tutorial. It answers the essential questions in one place. Hard limit: **150 lines maximum**. Beyond that, link to external docs.
+**Solution**: One agent instruction file is the single source of truth: a contract, not a tutorial. It answers the essential questions in one place. Use AGENTS.md as the shared file, which several coding agents read, and have CLAUDE.md import it. Claude Code reads CLAUDE.md, not AGENTS.md, unless CLAUDE.md imports AGENTS.md or settings say otherwise ([SC-8](references/sources.md)).
+
+Keep the file short, owned, tested and re-baselined:
+
+- **Short**: link to docs for anything long. CI warns at about 200 lines. Length costs context on every session, and instruction-following accuracy falls as the number of instructions grows ([SC-6](references/sources.md)).
+- **Owned**: a named person owns the file and records a reviewed date in it.
+- **Tested**: CI checks the file (line count, links, reachability of every doc).
+- **Re-baselined**: at each model upgrade, test whether each rule still changes behaviour, and delete the rules that no longer do.
 
 **In Practice**:
 
 ```markdown
-# Project — Agent Contract
+# Project — Agent Contract (AGENTS.md)
 
 ## Project Description
 One-sentence summary of what this project does.
@@ -182,18 +196,26 @@ Tree diagram showing major directories and their purposes.
 2. Evidence-based claims only
 3. Zero-defect tolerance
 
-## Level Documentation
+## Layer Documentation
 - [docs/L0-foundation.md](docs/L0-foundation.md)
 - [docs/L1-feedback-loops.md](docs/L1-feedback-loops.md)
 ```
 
-Every referenced doc must be reachable from CLAUDE.md — it serves as the master index. An agent discovers any project document by starting here and following the relative markdown links.
+Every doc must be reachable from AGENTS.md, which serves as the master index. An agent discovers any project document by starting here and following the relative markdown links.
 
-Claude Code expands `@path` imports into context when CLAUDE.md loads, so an index of `@` imports loads every listed doc into every session. Use plain markdown links for an index, and `@` only for content that must always load.
+Claude Code expands `@path` imports into context when CLAUDE.md loads, so an index of `@` imports loads every listed doc into every session. Use plain markdown links for an index, and `@` only for content that must always load. The one-line `@AGENTS.md` import in CLAUDE.md is the intended use:
 
-**Anti-Pattern**: Writing tutorials or extensive guides in CLAUDE.md. Every line beyond 150 displaces context the agent needs for the actual task. Link to docs instead.
+```markdown
+# Claude Code
 
-**Cross-References**: [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether CLAUDE.md succeeds. [Pattern 0.7 — Documentation as System Map](#pattern-07--documentation-as-system-map) covers keeping the system map in sync with code.
+@AGENTS.md
+```
+
+**Anti-Pattern**: Writing tutorials or extensive guides in the instruction file. Every line displaces context the agent needs for the actual task. A file with no owner and no review date, whose rules nobody has re-tested since the last model upgrade, accumulates rules that no longer help.
+
+**Cross-References**: [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether the instruction file succeeds. [Pattern 0.7 — Documentation as System Map](#pattern-07--documentation-as-system-map) covers keeping the system map in sync with code.
+
+**Evidence:** Partial — instruction-file studies disagree on value; the 200-line warning is a house rule (SC-4, SC-5, SC-8, SC-11)
 
 ---
 
@@ -233,7 +255,9 @@ During a refactoring session:
 
 **Anti-Pattern**: Relying on documentation as the primary contract. Documentation drifts. Tests execute. Treating unit tests as subordinate to stack tests — both layers provide distinct, necessary signals. Writing tests for coverage metrics rather than diagnostic value.
 
-**Cross-References**: [L1: Stack Tests](L1-feedback-loops.md#pattern-11--stack-tests) — the system-level complement to unit tests. [Pattern 0.4](#pattern-04--claudemd-as-project-constitution) — CLAUDE.md as the human-readable contract layer. [L2: Zero-Defect Tolerance](L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance) — every test failure matters, unit or stack.
+**Cross-References**: [L1: Stack Tests](L1-feedback-loops.md#pattern-11--stack-tests) — the system-level complement to unit tests. [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) — the instruction file as the human-readable contract layer. [L2: Zero-Defect Tolerance](L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance) — every test failure matters, unit or stack.
+
+**Evidence:** Partial — one vendor's guidance to give agents a verifiable check; no outcome study (OM-7)
 
 ---
 
@@ -266,62 +290,58 @@ Convention: `.worktrees/<branch-name>/` directory.
 
 **Anti-Pattern**: Working directly on main for feature work. Agents should never modify main without explicit instruction.
 
-**Cross-References**: [L2: Skills](L2-behavioral-guardrails.md) can enforce worktree usage via hooks. [L3: Optimization](L3-optimization.md) benefits from deterministic starting states. See [Further Reading](references/further-reading.md) for the superpowers framework.
+**Cross-References**: [L2: Skills](L2-behavioral-guardrails.md) can enforce worktree usage via hooks. See [Further Reading](references/further-reading.md) for the superpowers framework.
+
+**Evidence:** Partial — isolation by default is vendor and practitioner guidance; native in Claude Code (OM-18, PL-15)
 
 ---
 
 ## Pattern 0.7 — Documentation as System Map
 
-**Problem**: Stale documentation is worse than no documentation. When docs are outdated, agents follow them with false confidence, leading to wasted tokens, incorrect implementations, and cascading errors. Documentation freshness is often treated as a one-time task rather than a continuous obligation. Documentation and file structure ([Pattern 0.3](#pattern-03--conceptual-file-organization)) serve the same purpose at different levels: both help agents navigate the codebase. When either drifts, discoverability breaks.
+**Problem**: Documentation, tests and code drift apart. A pattern is renamed in code but not in the docs, a test calls a deleted function, a doc describes behavior that changed months ago. Agents follow stale docs with full confidence, which costs tokens and produces wrong implementations. File structure ([Pattern 0.3](#pattern-03--conceptual-file-organization)) and documentation serve the same purpose at different scales: both help agents navigate. When either drifts, discoverability breaks.
 
-**Solution**: **Treat documentation as the system map — the navigational layer that maps structure, intent, and conventions.** When code changes, update the corresponding documentation in the SAME task—not deferred to "later." Every change that affects behavior must include a corresponding documentation update.
+**Solution**: Treat documentation as the system map: the navigational layer for structure, intent and conventions. Update the affected docs in the same task as the code change, and check for drift with commands that run in CI.
 
-The CLAUDE.md master index pattern (from [Pattern 0.4](#pattern-04--claudemd-as-project-constitution)) is the enforcement mechanism: documentation not linked from CLAUDE.md is orphaned and therefore dead. Link validation is part of keeping the map current.
-
-**Key principles:**
-
-- **Synchronous updates:** Code changes and doc updates happen in the same task
-- **Reference integrity:** All docs must be reachable from CLAUDE.md via link chains
-- **Version-aware docs:** When patterns evolve, mark old versions as deprecated and link to current ones
-- **Example currency:** Code examples in docs must match the current codebase
+- **Synchronous updates**: a code change and its doc update land in the same commit.
+- **Reachability**: every doc is reachable from AGENTS.md by following links, directly or through other docs ([Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution)). An unlinked doc is invisible to agents.
+- **Current examples**: code in docs matches the code in the repository.
+- **Deletion over archiving**: version control is the archive. Delete docs for deleted features.
 
 **In Practice**:
 
-**Before starting a task:**
+This repository runs these checks in `.github/workflows/docs.yml`:
 
-1. Read the relevant documentation sections
-2. Verify the examples match current code
-3. If docs are stale, flag it before proceeding
+| Check | What it verifies | Result on failure |
+|-------|------------------|-------------------|
+| `markdown-lint` (`npm run lint:md`) | Markdown style rules | Fails |
+| `link-integrity` (`python3 scripts/check-doc-links.py .`) | Every relative link and `#anchor` resolves | Fails |
+| `doc-reachability` (`python3 scripts/check-doc-reachability.py .`) | Every file under `docs/` is reachable from AGENTS.md by following links | Warns |
+| `source-ids` (`python3 scripts/sourcecheck.py .`) | Every cited source ID has a row in `docs/references/sources.md` | Fails |
+| `writing-conventions` | No filler words ("basically", "simply") | Warns |
 
-**During implementation:**
+Run the link check locally before committing:
 
-1. Make code changes
-2. IMMEDIATELY update affected docs
-3. Update CLAUDE.md links if structure changed
-4. Run link validation to catch orphans
-
-**Example task flow:**
-
-```
-Task: Refactor authentication flow
-
-1. Read L1/L2 patterns for auth
-2. Implement new auth logic
-3. Update L1/L2 pattern docs with new flow
-4. Update CLAUDE.md if patterns moved
-5. Verify: grep -r "old_auth_function" docs/
-6. Commit: Code + docs together
+```bash
+python3 scripts/check-doc-links.py .
 ```
 
-**Never defer:**
+Three drift checks have no script and stay manual. Run them in review:
 
-- "I'll update the docs in a separate PR"
-- "The docs are close enough for now"
-- "I'll document this when the feature is complete"
+- Code examples in docs match the current code.
+- File paths named in docs exist.
+- Behavior descriptions match what the tests assert ([Pattern 0.5](#pattern-05--unit-tests-as-contract)).
 
-**Anti-Pattern**: "Good enough" documentation ("the agent can figure it out"). Deferred updates (code changes + doc ticket for "later"). Orphaned content not linked from CLAUDE.md. Unverified examples. Zombie docs kept around — version control is the archive.
+When a check or a review finds drift:
 
-**Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) — file structure is the physical map; docs are the conceptual map. Together they provide complete navigability. [Pattern 0.4](#pattern-04--claudemd-as-project-constitution) establishes the master index mechanism. [Pattern 4.2 — Spec Drift Detection](L4-standards-measurement.md#pattern-42--spec-drift-detection) provides automated checks for doc freshness. [Pattern 4.3 — New Starter Standard](L4-standards-measurement.md#pattern-43--new-starter-standard) is the ultimate test for entry point clarity.
+1. Decide which side is wrong: the code or the doc.
+2. Fix that side in the same commit.
+3. Re-run the check.
+
+**Anti-Pattern**: Deferring doc updates to a later change. Tolerating "close enough" drift. Keeping docs for deleted features "for reference". Relying on manual review alone for drift that a script can find.
+
+**Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) — file structure is the physical map; docs are the conceptual map. [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) establishes the master index. [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether the map works for a reader with no context. [Pattern 4.5 — CI Guardrails](L4-standards-measurement.md#pattern-45--ci-guardrails) covers running checks in CI.
+
+**Evidence:** Thin — for agents; committed documentation artefacts are mostly never updated, so presence is not practice (MC-11)
 
 ---
 
@@ -406,26 +426,44 @@ Cleanup:
 
 **Anti-Pattern**: "Just in case" retention. Commented-out code. Defensive cleanup avoidance ("someone might be using this"). Cleanup theater (removing a few imports but leaving major dead code). Deferred cleanup.
 
-**Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) — clean file structure and clean code reinforce each other. [Pattern 0.7](#pattern-07--documentation-as-system-map) — documentation cleanup is a separate concern; stale docs are covered there. [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) establishes the standard for verifying cleanup doesn't break anything. [Pattern 4.2 — Spec Drift Detection](L4-standards-measurement.md#pattern-42--spec-drift-detection) provides automated tools for detecting dead code.
+**Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) — clean file structure and clean code reinforce each other. [Pattern 0.7](#pattern-07--documentation-as-system-map) — documentation cleanup is a separate concern; stale docs are covered there. [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) establishes the standard for verifying cleanup doesn't break anything.
+
+**Evidence:** Thin — reasoned; the author's practice (first-party, n=1)
 
 ---
 
 ## Pattern 0.9 — AI-as-New-Starter Standard
 
-**Problem**: Projects accumulate implicit knowledge. "Oh, we always put types in `src/types/`" or "utils files are in `shared/`" — assumptions never written down. Each assumption is a point where an agent will go wrong.
+**Problem**: Projects accumulate implicit knowledge: "we always put types in `src/types/`", "utils live in `shared/`". Each unwritten assumption is a point where an agent goes wrong, and the gaps grow as the project changes.
 
-**Solution**: If someone with zero context cannot understand your project from CLAUDE.md + README + file structure alone, the project is not agentic-ready. Every assumption not codified in these entry points creates friction for AI agents.
+**Solution**: If someone with zero context cannot understand the project from AGENTS.md, README and file structure alone, the project is not agent-ready. Test this on a schedule, not once. Give a person or an agent only those three entry points and ask:
+
+1. What does this project do?
+2. How do I run it locally?
+3. Where do I add a new feature?
+4. What patterns should I follow?
+5. How do I test my changes?
+6. What must I never do?
+
+Each assumption the reader has to make is a gap. Fix the entry point, not the reader.
 
 **In Practice**:
 
-- Test by asking: "Would a new developer understand this from README alone?"
-- Put answers in CLAUDE.md, not tribal knowledge
-- Let file structure tell the story
-- Explicit conventions over implicit ones
+Audit quarterly and after each major structural change:
 
-**Anti-Pattern**: "They should just read the code." Code shows what exists, not why. AI agents need intent and structure, not just implementation.
+- [ ] README explains the project in under 30 seconds.
+- [ ] The quick start runs without reading beyond the README.
+- [ ] AGENTS.md is a map with stated rules, not a wall of links.
+- [ ] Examples in docs run as written.
+- [ ] Directory names communicate intent ([Pattern 0.2](#pattern-02--progressive-disclosure)).
 
-**Cross-References**: [Pattern 0.4](#pattern-04--claudemd-as-project-constitution) specifies CLAUDE.md format. [L4: New Starter Audit](L4-standards-measurement.md#pattern-43--new-starter-standard) covers maintaining this over time.
+Apply the zero-context rule to every doc section: no undefined terms, no assumed prior knowledge, no "we" implying existing team membership, no examples that depend on unstated setup.
+
+**Anti-Pattern**: "They should read the code." Code shows what exists, not why. Insider references ("the thing from the meeting"). Quick starts that fail because a step is missing. Explaining how without saying why.
+
+**Cross-References**: [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) specifies the AGENTS.md format. [Pattern 0.7](#pattern-07--documentation-as-system-map) keeps the entry points current.
+
+**Evidence:** Thin — a reasoned audit test with no study (first-party, n=1)
 
 ---
 
@@ -434,7 +472,7 @@ Cleanup:
 - **L1: Closed Loop Design** — Testing at module boundaries validates deep module design
 - **L2: Behavioral Guardrails** — Skills enforce structural conventions during implementation
 - **L3: Optimization** — Good structure reduces token overhead for navigation
-- **L4: Standards & Measurement** — Maturity practices: evidence-based discipline, drift detection, metrics
+- **L4: Standards & Measurement** — Evidence-based claims, metrics, CI guardrails, context eval
 
 ## Further Reading
 

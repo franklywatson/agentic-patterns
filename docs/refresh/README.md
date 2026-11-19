@@ -4,9 +4,9 @@ This directory holds a critical review of this repository and the plans to act o
 that any session, human or agent, can take over the refresh without the conversation that
 produced it.
 
-Status: **analysis complete; Phase 0 is complete on branch `refresh/phase-0-correct` (PR pending
-merge) and has changed pattern docs and examples.** Next: confirm the open decisions in
-[decisions.md](decisions.md), then Phase 1.
+Status: **analysis complete; Phase 0 is merged. Phase 1 is in progress on branch
+`refresh/phase-1-reframe`.** All decisions D1-D7 are decided (2026-11-19; see
+[decisions.md](decisions.md)).
 
 ## What happened
 
@@ -21,9 +21,9 @@ different lens. Their reports were combined into one synthesis.
 
 Neither input is committed. The reviews name them by the plain-text extracts made during the review,
 `research/industry-baseline.txt` and `research/anthropic-companion.txt`. Instead,
-[sources.md](sources.md) restates the baseline's structure (curve, cap rule, findings, chapters) and
+[sources.md](../references/sources.md) restates the baseline's structure (curve, cap rule, findings, chapters) and
 lists every source the corpus cites, with its public URL, so every reference ID can be checked
-without the inputs. `python3 docs/refresh/tools/sourcecheck.py` confirms that each cited ID
+without the inputs. `python3 scripts/sourcecheck.py` confirms that each cited ID
 resolves.
 
 The synthesis is committed twice: as a page snapshot,
@@ -35,8 +35,8 @@ The synthesis is committed twice: as a page snapshot,
 | File | Purpose |
 |------|---------|
 | [synthesis.md](synthesis.md) | The combined findings, the reframe, both goals, the prerequisite track, pruning, defects, roadmap and decisions |
-| [sources.md](sources.md) | Every cited source with its public URL, and the baseline's structure, so each reference ID resolves |
-| [decisions.md](decisions.md) | Decisions (open, partly decided and decided) with recommendations. **Read first**: several plans are gated on them. |
+| [sources.md](../references/sources.md) | Every cited source with its public URL, and the baseline's structure, so each reference ID resolves |
+| [decisions.md](decisions.md) | All decisions D1-D7, decided 2026-11-19, with options and the choice made. **Read first**: the plans follow them. |
 | [plans/](plans/) | One scoped plan per phase, each written to be executed by a session that has read only this directory |
 | [reviews/review-evidence.md](reviews/review-evidence.md) | Evidence auditor: holds the repo to its own "every claim verifiable" rule |
 | [reviews/review-autonomy.md](reviews/review-autonomy.md) | Autonomy-ladder architect: maps L0-L4 onto the curve and designs earned autonomy |
@@ -45,7 +45,7 @@ The synthesis is committed twice: as a page snapshot,
 | [reviews/review-adopter.md](reviews/review-adopter.md) | Adopter red team and model-generation realist |
 | [tools/linkcheck.py](tools/linkcheck.py) | Link and anchor checker used by the adopter review (`python3 docs/refresh/tools/linkcheck.py .`) |
 | [tools/anchors.py](tools/anchors.py) | Anchor-only checker used by the evidence review |
-| [tools/sourcecheck.py](tools/sourcecheck.py) | Checks that every reference ID cited in this directory resolves in sources.md |
+| [scripts/sourcecheck.py](../../scripts/sourcecheck.py) | Checks that every reference ID cited anywhere under `docs/` resolves in [sources.md](../references/sources.md) |
 
 The reviews are kept as written, apart from the edits noted at the top of each. Their line numbers refer to commit `a07ad93`, and some have moved
 since then. Two later commits are not on main yet: gstack removal and an L4 lint fix, both in
@@ -56,17 +56,17 @@ PR #4.
 | Phase | Plan | Depends on | Gated by decisions |
 |-------|------|-----------|--------------------|
 | 0 | [Correct defects](plans/phase-0-correct.md) | none | none |
-| 1 | [Reframe and prune](plans/phase-1-reframe.md) | Phase 0 | D2, D4, D5; D3 partly open (TOON cut); D6 decided |
-| 2 | [Containment, ownership and people](plans/phase-2-contain.md) | Phase 1 | D5 |
-| 3 | [Earned autonomy](plans/phase-3-earned-autonomy.md) | Phase 2 | D2, D7 |
-| 4 | [Self-repair](plans/phase-4-self-repair.md) | Phase 3 (A.1-A.3) | D1 |
-| Ongoing | [Prune and re-baseline](plans/phase-5-rebaseline.md) | Phase 1 | D4 |
+| 1 | [Reframe and prune](plans/phase-1-reframe.md) | Phase 0 | D2, D3, D4, D5, D6 (all decided 2026-11-19) |
+| 2 | [Containment, ownership and people](plans/phase-2-contain.md) | Phase 1 | D5 (decided 2026-11-19) |
+| 3 | [Earned autonomy](plans/phase-3-earned-autonomy.md) | Phase 2 | D2, D7 (decided 2026-11-19) |
+| 4 | [Self-repair](plans/phase-4-self-repair.md) | Phase 3 (A.1-A.3) | D1 (decided 2026-11-19) |
+| Ongoing | [Prune and re-baseline](plans/phase-5-rebaseline.md) | Phase 1 | D4 (decided 2026-11-19) |
 
 ## How to take over
 
 1. Read [synthesis.md](synthesis.md), then [decisions.md](decisions.md).
-2. Confirm with the maintainer any decision still marked **Open** or **Partially decided** before
-   starting a plan it gates.
+2. All decisions are decided; if a plan's task conflicts with one, ask the maintainer before
+   proceeding.
    Phase 0 needs no decision and can start immediately.
 3. Pick one plan. Each lists its tasks, the files it touches, its acceptance checks and what is out
    of scope. Work on a branch, one PR per phase. If a phase is large, split it into one PR per
