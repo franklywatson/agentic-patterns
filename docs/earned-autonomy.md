@@ -265,7 +265,7 @@ to promote on, and every workflow keeps the grant it was given.
 |----|----------------------------------|
 | A3 | At least 20 runs at A2. First-run pass rate on required checks has a lower bound of 0.80 or more. A traced sample of 10 runs shows substantive human review. An owner is named. |
 | A4 | At least 30 runs at A3, a floor for evaluation that the bounds below raise: zero reverts clear the 3% revert upper bound at about 125 merged runs, and the 0.90 pass bound needs at least 35 runs even if every run passes. First-run pass lower bound of 0.90 or more. Revert rate upper bound of 3% or less. Zero escaped defects. Task bank scores 0.90 or more on the current harness. The work is reversible and mechanically verified. A stop drill passed within 30 days. Cap of C4 or higher. |
-| A5 | At least 90 days at A4. Baseline, target and stop rule are set. Cost per merged outcome is reported. One review cycle has a recorded decision. Cap of C5. |
+| A5 | At least 90 days at A4. Baseline, target and stop rule are set. Cost per merged change is reported. One review cycle has a recorded decision. Cap of C5. |
 
 **Demotion** is automatic and immediate, and any one trigger is enough. `autonomy ledger` implements the ledger
 triggers ([list](../examples/autonomy/README.md#ledger)).
@@ -283,7 +283,7 @@ agent can reach. The hook denies writes to `.autonomy/` at every grant, but only
 make the file a boundary.
 
 **Review.** At each `review_date` a scheduled job opens one issue per workflow with the ledger trend, cost per merged
-outcome against the baseline ([Pattern 4.4](L4-standards-measurement.md#pattern-44--agentic-development-metrics)),
+change against the baseline ([Pattern 4.4](L4-standards-measurement.md#pattern-44--agentic-development-metrics)),
 the demotion history and the stop rule evaluated. The owner records one decision: keep,
 promote, demote or retire. Retirement deletes the register entry and revokes the identity ([Pattern
 0.8](L0-foundation.md#pattern-08--aggressive-cleanup)); the review also prunes the skills and rules the workflow used

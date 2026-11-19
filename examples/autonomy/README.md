@@ -232,7 +232,7 @@ One JSON line per run in `.autonomy/ledger/<workflow>.jsonl`, written by CI. `ce
 |---|---|
 | A3 | At least 20 runs at A2; first-run pass lower bound at least 0.80; owner named; a traced sample is listed as a human step |
 | A4 | At least 30 runs at A3, a floor for evaluation and not sufficient alone; first-run pass lower bound at least 0.90 (at least 35 runs even when every run passes); revert upper bound at most 0.03 (with zero reverts from 125 merged runs, 185 with one revert); zero escaped defects; task bank score at least 0.90 on the latest run; reversible and mechanical; stop drill within 30 days; cap at least C4; no demotion in the last 30 days |
-| A5 | At least 90 days at A4; baseline, target and stop rule set; cost per merged outcome reported; cap at least C5; no demotion in the last 30 days; a recorded review cycle is listed as a human step |
+| A5 | At least 90 days at A4; baseline, target and stop rule set; cost per merged change reported; cap at least C5; no demotion in the last 30 days; a recorded review cycle is listed as a human step |
 
 A gap separates the promote and demote thresholds. A revert upper bound of 0.03 or less allows promotion. An upper bound above 0.06 demotes. Between the two the band is `hold`. A revert demotion needs at least one revert in the window and at least `min_runs` merged runs, so a small clean sample is not demoted.
 

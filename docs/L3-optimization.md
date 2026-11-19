@@ -5,9 +5,10 @@ reviewed: 2026-11-19
 
 # L3: Optimization (optional)
 
-L3 is optional. It reduces the tokens an agent spends on exploration and tool output. It is not on the path to
-verified or unattended work: L0, L1, L2 and L4 carry that. Adopt L3 when token cost or context noise is a measured
-problem, and measure the effect in tokens on your own sessions. It uses the hook mechanism of
+L3 is optional. It reduces the tokens an agent spends on exploration and tool output, and matches the model and
+effort a session runs on to the task. It is not on the path to verified or unattended work: L0, L1, L2 and L4 carry
+that. Adopt L3 when token cost or context noise is a measured problem, and measure the effect on your own sessions:
+in tokens for routing, and as cost per merged change for model choice. It uses the hook mechanism of
 [Pattern 2.3](L2-behavioral-guardrails.md#pattern-23--hook-automation).
 
 The patterns share one idea: a tool that returns a short, typed answer costs less context than a raw dump the
@@ -130,6 +131,7 @@ and a single uncontrolled source, so treat it as Thin evidence.
 - Give the scout a bounded question ("which modules handle payment retries?"), not "explore the repo".
 - Require a result under a stated size, for example 30 lines.
 - The scout reads; it does not edit.
+- Run the scout on a small model ([Pattern 3.5](#pattern-35--model-effort-and-cost-per-task)).
 
 ### Anti-Pattern
 
@@ -141,6 +143,91 @@ Running broad `grep` and `find` commands in the main session, then carrying ever
 - [WISC video](https://youtu.be/gyo0eRgsUWk) and [WISC repository](https://github.com/coleam00/context-engineering-intro/tree/main/use-cases/ai-coding-wisc-framework)
 
 **Evidence:** Partial — vendor guidance on isolating exploration in subagents; no measured comparison (SC-1, OM-8)
+
+---
+
+## Pattern 3.5 — Model, Effort and Cost per Task
+
+### Problem
+
+A session runs one model at one effort level for whatever it is given. A large model at high effort renames a
+variable at the large model's per-token price. A small model reviews a security change and misses what it was there
+to find, which costs more than the tokens it saved. The setting is chosen by feel and judged by tokens per session,
+which counts activity, not outcomes ([Pattern
+4.4](L4-standards-measurement.md#pattern-44--agentic-development-metrics)).
+
+### Solution
+
+**Model class and effort.** Anthropic offers a small model class for high-volume, latency-sensitive work, a mid class
+for everyday coding and large classes for complex reasoning and long agentic work (AN-77, AN-73). Effort trades
+capability for tokens within one model; levels and defaults differ by model (AN-70). Names and prices change each
+release, so this page names classes. Anthropic's own guide starts most workloads on a large class and lowers effort
+or the class only where evals allow: "Tuning effort is often a better lever than switching models" ([choosing a
+model](https://platform.claude.com/docs/en/about-claude/models/choosing-a-model)).
+
+| Task type | Model class | Effort | Why |
+|-----------|-------------|--------|-----|
+| Mechanical edit, rename, formatting, transcription, extraction, the scout of [Pattern 3.2](#pattern-32--context-isolation-scout) | Small | Low or default | A deterministic check (test, diff, exact comparison) catches a miss |
+| Routine implementation with a clear scope and existing tests | Mid | Default | Tests catch most misses; a large model buys little |
+| Bug fix in existing code | Mid, or large when a mid run fails | High | Verification matters and edge cases are likely |
+| Design, architecture, debugging an unknown cause, security review, a review agent ([Pattern 2.14](L2-behavioral-guardrails.md#pattern-214--delegating-to-subagents)) | Large | High or above | No test catches the miss; it surfaces at merge or in production |
+
+The table is this library's starting point and sits lower than Anthropic's guide, so keep a step down only when the
+task bank passes (In Practice, step 2). It follows the advice to "choose smaller models for more routine tasks and
+larger models for more complex or ambiguous tasks" (AN-75); GitHub groups models the same way (OM-70). When a run
+fails, check the prompt, tools and context first; a wrong answer given full context and a real attempt means a
+larger class, and a skipped file, an unrun test or an unchecked result means higher effort (AN-75). Moving work on
+high-tier paths of the [risk model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) up one model class is
+this library's design.
+
+**Metric.** Judge a setting by cost per merged change ([Pattern
+4.4](L4-standards-measurement.md#pattern-44--agentic-development-metrics)), not tokens per session. Anthropic's
+guidance is to "compare models on cost per completed task, not per token": a cheaper model's failed tasks still bill
+their tokens, then the retry ([AN-74](references/sources.md)).
+
+**Caching.** Each request re-sends the conversation, and prompt caching bills the unchanged prefix at a reduced rate
+(AN-71). Each model keeps its own cache, so a mid-session model switch re-reads the conversation uncached, which
+can cost more than the switch saves, as does the first turn after an idle gap longer than the cache lifetime; whether
+an effort change keeps the cache depends on the model and platform (AN-72). Set model and effort at session start,
+clear between unrelated tasks, and send work that needs another model to a subagent with its own `model` and
+`effort` fields, which leaves the parent's cache intact (AN-72, AN-78).
+
+**Limits and where each is held.** A budget written only in the instruction file is a prompt; nothing enforces it.
+
+| Limit | Enforcement point | What it does not do |
+|-------|-------------------|---------------------|
+| Allowed models and an effort ceiling | Managed settings: `availableModels` with `enforceAvailableModels`, and `maxEffortLevel` ([model configuration](https://code.claude.com/docs/en/model-config)) | Cap spend |
+| Spend and turns per unattended run | Harness: `--max-budget-usd` and `--max-turns` ([CLI flags](https://code.claude.com/docs/en/cli-reference#cli-flags)) | Apply to interactive sessions (print mode only). The budget is a client-side estimate and spend can pass it |
+| Cost per run of a registered workflow | `limits.max_cost_usd_per_run` in the [register](earned-autonomy.md#pattern-a1--autonomy-register), checked by `autonomy ledger` after the run; for an A4 or A5 workflow, `--apply-demotion` demotes it to A3 ([Pattern A.3](earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate)) | Stop a run in progress |
+| Spend per workspace, organization, group or member | Billing: Console workspace spend limits, Team and Enterprise spend limits, cloud budget controls ([costs](https://code.claude.com/docs/en/costs#manage-costs-for-your-organization)) | Separate one workflow from another in the same scope |
+| A model or effort change that regresses work | CI: the task bank as a required check where the harness runs in CI ([Pattern 4.6](L4-standards-measurement.md#pattern-46--context-eval)) | Hold here: this repository has no such job and no recorded run |
+
+### In Practice
+
+1. Set `model` and `effort` in each subagent definition and in each unattended command, and restrict both with
+   managed settings, so the setting does not depend on who starts the session. A table in the instruction file is
+   guidance only.
+2. Run the [task bank](references/task-bank.md) at the candidate setting and one step up, k of at least 3 each. Keep
+   the cheaper setting only if it passes every task the stronger one passes. Record Model, Effort and Harness in the
+   run log, and write each run's estimated cost from `/usage` beside it; the runner records neither effort nor cost.
+3. A model or effort change changes a registered workflow's `harness_hash`, which holds it at A3 until the bank
+   passes ([Pattern A.2](earned-autonomy.md#pattern-a2--evidence-ledger)); re-run step 2 at each model upgrade
+   ([Pattern 0.10](L0-foundation.md#pattern-010--prune-and-re-baseline-context)).
+
+```bash
+claude -p --model "$SMALL_MODEL_ID" --effort low --max-budget-usd 2.00 --max-turns 30 "$TASK_PROMPT"
+```
+
+### Anti-Pattern
+
+- **A large model at maximum effort everywhere.** On routine work both classes generally succeed (AN-75); maximum
+  effort is prone to overthinking (AN-70), and high spend traces to long uncleared sessions or a large model left as
+  the default (AN-71).
+- **Tokens per session as the metric**, or a model class chosen from one run instead of the bank.
+
+**Evidence:** Partial — vendor guidance on choosing a model and effort by task type, which differs on where to start,
+and Anthropic guidance and measurements on cost per completed task, with no independent measurement; the task-type
+table, the risk-tier step-up and the limits table are this library's design (AN-70 to AN-78, OM-70)
 
 ---
 

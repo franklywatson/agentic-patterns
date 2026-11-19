@@ -95,7 +95,7 @@ def build_report(wf: dict, runs_all: list[dict], profile: dict | None, state: di
         criteria.append(_criterion("baseline", "present", wf.get("baseline"), bool(wf.get("baseline"))))
         criteria.append(_criterion("target", "present", wf.get("target"), bool(wf.get("target"))))
         criteria.append(_criterion("stop-rule", "present", wf.get("stop_rule"), bool(wf.get("stop_rule"))))
-        criteria.append(_criterion("cost-per-merged-outcome", "reported", cost_per, cost_per is not None))
+        criteria.append(_criterion("cost-per-merged-change", "reported", cost_per, cost_per is not None))
         criteria.append(_criterion("cap", ">= 5", cap, cap >= 5))
         criteria.append(_criterion("cooldown", ">= 30 days since demotion", demoted_at, cooldown_ok))
         manual.append("one review cycle completed with a recorded decision")

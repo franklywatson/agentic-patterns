@@ -522,11 +522,13 @@ model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) lists for its g
 
 ### Bindings
 
-**Claude Code** does not issue identities. A launcher script or CI job mints the short-lived token, passes it to
-the session at start, and keeps long-lived keys out (`sandbox.credentials` in [Pattern
-2.9](#pattern-29--contain-before-you-relax)). Put the `Co-Authored-By:` trailer rule ([Pattern
-4.7](L4-standards-measurement.md#pattern-47--author-of-record)) in the instruction file. The model may omit it, and no
-job in this library checks for it, so a commit without it under a person identity passes `autonomy check` as human.
+**Claude Code** does not issue identities. Hook input names a subagent by `agent_id` and `agent_type`
+([hooks](https://code.claude.com/docs/en/hooks)); the example autonomy hook does not record them. A launcher script
+or CI job mints the short-lived token, passes it to the session at start, and keeps long-lived keys out
+(`sandbox.credentials` in [Pattern 2.9](#pattern-29--contain-before-you-relax)). Put the `Co-Authored-By:` trailer
+rule ([Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record)) in the instruction file. The model
+may omit it, and no job in this library checks for it, so a commit without it under a person identity passes
+`autonomy check` as human.
 
 A Claude Code cloud scheduled task acts through its owner's connected GitHub identity and connectors: its commits
 and pull requests carry the owner's GitHub user, on `claude/`-prefixed branches
@@ -691,11 +693,94 @@ workflow add one as a required check.
 - The requester merging their own agent-written change.
 - A high-tier list that lives only in someone's head.
 
-The optional skill chain scales to these tiers ([Pattern 2.1](#pattern-21--skill-overlay-architecture)).
+The optional skill chain scales to these tiers ([Pattern 2.1](#pattern-21--skill-overlay-architecture)), and so
+do review subagents ([Pattern 2.14](#pattern-214--delegating-to-subagents)).
 
 **Evidence:** Partial — vendor telemetry and design, a platform rule, one company's practice and analyst
 corroboration. Anthropic's review design (AN-29) tiers by risk like this pattern but counts the requester as one
 of the required reviewers; this library does not (SG-9, SG-26, OM-18, PO-20, PL-17, AN-29)
+
+---
+
+## Pattern 2.14 — Delegating to Subagents
+
+### Problem
+
+A subagent starts with a fresh context, the delegation prompt and the CLAUDE.md files; Explore, Plan and an
+`omitClaudeMd` definition skip the project ones ([AN-78](references/sources.md)). Given vague tasks, Anthropic's
+research subagents duplicated work, left gaps and misread the task ([AN-60](references/sources.md)). A study of over
+1,600 multi-agent traces finds failures of design, coordination and verification, and many verifiers that make only
+superficial checks, such as whether the code compiles ([OM-60](references/sources.md)). Cognition reports that
+parallel writers make conflicting implicit decisions ([OM-61](references/sources.md)); agents report failing tests
+as passing ([IS-15](references/sources.md)).
+
+### Solution
+
+1. **A brief in a file.** Goal, constraints, files and docs to read first, values to use verbatim, the definition of
+   done as commands, and the report format and path. Pass the path, so a reviewer or retry reads the same brief.
+   Anthropic's lead agent gives each subagent an objective, an output format, tool guidance and boundaries (AN-60).
+2. **One writer per file set.** Each parallel implementer gets its own worktree ([Pattern
+   0.6](L0-foundation.md#pattern-06--git-worktree-based-development)) and files no other subagent touches. Work with
+   many dependencies stays sequential (AN-60, OM-61).
+3. **An independent reviewer.** It gets the diff, the brief and earlier findings with their resolutions, never the
+   implementer's reasoning: a fresh reviewer helps because it has not seen that reasoning
+   ([AN-3](references/sources.md)). A new reviewer each round is this library's choice, so none defends its last
+   verdict. After three rounds, rethink the approach, as Anthropic's review loop does
+   ([AN-29](references/sources.md)). Run the reviewer on a large model class at high effort: its misses fail no
+   check ([Pattern 3.5](L3-optimization.md#pattern-35--model-effort-and-cost-per-task)). Its findings never count as
+   approval ([Pattern 2.13](#pattern-213--risk-tiered-review)).
+4. **Verify, do not relay.** The parent checks each claim it passes on against code and command output ([Pattern
+   4.1](L4-standards-measurement.md#pattern-41--evidence-based-claims)). A subagent's report is input, not
+   instructions ([threat model](cross-cutting/threat-model.md)).
+5. **No hypothesis to confirm.** Ask "why does the session exit after one message?", not "confirm the timeout
+   causes it". Assistants shift answers toward a user's stated view ([AN-61](references/sources.md)); to test a
+   theory, ask a subagent to disprove it.
+6. **The parent's grant and cap.** A subagent acts under the dispatching workflow's grant, never above the cap
+   ([The Grants](earned-autonomy.md#the-grants)), and its commits carry the author of record and agent trailer
+   ([Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record)). This library's design; nothing tests
+   or enforces it today (Bindings).
+7. **A budget and stop conditions.** Turns, review rounds and spend; stop on done, budget spent, the same failure
+   twice or a question only a person can answer, and report what is open ([Pattern
+   1.11](L1-patterns/1.11-repair-budget-circuit-breaker-stop.md)).
+
+### In Practice
+
+```markdown
+# Brief: rate limiter, implementer 2 of 3
+Goal: per-key token bucket per SPEC.md section 3. Read AGENTS.md and SPEC.md first.
+Verbatim: header X-RateLimit-Remaining; config key rateLimit.burst; error code RATE_LIMITED
+Files you own: src/middleware/rateLimiter.ts, tests/stack/rate-limit.test.ts. Touch nothing else.
+Done when: npm test -- rate-limit and npm run lint pass. Stop at 40 turns or the same failure twice.
+Report: .briefs/reports/rate-limiter-2.md, under 30 lines: files changed, commands with output, open questions
+```
+
+### Bindings
+
+**Claude Code.** A definition in `.claude/agents/` sets `tools` (a reviewer with `Read, Grep, Glob` cannot edit),
+`isolation: worktree` (branched by default from the default branch, not the parent's `HEAD`) and `maxTurns`
+([AN-78](references/sources.md)). A subagent runs in `bypassPermissions` only when the parent does, but a definition
+can set `acceptEdits` under a parent in default mode. `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` turns off nesting.
+Claude Code issues subagents no credentials of their own; hook input names one by `agent_id` and `agent_type`
+([Pattern 2.11](#pattern-211--agent-identity-and-delegation)).
+
+Settings hooks fire on subagent tool calls ([hooks](https://code.claude.com/docs/en/hooks)), so the example hook
+applies the parent's `AUTONOMY_WORKFLOW` grant to them ([Pattern
+A.6](earned-autonomy.md#pattern-a6--enforcement-through-hooks)), untested: the eval suite checks only that spawning
+is allowed, and the hook reads branch and diff from `CLAUDE_PROJECT_DIR`, not an `isolation: worktree` checkout. The
+subagent definition (`tools`, `permissionMode`), a hook eval scenario run from a subagent's worktree or a required
+CI check could enforce rule 6. The brief, file ownership, verification and the no-hypothesis rule are prompt only.
+
+**No harness: CI only.** One job and branch per implementer; the review job gets the diff and brief, not their logs.
+
+### Anti-Pattern
+
+- The parent's conversation, or a summary of it, pasted as the brief.
+- A reviewer forked from the implementer, or kept across rounds.
+- "All tests pass" copied from a subagent report into a pull request.
+
+**Evidence:** Partial — consistent vendor guidance, one failure taxonomy of multi-agent traces and practitioner
+reports; nothing measures briefs by path against pasted prompts, and a fresh reviewer per round is this library's
+design (AN-60, AN-3, AN-29, AN-61, AN-78, OM-60, OM-61, IS-15)
 
 ---
 

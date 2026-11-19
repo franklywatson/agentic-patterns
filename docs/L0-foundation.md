@@ -141,6 +141,7 @@ owner and no review date, whose rules nobody has re-tested since the last model 
 
 **Cross-References**: [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether the file succeeds.
 [Pattern 0.7](#pattern-07--documentation-as-system-map) keeps the index in sync with the docs.
+[Pattern 0.11](#pattern-011--portable-agent-instructions) binds each harness to the same file.
 
 **Evidence:** Partial — instruction-file studies disagree on value; the 200-line warning follows vendor guidance (SC-4, SC-5, SC-6, SC-8, SC-11)
 
@@ -368,6 +369,75 @@ regresses nothing because no task exercises the rule, add the task before deleti
 file's owner and review date. [Pattern 0.8](#pattern-08--aggressive-cleanup) is the same discipline for code.
 
 **Evidence:** Partial — most committed AI config is never changed; a vendor cut over 80% of a prompt (MC-11, AN-7); task banks as the test (MV-9)
+
+---
+
+## Pattern 0.11 — Portable Agent Instructions
+
+**Problem**: Each harness has its own instruction file: CLAUDE.md, GEMINI.md, `.github/copilot-instructions.md`,
+`.cursor/rules/`. Hand-kept copies drift. A team that keeps one file assumes every harness loaded it and that a rule
+written there holds everywhere. Neither is true by default: Gemini CLI reads GEMINI.md unless configured otherwise,
+and Claude Code treats instruction files "as context, not enforced configuration" ([AN-50](references/sources.md)).
+
+**Solution**: Keep AGENTS.md as the one shared file ([Pattern
+0.4](#pattern-04--agent-instruction-file-as-project-constitution)), bind each harness to it, test that it loaded, and
+hold each invariant at an enforcement point the harness in use has. AGENTS.md is an open format stewarded by the
+Agentic AI Foundation under the Linux Foundation; in a tree of AGENTS.md files the nearest one takes precedence
+([PL-21](references/sources.md)).
+
+Portable: prose rules, build and test commands, architecture notes, the high-tier path list and the doc index as
+plain relative links. Not portable: hooks, permission and deny rules, sandbox settings, subagent definitions, `@path`
+imports, and skill frontmatter beyond the Agent Skills spec.
+
+Bindings, from each vendor's docs as read on 2026-11-19. All five harnesses are current, except Gemini CLI for
+unpaid-tier and Google One users. Not verified here: Antigravity CLI and the other tools the agents.md page lists.
+
+| Harness | Binding to AGENTS.md | Nested files | Load check |
+|---------|----------------------|--------------|------------|
+| [Claude Code](https://code.claude.com/docs/en/memory#agents-md) | `@AGENTS.md` in CLAUDE.md ([Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution)), or the **Project instructions** setting | Ancestors at launch; a subdirectory's file when Claude works there | `/context all`; `InstructionsLoaded` hooks fire for an imported AGENTS.md, not for one read through the setting |
+| [OpenAI Codex](https://learn.chatgpt.com/docs/agent-configuration/agents-md) | Native; an `AGENTS.override.md` is read instead of AGENTS.md in its directory | Global, then root to working directory; closer files override; stops adding at 32 KiB (`project_doc_max_bytes`) | Ask it to summarize its instructions |
+| [Gemini CLI](https://geminicli.com/docs/cli/gemini-md/) | `"context": {"fileName": ["AGENTS.md", "GEMINI.md"]}` in `.gemini/settings.json`. Banner on its docs: "Unpaid tier and Google One users: Gemini CLI was replaced by Antigravity CLI on June 18th, 2026." | Global, workspace and ancestors, concatenated | `/memory show` |
+| [GitHub Copilot](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions) | Native in the cloud agent, CLI, code review and VS Code chat; [not in](https://docs.github.com/en/copilot/reference/custom-instructions-support) JetBrains, Visual Studio, Xcode or Eclipse chat | Nearest AGENTS.md wins | None documented for AGENTS.md |
+| [Cursor](https://cursor.com/docs/context/rules) | Native, at the root and in subdirectories | Combined with parents; the more specific wins | None documented |
+
+**Skills.** The [Agent Skills](https://agentskills.io/) `SKILL.md` format is documented by all five harnesses, in no
+one directory: Claude Code reads `.claude/skills/`, Codex and Gemini CLI `.agents/skills/`, Copilot and Cursor both
+(AN-51, OM-53, OM-57, PL-56, PL-57). Keep frontmatter to the spec fields ([Pattern
+0.10](#pattern-010--prune-and-re-baseline-context)) and review skills as code ([Pattern
+2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)).
+
+**In Practice**:
+
+1. **Bind.** Put shared rules in AGENTS.md. CLAUDE.md holds `@AGENTS.md` and Claude-only lines;
+   `.gemini/settings.json` sets `context.fileName`. Where a surface cannot read AGENTS.md, a CI job generates its file
+   from AGENTS.md and fails on a hand edit (this library's design). A sentence telling the agent to read AGENTS.md
+   reaches it only if it opens the file ([AN-50](references/sources.md)).
+2. **Test the load.** Add a task-bank task ([Pattern 4.6](L4-standards-measurement.md#pattern-46--context-eval))
+   whose deterministic check passes only if the agent followed a rule written in AGENTS.md, and run it through each
+   harness in use at pass^3. Dry-run it with AGENTS.md removed: if it still passes, it does not test loading. Keep
+   each harness's load check output with the run log.
+3. **Hold invariants in CI.** A rule a Claude Code hook holds is prose in every other harness. Required CI checks and
+   branch protection are the points every harness passes through ([Pattern
+   4.5](L4-standards-measurement.md#pattern-45--ci-guardrails)). In-session points differ per harness: Codex sandbox
+   and hooks (OM-51, OM-52), Gemini CLI hooks and policy (OM-55, OM-56), Copilot hooks (PL-52), Cursor hooks (PL-55).
+   The Copilot cloud agent pushes to one branch and cannot approve or merge (PL-53).
+
+```markdown
+1. No migration without a rollback file (enforced by: required CI `migration-check`, every harness;
+   blocked in session by a PreToolUse hook in Claude Code only)
+```
+
+**Anti-Pattern**: One rule kept by hand in five files. A CLAUDE.local.md added beside an AGENTS.md that no CLAUDE.md
+imports: Claude Code then stops reading AGENTS.md ([AN-50](references/sources.md)). An AGENTS.md chain over 32 KiB,
+past which Codex stops adding files. Reporting a rule as enforced because a hook holds it in one harness.
+
+**Cross-References**: [Pattern 2.4](L2-behavioral-guardrails.md#pattern-24--constitutional-rules) separates guidance
+from invariants. [Pattern 0.10](#pattern-010--prune-and-re-baseline-context) re-baselines the shared file with the
+same task bank.
+
+**Evidence:** Partial — consistent vendor documentation of how five harnesses load instruction files and where each
+enforces; no measurement that one shared file reduces drift or errors (AN-50, AN-51, OM-50 to OM-59, PL-21,
+PL-51 to PL-57)
 
 ---
 

@@ -19,15 +19,15 @@ Each layer depends on the ones below it: L1 verification needs L0's navigable st
 
 ### Layer Overviews
 
-**[L0: Foundation](docs/L0-foundation.md)** — A codebase an agent with no prior context can navigate: deep modules, progressive disclosure, an instruction file (AGENTS.md) as constitution, unit tests as contract and aggressive cleanup.
+**[L0: Foundation](docs/L0-foundation.md)** — A codebase an agent with no prior context can navigate: deep modules, progressive disclosure, one AGENTS.md for every harness, unit tests as contract and aggressive cleanup.
 
 **[L1: Closed Loop Design and Verification](docs/L1-feedback-loops.md)** — How an agent proves its own change works. Stack tests run the whole application in Docker with real dependencies and assert each journey's effects; tests that can pass silently are forbidden. Patterns 1.7 to 1.12 extend the loop to incidents in code you own.
 
 **[L2: Behavioral Guardrails](docs/L2-behavioral-guardrails.md)** — Enforcement points stack. Prose is guidance, command hooks are deterministic policy inside the harness, containment and credentials are the boundary, and skills guarantee nothing. Name the enforcement point for every constitutional rule.
 
-**[L3: Optimization (optional)](docs/L3-optimization.md)** — Fewer tokens on exploration and tool output: native structured tools, blocking destructive shell edits and a scout sub-agent. Not on the path to verified or unattended work.
+**[L3: Optimization (optional)](docs/L3-optimization.md)** — Lower token cost: native structured tools, blocking destructive shell edits, a scout sub-agent, model and effort per task. Not on the path to verified or unattended work.
 
-**[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, development metrics, CI guardrails, context eval, ownership of agent-written code and the team's skill to supervise.
+**[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, metrics, CI guardrails, context eval, ownership of agent-written code, the team's skill to supervise and run records.
 
 ## How the Scales Fit Together
 
@@ -96,7 +96,7 @@ examples/             # Working code (TypeScript and Python; L3 is TypeScript on
 
 - **Production ownership, in part.** [Pattern 4.7](docs/L4-standards-measurement.md#pattern-47--author-of-record) names an author of record and [Pattern A.5](docs/earned-autonomy.md#pattern-a5--tested-stop) rehearses the stop. On-call, rollback, deployment and production telemetry are not covered; the [FAQ](docs/cross-cutting/faq.md#what-passes-between-the-application-and-operations) states the contract with operations.
 - **Comparing outcomes against a baseline.** [Pattern 4.4](docs/L4-standards-measurement.md#pattern-44--agentic-development-metrics) shows the baseline file the census reads, not how to compare against it.
-- **Data handling, audit retention and incident response.** The rest of security and governance is in [Patterns 2.9 to 2.13](docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) and the [threat model](docs/cross-cutting/threat-model.md).
+- **Data handling and incident response.** Run records: [Pattern 4.10](docs/L4-standards-measurement.md#pattern-410--observability-of-agent-runs). The rest of security and governance: [Patterns 2.9 to 2.13](docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) and the [threat model](docs/cross-cutting/threat-model.md).
 - **Docker stack tests inside the sandbox.** The [FAQ](docs/cross-cutting/faq.md#my-stack-tests-need-docker-how-do-i-run-them-inside-the-sandbox) compares three options; no example runs one.
 - **Monorepos.** The census computes one cap per repository, not per package ([FAQ](docs/cross-cutting/faq.md#monorepo-or-multi-repo-for-agents)).
 

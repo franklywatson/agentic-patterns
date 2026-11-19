@@ -107,7 +107,7 @@ export function buildReport(wf: Json, runsAll: Json[], profile: Json | null, sta
     criteria.push(criterion("baseline", "present", wf.baseline ?? null, Boolean(wf.baseline)));
     criteria.push(criterion("target", "present", wf.target ?? null, Boolean(wf.target)));
     criteria.push(criterion("stop-rule", "present", wf.stop_rule ?? null, Boolean(wf.stop_rule)));
-    criteria.push(criterion("cost-per-merged-outcome", "reported", costPer, costPer !== null));
+    criteria.push(criterion("cost-per-merged-change", "reported", costPer, costPer !== null));
     criteria.push(criterion("cap", ">= 5", cap, cap >= 5));
     criteria.push(criterion("cooldown", ">= 30 days since demotion", entry.demoted_at ?? null, cooldownOk));
     manual.push("one review cycle completed with a recorded decision");
