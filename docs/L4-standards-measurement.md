@@ -433,9 +433,8 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements context e
 
 ### Cross-References
 
-- [Pattern 3.1 — Smart Routing](L3-optimization.md#pattern-31--smart-routing--tool-selection) — Tool routing is one context eval application
-- [Pattern 3.2 — Intent Classification](L3-optimization.md#pattern-32--intent-classification) — Intent parsing correctness is eval'd through scenarios
-- [Pattern 3.3 — Environment-Aware Routing](L3-optimization.md#pattern-33--environment-aware-routing) — Configuration variants in eval ensure degraded paths work
+- [Pattern 3.1 — Prefer Native Structured Tools](L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits) — Tool routing and intent classification are context eval applications
+- [Pattern 3.3 — Environment-Aware Routing](L3-optimization.md#pattern-33--environment-aware-routing-and-session-lifecycle) — Configuration variants in eval ensure degraded paths work
 - [Pattern 2.4 — Constitutional Rules](L2-behavioral-guardrails.md#pattern-24--constitutional-rules) — Constitutional compliance can be eval'd through scenarios
 - [Pattern 2.6 — Enforcement Pipeline](L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition) — Pipeline behavior can be eval'd through scenarios
 - [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — Context eval produces evidence for decision-layer effectiveness claims
@@ -528,4 +527,4 @@ Architecture, tech debt, and modularity require continuous attention — especia
 
 ---
 
-**Previous:** [L3: Optimization — Token Efficiency & Agent Performance](L3-optimization.md) | [Back to Overview](../README.md)
+**Previous:** [L3: Optimization (Optional)](L3-optimization.md) | [Back to Overview](../README.md)

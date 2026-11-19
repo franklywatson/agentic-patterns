@@ -1,6 +1,8 @@
 # Guardrail Middleware Example
 
-A simplified implementation demonstrating smart routing and intent classification for token-optimized agent behavior.
+A simplified implementation demonstrating tool routing and intent classification for token-optimized agent behavior.
+
+This is a single-language (TypeScript) example for the optional [L3: Optimization](../../docs/L3-optimization.md) level. It illustrates Pattern 3.1, Prefer Native Structured Tools; Block Destructive Edits.
 
 ## Overview
 
@@ -8,7 +10,7 @@ This example shows the core routing logic:
 
 1. **Intent Classification** — Parse bash commands to detect what the agent is trying to do
 2. **Environment Detection** — Check available tools (RTK, jcodemunch) at session start
-3. **Smart Routing** — Route commands to optimal tools based on intent + environment
+3. **Native Structured Tool Routing** — Route commands to the native or structured tool for the job, based on intent + environment
 4. **Resolution** — Return `allow`, `advise` (use different tool), or `block`
 
 ## Architecture

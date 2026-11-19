@@ -50,7 +50,7 @@ Patterns are organized into five levels, each building on the previous. The leve
 
 **[L2: Behavioral Guardrails](docs/L2-behavioral-guardrails.md)** — Prose is guidance. Hooks are deterministic policy within the harness. Containment and credentials are the boundary. Put each rule at the lowest layer that can hold it, and name that layer for every constitutional rule. Skills overlay project rules on base agent capabilities; the skill chain and phase tracking are optional and scale with risk.
 
-**[L3: Optimization](docs/L3-optimization.md)** — Agent efficiency is quality, not just speed. Smart routing redirects shell commands to specialized tools. Intent classification, environment-aware routing, and the Scout Pattern (from the WISC context engineering framework: Write, Isolate, Select, Compress) turn exploration into structured context.
+**[L3: Optimization (optional)](docs/L3-optimization.md)** — Reduces tokens spent on exploration and tool output. It is not on the path to verified or unattended work. Covers preferring native structured tools and blocking destructive shell edits, context isolation with a scout sub-agent (from the WISC framework), and a pointer to rig's code for environment-aware routing.
 
 **[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, spec drift detection, the new starter audit, development metrics, CI guardrails, and context eval for routing effectiveness. The maturity layer that verifies L0-L3 are holding and measures their impact over time.
 
@@ -80,7 +80,7 @@ examples/           # Working code examples (TypeScript + Python for core patter
                     #   Demonstrates: API-level verification, Python conventions
                     #   Stack: Python + PostgreSQL + Redis in Docker
   guardrails/       # Optional L3 token optimization middleware (TypeScript only)
-                    #   Intent classification, smart routing, environment detection
+                    #   Intent classification, tool routing, environment detection
   project-structure/ # Before/after directory layouts
 docs/cross-cutting/ # Anti-patterns, adoption guide, FAQ, glossary
 docs/references/    # Case study (trading bot) and further reading

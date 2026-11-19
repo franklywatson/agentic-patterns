@@ -266,7 +266,7 @@ exit 0
 
 - [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — which layer holds which rule
 - [Pattern 2.6 — Enforcement Pipeline Composition](#pattern-26--enforcement-pipeline-composition) — composing checks
-- [L3: Optimization](L3-optimization.md#pattern-31--smart-routing--tool-selection) — hooks used as ergonomic routing nudges
+- [L3: Optimization](L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits) — hooks used as ergonomic routing nudges
 - [examples/guardrails](../examples/guardrails/) — hook-adjacent middleware example
 
 ### Reference Implementation
@@ -603,4 +603,4 @@ Planning is worth its cost when the change is large or risky. The plan becomes t
 
 ---
 
-**Previous:** [L1: Closed Loop Design and Verification](L1-feedback-loops.md) | **Next:** [L3: Optimization — Token Efficiency & Agent Performance](L3-optimization.md) | [Back to Overview](../README.md)
+**Previous:** [L1: Closed Loop Design and Verification](L1-feedback-loops.md) | **Next:** [L3: Optimization (Optional)](L3-optimization.md) | [Back to Overview](../README.md)
