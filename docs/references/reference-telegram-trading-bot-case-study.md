@@ -367,7 +367,7 @@ When the repository is indexed by [jcodemunch](https://github.com/jgravelle/jcod
 
 ### TOON Serialization for MCP Responses
 
-The project's MCP server uses [TOON (Token-Oriented Object Notation)](https://github.com/toon-format/toon) to serialize tabular responses ([Pattern 3.7](../L3-optimization.md#pattern-37--toon-serialization-for-mcp-response-optimization)). Order lists, portfolio holdings, and market data — uniform object arrays returned to agents from internal tools — are encoded more compactly than JSON by declaring field names once in a header row. The agent receives the same data; it just costs fewer tokens to consume.
+In this project, the MCP server used [TOON (Token-Oriented Object Notation)](https://github.com/toon-format/toon) to serialize tabular responses. This is a description of what the project did, not a library recommendation. Order lists, portfolio holdings, and market data — uniform object arrays returned to agents from internal tools — are encoded more compactly than JSON by declaring field names once in a header row. The agent receives the same data; it just costs fewer tokens to consume.
 
 ### Structured Output Over Raw Text
 
