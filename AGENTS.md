@@ -16,12 +16,13 @@ agentic-patterns/
 │   ├── L1-feedback-loops.md     # Closed loop design and verification (overview)
 │   ├── L1-patterns/             # Individual L1 patterns (1.1-1.6 + testing infra)
 │   ├── L2-behavioral-guardrails.md  # Skills, hooks, constitutional rules
-│   ├── L3-optimization.md       # Token efficiency, smart routing
-│   ├── L4-standards-measurement.md # Evidence, drift detection, metrics
+│   ├── L3-optimization.md       # Token efficiency, tool routing
+│   ├── L4-standards-measurement.md # Evidence, metrics, CI guardrails, context eval
 │   ├── cross-cutting/
 │   │   ├── anti-patterns.md
 │   │   ├── adoption-guide.md
 │   │   ├── threat-model.md
+│   │   ├── faq.md
 │   │   └── glossary.md
 │   ├── references/
 │   │   ├── reference-telegram-trading-bot-case-study.md
@@ -46,7 +47,10 @@ See [README.md](README.md) for detailed project overview.
 
 - Working code only. No TODOs, no placeholders.
 - All examples must run as-is.
-- TypeScript and Python versions for each core pattern (L0-L2, L4); examples for the optional L3 may be single-language.
+- Examples that exist: stack tests (Pattern 1.1, TypeScript and Python), containment (Pattern 2.9, TypeScript and
+  Python), guardrail middleware (Pattern 3.1, TypeScript only) and project structure (L0, documentation only).
+- A new example for a core pattern (L0-L2, L4) ships in TypeScript and Python; examples for the optional L3 may be
+  single-language.
 
 **Doc freshness:**
 
@@ -90,11 +94,11 @@ See [README.md](README.md) for detailed project overview.
 
 **Optimization:**
 
-- [docs/L3-optimization.md](docs/L3-optimization.md) — Token efficiency, smart routing, guardrail middleware
+- [docs/L3-optimization.md](docs/L3-optimization.md) — Token efficiency, tool routing, context isolation
 
 **Standards & Measurement:**
 
-- [docs/L4-standards-measurement.md](docs/L4-standards-measurement.md) — Evidence-based claims, drift detection, metrics
+- [docs/L4-standards-measurement.md](docs/L4-standards-measurement.md) — Evidence-based claims, metrics, CI guardrails, context eval
 
 ## Cross-Cutting Guides
 

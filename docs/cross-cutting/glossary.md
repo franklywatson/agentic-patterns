@@ -28,6 +28,11 @@ Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-
 prompt stops working as a control. The remedy is to tier approvals by risk and to measure the approve rate.
 **See**: [Pattern 2.13 - Risk-Tiered Review](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)
 
+### Autonomy Grant (A1-A5)
+
+**Definition**: What one named workflow may do on its own. A1 suggests and a human applies the change. A2 opens pull requests that a human reads. A3 passes required checks before a human merges. A4 acts on an event or schedule within permitted actions. A5 is A4 managed as an investment with a baseline, target, review date and stop rule. A grant is per workflow and cannot sit above the cap line.
+**See**: [How Far a Team Can Let Go](../../README.md#how-far-a-team-can-let-go)
+
 ### Assertion Layering (Full-Loop)
 
 **Layer**: L1 - Closed Loop Design
@@ -45,6 +50,11 @@ Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-
 ---
 
 ## C
+
+### Cap Line
+
+**Definition**: The lowest position among the four dimensions that cap unattended work (platform, measuring value, security and governance, production ownership). No workflow grant may sit above it.
+**See**: [How Far a Team Can Let Go](../../README.md#how-far-a-team-can-let-go)
 
 ### CI Guardrails
 
@@ -101,6 +111,11 @@ Approvals are relaxed only inside it.
 
 ## D
 
+### Curve (C1-C5)
+
+**Definition**: A five-step scale applied separately to each of seven dimensions: C1 Individual, C2 Grounded, C3 Verified delegation, C4 Governed autonomy, C5 Self-correcting. The C prefix distinguishes it from the layers L0-L4.
+**See**: [How Far a Team Can Let Go](../../README.md#how-far-a-team-can-let-go)
+
 ### Deep Module
 
 **Layer**: L0 - Foundation
@@ -129,12 +144,21 @@ Approvals are relaxed only inside it.
 **Definition**: Composable pipeline where independent enforcement checks return severity levels, resolved to the most severe result (block > advise > silent). PostToolUse checks are detective: they run after the tool call and report it, but cannot prevent it. Prevention needs a PreToolUse hook or a boundary outside the agent.
 **See**: [Pattern 2.6 - Enforcement Pipeline Composition](../L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition)
 
+### Enforcement Point
+
+**Layer**: L2 - Behavioral Guardrails
+**Definition**: The mechanism that holds a rule: prompt, hook, CI, sandbox or downstream authorisation. A rule is as strong as its weakest enforcement point, and each constitutional rule names its own.
+**See**: [Pattern 2.4 - Constitutional Rules](../L2-behavioral-guardrails.md#pattern-24--constitutional-rules)
+
+### Evidence Label
+
+**Definition**: The closing line of a pattern, `Evidence: Strong`, `Partial` or `Thin`, followed by the basis for the rating and the source IDs. Strong means the claim is measured or corroborated by independent sources, Partial means support exists but is incomplete or contested, and Thin means the pattern rests on reasoning, first-party experience or unmeasured vendor claims. Source IDs resolve in [Sources](../references/sources.md).
+
 ### Focused Integration Test
 
 **Layer**: L1 - Closed Loop Design
 **Definition**: Narrow-scope test that exercises a single external dependency's real API (testnet or sandbox) with exhaustive edge-case coverage. No mocks, no full system stack — just the adapter code plus the real external service. Used for complex dependencies like payment providers where each error code, timeout scenario, and rate limit behavior needs individual verification.
 **See**: [Pattern 1.5 - Real Dependencies in E2E/Integration and Stack Tests](../L1-feedback-loops.md#pattern-15--real-dependencies-in-e2eintegration-and-stack-tests)
-**See**: [Pattern 2.6 - Enforcement Pipeline Composition](../L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition)
 
 ### Evidence-Based Claim
 
@@ -198,6 +222,11 @@ to act outside, in one session. The Rule of Two says a session holds at most two
 deterministic or human gate sits between them.
 **See**: [Pattern 2.10 - Least Agency and Session
 Composition](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition)
+
+### Layer (L0-L4)
+
+**Definition**: A group of patterns that depend on the layers below it: L0 Foundation, L1 Closed Loop Design and Verification, L2 Behavioral Guardrails, L3 Optimization (optional), L4 Standards & Measurement. The layers are not a maturity scale. Not the same as an enforcement point or a position on the curve.
+**See**: [README](../../README.md)
 
 ---
 
@@ -354,4 +383,4 @@ Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-
 - **L1 Closed Loop Design**: Design-led verification and closed-loop testing
 - **L2 Behavioral Guardrails**: Skills, hooks, and enforcement
 - **L3 Optimization (optional)**: Token efficiency and routing
-- **L4 Standards & Measurement**: Evidence, drift detection, metrics, context eval, maturity
+- **L4 Standards & Measurement**: Evidence-based claims, metrics, CI guardrails, context eval

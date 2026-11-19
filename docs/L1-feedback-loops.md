@@ -140,6 +140,8 @@ Design rinsing is overkill when:
 
 Design rinsing operates at the **system-level** of the REPL fractal described earlier. It extends the Read phase beyond the current project — the agent reads external architecture to inform its mental model before acting. This is context harvesting at its broadest scope: not "what does this function do?" but "what design philosophy produced this system?"
 
+**Evidence:** Thin — a reasoned technique from first-party use; no study of cross-domain extraction (first-party, n=1)
+
 ---
 
 ## Pattern Index

@@ -3,8 +3,9 @@
 This page lists what an agent can reach, what could go wrong, and which pattern holds each risk. Use it to
 decide where to put a control, and as a checklist when you review a setup.
 
-The list of assets, entry points and capabilities is the author's synthesis of the sources cited in the
-patterns, so the evidence is Thin (see the footer). The individual patterns carry their own evidence labels.
+The list of assets, entry points and capabilities is the author's synthesis of the
+[sources](../references/sources.md) cited in the patterns, so the evidence is Thin (see the footer). The
+individual patterns carry their own evidence labels.
 Add your own assets and entry points; this list is a start.
 
 ## How to read it
@@ -60,8 +61,7 @@ Each of these can carry text that instructs the agent (prompt injection) or code
 This page does not cover data handling, audit retention or incident response. It does not model attackers who
 already control the developer's machine or the CI platform.
 
-**Evidence:** Thin — the author's synthesis of the sources behind the patterns, not a tested model ([SG-1,
-SG-2, SG-16](../references/sources.md))
+**Evidence:** Thin — the author's synthesis of the sources behind the patterns, not a tested model (SG-1, SG-2, SG-16)
 
 ---
 
