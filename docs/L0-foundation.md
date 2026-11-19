@@ -50,6 +50,8 @@ export function parseAddress(...) { }               // internal
 
 **Cross-References**: See [L2: Skills Framework](L2-behavioral-guardrails.md) for how skills enforce deep module boundaries during implementation. [Pattern 0.8 — Aggressive Cleanup](#pattern-08--aggressive-cleanup) covers maintaining depth through continuous cleanup.
 
+**Evidence:** Thin — the 3-5 export limit is a rule of thumb; Ousterhout gives no number (first-party, n=1)
+
 ---
 
 ## Pattern 0.2 — Progressive Disclosure
@@ -103,6 +105,8 @@ project/
 **Anti-Pattern**: "Treasure hunt" structures where understanding one file requires reading 10 others scattered across the tree.
 
 **Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) expands on grouping by domain. [L4: New Starter Standard](L4-standards-measurement.md) tests whether disclosure works for zero-context agents.
+
+**Evidence:** Partial — vendor guidance on loading context just in time, no measured comparison ([SC-1, AN-2](references/sources.md))
 
 ---
 
@@ -159,6 +163,8 @@ src/
 
 **Cross-References**: [Pattern 0.1](#pattern-01--deep-modules) shows how deep modules reinforce conceptual organization. [Pattern 0.7](#pattern-07--documentation-as-system-map) — file structure is the physical map; documentation is the conceptual map. [L1: Stack Tests](L1-feedback-loops.md) demonstrates testing at domain boundaries.
 
+**Evidence:** Thin — reasoned from how agents use paths; no study (first-party, n=1)
+
 ---
 
 ## Pattern 0.4 — Agent instruction file as project constitution
@@ -209,6 +215,8 @@ Claude Code expands `@path` imports into context when CLAUDE.md loads, so an ind
 
 **Cross-References**: [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether the instruction file succeeds. [Pattern 0.7 — Documentation as System Map](#pattern-07--documentation-as-system-map) covers keeping the system map in sync with code.
 
+**Evidence:** Partial — instruction-file studies disagree on value; the 200-line warning is a house rule (SC-4, SC-5, SC-8, SC-11)
+
 ---
 
 ## Pattern 0.5 — Unit Tests as Contract
@@ -249,6 +257,8 @@ During a refactoring session:
 
 **Cross-References**: [L1: Stack Tests](L1-feedback-loops.md#pattern-11--stack-tests) — the system-level complement to unit tests. [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) — the instruction file as the human-readable contract layer. [L2: Zero-Defect Tolerance](L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance) — every test failure matters, unit or stack.
 
+**Evidence:** Partial — vendor guidance to give agents a verifiable check; no outcome study (OM-7, AN-3)
+
 ---
 
 ## Pattern 0.6 — Git Worktree-Based Development
@@ -281,6 +291,8 @@ Convention: `.worktrees/<branch-name>/` directory.
 **Anti-Pattern**: Working directly on main for feature work. Agents should never modify main without explicit instruction.
 
 **Cross-References**: [L2: Skills](L2-behavioral-guardrails.md) can enforce worktree usage via hooks. [L3: Optimization](L3-optimization.md) benefits from deterministic starting states. See [Further Reading](references/further-reading.md) for the superpowers framework.
+
+**Evidence:** Partial — isolation by default is vendor and practitioner guidance; now native in Claude Code (OM-18, PL-15)
 
 ---
 
@@ -327,6 +339,8 @@ When a check or a review finds drift:
 **Anti-Pattern**: Deferring doc updates to a later change. Tolerating "close enough" drift. Keeping docs for deleted features "for reference". Relying on manual review alone for drift that a script can find.
 
 **Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) — file structure is the physical map; docs are the conceptual map. [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) establishes the master index. [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether the map works for a reader with no context. [Pattern 4.5 — CI Guardrails](L4-standards-measurement.md#pattern-45--ci-guardrails) covers running checks in CI.
+
+**Evidence:** Thin — for agents; committed documentation artefacts are mostly never updated, so presence is not practice (MC-11)
 
 ---
 
@@ -413,6 +427,8 @@ Cleanup:
 
 **Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) — clean file structure and clean code reinforce each other. [Pattern 0.7](#pattern-07--documentation-as-system-map) — documentation cleanup is a separate concern; stale docs are covered there. [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) establishes the standard for verifying cleanup doesn't break anything.
 
+**Evidence:** Thin — reasoned and first-party, n=1; a feedback flywheel must remove as well as add (IS-13)
+
 ---
 
 ## Pattern 0.9 — AI-as-New-Starter Standard
@@ -445,6 +461,8 @@ Apply the zero-context rule to every doc section: no undefined terms, no assumed
 **Anti-Pattern**: "They should read the code." Code shows what exists, not why. Insider references ("the thing from the meeting"). Quick starts that fail because a step is missing. Explaining how without saying why.
 
 **Cross-References**: [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) specifies the AGENTS.md format. [Pattern 0.7](#pattern-07--documentation-as-system-map) keeps the entry points current.
+
+**Evidence:** Thin — a reasoned audit test with no study (first-party, n=1)
 
 ---
 

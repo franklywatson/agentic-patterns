@@ -101,6 +101,8 @@ Copying the same rules into every prompt. This creates drift: prompts get update
 - [Pattern 0.4 — Agent instruction file as project constitution](L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution) — instruction file as rule source
 - [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — enforcement point per rule
 
+**Evidence:** Thin — overlay design from superpowers and rig use (first-party, n=1); inspect third-party skills before adopting (IS-13)
+
 ---
 
 ## Pattern 2.2 — The Skill Chain
@@ -175,6 +177,8 @@ in bulk. The opposite failure is shipping without verification evidence or revie
 ### Reference Implementation
 
 The [rig](https://github.com/franklywatson/claude-rig) repo implements the chain as skills, with a phase tracker; see its `src/skills/` directory.
+
+**Evidence:** Thin — the chain is a design from trading-bot and rig use; no comparison against unchained work (first-party, n=1)
 
 ---
 
@@ -273,6 +277,8 @@ exit 0
 
 The [rig](https://github.com/franklywatson/claude-rig) repo implements composable hooks in `src/enforcement/`.
 
+**Evidence:** Strong — independent organisations put must-hold rules in hooks, because a hook runs outside the model and cannot be talked out of the rule (OM-7, OM-12, OM-18, SG-11, SG-16, SC-8)
+
 ---
 
 ## Pattern 2.4 — Constitutional Rules
@@ -335,6 +341,8 @@ tells a reviewer where to look.
 ### Reference Implementation
 
 The [rig](https://github.com/franklywatson/claude-rig) repo implements a constitutional check in `src/enforcement/checks/constitutional.ts`; it detects mock patterns in edited files by regex, so it is a hook-layer check and inherits the limits listed in [Pattern 2.3](#pattern-23--hook-automation).
+
+**Evidence:** Strong — for enforcing hard rules in deterministic checks, same sources as 2.3; the rule list itself is a project choice (OM-7, OM-18, SG-16)
 
 ---
 
@@ -402,6 +410,8 @@ Classifying errors as "relevant" or "irrelevant" without evidence. Unless you ca
 
 The [rig](https://github.com/franklywatson/claude-rig) repo parses test-runner output for failures and warnings in `src/enforcement/checks/zero-defect.ts`.
 
+**Evidence:** Partial — agents declare success on failing tests; the rest is a mechanism argument that agents cannot tell tolerated from real failures (IS-14, IS-15)
+
 ---
 
 ## Pattern 2.6 — Enforcement Pipeline Composition
@@ -459,6 +469,8 @@ For the implementation, see the reference below.
 
 The [rig](https://github.com/franklywatson/claude-rig) repo implements the pipeline in `src/enforcement/` with an orchestrator, `handlePostToolUse`, that resolves severity. Its code is not reproduced here.
 
+**Evidence:** Thin — composition design from rig (first-party, n=1); the hook exit-code contract it builds on is documented (SG-11)
+
 ---
 
 ## Pattern 2.7 — Phase Transition Validation
@@ -512,6 +524,8 @@ For the implementation, see the reference below.
 ### Reference Implementation
 
 The [rig](https://github.com/franklywatson/claude-rig) repo implements a phase tracker in `src/skills/phase-tracker.ts` with transition validation, query methods and reset. Its code is not reproduced here.
+
+**Evidence:** Thin — state-machine design from rig (first-party, n=1); no study of phase enforcement
 
 ---
 
@@ -582,6 +596,8 @@ The [compound-engineering](https://github.com/EveryInc/compound-engineering-plug
 ### Reference Implementation
 
 The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin provides `/ce:compound`. The [rig](https://github.com/franklywatson/claude-rig) framework implements the brainstorm, plan, work and review portion of the loop.
+
+**Evidence:** Thin — vendor plugin claim, including the 80/20 split; a flywheel must remove as well as add (IS-13)
 
 ---
 
