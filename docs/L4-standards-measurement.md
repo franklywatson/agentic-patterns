@@ -19,6 +19,11 @@ Agents make claims without backing them with evidence. "Tests should pass" is no
 
 **The verify+ pattern:** Run the commands, show the output, then make the claim. Every completion claim must be backed by actual command output.
 
+**Where the evidence comes from matters.** Output the agent pastes into its own message is a claim about output.
+Evidence is the result of a system the agent cannot edit: a CI log, a required check, a signed build record. The
+reviewer reads that source, and the agent has no write access to it. [Pattern
+4.8](#pattern-48--evidence-over-self-report) states the rule in full.
+
 **Evidence format template:**
 
 ```bash
@@ -469,6 +474,218 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements context e
 
 ---
 
+## Pattern 4.7 — Author of Record and Agent Register
+
+### Problem
+
+When an agent writes code, nobody is named as responsible for it. When an agent, a skill or a set of hooks has
+no owner, it keeps running after the person who set it up has left. Credentials stay valid, instructions go
+stale, and no one knows whether to remove it.
+
+This pattern is **Partial**. Open-source projects have converged on one rule for agent-written code. Vendors
+document sponsor and lifecycle mechanisms for agent identities. No source measures how teams apply either
+([PO-10 to PO-17](references/sources.md)).
+
+### Solution
+
+Name a person for every piece of agent-written code, and list every agent and agent-facing artefact in one register.
+
+**Author of record.** The person who asks an agent for a change is its author of record. They read it, they
+answer for it, and they cannot approve it ([Pattern
+2.13](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)). A different person approves. The LLVM
+project, the Linux kernel and the Apache Software Foundation state this rule for contributions made with AI
+tools: the human who submits is responsible ([PO-16, PO-17, PO-19](references/sources.md)). GitHub's guidance
+for its cloud agent says the same about the person who asked for the work ([PO-20](references/sources.md)).
+Record the tool in a commit trailer, such as a co-author line, so reviewers and later readers can see which
+changes an agent wrote.
+
+**Agent register.** One list of every agent, unattended workflow, skill, hook pack and MCP server in use. Each
+entry holds:
+
+| Field | Meaning |
+|-------|---------|
+| Item | Name and where it lives |
+| Owner | The person who maintains it |
+| Sponsor | The person accountable for it and for renewing or retiring it ([PO-10, PO-11](references/sources.md)) |
+| Permitted actions | What it may read, write and call |
+| Access expiry | When its credentials stop working unless renewed |
+| State | Proposed, active, suspended or retired ([PO-12](references/sources.md)) |
+| Last review | Date a person last checked that it is still needed and still correct |
+| Retirement rule | What triggers removal: owner leaves, review lapses, no use for 90 days |
+| Stop | For an unattended workflow: who can halt it, how, and when the stop was last tested |
+
+The register starts as a table in the repository. As the number of entries grows, move it to a
+machine-readable file (YAML or JSON) and add a CI check that fails when an entry has no owner, a review date
+is older than the review interval, or an access expiry has passed. The fields stay the same.
+
+A **tested stop** is a halt mechanism that someone has used in a drill, with a named person who can invoke it
+and a named role who approves restart. This pattern only records whether one exists and when it was last
+tested.
+
+Retirement is part of [Pattern 0.8 — Aggressive Cleanup](L0-foundation.md#pattern-08--aggressive-cleanup),
+applied to agents, skills and hooks: an item whose owner has left or whose review has lapsed is suspended,
+then removed.
+
+### In Practice
+
+Start with a table in `docs/agents.md`:
+
+| Item | Owner | Sponsor | Permitted actions | Access expiry | State | Last review | Retirement rule | Stop |
+|------|-------|---------|-------------------|---------------|-------|-------------|-----------------|------|
+| Nightly dependency-update agent | A. Rivera | J. Chen | Push to `deps/*` branches; open PRs | 2027-03-01 | Active | 2026-11-10 | Owner leaves or no PR in 90 days | Revoke token (J. Chen); drilled 2026-10-20 |
+| `protect-paths` hook | M. Okafor | J. Chen | Block Edit and Write on protected paths | None | Active | 2026-11-10 | Review lapses | Not applicable |
+
+At each quarterly review, confirm each entry still has a person who answers for it. Remove entries nobody claims.
+
+For pull requests, use a template line "Requested by: <person>. Agent: <tool>." and a CI check that the commit
+trailer is present.
+
+### Anti-Pattern
+
+- Agent-written code that nobody is named for, merged because "the agent wrote it".
+- The requester approving their own agent's change.
+- A register that lists agents but not the skills, hooks and servers they depend on.
+- No access expiry, so a departed owner's agent keeps its credentials.
+- Writing the register once and never reviewing it.
+
+### Cross-References
+
+- [Pattern 2.11 — Agent Identity and
+  Delegation](L2-behavioral-guardrails.md#pattern-211--agent-identity-and-delegation) — the identity and
+  credentials an entry refers to
+- [Pattern 2.12 — Skill, Plugin and MCP Supply
+  Chain](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain) — owner and provenance per
+  installed item
+- [Pattern 2.13 — Risk-Tiered Review](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review) — requester
+  cannot approve
+- [Pattern 0.8 — Aggressive Cleanup](L0-foundation.md#pattern-08--aggressive-cleanup) — retirement
+
+**Evidence:** Partial — converged open-source rule and vendor-documented mechanisms; no practice data (PO-10
+to PO-17, PO-19, PO-20, PO-31, AN-42)
+
+---
+
+## Pattern 4.8 — Evidence Over Self-Report
+
+### Problem
+
+An agent's report that it finished is a claim by the party being checked. A person's report that AI made them
+faster is also a claim. Both can be wrong in ways their authors cannot see. In a randomised trial, experienced
+open-source developers took longer to finish tasks with AI tools than without, while expecting and believing
+that the tools made them faster ([IS-6](references/sources.md)). A 1,300-engineer survey measures what
+engineers say about their practice, not what they produce ([MC-22](references/sources.md)).
+
+This pattern is **Strong** for the finding that self-report is unreliable. It is **Partial** for the practice
+of gating configuration changes on evals, which rests on vendor guidance.
+
+### Solution
+
+Take completion evidence from systems the agent cannot edit. Take productivity evidence from artefacts, not opinion.
+
+**Contract.**
+
+1. **Completion evidence comes from outside the agent.** A CI log, a required check result, a signed build record
+   and the repository history count. Command output that the agent pastes into its own message is a claim about
+   output. The reviewer reads the CI result.
+2. **The agent cannot edit the evidence source.** It has no write access to the CI workflow, branch protection or
+   the build signing step ([Pattern 2.3](L2-behavioral-guardrails.md#pattern-23--hook-automation), [Pattern
+   2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
+3. **Productivity claims rest on artefacts.** Use cycle time, rework, revert rate and escaped defects from
+   version control and CI. A survey adds context. It does not stand alone ([IS-3, MV-8](references/sources.md)).
+4. **Configuration changes are releases.** A change to a skill, hook, prompt, instruction file or model version
+   runs against a fixed task set before it ships ([Pattern 4.6](#pattern-46--context-eval)). Run each task more
+   than once, because agent runs vary, and pass the change only if it holds across runs
+   ([PO-25](references/sources.md)).
+
+### In Practice
+
+- The completion template in the instruction file says "link the CI run", not "paste the test output".
+- The reviewer opens the required check, not the agent's summary.
+- A monthly report takes cycle time, revert rate and rework from the repository and CI, with the survey beside it.
+- A pull request that edits a skill or the instruction file attaches the eval run for the task set. The eval job
+  is a required check.
+
+### Anti-Pattern
+
+- Accepting "all tests pass" with a pasted block the agent could have written.
+- Letting the agent edit the workflow that produces the evidence.
+- Reporting AI productivity from a satisfaction survey.
+- Changing a prompt or model version because it feels better, with no task set to compare.
+
+### Cross-References
+
+- [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — the claim format this pattern anchors
+- [Pattern 4.4 — Agentic Development Metrics](#pattern-44--agentic-development-metrics) — artefact-based metrics
+- [Pattern 4.6 — Context Eval](#pattern-46--context-eval) — the eval gate for configuration changes
+- [Pattern 2.5 — Zero-Defect Tolerance](L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance)
+  — required checks
+
+**Evidence:** Partial — the finding that self-report is unreliable is Strong (independent trial); eval-gated
+releases rest on vendor guidance (IS-6, IS-3, MC-22, MV-8, PO-25)
+
+---
+
+## Pattern 4.9 — Deliberate Practice
+
+### Problem
+
+Safe delegation depends on a person who can read what the agent wrote, debug it and judge whether it is right.
+Heavy delegation can erode that skill. In a randomised trial from Anthropic, people who used an AI assistant
+to learn a new library scored lower on a comprehension test than people who coded by hand, and the gap
+depended on how they used the assistant ([IS-1](references/sources.md)). Anthropic's staff reported the same
+worry in a survey ([IS-4](references/sources.md)). Thoughtworks calls the team-level version codebase
+cognitive debt: the code works, and nobody understands it ([IS-12](references/sources.md)).
+
+This pattern is **Partial**. The trial was a short study of people learning a library. No study follows
+experienced engineers over years.
+
+### Solution
+
+Keep supervision skill alive on purpose.
+
+1. **Protected hands-on time.** Each engineer debugs or writes without the agent on a regular cadence, for
+   example one session a week or one task a sprint. Choose work in the modules the engineer owns.
+2. **Explain before merge.** For an owned module, the author of record explains the agent's change to a reviewer,
+   in their own words, before it merges. If they cannot, the change is not ready.
+3. **Rotate end-to-end diff reading.** Each week one person reads every agent diff in a module from start to
+   finish, so more than one person holds the picture.
+4. **Pair generation with comprehension.** When someone must own the result, they ask the agent to explain the
+   code and the trade-offs, and then check the explanation against the code ([AN-20,
+   AN-21](references/sources.md)).
+5. **Test the skill.** The [new-starter audit](L0-foundation.md#pattern-09--ai-as-new-starter-standard) includes
+   a work sample for the team: can an engineer explain and debug a module an agent changed?
+
+### In Practice
+
+A work sample takes 30 minutes:
+
+1. Pick a module an agent changed in the last month.
+2. Ask an engineer who did not review the change to explain what the module does and why the change was made.
+3. Give them a failing test in the module and ask them to find the cause without the agent.
+
+Record the result per module. A module nobody can explain gets a hands-on task assigned to an owner.
+
+### Anti-Pattern
+
+- Treating throughput as the only measure while no one can debug without the agent.
+- Merging changes the author of record cannot explain.
+- Skipping hands-on time because the schedule is tight.
+- Using the work sample to rank people. It measures whether the team can supervise.
+
+### Cross-References
+
+- [Pattern 0.9 — AI-as-New-Starter Standard](L0-foundation.md#pattern-09--ai-as-new-starter-standard) — the
+  audit that carries the work sample
+- [Pattern 4.7 — Author of Record and Agent Register](#pattern-47--author-of-record-and-agent-register) — the
+  person who must be able to explain the change
+- [Pattern 2.13 — Risk-Tiered Review](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review) — human
+  attention goes where mistakes cost most
+
+**Evidence:** Partial — the trial result is Strong in its setting; evidence for experienced engineers is Thin
+and no study is longitudinal (IS-1, IS-4, IS-12, AN-20, AN-21)
+
+---
+
 ## Review Checklist Template
 
 Adopt this checklist for code reviews, PR reviews, and task completion verification. A PR should not merge until all applicable items pass.
@@ -509,10 +726,25 @@ Adopt this checklist for code reviews, PR reviews, and task completion verificat
 ### Evidence Requirements
 
 - [ ] Claims backed by command output
+- [ ] Completion evidence comes from CI or another system the agent cannot edit ([Pattern
+  4.8](#pattern-48--evidence-over-self-report))
 - [ ] Test results shown (not just "tests pass")
 - [ ] Before/after evidence for bug fixes
 - [ ] Performance claims include metrics
 - [ ] Negative claims include investigation
+
+### Security and Ownership
+
+- [ ] The sandbox is on and locked, and fails closed ([Pattern
+  2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax))
+- [ ] No new secrets in agent-reachable configuration or files
+- [ ] New skills, plugins and MCP servers are vetted and pinned ([Pattern
+  2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain))
+- [ ] An author of record is named, and they are not the approver ([Pattern
+  4.7](#pattern-47--author-of-record-and-agent-register))
+- [ ] High-tier changes have a second human approver ([Pattern
+  2.13](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review))
+- [ ] New agents, skills and hooks have a register entry with an owner
 
 ### Code Quality
 
@@ -540,6 +772,10 @@ L4 holds the practices that check L0-L3 and measure their impact:
 2. **Pattern 4.4 (Agentic Development Metrics):** Measure outcomes, close the feedback loop
 3. **Pattern 4.5 (CI Guardrails):** Non-negotiable enforcement through CI workflows
 4. **Pattern 4.6 (Context Eval):** Score routing decisions against expected outcomes across environments
+5. **Pattern 4.7 (Author of Record and Agent Register):** Name a person for agent-written code; list every agent
+   and its owner
+6. **Pattern 4.8 (Evidence Over Self-Report):** Completion evidence comes from systems the agent cannot edit
+7. **Pattern 4.9 (Deliberate Practice):** Keep the skill to supervise the agent alive
 
 **The review checklist is the enforcement mechanism.** Apply it to every task, every PR, every completion.
 
