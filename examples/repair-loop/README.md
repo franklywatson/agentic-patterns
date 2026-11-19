@@ -43,9 +43,14 @@ Simulated:
 Not demonstrated: the Pattern 1.5 carve-out for network-level fault injection (a proxy in front of a real
 dependency). The example has no INC-002 that reproduces a dependency timeout.
 
-`.autonomy.yaml` is schema-valid. Running `autonomy check` on this directory alone still fails with
-`profile-missing` and `grant-exceeds-cap`, because the cap check needs a census profile that the example
-does not ship.
+`.autonomy.yaml` is schema-valid. Its owner, sponsor, identity and dates are example values, not real
+people or accounts. Running `autonomy check` on this directory alone still fails with `profile-missing`
+and `grant-exceeds-cap`, because the cap check needs a census profile that the example does not ship.
+
+To validate the register, copy `.autonomy.yaml` into an empty directory, add a `.autonomy/profile.json`
+with every dimension at level 3 and `"cap": 3`, then run the autonomy tooling there:
+`node dist/src/cli.js check --dir <that directory> --no-commits`. With that profile the check reports
+`workflow repair-loop: granted 3, effective 3` and `autonomy check: ok`.
 
 Out of scope: unattended repair of R3 (data-forward) or R4 (irreversible or external) changes. The
 gate sends every such change to a person, and the example never grants A4.

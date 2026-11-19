@@ -1,4 +1,5 @@
-# Autonomy register for the repair-loop example. Schema: examples/autonomy/schema/autonomy.schema.json;
+# Autonomy register for the repair-loop example. Owner, sponsor, identity and dates below are example
+# values for illustration, not real people or accounts. Schema: examples/autonomy/schema/autonomy.schema.json;
 # design: docs/refresh/reviews/review-autonomy.md (pattern A.1). The cap check needs a census profile
 # that this example does not ship. The repair workflow is granted
 # A3: changes pass the required checks before a person sees them, and a person merges.

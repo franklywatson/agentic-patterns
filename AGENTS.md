@@ -48,7 +48,8 @@ See [README.md](README.md) for detailed project overview.
 - Working code only. No TODOs, no placeholders.
 - All examples must run as-is.
 - Examples that exist: stack tests (Pattern 1.1, TypeScript and Python), containment (Pattern 2.9, TypeScript and
-  Python), guardrail middleware (Pattern 3.1, TypeScript only) and project structure (L0, documentation only).
+  Python), repair loop (Patterns 1.7 to 1.11, TypeScript and Python), guardrail middleware (Pattern 3.1,
+  TypeScript only) and project structure (L0, documentation only).
 - A new example for a core pattern (L0-L2, L4) ships in TypeScript and Python; examples for the optional L3 may be
   single-language.
 
@@ -92,6 +93,7 @@ See [README.md](README.md) for detailed project overview.
 - [docs/L1-patterns/1.10-production-gate-progressive-confirmation.md](docs/L1-patterns/1.10-production-gate-progressive-confirmation.md) — Production gate and progressive confirmation
 - [docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md](docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md) — Repair budget, circuit breaker, stop authority
 - [docs/L1-patterns/1.12-self-healing-tests-vs-systems.md](docs/L1-patterns/1.12-self-healing-tests-vs-systems.md) — Self-healing tests vs self-healing systems
+- [examples/repair-loop/README.md](examples/repair-loop/README.md) — Runnable repair loop with a deterministic gate
 - [docs/L1-patterns/testing-infrastructure.md](docs/L1-patterns/testing-infrastructure.md) — Testing infrastructure is production code
 
 **Behavioral Guardrails:**

@@ -191,7 +191,7 @@ The first pattern needs no autonomy. The rest set the limits before any repair r
 - [Pattern 1.11 — Repair Budget, Circuit Breaker and Stop Authority](L1-patterns/1.11-repair-budget-circuit-breaker-stop.md): attempt budgets, a breaker that lowers the grant, a named stop. Unattended repair of R3 and R4 changes is not supported at any grant.
 - [Pattern 1.12 — Self-Healing Tests vs Self-Healing Systems](L1-patterns/1.12-self-healing-tests-vs-systems.md): tests never heal themselves, and recovery without a repair ticket is a masked defect.
 
-A runnable example of the gate is in `examples/repair-loop/`. It simulates production confirmation and does not prove it.
+A runnable example of the gate is in [`examples/repair-loop/`](../examples/repair-loop/README.md) (TypeScript and Python). It simulates production confirmation and does not prove it.
 
 ---
 
