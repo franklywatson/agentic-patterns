@@ -108,6 +108,10 @@ The pattern docs contain the detailed guidance. This guide links to them rather 
 | L3 | [L3-optimization.md](../L3-optimization.md) — Native structured tools, context isolation | [examples/guardrails/](../../examples/guardrails/) |
 | L4 | [L4-standards-measurement.md](../L4-standards-measurement.md) — Evidence, drift detection, metrics, context eval | — |
 
+### Readiness for A3 and A4
+
+A workflow is ready for A3 (gated) when its journey has a stack test, required checks run in CI, a named owner exists and the sandbox is locked. It is ready for A4 (unattended) only when verification is mechanical, the action is reversible, the cap is C4 or higher, and a stop drill has passed within 30 days. See [Earned Autonomy](../earned-autonomy.md).
+
 ### Reference Implementations
 
 | System | What it implements | Language |

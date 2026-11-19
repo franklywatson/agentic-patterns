@@ -60,7 +60,7 @@ The layers say whether letting go is safe. Two further scales say how far a team
 
 **The curve (C1-C5).** A five-step curve applied separately to each of seven dimensions: C1 Individual, C2 Grounded, C3 Verified delegation, C4 Governed autonomy, C5 Self-correcting. A team has a position per dimension, not one overall score. The steps carry a C prefix so they are not confused with L0-L4.
 
-**Autonomy grants (A1-A5).** A grant is what one named workflow may do. A1 suggests and a human applies the change. A2 opens pull requests that a human reads. A3 passes required checks before a human merges. A4 acts on an event or schedule within permitted actions, with an owner, limits, an audit record and a tested stop, only where verification is mechanical and the action reversible. A5 is A4 managed as an investment: baseline, target, review date and stop rule. Each grant needs a minimum cap, set out below. A guide to earning and withdrawing grants (`docs/earned-autonomy.md`) arrives in Phase 3 of the refresh.
+**Autonomy grants (A1-A5).** A grant is what one named workflow may do. A1 suggests and a human applies the change. A2 opens pull requests that a human reads. A3 passes required checks before a human merges. A4 acts on an event or schedule within permitted actions, with an owner, limits, an audit record and a tested stop, only where verification is mechanical and the action reversible. A5 is A4 managed as an investment: baseline, target, review date and stop rule. Each grant needs a minimum cap, set out below. [Earned Autonomy](docs/earned-autonomy.md) explains how grants are earned, recorded and withdrawn.
 
 **The seven dimensions.** Four of them cap unattended work. The table shows the position a team reaches by adopting every pattern as written (synthesis section 2). It is a ceiling set by the content, not an assessment of any team.
 
@@ -83,6 +83,8 @@ Three dimensions that cap unattended work are not covered, or are covered only i
 - **Production ownership.** Running and repairing agent-built software in production, including on-call and rollback. The [FAQ](docs/cross-cutting/faq.md) names it as out of scope.
 - **Security and governance.** L2 covers enforcement and containment. It does not cover supply-chain controls, data handling, audit retention or approval policy.
 - **Measuring value against a baseline.** L4 describes metrics. It does not describe how to set a baseline before adopting a pattern or how to compare against it afterwards.
+
+Earned autonomy, the way a grant is earned and withdrawn on evidence, now has its own pattern doc: [Earned Autonomy](docs/earned-autonomy.md). Its upper grants (A4, A5) still depend on the capping dimensions above.
 
 The consequence: a team that adopts every pattern in this library is capped at C1 for unattended work, because the lowest capping dimension sets the cap. Phases 2 to 4 of the refresh add these dimensions. This section is updated as each phase lands. The plan is in [docs/refresh/synthesis.md](docs/refresh/synthesis.md).
 

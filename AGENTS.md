@@ -95,6 +95,10 @@ See [README.md](README.md) for detailed project overview.
 
 - [docs/L4-standards-measurement.md](docs/L4-standards-measurement.md) — Evidence-based claims, drift detection, metrics
 
+## Earned Autonomy
+
+- [docs/earned-autonomy.md](docs/earned-autonomy.md) — Autonomy grants A1-A5, register, evidence ledger, promotion and demotion, census, tested stop
+
 ## Cross-Cutting Guides
 
 - [docs/cross-cutting/anti-patterns.md](docs/cross-cutting/anti-patterns.md) — Pattern diagnostic catalog
