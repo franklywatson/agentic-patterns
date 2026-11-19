@@ -116,7 +116,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Guardrail
 
 **Level**: L2 - Behavioral Guardrails
-**Definition**: Automated enforcement mechanism operating at the tool layer that blocks, advises, or transforms operations to ensure consistent behavior.
+**Definition**: A control that holds a rule at one layer: prompt (guidance), hook (deterministic policy inside the harness), CI (required check), sandbox or credential scope (boundary), or downstream authorisation. Each rule is only as strong as the layer that holds it. A hook is not a security boundary.
 **See**: [L2 Behavioral Guardrails Overview](../L2-behavioral-guardrails.md)
 
 ---
@@ -126,7 +126,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Hook
 
 **Level**: L2 - Behavioral Guardrails
-**Definition**: Automated trigger that fires before or after tool operations to enforce rules through the tool layer, independent of prompt content.
+**Definition**: Script the harness runs around a tool call. PreToolUse hooks run before the call and can block it; PostToolUse hooks run after the call and are detective (they report and record, and cannot prevent the call). Hooks gate the agent's tool calls, not what a permitted tool does once running.
 **See**: [Pattern 2.3 - Hook Automation](../L2-behavioral-guardrails.md#pattern-23--hook-automation)
 
 ---
@@ -174,7 +174,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Phase Transition Validation
 
 **Level**: L2 - Behavioral Guardrails
-**Definition**: State machine that tracks which skill chain phases the agent has visited and validates transitions, preventing phase-skipping (e.g., tdd+ without prior plan+).
+**Definition**: Optional state machine that records which skill chain phases the agent has visited and checks declared prerequisites, with strictness scaled to the change's risk. It records visits, not outcomes; verification and review remain outcome gates held by CI and the merge process.
 **See**: [Pattern 2.7 - Phase Transition Validation](../L2-behavioral-guardrails.md#pattern-27--phase-transition-validation)
 
 ---
@@ -218,7 +218,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Skill Chain
 
 **Level**: L2 - Behavioral Guardrails
-**Definition**: Workflow pipeline where skills compose (brain+ → plan+ → tdd+ → verify+ → review+), each validating input and producing structured output for the next.
+**Definition**: Optional workflow pipeline where skills compose (brain+ → plan+ → tdd+ → verify+ → review+). Ceremony scales with risk; verification and review stay outcome gates for every change.
 **See**: [Pattern 2.2 - The Skill Chain](../L2-behavioral-guardrails.md#pattern-22--the-skill-chain)
 
 ### Skill Overlay

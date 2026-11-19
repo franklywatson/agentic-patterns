@@ -333,90 +333,81 @@ npm test -- tests/stack/
 
 ### Enforce Rules Through Skills and Hooks
 
-**Symptom**: Rules written in CLAUDE.md have no enforcement mechanism. Guidelines are phrased as "should" rather than "must." Agents forget or ignore the rules when context shifts or prompts get complex.
+**Symptom**: Rules written in CLAUDE.md have no enforcement mechanism. Guidelines are phrased as "should" rather than "must." Agents forget or ignore the rules when context shifts or prompts get complex. Or the opposite: a safety rule ("never touch production") is held only by a hook.
 
-**Why This Happens**: Writing a rule feels like enforcing it. But prose rules are unreliable - agents drop them between phases of work, especially under complex prompts. Without tool-layer enforcement, rules are suggestions that erode under pressure.
+**Why This Happens**: Writing a rule feels like enforcing it. Prose rules are guidance; agents drop them between phases of work, especially under complex prompts. A hook is stronger, but it runs inside the agent's environment: it gates tool calls, not what a permitted tool does once running, and the agent can often edit project hook files. Rules are only as strong as the layer that holds them.
 
-**Pattern**: Apply [Pattern 2.1 - Skill Overlay Architecture](../L2-behavioral-guardrails.md#pattern-21--skill-overlay-architecture):
+**Pattern**: Apply [Pattern 2.4 - Constitutional Rules](../L2-behavioral-guardrails.md#pattern-24--constitutional-rules) and [Pattern 2.1 - Skill Overlay Architecture](../L2-behavioral-guardrails.md#pattern-21--skill-overlay-architecture):
 
-- Encapsulate rules in skills
-- Skills enforce rules automatically when activated
-- Hooks block violations at tool layer
-- Constitutional rules are hardcoded, not soft suggestions
+- Name each rule's enforcement point: prompt, hook, CI, sandbox or downstream
+- What must never happen goes to the sandbox, credential scope or downstream authorisation
+- What must always happen goes to a hook plus a required CI check
+- Prompts and skills carry everything else
 
 Example refactor:
 
 ```
 Before: Rule in CLAUDE.md
-"Never mock database drivers in tests"
-(No enforcement - agent may mock anyway)
+"Never mock database drivers in stack tests"
+(Enforcement point: prompt only. The agent may mock anyway.)
 
-After: Skill with hook activation
-tdd+ skill:
-  - Reads CLAUDE.md constitutional rules
-  - Rejects mock generation for protected components
-  - Hook: blocks Edit tool if mock code detected
+After: Rule with named enforcement points
+Prompt: tdd+ skill states the rule
+Hook: PreToolUse blocks an Edit that adds a mock import to a stack-test file
+CI: required check searches stack-test directories for mock libraries
 ```
 
 ---
 
-### Complete the Skill Chain
+### Scale the Skill Chain to Risk
 
-**Symptom**: Work jumps straight from planning to implementation without test-driven development. Changes ship without verification. Review happens after the fact, if at all.
+**Symptom**: Every change, including a typo fix, runs through five phases. Agents and reviewers skip phases in bulk. Or the opposite: changes ship without verification evidence or review because they "looked small".
 
-**Why This Happens**: Skipping steps feels faster. But each link in the skill chain enforces a guardrail - skip TDD and code ships without tests; skip verification and claims go unverified; skip review and constitutional rules go unchecked.
+**Why This Happens**: The chain compensated for models that skipped planning or verification, so it was applied uniformly. Applied uniformly, it adds ceremony to small changes, and people learn to bypass it. Visiting a phase also does not show that the phase did its job.
 
-**Pattern**: Apply [Pattern 2.2 - The Skill Chain](../L2-behavioral-guardrails.md#pattern-22--the-skill-chain):
+**Pattern**: Apply [Pattern 2.2 - The Skill Chain](../L2-behavioral-guardrails.md#pattern-22--the-skill-chain) as an optional pipeline:
 
-- Complete chain: brain+ -> plan+ -> tdd+ -> verify+ -> review+
-- Each skill validates input and produces structured output for next
-- Every link catches what the previous link cannot
+- Scale ceremony to risk: reversibility and blast radius set how many phases a change needs
+- Verification (evidence before claims) and review stay outcome gates for every change
+- Hold those gates in CI and the merge process, not in whether the agent visited a phase
+- Use [phase tracking](../L2-behavioral-guardrails.md#pattern-27--phase-transition-validation) only where an audit trail of phases is wanted, with strictness set per risk tier
 
 Example workflow:
 
 ```
-brain+ -> plan+ -> tdd+ -> verify+ -> review+
-- brain+: Design with stack testing considerations
-- plan+: Create plan with test coverage matrix
-- tdd+: RED-GREEN-REFACTOR with full-loop assertions
-- verify+: Show command output before claiming done
-- review+: Checklist-based compliance check
+Typo fix:           edit -> CI checks -> review
+Small code change:  tdd+ -> verify+ -> review
+Feature:            brain+ -> plan+ -> tdd+ -> verify+ -> review+
+Irreversible:       full chain + approver who is not the requester
 ```
 
 ---
 
-### Hooks That Block, Not Just Log
+### Match the Hook to the Job
 
-**Symptom**: Hook scripts warn but allow the operation to proceed. Warnings accumulate in output that agents learn to ignore. Rules that were important enough to hook are bypassed routinely.
+**Symptom**: Hook scripts warn but allow the operation to proceed, and agents learn to ignore the warnings. Or a PostToolUse check is described as "blocking" a violation that has already happened. Or a hook is the only control for something that must never happen.
 
-**Why This Happens**: Advisory hooks feel safer - "we'll log it and let them decide." But agents treat warnings as noise. If a rule is important enough to hook, it's important enough to enforce. An advisory hook is a rule that's been written down and then abandoned.
+**Why This Happens**: One mechanism gets used for three jobs: nudging (advise is fine), enforcing a workflow rule (needs a block or a required CI check), and preventing harm (needs a sandbox or downstream authorisation, with a hook as defence in depth). Advisory hooks on rules that must hold are rules written down and abandoned. A PostToolUse hook runs after the tool call, so it is detective: it reports and records, and cannot prevent the call.
 
-**Pattern**: Apply [Pattern 2.3 - Hook Automation](../L2-behavioral-guardrails.md#pattern-23--hook-automation):
+**Pattern**: Apply [Pattern 2.3 - Hook Automation](../L2-behavioral-guardrails.md#pattern-23--hook-automation) and [Pattern 2.6 - Enforcement Pipeline Composition](../L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition):
 
-- Hooks should either allow, advise with clear action, or block
-- Critical rules must block, not warn
-- Clear narrow purposes with documented behavior
+- Use advise for ergonomic nudges
+- Use PreToolUse blocks on structured arguments (a file path in an Edit call) for workflow rules
+- Use a required CI check for invariants on every change
+- Use the sandbox, credential scope and downstream authorisation for what must never happen
+- Do not rely on PostToolUse to prevent anything
 
 Example refactor:
 
-```typescript
-// Advisory: Warning only (agent ignores it)
-hook.on('PreToolUse', (tool, args) => {
-  if (tool === 'Bash' && args.command.includes('sed -i')) {
-    console.warn('Prefer Edit tool over sed -i');
-    return; // operation proceeds anyway
-  }
-});
+```bash
+# Advisory only for a rule that must hold: the agent ignores the message.
+echo "Prefer the Edit tool for protected files" >&2
+exit 0
 
-// Enforcement: Block with explanation
-hook.on('PreToolUse', (tool, args) => {
-  if (tool === 'Bash' && args.command.includes('sed -i')) {
-    throw new Error(
-      'Use Edit tool instead of sed -i. ' +
-      'sed -i is destructive and bypasses undo history.'
-    );
-  }
-});
+# PreToolUse block on a structured argument (Edit tool, file_path).
+case "$path" in
+  .github/workflows/*) echo "Blocked: protected path" >&2; exit 2 ;;
+esac
 ```
 
 ---

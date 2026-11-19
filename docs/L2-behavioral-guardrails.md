@@ -1,19 +1,50 @@
 # L2: Behavioral Guardrails
 
-Prose instructions are insufficient for agentic development. Skills and hooks enforce discipline through the tool layer, making correct behavior the path of least resistance.
+Prose is guidance. Hooks are deterministic policy within the harness. Containment and credentials are the boundary. Put each rule at the lowest layer that can hold it:
 
-**A note on skills frameworks:** The skills referenced throughout this document (brainstorming, test-driven-development, verification-before-completion, etc.) are primarily drawn from the [superpowers](https://github.com/obra/superpowers) framework by Jesse Vincent (obra). However, the patterns described here are framework-agnostic. Equivalent skill sets exist in [OpenSpec](https://github.com/openspec-dev/openspec) and other agent skill frameworks. The important thing is the pattern — overlaying project-specific constraints on base agent capabilities — not which specific framework provides the skills.
+- What must never happen is prevented by the sandbox, credential scope, or downstream authorisation.
+- What must always happen runs as a hook and a required CI check.
+- Prompts and skills carry everything else.
+
+A hook runs inside the agent's operating environment, so it is not a security boundary. Anthropic's guidance
+says that a rule the model keeps missing despite emphasis belongs in a hook rather than in more prose
+([OM-7](references/sources.md)). Independent sources reach the same split between instructions, policy
+checks and boundaries ([SG-7, SG-11, SG-16, OM-18](references/sources.md)).
+
+**A note on skills frameworks:** The skills referenced in this document (brainstorming,
+test-driven-development, verification-before-completion) are drawn from the
+[superpowers](https://github.com/obra/superpowers) framework by Jesse Vincent (obra). The patterns are
+framework-agnostic; equivalent skill sets exist in [gstack](https://github.com/garrytan/gstack),
+[OpenSpec](https://github.com/openspec-dev/openspec) and other frameworks. **Disclosure:** the author of this
+library also wrote [rig](https://github.com/franklywatson/claude-rig), which this document links to as a
+reference implementation. Hook syntax in this document follows Claude Code; each pattern states the contract
+(what runs, when, with what authority), so other harnesses can bind it.
 
 ## Overview
 
-L1 established testing discipline. L2 automates enforcement of that discipline through behavioral guardrails. These guardrails operate at the tool layer rather than the instruction layer, ensuring consistent behavior regardless of context or prompt complexity.
+L1 established testing discipline. L2 decides where each rule is held, so that the rule is as strong as its
+weakest enforcement point and no stronger. The layers, from weakest to strongest:
 
-The guardrail framework consists of:
+| Layer | Mechanism | Holds | Can the agent bypass it? |
+|-------|-----------|-------|--------------------------|
+| Prompt | CLAUDE.md / AGENTS.md, skills | Conventions, preferences, procedure | Yes. The model may not follow it |
+| Hook | PreToolUse and PostToolUse scripts | Policy that matches structured tool arguments | Often. Hooks match tool calls, not what a permitted tool does once running, and project hook files are usually editable by the agent |
+| CI | Required checks on the merge path | Invariants that must hold for every change | No, if the check is required and the agent cannot edit the workflow or branch protection |
+| Sandbox | Filesystem and network isolation, credentials absent from the environment | What must never happen | No, if the sandbox is locked and fails closed |
+| Downstream | Authorisation in the system being called (scoped token, protected branch, approval) | Irreversible or external actions | No |
 
-- **Skills**: Overlay patterns that extend base agent capabilities with project-specific rules
-- **Hooks**: Automated triggers that block, advise, or transform operations
-- **Constitutional rules**: Hard constraints that never relax
-- **Zero-defect tolerance**: The discipline that makes agentic development work at scale
+A sandbox with credentials kept outside it makes hooks such as "block `sed -i`" or "block `docker system
+prune`" unnecessary as safety controls. They remain useful as ergonomic nudges
+([AN-9, SG-10](references/sources.md)). This document does not specify sandbox setup; see the containment
+patterns planned for this layer in the refresh plan ([docs/refresh/README.md](refresh/README.md)).
+
+The mechanisms in this document:
+
+- **Skills**: overlay patterns that extend base agent capabilities with project-specific rules (prompt layer)
+- **Hooks**: scripts that fire around tool calls (hook layer)
+- **Constitutional rules**: the hard rules, each with a named enforcement point
+- **Zero-defect tolerance**: the discipline that keeps feedback unambiguous
+- **Skill chain and phase tracking**: optional workflow ceremony, scaled to risk
 
 ---
 
@@ -23,7 +54,7 @@ The guardrail framework consists of:
 
 ### Problem
 
-Claude Code provides base capabilities through skills like `brainstorming` and `test-driven-development`. However, production projects need project-specific constraints layered on top of these generic capabilities. Writing all constraints inline in prompts is verbose and inconsistent.
+Claude Code provides base capabilities through skills like `brainstorming` and `test-driven-development`. Production projects need project-specific constraints layered on top of these generic capabilities. Writing all constraints inline in prompts is verbose and inconsistent.
 
 ### Solution
 
@@ -37,37 +68,40 @@ base capability (e.g., superpowers:test-driven-development)
     = skill overlay
 ```
 
-The overlay architecture works with **any structured skill set**, not just Claude Code's built-in capabilities. OpenSpec, custom agent frameworks, or any system that drives agent behavior through declarative configuration can be wrapped and extended with project-specific rules. The examples in this repo reference superpowers because it's the framework in active use, but the pattern is universal: identify the base skill, then overlay project constraints.
-
 A skill is a markdown file that declares:
 
 - **Frontmatter**: name, description, base reference
 - **Purpose**: what this skill achieves
-- **Rules**: project-specific constraints this skill enforces
-- **Hook activations**: what guards this skill triggers
+- **Rules**: project-specific constraints this skill carries
+- **Hook activations**: what guards this skill relies on
 - **Integration points**: what other skills compose with this
 - **Checklist**: steps the agent follows when using the skill
 
-Skills are the mechanism by which a project's constitution ([Pattern 0.4](L0-foundation.md#pattern-04--claudemd-as-project-constitution)) becomes executable. CLAUDE.md declares the rules; skills enforce them.
+A skill is prompt-layer material. It raises the probability that the agent follows a rule; it does not
+guarantee it. A rule that must hold on every change needs a hook or CI check behind it, and the skill states
+which one. Keep skills short: a skill that restates rules already enforced elsewhere adds context cost without
+adding enforcement.
+
+The overlay architecture works with any structured skill set (superpowers, OpenSpec, custom frameworks): identify the base skill, then overlay project constraints.
 
 ### In Practice
 
 A TDD skill for an ecommerce project might extend `superpowers:test-driven-development` and add:
 
-- Real dependencies in E2E/integration and stack tests — no mocking database drivers in stack tests (constitutional rule)
-- Real dependencies in E2E/integration and stack tests — no mocking payment processor libraries in stack tests (constitutional rule)
-- Full-loop assertion requirements (project convention)
-- Hook to track test file changes (integration with workflow)
+- No mocking of database drivers in stack tests (enforced by a hook on test-file edits and a CI check)
+- No mocking of payment processor libraries in stack tests (same enforcement)
+- Full-loop assertion requirements (project convention, carried by the skill)
 
-When the agent invokes this skill, it inherits the base TDD workflow plus all project-specific constraints automatically.
+When the agent invokes this skill, it inherits the base TDD workflow plus the project-specific constraints.
 
 ### Anti-Pattern
 
-Copying the same rules into every prompt. This creates drift—prompts get updated inconsistently, and some code paths miss critical constraints.
+Copying the same rules into every prompt. This creates drift: prompts get updated inconsistently, and some code paths miss constraints. The opposite failure is carrying non-negotiable rules only as skill prose, with no hook or CI check behind them.
 
 ### Cross-References
 
-- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claudemd-as-project-constitution) — CLAUDE.md as rule source
+- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claudemd-as-project-constitution) — instruction file as rule source
+- [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — enforcement point per rule
 
 ---
 
@@ -75,13 +109,20 @@ Copying the same rules into every prompt. This creates drift—prompts get updat
 
 ![Skill Chain Pipeline](diagrams/2.2-skill-chain-pipeline.png)
 
+**Status: optional.** Scale ceremony to risk. A one-line fix does not need five phases. Verification and
+review stay outcome gates for every change: evidence before claiming done, and review before merge, at a
+depth set by reversibility and blast radius.
+
 ### Problem
 
-Individual skills are useful, but development requires a complete lifecycle. Isolated skills miss dependencies between phases—code written without tests, tests written without verification, changes submitted without review.
+Models that skip planning or verification produce code that cannot be checked systematically. A phased
+workflow compensated for this. Current models plan and verify more reliably on their own, so a mandatory
+five-phase chain now adds ceremony to small changes while the gates that matter (tests run, evidence shown,
+review done) can be held by CI and review directly.
 
 ### Solution
 
-Skills compose into a workflow pipeline where each skill's output becomes the next skill's input:
+Compose skills into a workflow pipeline when the change is large or risky enough to justify it:
 
 ```
 brain+ (design with stack-first considerations)
@@ -91,29 +132,27 @@ brain+ (design with stack-first considerations)
                               +-> review+ (checklist-based compliance review)
 ```
 
-The chain enforces a complete development lifecycle. Each skill validates its input and produces structured output for the next skill. Skipping a link means losing a guardrail.
-
 **Chain phases:**
 
 1. **brain+**: Design with stack testing in mind. What needs Docker? What are the full-loop assertions?
 2. **plan+**: Create implementation plan with explicit testing strategy. Which tests cover which requirements?
-3. **tdd+**: RED-GREEN-REFACTOR with full-loop assertions. ([Pattern 1.2](L1-patterns/1.2-full-loop-assertions.md))
+3. **tdd+**: RED-GREEN-REFACTOR with full-loop assertions ([Pattern 1.2](L1-patterns/1.2-full-loop-assertions.md)).
 4. **verify+**: Evidence-based claims. Run commands, show output, then claim done.
 5. **review+**: Checklist-based compliance review. Tests pass, docs updated, constitutional rules followed.
 
-### In Practice
+**Scaling by risk:**
 
-A typical workflow session:
+| Change | Suggested path | Gates that always apply |
+|--------|---------------|-------------------------|
+| Typo, comment, docs wording | Edit, run link and lint checks | CI checks, review at the team's normal depth |
+| Small, reversible code change | tdd+, verify+ | Tests and evidence; review before merge |
+| New feature or cross-module change | Full chain | All of the above plus plan review |
+| Irreversible or external effect (migration, payment path, permissions) | Full chain plus a human approver who is not the requester | All of the above plus downstream authorisation |
 
-1. Agent activates `brain+` skill, designs feature with stack testing considerations
-2. Agent activates `plan+` skill, produces plan with test coverage matrix
-3. Agent activates `tdd+` skill, implements following RED-GREEN-REFACTOR
-4. Agent activates `verify+` skill, runs tests and shows output before claiming success
-5. Agent activates `review+` skill, confirms all checklist items complete
+The phases are a means. The outcome gates (verification evidence, review) are the point, and they are held
+by CI and the merge process, not by whether the agent visited a phase.
 
-The `review+` skill also integrates `test-integrity` for test file review, ensuring tests follow [Pattern 1.6 — Test Integrity Rules](L1-patterns/1.6-test-integrity.md).
-
-**Superpowers framework integration:** The [obra/superpowers](https://github.com/obra/superpowers) library provides the base skills that the chain builds on:
+**Superpowers framework integration:** The [obra/superpowers](https://github.com/obra/superpowers) library provides base skills the chain builds on:
 
 | Skill | Role in Chain |
 |-------|--------------|
@@ -125,21 +164,20 @@ The `review+` skill also integrates `test-integrity` for test file review, ensur
 | [requesting-code-review](https://github.com/obra/superpowers) | Checklist-based review against plan requirements |
 | [finishing-a-development-branch](https://github.com/obra/superpowers) | Integration decisions (merge, PR, cleanup) when work is complete |
 
-Project-specific skill overlays (like `tdd+`, `verify+`, `review+`) wrap these base skills with project constraints such as constitutional rules, mock policies, and full-loop assertion requirements.
-
 ### Anti-Pattern
 
-Jumping directly to implementation without planning or testing. This produces code that may work but cannot be verified systematically. The chain only works if all links are present.
+Running the full chain on every change regardless of risk, so that agents and reviewers learn to skip phases
+in bulk. The opposite failure is shipping without verification evidence or review because the change "looked small".
 
 ### Cross-References
 
-- [Pattern 1.1 — Stack Tests](L1-patterns/1.1-stack-tests.md) — Stack testing foundation
-- [Pattern 1.2 — Full-Loop Assertion Layering](L1-patterns/1.2-full-loop-assertions.md) — Assertion requirements
-- [Glossary](cross-cutting/glossary.md) — Skill chain terminology
+- [Pattern 1.1 — Stack Tests](L1-patterns/1.1-stack-tests.md) — stack testing foundation
+- [Pattern 1.2 — Full-Loop Assertion Layering](L1-patterns/1.2-full-loop-assertions.md) — assertion requirements
+- [Glossary](cross-cutting/glossary.md) — skill chain terminology
 
 ### Reference Implementation
 
-The [rig](https://github.com/franklywatson/claude-rig) repo implements this pattern with [`SkillPhaseTracker`](https://github.com/franklywatson/claude-rig/blob/main/src/skills/phase-tracker.ts) for tracking which phases the agent has visited and validating transitions between skill phases.
+The [rig](https://github.com/franklywatson/claude-rig) repo implements the chain as skills, with a phase tracker; see its `src/skills/` directory.
 
 ---
 
@@ -147,99 +185,96 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements this patt
 
 ### Problem
 
-Agents forget rules. Instructions written in prose are unreliable enforcement mechanisms. When context shifts or prompts get complex, rules get dropped.
+Agents drop rules when context shifts or prompts get complex. Instructions written in prose are not an enforcement mechanism for rules that must always hold.
 
 ### Solution
 
-Hooks are automated triggers that fire before or after tool operations. They enforce rules through the tool layer, independent of prompt content.
+Hooks are scripts the harness runs before or after a tool call. They apply policy through the tool layer, independent of prompt content. Claude Code documents the hook events and their exit-code contract ([SG-11](references/sources.md)).
 
-**Three hook types:**
+**Contract:** a hook receives the tool name and arguments, and returns allow, advise or block. Two timing
+classes differ in what they can do:
 
-**PostToolUse hooks**: Fire after a tool completes. Examples:
+**PreToolUse hooks** run before the tool call and can block it. Use them for policy that matches structured
+arguments:
+
+- Refuse an Edit whose `file_path` is a protected path (CI workflow, hook configuration, lockfile)
+- Refuse an Edit that adds a mock import to a stack-test file
+- Rewrite or redirect a call to a better tool (ergonomic nudge)
+
+**PostToolUse hooks** run after the tool call. They are detective: they can report, record and advise, but
+they cannot prevent a call that has already run ([Pattern 2.6](#pattern-26--enforcement-pipeline-composition)). Use them for:
 
 - Track source file edits in `pending-tests.json`
 - Emit "TEST TASK REQUIRED" when code changes without corresponding test changes
-- Add modified files to a change-set for review
+- Append an audit record (tool, arguments, time)
 
-**PreToolUse hooks**: Fire before a tool executes. Examples:
+**What hooks cannot hold:**
 
-- Block `sed -i` (always redirect to Edit tool)
-- Block `docker system prune` in shared environments
-- Require confirmation before deleting files matching a pattern
+- Hooks gate the agent's tool calls. They do not constrain what a permitted tool does once running. Any
+  allowed `bash`, `python`, `node`, `docker` or `make` is a general-purpose computer.
+- A regex over a free-text shell string is bypassable (quoting, variables, a script that does the work).
+  Hooks are strongest when they match structured arguments such as an Edit call's file path.
+- Project-level hook configuration is usually a file the agent can edit. Where the harness supports
+  managed settings that the agent cannot edit, put policy hooks there ([SG-12](references/sources.md)).
 
-**Context-aware hooks**: Detect environment state and adjust behavior. Examples:
+Use hooks for what must always happen in the workflow and for ergonomics. Use the sandbox, credential scope
+and downstream authorisation for what must never happen.
 
-- If `./test-logs/` has files modified within 5 minutes, block `docker logs` and redirect to log files
-- If pending tests exist, block implementation tasks until test task is created
-- If working in a git worktree, ensure commands respect worktree boundaries
-
-**The automation pattern:**
+**Hook decision flow:**
 
 ```
 hook fires
-    +-> check state (what files changed? what's on disk? what's the context?)
+    +-> check state (which file? which arguments? what is on disk?)
             +-> allow (operation proceeds)
-            +-> advise (warn but allow, with explanation)
-            +-> block (stop operation, require different approach)
+            +-> advise (operation proceeds; a message explains the better path)
+            +-> block (PreToolUse only: the call does not run)
 ```
 
 ### In Practice
 
-A PostToolUse hook tracking test coverage:
+A PreToolUse hook that blocks an Edit to a protected path (Claude Code binding, shell hook reading JSON on
+stdin and exiting with code 2 to block):
 
-```typescript
-// Simplified pseudocode
-hook.on('PostToolUse', (tool, args) => {
-  if (tool === 'Edit' && isSourceFile(args.file_path)) {
-    pendingTests.add(args.file_path);
-    console.warn('TEST TASK REQUIRED: Source file modified');
-  }
-  if (tool === 'Edit' && isTestFile(args.file_path)) {
-    pendingTests.remove(sourceFileFor(args.file_path));
-  }
-});
+```bash
+#!/usr/bin/env bash
+# PreToolUse hook for the Edit and Write tools.
+path=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["tool_input"]["file_path"])')
+case "$path" in
+  .github/workflows/*|.claude/settings*.json)
+    echo "Blocked: $path is protected policy. Ask a human to change it." >&2
+    exit 2 ;;
+esac
+exit 0
 ```
 
-A PreToolUse hook blocking destructive operations:
+A PostToolUse hook is a record, not a gate:
 
-```typescript
-hook.on('PreToolUse', (tool, args) => {
-  if (tool === 'Bash' && args.command.includes('sed -i')) {
-    throw new Error('Use Edit tool instead of sed -i');
-  }
-});
-```
-
-**Limits of string matching.** Matching `sed -i` in the command string is an ergonomic nudge that steers the agent to the Edit tool. It is not a security control. `command.includes('sed -i')` catches `/usr/bin/sed -i`, but not `sed -E -i`, `sed --in-place`, `perl -pi`, `python -c` file writes, or a command assembled at runtime (`$(echo sed) -i ...`, `S=sed; $S -i ...`); it also matches harmless text such as `echo sed -i`. Enforce destructive-operation limits with a containment boundary (sandbox, credential scope); see [the containment prerequisite track](refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people).
-
-A context-aware hook:
-
-```typescript
-hook.on('PreToolUse', (tool, args) => {
-  if (tool === 'Bash' && args.command.startsWith('docker logs')) {
-    const recentLogs = findRecentTestLogs(5 * 60 * 1000); // 5 minutes
-    if (recentLogs.length > 0) {
-      throw new Error(
-        `Recent test logs available: ${recentLogs.join(', ')}. ` +
-        'Read those files instead of running docker logs.'
-      ); // throwing blocks the docker logs command
-    }
-  }
-});
+```bash
+#!/usr/bin/env bash
+# PostToolUse hook: append an audit line after every Edit or Write.
+python3 -c 'import json,sys,time; d=json.load(sys.stdin); print(json.dumps({"t":time.time(),"tool":d["tool_name"],"input":d["tool_input"]}))' \
+  >> .audit/tool-calls.jsonl
+exit 0
 ```
 
 ### Anti-Pattern
 
-Writing hooks that are too permissive or too restrictive. Permissive hooks fail to catch problems; restrictive hooks block legitimate work. Hooks should have clear, narrow purposes with documented behavior.
+- Using a hook as the only control for something that must never happen (a destructive command, credential
+  access). The sandbox and credential scope hold that rule; the hook is defence in depth.
+- Advisory hooks for rules that must hold. Agents treat repeated warnings as noise; a rule that must hold needs
+  a block (PreToolUse) or a required CI check.
+- Blocking hooks that match too broadly and stop legitimate work. Keep each hook narrow, with documented behavior.
 
 ### Cross-References
 
-- [Pattern 3.1 — Smart Routing / Tool Selection](L3-optimization.md#pattern-31--smart-routing--tool-selection) — Command routing patterns
-- [examples/guardrails](../examples/guardrails/) — Hook implementation examples
+- [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — which layer holds which rule
+- [Pattern 2.6 — Enforcement Pipeline Composition](#pattern-26--enforcement-pipeline-composition) — composing checks
+- [L3: Optimization](L3-optimization.md#pattern-31--smart-routing--tool-selection) — hooks used as ergonomic routing nudges
+- [examples/guardrails](../examples/guardrails/) — hook-adjacent middleware example
 
 ### Reference Implementation
 
-The [rig](https://github.com/franklywatson/claude-rig) repo implements composable hooks in [`src/enforcement/`](https://github.com/franklywatson/claude-rig/tree/main/src/enforcement) with a `handlePostToolUse` orchestrator that runs multiple checks and resolves to the most severe enforcement level.
+The [rig](https://github.com/franklywatson/claude-rig) repo implements composable hooks in `src/enforcement/`.
 
 ---
 
@@ -247,51 +282,62 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements composabl
 
 ### Problem
 
-Projects have rules that should never be violated—core constraints that define the project's approach. When these rules are scattered across documentation or written as soft suggestions, they get forgotten or worked around.
+Projects have rules that define their approach. When these rules are scattered across documentation or written as soft suggestions, they get forgotten or worked around. A rule declared in prose and enforced by nothing is only as strong as the model's attention on that turn.
 
 ### Solution
 
-Constitutional rules are hard constraints declared in CLAUDE.md that never relax. They are the foundation of the project's guardrail system.
+Constitutional rules are the hard rules declared in the instruction file (CLAUDE.md or AGENTS.md). **Each rule
+names its enforcement point**, and a rule is only as absolute as its weakest enforcement point. The points,
+from [the layers above](#overview): prompt, hook, CI, sandbox, downstream.
 
-**Example constitutional rules from a production ecommerce platform:**
+**Example rules and their enforcement points:**
 
-- **Real dependencies in E2E/integration and stack tests** — logger, payment processor libraries (Stripe, PayPal), database drivers, HTTP clients for first-party services. Use real components in stack tests. Mocks are appropriate in unit tests.
-- **Full accounting for every state change** — every inventory change, every order, every transaction fee must be logged and queryable.
-- **Evidence-based claims only** — show command output before claiming done. "Tests pass" is not evidence; show the test output.
-- **Docker-first development** — no local OS execution. Everything runs in containers.
-- **No conditional test assertions** — tests must be able to fail. ([Pattern 1.6](L1-patterns/1.6-test-integrity.md))
+| Rule | Enforcement point | What holds it |
+|------|-------------------|---------------|
+| Real dependencies in E2E/integration and stack tests | Prompt, hook, CI | Skill carries the rule; PreToolUse hook blocks mock imports in stack-test files; CI check greps stack-test directories for mock libraries |
+| No conditional test assertions | CI | Lint rule or test-integrity check in the required CI job ([Pattern 1.6](L1-patterns/1.6-test-integrity.md)) |
+| Evidence-based claims only | Prompt, CI | Verification skill requires output; CI result is the evidence the reviewer reads |
+| Zero-defect tolerance | CI | Required check fails on any test failure, lint error or warning |
+| Docs updated with code | CI | Required check fails when `examples/` changes without a `docs/` change |
+| No production credentials in the agent's environment | Sandbox, downstream | Credentials injected outside the sandbox; scoped, short-lived tokens; the production system authorises independently |
+| No writes outside the working tree, no unapproved network egress | Sandbox | Filesystem and network policy, locked and failing closed |
+| Docker-first development, never prune shared Docker state | Prompt, sandbox | Skill states the rule; the sandbox denies access to the host Docker socket |
+| Requester cannot approve their own change | Downstream | Branch protection requiring a non-author review |
 
 **The rules flow:**
 
 ```
-CLAUDE.md declares constitutional rules
-    +-> plan+ includes rules in plan template (what must this plan respect?)
-            +-> tdd+ rejects mocked components in stack test generation
-                    +-> review+ checks constitutional compliance (did this violate any rules?)
+Instruction file declares the rule and its enforcement point
+    +-> skill carries the procedure (prompt)
+            +-> PreToolUse hook blocks the structured violation (hook)
+                    +-> required CI check catches what slipped past (CI)
+                            +-> sandbox, credentials and downstream authorisation hold what must never happen
 ```
+
+If a rule has only a prompt entry, say so in the table. That marks it as guidance that may be missed, and
+tells a reviewer where to look.
 
 ### In Practice
 
-Constitutional rule enforcement in the skill chain:
-
-1. **plan+** reads CLAUDE.md and adds a "Constitutional compliance" section to each plan
-2. **tdd+** checks that proposed stack tests don't mock protected components
-3. **review+** runs a checklist that includes "No constitutional rules violated"
-
-When the agent attempts to mock a database driver in a stack test, the tdd+ skill blocks it with a reference to the constitutional rule.
+1. The plan step reads the constitutional rules and lists, per rule, which enforcement points the change touches.
+2. The TDD step rejects mocked components in stack-test generation; the PreToolUse hook blocks the edit if it does not.
+3. The review step checks that each rule's CI check ran and passed, rather than re-reading the code for the rule.
 
 ### Anti-Pattern
 
-Writing "soft" rules with exceptions. Constitutional rules must have no escape hatches. If a rule needs exceptions, it is not constitutional—it is a guideline, not a constraint.
+- Rules with an enforcement-point column of "prompt" only, presented as absolute. Regex-based checks and
+  prose are not absolute; state what holds the rule.
+- Declaring a safety rule ("never touch production") and enforcing it with a hook alone. A permitted tool can
+  do what the hook forbids by another route. Hold it in the sandbox or downstream.
 
 ### Cross-References
 
-- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claudemd-as-project-constitution) — CLAUDE.md format
-- [Pattern 1.5 — Real Dependencies](L1-patterns/1.5-no-mock-philosophy.md) — Real dependencies in E2E/integration and stack tests
+- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claudemd-as-project-constitution) — instruction file format
+- [Pattern 1.5 — Real Dependencies](L1-patterns/1.5-no-mock-philosophy.md) — the rule behind the first example
 
 ### Reference Implementation
 
-The [rig](https://github.com/franklywatson/claude-rig) repo implements constitutional rule checking with [`checkConstitutional()`](https://github.com/franklywatson/claude-rig/blob/main/src/enforcement/checks/constitutional.ts) which uses regex detection to identify mock patterns in edited files and blocks violations.
+The [rig](https://github.com/franklywatson/claude-rig) repo implements a constitutional check in `src/enforcement/checks/constitutional.ts`; it detects mock patterns in edited files by regex, so it is a hook-layer check and inherits the limits listed in [Pattern 2.3](#pattern-23--hook-automation).
 
 ---
 
@@ -299,22 +345,24 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements constitut
 
 ### Problem
 
-Agents don't have intuition to work around known issues. When developers tolerate "unrelated" failures or "pre-existing" warnings, agents lose the ability to self-diagnose systematically. A tolerated defect becomes an undiagnosed regression later.
+Agents do not have the intuition to work around known issues. When developers tolerate "unrelated" failures or "pre-existing" warnings, agents lose the ability to self-diagnose systematically. A tolerated defect becomes an undiagnosed regression later.
 
 ### Solution
 
-Zero-defect tolerance: every error, warning, and failure must be addressed. Not just "relevant" errors—ALL of them. This applies to both unit tests and stack tests — dismissing a unit test failure while trusting stack test results means relying on partial feedback.
+Every error, warning and failure is addressed, not only the relevant ones. This applies to unit tests and stack tests alike: dismissing a unit test failure while trusting stack test results relies on partial feedback.
 
 **What zero-defect means:**
 
-- "This failure is unrelated" is never acceptable
+- "This failure is unrelated" is not accepted without evidence of isolation (different subsystem, proven by a run)
 - "This warning was pre-existing" means fix it now
-- Tests that fail for any reason must either pass or be explicitly skipped with documentation
-- Compiler warnings must be resolved, not suppressed
-- Linter errors must be fixed, not waived
+- A test that fails for any reason either passes or is explicitly skipped with documentation
+- Compiler warnings are resolved, not suppressed
+- Linter errors are fixed, not waived
 
-**Why this matters for agents:**
-Agents process feedback systematically. When output contains errors, agents must be able to assume those errors are relevant. If some errors are "okay to ignore," the agent cannot distinguish which errors require action and which do not. This ambiguity breaks the feedback loop.
+**Enforcement point:** CI. A required check that fails on any test failure, lint error or warning holds
+this rule. The agent's prompt and the verification skill state it; they do not hold it.
+
+**Why this matters for agents:** Agents process feedback systematically. When output contains errors, agents must be able to assume those errors are relevant. If some errors are "okay to ignore," the agent cannot distinguish which require action, and the feedback loop breaks.
 
 ### In Practice
 
@@ -336,9 +384,9 @@ Zero-defect response:
 1. Fix the missing module import first
 2. Re-run tests
 3. If the order processing test still fails, investigate that
-4. Only when ALL errors and warnings are resolved is the task complete
+4. The task is complete only when all errors and warnings are resolved
 
-Not zero-defect (wrong approach):
+Not zero-defect:
 
 1. "The module error is unrelated to the order test"
 2. Focus only on the order test failure
@@ -346,16 +394,16 @@ Not zero-defect (wrong approach):
 
 ### Anti-Pattern
 
-Classifying errors as "relevant" or "irrelevant" without evidence. Unless you can prove an error is truly unrelated (different subsystem, proven isolation), assume it is relevant.
+Classifying errors as "relevant" or "irrelevant" without evidence. Unless you can prove an error is unrelated, assume it is relevant.
 
 ### Cross-References
 
-- [Pattern 1.3 — Sequential / Additive Test Design](L1-patterns/1.3-sequential-design.md) — Sequential test ordering
-- [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) — Evidence standards
+- [Pattern 1.3 — Sequential / Additive Test Design](L1-patterns/1.3-sequential-design.md) — sequential test ordering
+- [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) — evidence standards
 
 ### Reference Implementation
 
-The [rig](https://github.com/franklywatson/claude-rig) repo implements zero-defect enforcement with [`checkZeroDefect()`](https://github.com/franklywatson/claude-rig/blob/main/src/enforcement/checks/zero-defect.ts) which parses test runner output for failures, errors, and warnings and surfaces them as enforcement results.
+The [rig](https://github.com/franklywatson/claude-rig) repo parses test-runner output for failures and warnings in `src/enforcement/checks/zero-defect.ts`.
 
 ---
 
@@ -363,109 +411,110 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements zero-defe
 
 ### Problem
 
-Individual enforcement checks (stale tests, zero-defect, constitutional rules) are useful in isolation, but a production guardrail system needs to compose multiple checks into a single hook response. Without a composition pattern, each check runs independently with no unified severity resolution.
+Individual checks (stale tests, zero-defect, constitutional rules) are useful alone, but several checks firing on one tool call produce conflicting messages unless one severity is resolved.
 
 ### Solution
 
-A composable enforcement pipeline where each check is an independent function returning `{ level, message }`. The pipeline runs all checks and resolves to the most severe level (block > advise > silent). Checks are configurable per-rule via a config file (`.harness.yaml`).
+A pipeline in which each check is an independent function returning a level (block, advise or silent) and a message. The pipeline runs all checks and resolves to the most severe level (block > advise > silent). Checks are configurable per rule in a project config file.
+
+**PostToolUse checks are detective, not preventive.** A PostToolUse hook runs after the tool call has
+completed. It can report a violation, record it and tell the agent to repair it, but it cannot prevent the call
+that already ran. A "block" level returned from a PostToolUse pipeline means "stop and repair before
+continuing", delivered as feedback to the agent. Prevention needs a PreToolUse hook (for structured
+arguments) or a boundary outside the agent (sandbox, credentials, a required CI check).
+
+| Check timing | Can prevent the call? | Use for |
+|--------------|----------------------|---------|
+| PreToolUse | Yes | Protected paths, mock imports in stack-test files |
+| PostToolUse | No (detective) | Stale-test tracking, failure parsing, audit records |
+| Required CI check | Yes, for merge | Invariants on every change |
+| Sandbox / credential scope | Yes, for the whole session | What must never happen |
 
 **Key concepts:**
 
-- Each check has one responsibility (stale test detection, scope control, mock detection, failure parsing)
-- Checks compose through a single orchestrator (`handlePostToolUse`)
-- Severity resolution: most severe level wins
-- Configurable: each rule can be block/advise/silent independently
+- Each check has one responsibility (stale-test detection, scope control, mock detection, failure parsing)
+- Checks compose through a single orchestrator
+- Severity resolution: the most severe level wins, so the agent gets one clear signal
+- Each rule is configurable as block, advise or silent
 
 ### In Practice
 
-```typescript
-// Each check returns a result with severity level
-type CheckResult = { level: 'block' | 'advise' | 'silent'; message: string };
+A pipeline contract in prose:
 
-// The pipeline runs all checks and resolves to the most severe
-async function handlePostToolUse(tool: string, args: unknown): Promise<EnforcementResponse> {
-  const checks = [
-    checkStaleTests(tool, args),
-    checkConstitutional(tool, args),
-    checkZeroDefect(tool, args),
-    checkScope(tool, args),
-  ];
+1. The orchestrator receives the tool name, arguments and (for PostToolUse) the tool result.
+2. It runs every enabled check; each returns a level and a message.
+3. It returns the highest level and the messages of every check at that level.
+4. The harness delivers the result: a PreToolUse "block" stops the call; a PostToolUse result is feedback.
 
-  const results = await Promise.all(checks);
-  const maxSeverity = results.reduce((max, r) =>
-    severityOrder(r.level) > severityOrder(max.level) ? r : max
-  );
-
-  return { level: maxSeverity.level, messages: results.map(r => r.message) };
-}
-```
-
-### Reference Implementation
-
-The [rig](https://github.com/franklywatson/claude-rig) repo implements this in [`src/enforcement/`](https://github.com/franklywatson/claude-rig/tree/main/src/enforcement) with composable checks and a `handlePostToolUse` orchestrator that resolves severity.
+For the implementation, see the reference below.
 
 ### Anti-Pattern
 
-Running checks independently without severity resolution. If one check returns "block" and another returns "advise," the agent needs a single clear signal, not conflicting messages.
+- Running checks independently without severity resolution, so the agent receives a "block" and an "advise" and has to guess which governs.
+- Describing a PostToolUse check as a guardrail that stops a violation. It reports the violation after the fact.
 
 ### Cross-References
 
-- [Pattern 2.3 — Hook Automation](#pattern-23--hook-automation) — Hooks fire checks; the pipeline composes them
-- [Pattern 2.7 — Phase Transition Validation](#pattern-27--phase-transition-validation) — Phase-aware checks change behavior by skill phase
+- [Pattern 2.3 — Hook Automation](#pattern-23--hook-automation) — hooks fire checks; the pipeline composes them
+- [Pattern 2.7 — Phase Transition Validation](#pattern-27--phase-transition-validation) — optional phase-aware checks
+
+### Reference Implementation
+
+The [rig](https://github.com/franklywatson/claude-rig) repo implements the pipeline in `src/enforcement/` with an orchestrator, `handlePostToolUse`, that resolves severity. Its code is not reproduced here.
 
 ---
 
 ## Pattern 2.7 — Phase Transition Validation
 
+**Status: optional.** Scale ceremony to risk; verification and review stay outcome gates. Use phase tracking
+when a team wants an audit trail of which workflow phases ran on large or risky changes. It is not a
+precondition for good work, and it does not replace CI evidence.
+
 ### Problem
 
-The skill chain (brain+ → plan+ → tdd+ → verify+ → review+) is described as a conceptual pipeline, but without enforcement agents can skip phases. Skipping plan+ before tdd+ means unstructured implementation. Skipping tdd+ before verify+ means unverified code.
+Where a team uses the skill chain ([Pattern 2.2](#pattern-22--the-skill-chain)), agents can skip phases:
+implementing without a plan, or claiming completion without verification. Teams that want a record of which
+phases ran, or a warning when a phase was skipped on a high-risk change, need state to check.
 
 ### Solution
 
-A state machine that tracks which phases the agent has visited and validates transitions. Each phase records its visit with a timestamp. Transition validation checks that prerequisites are met before allowing entry to the next phase.
+A small state machine that records each phase visit with a timestamp and checks declared prerequisites on
+entry (for example, `verify+` after `tdd+`). Query methods let other checks vary behavior by phase.
 
 **Key concepts:**
 
 - Phase history with timestamps
-- Transition validation: `tdd+` requires prior `plan+` visit, `verify+` requires prior `tdd+` visit
-- Query methods: `isTddPhase()`, `isVerifyPhase()` for conditional behavior
-- Reset capability for new workflows
+- Declared prerequisites per phase, configurable per risk tier (for example, required for irreversible changes, advisory for small ones)
+- Query methods such as "is the agent in the TDD phase?"
+- A reset for new workflows
+
+A phase tracker is state inside the harness. It records that the agent visited a phase, not that the phase
+did its job. The gates that confirm the job (tests ran, evidence shown, review done) are held by CI and the
+merge process.
 
 ### In Practice
 
-```typescript
-class PhaseTracker {
-  private history = new Map<string, Date>();
+The contract, in prose:
 
-  enter(phase: string): void {
-    this.validateTransition(phase);
-    this.history.set(phase, new Date());
-  }
+1. On entering a phase, the tracker checks the declared prerequisites for the current risk tier.
+2. A missing prerequisite on a high-risk change returns a block (PreToolUse) or an advisory message (low-risk change).
+3. The tracker records the phase and timestamp.
 
-  private validateTransition(phase: string): void {
-    if (phase === 'tdd+' && !this.history.has('plan+')) {
-      throw new Error('Cannot enter tdd+ without prior plan+ visit');
-    }
-    if (phase === 'verify+' && !this.history.has('tdd+')) {
-      throw new Error('Cannot enter verify+ without prior tdd+ visit');
-    }
-  }
-}
-```
-
-### Reference Implementation
-
-The [rig](https://github.com/franklywatson/claude-rig) repo implements this in [`src/skills/phase-tracker.ts`](https://github.com/franklywatson/claude-rig/blob/main/src/skills/phase-tracker.ts) with transition validation, query methods, and reset capability.
+For the implementation, see the reference below.
 
 ### Anti-Pattern
 
-Treating phase tracking as advisory. If the tracker warns but allows invalid transitions, agents learn to ignore it. Phase enforcement must be blocking.
+- Treating phase visits as proof of quality. Visiting `verify+` does not show that verification evidence exists.
+- Applying one blocking policy to every change. A required five-phase path on a typo fix teaches agents and reviewers to bypass the tracker.
 
 ### Cross-References
 
-- [Pattern 2.2 — The Skill Chain](#pattern-22--the-skill-chain) — The chain that phase validation enforces
-- [Pattern 2.3 — Hook Automation](#pattern-23--hook-automation) — Hooks can check phase state before allowing operations
+- [Pattern 2.2 — The Skill Chain](#pattern-22--the-skill-chain) — the optional chain this tracks
+- [Pattern 2.3 — Hook Automation](#pattern-23--hook-automation) — hooks can consult phase state
+
+### Reference Implementation
+
+The [rig](https://github.com/franklywatson/claude-rig) repo implements a phase tracker in `src/skills/phase-tracker.ts` with transition validation, query methods and reset. Its code is not reproduced here.
 
 ---
 
@@ -473,11 +522,11 @@ Treating phase tracking as advisory. If the tracker warns but allows invalid tra
 
 ### Problem
 
-Traditional development accumulates complexity. Each feature adds surface area, each bugfix patches over a gap, and each session starts from roughly the same knowledge baseline as the one before. Agents compound this problem: without persistent memory, every session re-derives the same lessons. The first time an agent solves an N+1 query problem, it takes research. The next session facing the same problem starts from zero.
+Traditional development accumulates complexity. Agents compound this: without persistent memory, every session re-derives the same lessons. The first time an agent solves an N+1 query problem, it takes research. The next session facing the same problem starts from zero.
 
 ### Solution
 
-**Each unit of engineering work should make subsequent units easier, not harder.** Compound engineering extends the skill chain ([Pattern 2.2](#pattern-22--the-skill-chain)) with a feedback loop: after each cycle of brainstorm → plan → work → review, explicitly capture learnings back into the system so future sessions — by the same agent or different ones — start from a higher knowledge baseline.
+**Each unit of engineering work should make subsequent units easier, not harder.** Compound engineering extends the workflow with a feedback loop: after each cycle of brainstorm, plan, work and review, capture learnings back into the system so future sessions start from a higher baseline.
 
 The core cycle:
 
@@ -487,25 +536,28 @@ brainstorm → plan → work → review → compound → repeat
     └─── knowledge feeds back ────────────┘
 ```
 
-**The compounding principle:** 80% planning and review, 20% execution. Thorough planning prevents wasted implementation. Review catches issues while context is fresh. Codified learnings prevent re-deriving solutions. Quality is not a separate phase — it is the mechanism that makes future work easier.
-
 **What compounds:**
 
-- **Documented solutions** — When a bug is fixed, document the symptoms, root cause, and prevention strategy. Next time the same symptom appears, the lookup takes minutes instead of research.
-- **Refined plans** — Plans that survived review become templates for similar features. Each planning cycle sharpens the next.
-- **Captured patterns** — Architecture decisions, trade-off analyses, and failure modes recorded during review become reference material for future design sessions.
-- **Constitutional amendments** — When a review catches a novel violation, the constitutional rules ([Pattern 2.4](#pattern-24--constitutional-rules)) expand to cover it.
+- **Documented solutions** — symptoms, root cause and prevention for each fixed bug, so a recurrence is a lookup
+- **Refined plans** — plans that survived review become templates for similar features
+- **Captured patterns** — architecture decisions and failure modes recorded during review
+- **Constitutional amendments** — when a review catches a novel violation, the rules ([Pattern 2.4](#pattern-24--constitutional-rules)) expand to cover it, with an enforcement point
 
-**What does NOT compound:**
+**What does not compound:**
 
 - Undocumented fixes that live only in conversation history
-- Plans that are discarded after implementation without extracting lessons
-- Reviews that approve or reject without recording *why*
+- Plans discarded after implementation without extracting lessons
+- Reviews that approve or reject without recording why
 - Errors dismissed as "unrelated" rather than investigated and catalogued
+
+**Learnings are context, so they need review and pruning.** Agent-written learnings feed future prompts. A
+wrong or stale learning degrades every later session, and the flywheel has to remove entries as well as add them
+([IS-13](references/sources.md)). Promote a learning into shared context only after a human has reviewed it, and
+prune learnings that no longer hold.
 
 ### In Practice
 
-The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin implements this pattern with `/ce:compound` — a skill that captures solved problems into structured documentation (`docs/solutions/`) with YAML frontmatter for searchability. Each documented solution reduces the cost of the next occurrence from research to lookup.
+The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin implements this with `/ce:compound`, which captures solved problems into structured documentation (`docs/solutions/`) with YAML frontmatter for searchability. The vendor describes a split of 80% planning and review to 20% execution; that ratio is a vendor claim, not a measured result in this library.
 
 **Compounding across the pattern pyramid:**
 
@@ -513,41 +565,44 @@ The [compound-engineering](https://github.com/EveryInc/compound-engineering-plug
 |-------|---------------|-----------|
 | L0 | Clean structure, current docs | [Pattern 0.8 — Aggressive Cleanup](L0-foundation.md#pattern-08--aggressive-cleanup) removes noise each session |
 | L1 | Test coverage, verification infrastructure | Stack tests accumulate; each new test catches regressions permanently |
-| L2 | Constitutional rules, skills, learnings | Each review that catches a novel violation strengthens the guardrail system |
-| L3 | Codebase index, routing rules | Session caching ([Pattern 3.8](L3-optimization.md#pattern-38--session-lifecycle)) carries detection forward |
+| L2 | Constitutional rules, skills, learnings | Each review that catches a novel violation adds a rule with an enforcement point |
+| L3 | Codebase index, routing rules | Session caching carries detection forward |
 | L4 | Metrics, drift corrections | Measurement creates a tightening feedback loop |
 
 ### Anti-Pattern
 
-- **Disposable sessions** — Work that produces code but no learnings. The feature ships, the bug is fixed, but nothing is captured for next time.
-- **Knowledge silos** — Learnings stored in conversation history, personal notes, or tribal memory instead of discoverable documentation.
-- **Review without extraction** — Code reviews that approve or reject without recording the reasoning, missing the opportunity to compound the architectural insight.
-- **Premature abstraction** — Compounding knowledge is not the same as building frameworks. Document the *why*, not just the *what*. Let patterns emerge from documented solutions before promoting them into abstractions.
+- **Disposable sessions** — work that produces code but no learnings.
+- **Knowledge silos** — learnings stored in conversation history or personal notes instead of discoverable documentation.
+- **Review without extraction** — approving or rejecting without recording the reasoning.
+- **Unreviewed, unpruned learnings** — agent-written entries promoted to shared context without review, and never removed.
+- **Premature abstraction** — compounding knowledge is not building frameworks. Document the why; let patterns emerge before promoting them.
 
 ### Cross-References
 
-- [Pattern 2.2 — The Skill Chain](#pattern-22--the-skill-chain) — The workflow pipeline that compound engineering extends
-- [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — Rules that grow through compounding
-- [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) — Compounding requires evidence, not assumptions
+- [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — rules that grow through compounding
+- [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) — compounding requires evidence
 
 ### Reference Implementation
 
-The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin provides the `/ce:compound` skill for capturing solved problems into structured, searchable documentation. The [rig](https://github.com/franklywatson/claude-rig) framework's skill chain implements the brainstorm → plan → work → review portion; compound engineering closes the loop by feeding learnings back.
+The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin provides `/ce:compound`. The [rig](https://github.com/franklywatson/claude-rig) framework implements the brainstorm, plan, work and review portion of the loop.
 
 ---
 
 ## Summary
 
-L2 behavioral guardrails automate enforcement of the discipline established in L1. Skills extend base capabilities with project-specific rules. Hooks enforce rules through the tool layer. Constitutional rules declare hard constraints. Zero-defect tolerance ensures systematic self-diagnosis. Compound engineering closes the loop — each cycle of work feeds learnings back into the system, making subsequent cycles more effective.
-
-Together, these patterns make correct behavior the path of least resistance for agentic development.
+Put each rule at the lowest layer that can hold it. Prose carries guidance. Hooks apply deterministic policy
+inside the harness: PreToolUse can prevent a structured violation, PostToolUse detects after the fact. CI holds
+invariants on the merge path. The sandbox, credential scope and downstream authorisation hold what must never
+happen. Skills overlay project rules on base capabilities; the skill chain and phase tracker are optional and
+scale with risk. Zero-defect tolerance keeps feedback unambiguous, and compound engineering feeds reviewed
+learnings back into context.
 
 ## Practitioner Insight
 
 > "Spend a lot of time planning out the work the agent will do."
 > — Peter Steinberger, creator of OpenClaw
 
-The skill chain's brain+ → plan+ phase operationalizes this insight. Fleshing out a plan — challenging the agent, tweaking scope, pushing back on assumptions — before implementation begins prevents wasted tokens on wrong paths. The plan becomes the contract that tdd+, verify+, and review+ enforce.
+Planning is worth its cost when the change is large or risky. The plan becomes the contract that verification and review check against; for small reversible changes, a short plan or none is proportionate.
 
 ---
 
