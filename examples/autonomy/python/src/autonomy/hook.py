@@ -12,15 +12,15 @@ from urllib.parse import urlparse
 from autonomy.check import is_governance_file
 from autonomy.levels import Effective, all_workflows, effective_level
 from autonomy.register import load_register_file
-from autonomy.util import git, match_command, match_path, read_json_if_exists
+from autonomy.util import git, inside_dir, match_command, match_path, read_json_if_exists
 
-READ_TOOLS = {"Read", "Grep", "Glob", "LS", "TodoWrite", "NotebookRead"}
+READ_TOOLS = {"Read", "Grep", "Glob", "LS", "TodoWrite", "NotebookRead", "Task", "Agent", "Skill", "ToolSearch", "AskUserQuestion", "ExitPlanMode", "EnterPlanMode", "TaskOutput", "TaskStop"}
 WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 NETWORK_TOOLS = {"WebFetch", "WebSearch"}
 READ_ONLY_COMMANDS = {"ls", "cat", "head", "tail", "grep", "rg", "find", "pwd", "echo", "wc", "which", "sort", "diff", "stat"}
 PROTECTED = {"main", "master"}
 SECRET_PATH = re.compile(r"(^|/)\.env(\.|$)|\.ssh/|\.aws/|\.npmrc|(^|/)secrets?(/|\.)")
-GOV_WORDS = re.compile(r"\.autonomy|CODEOWNERS|\.github/workflows")
+GOV_WORDS = re.compile(r"\.autonomy|codeowners|\.github/workflows|\.claude/(settings|hooks)|\.harness", re.I)
 WRITE_HINT = re.compile(r">|\btee\b|\bsed\s+-i|\bmv\b|\bcp\b|\brm\b|\btouch\b|\btruncate\b|\bdd\b|\binstall\b|\bchmod\b|git\s+(checkout|restore|apply)\b")
 
 
@@ -124,10 +124,52 @@ def _permitted_tool(entries: list[str], tool: str, subject: str | None, bash_seg
     return False
 
 
+def _norm_paths(ctx: HookContext, p: str) -> tuple[str, str]:
+    """Normalise a tool path against the project directory, resolving `..` and symlinks."""
+    absolute = os.path.normpath(os.path.join(ctx.project_dir, p))
+    real = os.path.realpath(absolute)
+    root = os.path.realpath(ctx.project_dir)
+    return os.path.relpath(absolute, ctx.project_dir).replace(os.sep, "/"), os.path.relpath(real, root).replace(os.sep, "/")
+
+
 def _rel_path(ctx: HookContext, p: str) -> str:
-    if PurePosixPath(p).is_absolute():
-        return os.path.relpath(p, ctx.project_dir).replace(os.sep, "/")
-    return p.replace(os.sep, "/")
+    return _norm_paths(ctx, p)[0]
+
+
+def _governance_path(ctx: HookContext, p: str) -> bool:
+    rel, real = _norm_paths(ctx, p)
+    return is_governance_file(rel) or is_governance_file(real)
+
+
+_WRAPPER_OPTIONS = re.compile(
+    r"^git\s+(?:(?:(?:-C|-c|--git-dir|--work-tree|--namespace)(?:\s+|=)\S+|--no-pager|--paginate|--no-optional-locks|-P)\s+)+"
+)
+
+
+def strip_wrappers(segment: str) -> str:
+    """Remove leading assignments, wrappers (env, sudo, time, ...) and git global options."""
+    s = segment.strip()
+    while True:
+        before = s
+        s = re.sub(r"^[A-Za-z_][A-Za-z0-9_]*=\S*\s+", "", s)
+        s = re.sub(r"^(env|command|sudo|time|nohup|nice|exec)\s+(-\S+\s+)*", "", s)
+        s = re.sub(r"^timeout\s+(-\S+\s+)*\d+[smhd]?\s+", "", s)
+        s = _WRAPPER_OPTIONS.sub("git ", s, count=1)
+        if s == before:
+            return s
+
+
+INLINE_CODE = [
+    re.compile(r"^(sh|bash|zsh|dash|ksh|fish)\s+(?:-\S+\s+)*-\S*c\b"),
+    re.compile(r"^eval\b"),
+    re.compile(r"^python[0-9.]*\s+(?:-\S+\s+)*-c\b"),
+    re.compile(r"^(node|deno|bun)\s+(?:-\S+\s+)*(-e|--eval|-p|--print)\b"),
+    re.compile(r"^(perl|ruby|php)\s+(?:-\S+\s+)*-\S*[eEr]\b"),
+]
+
+
+def _is_inline_code(seg: str) -> bool:
+    return any(p.search(seg) for p in INLINE_CODE)
 
 
 def _tool_file(tool_input: dict) -> str | None:
@@ -173,7 +215,11 @@ def _decide_bash(ctx: HookContext, command: str) -> Decision:
     network = perm.get("network")
     restrict_egress = level <= 2 or network is not None or level >= 4
     mark = False
-    for seg in segments:
+    for raw in segments:
+        seg = strip_wrappers(raw)
+        explicit = isinstance(perm.get("tools"), list) and any(e.startswith("Bash(") and _permitted_tool([e], "Bash", None, [raw]) for e in perm["tools"])
+        if _is_inline_code(seg) and not explicit:
+            return _deny("inline-interpreter", "inline shell or interpreter code cannot be inspected; permit it with an explicit Bash(...) pattern")
         first = seg.split()[0] if seg.split() else ""
         if level <= 1 and not (first in READ_ONLY_COMMANDS and ">" not in seg) and not re.match(r"^git\s+(status|diff|log|show)\b", seg):
             return _deny("read-only-level", "level 1 allows read-only commands only")
@@ -216,7 +262,7 @@ def decide(ctx: HookContext, call: dict) -> Decision:
     tool = call["tool_name"]
     tool_input = call.get("tool_input") or {}
     file = _tool_file(tool_input)
-    if file is not None and tool in WRITE_TOOLS and is_governance_file(_rel_path(ctx, file)):
+    if file is not None and tool in WRITE_TOOLS and _governance_path(ctx, file):
         return _deny("governance-write", f"agents may not write {_rel_path(ctx, file)}")
     if ctx.workflow is None or ctx.eff is None:
         if tool in READ_TOOLS:
@@ -255,9 +301,11 @@ def decide(ctx: HookContext, call: dict) -> Decision:
         return Decision(True, mark_untrusted=True)
     if tool == "Bash":
         return _decide_bash(ctx, str(tool_input.get("command", "")))
-    if isinstance(perm.get("tools"), list) and not _permitted_tool(perm["tools"], tool, None, None):
-        return _deny("outside-permitted-tools", f"{tool} is not in permitted_actions.tools")
-    return _deny("read-only-level", "level 1 allows read-only tools only") if level <= 1 else OK
+    if isinstance(perm.get("tools"), list):
+        if not _permitted_tool(perm["tools"], tool, None, None):
+            return _deny("outside-permitted-tools", f"{tool} is not in permitted_actions.tools")
+        return _deny("read-only-level", "level 1 allows read-only tools only") if level <= 1 else OK
+    return _deny("unknown-tool", f"{tool} is not a recognised tool and permitted_actions.tools does not list it")
 
 
 @dataclass
@@ -276,7 +324,8 @@ def resolve_workflow(project_dir: str | Path, workflow_id: str, now: int) -> Res
     wf = next((w for w in all_workflows(register) if w["id"] == workflow_id), None)
     if wf is None:
         return Resolved(None, None, f"workflow {workflow_id} is not in the register; read-only tools only")
-    profile = read_json_if_exists(root / register.get("profile", ".autonomy/profile.json"))
+    profile_rel = register.get("profile", ".autonomy/profile.json")
+    profile = read_json_if_exists(root / profile_rel) if inside_dir(root, profile_rel) else None
     state = read_json_if_exists(root / ".autonomy" / "state.json")
     eff = effective_level(wf, profile, state, register.get("defaults"), now)
     why = f" (reduced: {', '.join(eff.reasons)})" if eff.reasons else ""
@@ -310,7 +359,9 @@ def _iso_ms(now: int) -> str:
 
 def run_hook(event: str, stdin: str, env: dict[str, str | None], now: int) -> tuple[str, int]:
     """Return (stdout, exit_code) for one hook invocation."""
-    data: dict[str, Any] = {} if not stdin.strip() else json.loads(stdin)
+    data: Any = {} if not stdin.strip() else json.loads(stdin)
+    if not isinstance(data, dict):
+        raise ValueError("hook input must be a JSON object")
     project_dir = str(Path(env.get("CLAUDE_PROJECT_DIR") or data.get("cwd") or os.getcwd()).resolve())
     workflow_id = env.get("AUTONOMY_WORKFLOW") or "interactive"
     resolved = resolve_workflow(project_dir, workflow_id, now)
@@ -319,6 +370,8 @@ def run_hook(event: str, stdin: str, env: dict[str, str | None], now: int) -> tu
         return json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": context}}, separators=(",", ":")), 0
     if event != "pre-tool-use":
         raise ValueError(f"unknown hook event: {event}")
+    if not isinstance(data.get("tool_name"), str) or data["tool_name"] == "" or not isinstance(data.get("tool_input"), dict):
+        raise ValueError("pre-tool-use input needs a string tool_name and an object tool_input")
     session = data.get("session_id") or "unknown"
     session_path = Path(project_dir) / ".autonomy" / "sessions" / f"{_safe(session)}.json"
     seen = (read_json_if_exists(session_path) or {}).get("untrusted_input_seen") is True

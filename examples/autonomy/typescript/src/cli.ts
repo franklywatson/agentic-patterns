@@ -13,7 +13,7 @@ import { nowMs, readJson, readJsonIfExists } from "./util.js";
 
 const USAGE = `usage: autonomy <command> [options]
 
-  check   [--dir D] [--register F] [--now T] [--commits F | --git-range R] [--json]
+  check   [--dir D] [--register F] [--now T] (--commits F | --git-range R | --no-commits) [--json]
   census  [--dir D] [--now T] [--json]
   ledger  --workflow ID [--dir D] [--now T] [--apply-demotion] [--json]
   drill   --workflow ID [--dir D] [--bound-ms N] [--now T]
@@ -56,7 +56,13 @@ async function main(argv: string[]): Promise<number> {
       if (str("commits")) commits = readJson(str("commits") as string);
       else if (str("git-range")) commits = commitsFromGit(dir, str("git-range") as string);
       const result = runCheck({ dir, registerPath: str("register"), now, commits });
-      console.log(json ? JSON.stringify(result, null, 2) : formatCheck(result));
+      const skipped = commits === undefined;
+      if (skipped && !flags.has("no-commits")) {
+        result.failures.push({ code: "governance-check-skipped" });
+        result.ok = false;
+      }
+      const note = skipped && flags.has("no-commits") ? "\ngovernance check: skipped (--no-commits)" : "";
+      console.log(json ? JSON.stringify(result, null, 2) : `${formatCheck(result)}${note}`);
       return result.ok ? 0 : 1;
     }
     case "census": {
@@ -88,6 +94,7 @@ async function main(argv: string[]): Promise<number> {
       if (!wf) throw new Error(`workflow ${id} is not in the register`);
       const result = await runDrill({ dir, registerPath: join(dir, ".autonomy.yaml"), workflow: wf, boundMs: Number(str("bound-ms") ?? 2000), now });
       console.log(JSON.stringify(result, null, 2));
+      if (result.reason === "canary-never-started") return 2;
       return result.passed ? 0 : 1;
     }
     case "hook": {

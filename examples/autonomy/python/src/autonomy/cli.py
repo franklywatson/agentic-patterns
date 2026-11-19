@@ -15,7 +15,7 @@ from autonomy.util import now_ms, read_json, read_json_if_exists
 
 USAGE = """usage: autonomy <command> [options]
 
-  check   [--dir D] [--register F] [--now T] [--commits F | --git-range R] [--json]
+  check   [--dir D] [--register F] [--now T] (--commits F | --git-range R | --no-commits) [--json]
   census  [--dir D] [--now T] [--json]
   ledger  --workflow ID [--dir D] [--now T] [--apply-demotion] [--json]
   drill   --workflow ID [--dir D] [--bound-ms N] [--now T]
@@ -71,7 +71,12 @@ def _run(argv: list[str]) -> int:
         elif text("git-range"):
             commits = commits_from_git(directory, text("git-range"))
         result = run_check(directory, now, text("register"), commits)
-        print(json.dumps(result, indent=2) if as_json else format_check(result))
+        skipped = commits is None
+        if skipped and "no-commits" not in flags:
+            result["failures"].append({"code": "governance-check-skipped"})
+            result["ok"] = False
+        note = "\ngovernance check: skipped (--no-commits)" if skipped and "no-commits" in flags else ""
+        print(json.dumps(result, indent=2) if as_json else f"{format_check(result)}{note}")
         return 0 if result["ok"] else 1
     if command == "census":
         result = run_census(directory, now)
@@ -108,6 +113,8 @@ def _run(argv: list[str]) -> int:
             raise ValueError(f"workflow {wid} is not in the register")
         result = run_drill(directory, directory / ".autonomy.yaml", wf, int(text("bound-ms") or 2000), now)
         print(json.dumps(result, indent=2))
+        if result["reason"] == "canary-never-started":
+            return 2
         return 0 if result["passed"] else 1
     if command == "hook":
         import os

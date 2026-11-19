@@ -31,7 +31,7 @@ export interface Effective {
 export function dimensionLevel(profile: Json | null, dimension: string): number {
   const entry = profile?.dimensions?.[dimension];
   if (entry === undefined || entry === null) return 2;
-  return typeof entry.level === "number" ? entry.level : (entry.counted_as ?? 2);
+  return Number.isInteger(entry.level) && entry.level >= 1 && entry.level <= 5 ? entry.level : 2;
 }
 
 export function capOf(profile: Json | null): number {

@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { dirname, join, relative, sep } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export type Json = any;
@@ -38,6 +38,16 @@ export function ageDays(now: number, then: number): number {
 
 export function round4(value: number): number {
   return Math.floor(value * 10000 + 0.5) / 10000;
+}
+
+export function insideDir(dir: string, rel: string): boolean {
+  const root = resolve(dir);
+  const target = resolve(root, rel);
+  return target === root || target.startsWith(root + sep);
+}
+
+export function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export function readJson(path: string): Json {

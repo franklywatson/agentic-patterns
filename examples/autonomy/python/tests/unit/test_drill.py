@@ -10,10 +10,10 @@ from tests.conftest import NOW
 NOW_MS = parse_time(NOW)
 
 
-def drill(directory, workflow_id, bound_ms=2000):
+def drill(directory, workflow_id, bound_ms=2000, **extra):
     path = directory / ".autonomy.yaml"
     workflow = next(w for w in load_register_file(path)["workflows"] if w["id"] == workflow_id)
-    return run_drill(directory, path, workflow, bound_ms, NOW_MS)
+    return run_drill(directory, path, workflow, bound_ms, NOW_MS, **extra)
 
 
 def test_set_last_tested_replaces_an_existing_date_and_keeps_the_rest_of_the_file():
@@ -83,3 +83,27 @@ def test_a_workflow_without_a_stop_command_fails_the_drill(copy_fixture):
     result = drill(directory, "flaky-test-triage", 500)
     assert result["passed"] is False
     assert result["reason"] == "no-stop-command"
+
+
+def test_set_last_tested_does_not_treat_the_id_as_a_pattern():
+    text = "workflows:\n  - id: axb\n    stop:\n      last_tested: 2026-01-01\n"
+    with pytest.raises(ValueError, match="not found"):
+        set_last_tested(text, "a.b", "2026-11-18")
+
+
+def test_a_stop_command_that_is_slower_than_the_bound_fails_the_drill(copy_fixture):
+    directory = copy_fixture("registers", "valid")
+    path = directory / ".autonomy.yaml"
+    path.write_text(path.read_text().replace("""'touch "$AUTONOMY_STOP_FILE"'""", """'sleep 1; touch "$AUTONOMY_STOP_FILE"'"""))
+    result = drill(directory, "dep-bump", 300)
+    assert result["passed"] is False
+    assert result["reason"] == "bound-exceeded"
+    assert json.loads((directory / ".autonomy" / "state.json").read_text())["workflows"]["dep-bump"]["demotion_override"] == 3
+
+
+def test_a_canary_that_never_starts_is_a_tool_fault_no_demotion_and_no_date_change(copy_fixture):
+    directory = copy_fixture("registers", "valid")
+    result = drill(directory, "dep-bump", 500, canary_command=["sh", "-c", "sleep 3"], start_timeout_s=0.3)
+    assert result["reason"] == "canary-never-started"
+    assert json.loads((directory / ".autonomy" / "state.json").read_text()) == {"workflows": {}}
+    assert load_register_file(directory / ".autonomy.yaml")["workflows"][0]["stop"]["last_tested"] == "2026-11-02"

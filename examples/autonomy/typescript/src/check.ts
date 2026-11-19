@@ -3,7 +3,7 @@ import { join, resolve } from "node:path";
 import { allWorkflows, effectiveLevel, capOf, profileStatus } from "./levels.js";
 import type { Effective } from "./levels.js";
 import { loadRegisterFile, validateRegister } from "./register.js";
-import { ageDays, git, parseTime, readJsonIfExists } from "./util.js";
+import { ageDays, git, insideDir, parseTime, readJsonIfExists } from "./util.js";
 import type { Json } from "./util.js";
 
 export interface Failure {
@@ -33,10 +33,18 @@ export interface Commit {
   files: string[];
 }
 
-const GOVERNANCE = [/^\.autonomy/, /(^|\/)CODEOWNERS$/, /^\.github\/workflows\//];
+const GOVERNANCE = [
+  /^\.autonomy/,
+  /(^|\/)codeowners$/,
+  /^\.github\/workflows\//,
+  /^\.claude\/settings[^/]*\.json$/,
+  /^\.claude\/hooks\//,
+  /^\.harness\.yaml$/,
+];
 
 export function isGovernanceFile(path: string): boolean {
-  return GOVERNANCE.some((re) => re.test(path));
+  const lower = path.toLowerCase();
+  return GOVERNANCE.some((re) => re.test(lower));
 }
 
 export function agentTokens(register: Json): string[] {
@@ -53,14 +61,17 @@ export function isAgentCommit(commit: Commit, tokens: string[]): boolean {
   return /^co-authored-by:\s*claude/im.test(commit.body ?? "");
 }
 
+const RANGE = /^[\w./^~@{:+][\w./^~@{}:+-]*(\.\.\.?[\w./^~@{}:+-]+)?$/;
+
 export function commitsFromGit(dir: string, range: string): Commit[] {
-  const out = git(dir, ["log", "--name-only", "--format=@@%H%x1f%an%x1f%ae%x1f%b%x1e", range]);
+  if (!RANGE.test(range)) throw new Error(`invalid git range: ${range}`);
+  const out = git(dir, ["log", "--no-renames", "--name-only", "--format=%x1e%H%x1f%an%x1f%ae%x1f%B%x1d", range]);
   if (out === null) throw new Error(`git log failed for range ${range}`);
   const commits: Commit[] = [];
-  for (const chunk of out.split("@@").filter((c) => c.trim() !== "")) {
-    const [head, filesText] = chunk.split("\x1e");
-    const [sha, author, email, body] = head.split("\x1f");
-    commits.push({ sha, author, email, body, files: filesText.split("\n").filter(Boolean) });
+  for (const chunk of out.split("\x1e").filter((c) => c.trim() !== "")) {
+    const [head, filesText] = chunk.split("\x1d");
+    const [sha, author, email, ...body] = head.split("\x1f");
+    commits.push({ sha, author, email, body: body.join("\x1f"), files: filesText.split("\n").filter(Boolean) });
   }
   return commits;
 }
@@ -83,7 +94,9 @@ export function runCheck(opts: CheckOptions): CheckResult {
     result.ok = false;
     return result;
   }
-  const profilePath = join(dir, register.profile ?? ".autonomy/profile.json");
+  const profileRel: string = register.profile ?? ".autonomy/profile.json";
+  if (!insideDir(dir, profileRel)) throw new Error(`profile path escapes the repository: ${profileRel}`);
+  const profilePath = join(dir, profileRel);
   const profile: Json | null = existsSync(profilePath) ? readJsonIfExists(profilePath) : null;
   const state = readJsonIfExists(join(dir, ".autonomy", "state.json"));
   const status = profileStatus(profile, opts.now);

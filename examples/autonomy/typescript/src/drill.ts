@@ -3,7 +3,7 @@ import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { applyDemotion } from "./ledger.js";
-import { isoDate, isoSeconds } from "./util.js";
+import { escapeRegExp, isoDate, isoSeconds } from "./util.js";
 import type { Json } from "./util.js";
 
 const CANARY = `
@@ -41,7 +41,7 @@ const readBeat = (path: string) => (existsSync(path) ? readFileSync(path, "utf8"
 /** Set `last_tested` for one workflow by editing the register text in place. */
 export function setLastTested(text: string, workflowId: string, date: string): string {
   const lines = text.split("\n");
-  const start = lines.findIndex((l) => new RegExp(`^\\s*-\\s+id:\\s*["']?${workflowId}["']?\\s*$`).test(l));
+  const start = lines.findIndex((l) => new RegExp(`^\\s*-\\s+id:\\s*["']?${escapeRegExp(workflowId)}["']?\\s*$`).test(l));
   if (start < 0) throw new Error(`workflow ${workflowId} not found in register text`);
   let end = lines.length;
   for (let i = start + 1; i < lines.length; i++) {
@@ -72,13 +72,17 @@ export async function runDrill(opts: {
   workflow: Json;
   boundMs: number;
   now: number;
+  /** Command that starts the canary; defaults to a node heartbeat loop. Tests override it. */
+  canary?: string[];
+  startTimeoutMs?: number;
 }): Promise<DrillResult> {
   const { workflow, boundMs } = opts;
   const work = mkdtempSync(join(tmpdir(), "autonomy-drill-"));
   const heartbeat = join(work, "heartbeat");
   const stopFile = join(work, "stop");
-  const env = { ...process.env, AUTONOMY_HEARTBEAT: heartbeat, AUTONOMY_STOP_FILE: stopFile };
-  const canary = spawn(process.execPath, ["-e", CANARY], { env, stdio: "ignore" });
+  const env: NodeJS.ProcessEnv = { PATH: process.env.PATH, HOME: process.env.HOME, AUTONOMY_HEARTBEAT: heartbeat, AUTONOMY_STOP_FILE: stopFile };
+  const [cmd, ...cmdArgs] = opts.canary ?? [process.execPath, "-e", CANARY];
+  const canary = spawn(cmd, cmdArgs, { env, stdio: "ignore" });
   let exited = false;
   canary.on("exit", () => {
     exited = true;
@@ -92,21 +96,25 @@ export async function runDrill(opts: {
   });
   let result: DrillResult;
   try {
-    const beating = await waitFor(() => Number(readBeat(heartbeat) || 0) >= 2, 5000);
+    const beating = await waitFor(() => Number(readBeat(heartbeat) || 0) >= 2, opts.startTimeoutMs ?? 5000);
     if (!beating) {
       result = fail("canary-never-started", null);
     } else if (!workflow.stop?.command) {
       result = fail("no-stop-command", null);
     } else {
+      const started = Date.now();
       const stop = spawnSync("sh", ["-c", workflow.stop.command], {
         env: { ...env, AUTONOMY_CANARY_PID: String(canary.pid) },
+        cwd: opts.dir,
         timeout: 10_000,
       });
-      const started = Date.now();
+      const stopTook = Date.now() - started;
       if (stop.status !== 0) {
         result = fail("stop-command-failed", null);
+      } else if (stopTook > boundMs) {
+        result = fail("bound-exceeded", stopTook);
       } else {
-        const halted = await waitFor(() => exited, boundMs);
+        const halted = await waitFor(() => exited, Math.max(0, boundMs - (Date.now() - started)));
         const took = Date.now() - started;
         if (!halted) {
           result = fail("canary-still-running", null);
@@ -126,6 +134,7 @@ export async function runDrill(opts: {
     join(opts.dir, ".autonomy", "drills.jsonl"),
     `${JSON.stringify({ ts: isoSeconds(opts.now), workflow: workflow.id, passed: result.passed, reason: result.reason })}\n`,
   );
+  if (result.reason === "canary-never-started") return result;
   if (result.passed) {
     const text = readFileSync(opts.registerPath, "utf8");
     writeFileSync(opts.registerPath, setLastTested(text, workflow.id, isoDate(opts.now)));

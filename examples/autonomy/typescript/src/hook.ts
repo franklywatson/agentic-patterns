@@ -1,10 +1,10 @@
-import { appendFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, realpathSync, writeFileSync } from "node:fs";
 import { join, relative, resolve, isAbsolute } from "node:path";
 import { isGovernanceFile } from "./check.js";
 import { allWorkflows, effectiveLevel } from "./levels.js";
 import type { Effective } from "./levels.js";
 import { loadRegisterFile } from "./register.js";
-import { git, matchCommand, matchPath, readJsonIfExists, toPosix } from "./util.js";
+import { git, insideDir, matchCommand, matchPath, readJsonIfExists, toPosix } from "./util.js";
 import type { Json } from "./util.js";
 
 export interface Diff {
@@ -28,7 +28,7 @@ export interface Decision {
   markUntrusted?: boolean;
 }
 
-const READ_TOOLS = new Set(["Read", "Grep", "Glob", "LS", "TodoWrite", "NotebookRead"]);
+const READ_TOOLS = new Set(["Read", "Grep", "Glob", "LS", "TodoWrite", "NotebookRead", "Task", "Agent", "Skill", "ToolSearch", "AskUserQuestion", "ExitPlanMode", "EnterPlanMode", "TaskOutput", "TaskStop"]);
 const WRITE_TOOLS = new Set(["Write", "Edit", "MultiEdit", "NotebookEdit"]);
 const NETWORK_TOOLS = new Set(["WebFetch", "WebSearch"]);
 const READ_ONLY_COMMANDS = new Set(["ls", "cat", "head", "tail", "grep", "rg", "find", "pwd", "echo", "wc", "which", "sort", "diff", "stat"]);
@@ -91,15 +91,61 @@ function permittedTool(entries: string[], tool: string, subject: string | null, 
   });
 }
 
-function relPath(ctx: HookContext, p: string): string {
-  return toPosix(isAbsolute(p) ? relative(ctx.projectDir, p) : p);
+/** Normalise a tool path against the project directory, resolving `..` and symlinks. */
+function normPaths(ctx: HookContext, p: string): { rel: string; real: string } {
+  const abs = resolve(ctx.projectDir, p);
+  let real = abs;
+  try {
+    real = realpathSync(abs);
+  } catch {
+    // the path does not exist yet; the logical path is all there is
+  }
+  let root = ctx.projectDir;
+  try {
+    root = realpathSync(ctx.projectDir);
+  } catch {
+    // fixture project directories need not exist
+  }
+  return { rel: toPosix(relative(ctx.projectDir, abs)), real: toPosix(relative(root, real)) };
 }
+
+const relPath = (ctx: HookContext, p: string) => normPaths(ctx, p).rel;
+
+function governancePath(ctx: HookContext, p: string): boolean {
+  const { rel, real } = normPaths(ctx, p);
+  return isGovernanceFile(rel) || isGovernanceFile(real);
+}
+
+const WRAPPER_OPTIONS = /^git\s+(?:(?:(?:-C|-c|--git-dir|--work-tree|--namespace)(?:\s+|=)\S+|--no-pager|--paginate|--no-optional-locks|-P)\s+)+/;
+
+/** Remove leading assignments, wrappers (env, sudo, time, ...) and git global options. */
+export function stripWrappers(segment: string): string {
+  let s = segment.trim();
+  for (;;) {
+    const before = s;
+    s = s.replace(/^[A-Za-z_][A-Za-z0-9_]*=\S*\s+/, "");
+    s = s.replace(/^(env|command|sudo|time|nohup|nice|exec)\s+(-\S+\s+)*/, "");
+    s = s.replace(/^timeout\s+(-\S+\s+)*\d+[smhd]?\s+/, "");
+    s = s.replace(WRAPPER_OPTIONS, "git ");
+    if (s === before) return s;
+  }
+}
+
+const INLINE_CODE = [
+  /^(sh|bash|zsh|dash|ksh|fish)\s+(?:-\S+\s+)*-\S*c\b/,
+  /^eval\b/,
+  /^python[0-9.]*\s+(?:-\S+\s+)*-c\b/,
+  /^(node|deno|bun)\s+(?:-\S+\s+)*(-e|--eval|-p|--print)\b/,
+  /^(perl|ruby|php)\s+(?:-\S+\s+)*-\S*[eEr]\b/,
+];
+
+const isInlineCode = (seg: string) => INLINE_CODE.some((re) => re.test(seg));
 
 function toolFile(input: Json): string | null {
   return input.file_path ?? input.notebook_path ?? null;
 }
 
-const GOV_WORDS = /\.autonomy|CODEOWNERS|\.github\/workflows/;
+const GOV_WORDS = /\.autonomy|codeowners|\.github\/workflows|\.claude\/(settings|hooks)|\.harness/i;
 const WRITE_HINT = />|\btee\b|\bsed\s+-i|\bmv\b|\bcp\b|\brm\b|\btouch\b|\btruncate\b|\bdd\b|\binstall\b|\bchmod\b|git\s+(checkout|restore|apply)\b/;
 
 function decideBash(ctx: HookContext, command: string): Decision {
@@ -122,7 +168,12 @@ function decideBash(ctx: HookContext, command: string): Decision {
   const network: string[] | undefined = perm.network;
   const restrictEgress = level <= 2 || network !== undefined || level >= 4;
   let mark = false;
-  for (const seg of segments) {
+  for (const raw of segments) {
+    const seg = stripWrappers(raw);
+    const explicit = Array.isArray(perm.tools) && perm.tools.some((e: string) => e.startsWith("Bash(") && permittedTool([e], "Bash", null, [raw]));
+    if (isInlineCode(seg) && !explicit) {
+      return deny("inline-interpreter", "inline shell or interpreter code cannot be inspected; permit it with an explicit Bash(...) pattern");
+    }
     if (level <= 1 && !(READ_ONLY_COMMANDS.has(seg.split(/\s+/)[0]) && !/>/.test(seg)) && !/^git\s+(status|diff|log|show)\b/.test(seg)) {
       return deny("read-only-level", "level 1 allows read-only commands only");
     }
@@ -183,7 +234,7 @@ export function decide(ctx: HookContext, call: { tool_name: string; tool_input: 
   const tool = call.tool_name;
   const input = call.tool_input ?? {};
   const file = toolFile(input);
-  if (file !== null && WRITE_TOOLS.has(tool) && isGovernanceFile(relPath(ctx, file))) {
+  if (file !== null && WRITE_TOOLS.has(tool) && governancePath(ctx, file)) {
     return deny("governance-write", `agents may not write ${relPath(ctx, file)}`);
   }
   if (ctx.workflow === null || ctx.eff === null) {
@@ -231,10 +282,13 @@ export function decide(ctx: HookContext, call: { tool_name: string; tool_input: 
     return { allow: true, markUntrusted: true };
   }
   if (tool === "Bash") return decideBash(ctx, String(input.command ?? ""));
-  if (Array.isArray(perm.tools) && !permittedTool(perm.tools, tool, null, null)) {
-    return deny("outside-permitted-tools", `${tool} is not in permitted_actions.tools`);
+  if (Array.isArray(perm.tools)) {
+    if (!permittedTool(perm.tools, tool, null, null)) {
+      return deny("outside-permitted-tools", `${tool} is not in permitted_actions.tools`);
+    }
+    return level <= 1 ? deny("read-only-level", "level 1 allows read-only tools only") : ok;
   }
-  return level <= 1 ? deny("read-only-level", "level 1 allows read-only tools only") : ok;
+  return deny("unknown-tool", `${tool} is not a recognised tool and permitted_actions.tools does not list it`);
 }
 
 export interface Resolved {
@@ -249,7 +303,8 @@ export function resolveWorkflow(projectDir: string, workflowId: string, now: num
   const register = loadRegisterFile(registerPath);
   const wf = allWorkflows(register).find((w) => w.id === workflowId);
   if (wf === undefined) return { workflow: null, eff: null, note: `workflow ${workflowId} is not in the register; read-only tools only` };
-  const profile = readJsonIfExists(join(projectDir, register.profile ?? ".autonomy/profile.json"));
+  const profileRel: string = register.profile ?? ".autonomy/profile.json";
+  const profile = insideDir(projectDir, profileRel) ? readJsonIfExists(join(projectDir, profileRel)) : null;
   const state = readJsonIfExists(join(projectDir, ".autonomy", "state.json"));
   const eff = effectiveLevel(wf, profile, state, register.defaults, now);
   const why = eff.reasons.length > 0 ? ` (reduced: ${eff.reasons.join(", ")})` : "";
@@ -284,6 +339,7 @@ export interface HookRun {
 
 export function runHook(event: string, stdin: string, env: Record<string, string | undefined>, now: number): HookRun {
   const input: Json = stdin.trim() === "" ? {} : JSON.parse(stdin);
+  if (input === null || typeof input !== "object") throw new Error("hook input must be a JSON object");
   const projectDir = resolve(env.CLAUDE_PROJECT_DIR ?? input.cwd ?? process.cwd());
   const workflowId = env.AUTONOMY_WORKFLOW ?? "interactive";
   const resolved = resolveWorkflow(projectDir, workflowId, now);
@@ -292,6 +348,9 @@ export function runHook(event: string, stdin: string, env: Record<string, string
     return { stdout: JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: context } }), exitCode: 0 };
   }
   if (event !== "pre-tool-use") throw new Error(`unknown hook event: ${event}`);
+  if (typeof input.tool_name !== "string" || input.tool_name === "" || input.tool_input === null || typeof input.tool_input !== "object") {
+    throw new Error("pre-tool-use input needs a string tool_name and an object tool_input");
+  }
   const session: string = input.session_id ?? "unknown";
   const spath = sessionPath(projectDir, session);
   const untrustedSeen = readJsonIfExists(spath)?.untrusted_input_seen === true;

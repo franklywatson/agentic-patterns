@@ -61,7 +61,7 @@ def test_a_skill_worksheet_result_older_than_90_days_reverts_to_unknown(cli, git
 def test_check_fails_on_the_census_output_of_the_adopter_repository_because_dep_bump_exceeds_the_cap(cli, git_fixture_repo):
     directory = git_fixture_repo("adopter")
     census(cli, directory)
-    run = cli(["check", "--dir", str(directory), "--now", NOW, "--json"])
+    run = cli(["check", "--dir", str(directory), "--now", NOW, "--json", "--no-commits"])
     assert run.returncode == 1
     assert json.loads(run.stdout)["failures"] == [{"code": "grant-exceeds-cap", "workflow": "dep-bump", "granted": 4, "cap": 3}]
 
@@ -74,4 +74,4 @@ def test_check_passes_after_the_grant_is_lowered_to_the_cap(cli, git_fixture_rep
     lowered = original.replace("granted_level: 4", "granted_level: 3")
     assert lowered != original
     path.write_text(lowered)
-    assert cli(["check", "--dir", str(directory), "--now", NOW]).returncode == 0
+    assert cli(["check", "--dir", str(directory), "--now", NOW, "--no-commits"]).returncode == 0

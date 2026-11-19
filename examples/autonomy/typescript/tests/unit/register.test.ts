@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readdirSync } from "node:fs";
 import { test } from "node:test";
+import { parse as parseYaml } from "yaml";
 import { loadRegisterFile, validateRegister } from "../../src/register.js";
 import { fixture, readFixtureJson } from "../helpers.js";
 
@@ -33,4 +34,15 @@ test("a level 2 workflow with a full trifecta needs no gate", () => {
   const register = loadRegisterFile(fixture("registers", "invalid", "trifecta-no-gate.yaml"));
   register.workflows[0].granted_level = 2;
   assert.deepEqual(validateRegister(register), []);
+});
+
+test("YAML 1.1 words stay strings: on, yes and no are not booleans", () => {
+  const register = parseYaml("trigger: on\nname: yes\nother: no\n");
+  assert.deepEqual(register, { trigger: "on", name: "yes", other: "no" });
+});
+
+test("a trailing newline does not satisfy the date pattern", () => {
+  const register = loadRegisterFile(fixture("registers", "valid", ".autonomy.yaml"));
+  register.workflows[0].review_date = "2027-02-01\n";
+  assert.deepEqual(validateRegister(register).map((e) => `${e.path}:${e.keyword}`), ["/workflows/0/review_date:pattern"]);
 });

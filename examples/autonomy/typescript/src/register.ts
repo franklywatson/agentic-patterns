@@ -9,6 +9,11 @@ export interface SchemaError {
   keyword: string;
 }
 
+function isCalendarDate(value: string): boolean {
+  const d = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+}
+
 let validator: ReturnType<Ajv["compile"]> | null = null;
 
 function compiled() {
@@ -34,6 +39,19 @@ export function validateRegister(data: Json): SchemaError[] {
     if (err.keyword === "required") path += `/${err.params.missingProperty}`;
     if (err.keyword === "additionalProperties") path += `/${err.params.additionalProperty}`;
     found.set(`${path}|${err.keyword}`, { path, keyword: err.keyword });
+  }
+  for (const [i, wf] of ((data?.workflows as Json[] | undefined) ?? []).entries()) {
+    const dates: Array<[string, unknown]> = [
+      ["access_expires", wf?.access_expires],
+      ["review_date", wf?.review_date],
+      ["stop/last_tested", wf?.stop?.last_tested],
+    ];
+    for (const [name, value] of dates) {
+      if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !isCalendarDate(value)) {
+        const path = `/workflows/${i}/${name}`;
+        found.set(`${path}|format`, { path, keyword: "format" });
+      }
+    }
   }
   const key = (e: SchemaError) => `${e.path}|${e.keyword}`;
   return [...found.values()].sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));

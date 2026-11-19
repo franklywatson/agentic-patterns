@@ -37,7 +37,7 @@ def dimension_level(profile: dict | None, dimension: str) -> int:
     if entry is None:
         return 2
     level = entry.get("level")
-    return level if isinstance(level, int) else entry.get("counted_as", 2)
+    return level if isinstance(level, int) and not isinstance(level, bool) and 1 <= level <= 5 else 2
 
 
 def cap_of(profile: dict | None) -> int:

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from datetime import datetime
 from jsonschema import Draft7Validator
 
 from autonomy.util import SCHEMA_PATH
@@ -20,7 +21,22 @@ _Loader.yaml_implicit_resolvers = {
     for key, resolvers in yaml.SafeLoader.yaml_implicit_resolvers.items()
 }
 
+# YAML 1.2 booleans: only true and false (PyYAML defaults to YAML 1.1: on, yes, no, ...).
+_Loader.yaml_implicit_resolvers = {
+    key: [(tag, regexp) for tag, regexp in resolvers if tag != "tag:yaml.org,2002:bool"]
+    for key, resolvers in _Loader.yaml_implicit_resolvers.items()
+}
+_Loader.add_implicit_resolver("tag:yaml.org,2002:bool", re.compile(r"^(?:true|True|TRUE|false|False|FALSE)$"), list("tTfF"))
+
 _validator: Draft7Validator | None = None
+
+
+def _is_calendar_date(value: str) -> bool:
+    try:
+        datetime.strptime(value, "%Y-%m-%d")
+    except ValueError:
+        return False
+    return True
 
 
 def _compiled() -> Draft7Validator:
@@ -48,4 +64,12 @@ def validate_register(data: Any) -> list[dict[str, str]]:
         for name in names:
             full = f"{path}/{name}" if name is not None else path
             found[f"{full}|{err.validator}"] = {"path": full, "keyword": err.validator}
+    workflows = data.get("workflows") if isinstance(data, dict) else None
+    for i, wf in enumerate(workflows if isinstance(workflows, list) else []):
+        wf = wf if isinstance(wf, dict) else {}
+        stop = wf.get("stop") if isinstance(wf.get("stop"), dict) else {}
+        for name, value in (("access_expires", wf.get("access_expires")), ("review_date", wf.get("review_date")), ("stop/last_tested", stop.get("last_tested"))):
+            if isinstance(value, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", value) and not _is_calendar_date(value):
+                path = f"/workflows/{i}/{name}"
+                found[f"{path}|format"] = {"path": path, "keyword": "format"}
     return [found[key] for key in sorted(found)]

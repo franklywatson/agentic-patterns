@@ -17,14 +17,14 @@ examples/autonomy/
 
 ## The five commands
 
-Each language has one CLI with five commands. All commands accept `--dir D` (the repository root, default the current directory) and `--now T` (an ISO date or time, default the current time; the environment variable `AUTONOMY_NOW` does the same).
+Each language has one CLI with five commands. All commands accept `--dir D` (the repository root, default the current directory) and `--now T` (an ISO date or time, default the current time; the environment variable `AUTONOMY_NOW` does the same). `--now` and `AUTONOMY_NOW` exist for tests and replays: CI must not set them, because a back-dated clock hides stale profiles and stop tests.
 
 | Command | What it does | Exit code |
 |---|---|---|
-| `autonomy check` | Validates `.autonomy.yaml` against the schema, computes each workflow's effective level, and fails on the rules below | 0 ok, 1 failed, 2 error |
+| `autonomy check` | Validates `.autonomy.yaml` against the schema, computes each workflow's effective level, and fails on the rules below. Needs `--commits`, `--git-range` or an explicit `--no-commits` | 0 ok, 1 failed, 2 error |
 | `autonomy census` | Probes the repository, writes `.autonomy/profile.json` and `.autonomy/worksheet.json` | 0 |
 | `autonomy ledger` | Reads `.autonomy/ledger/<workflow>.jsonl`, prints a promotion evidence report, optionally applies a demotion | 0 |
-| `autonomy drill` | Runs the stop drill for one workflow and writes `stop.last_tested` | 0 passed, 1 failed |
+| `autonomy drill` | Runs the stop drill for one workflow and writes `stop.last_tested` | 0 passed, 1 failed, 2 tool fault |
 | `autonomy hook` | Claude Code hook entry point: `pre-tool-use` and `session-start` | 0 |
 
 ### TypeScript
@@ -33,7 +33,7 @@ Each language has one CLI with five commands. All commands accept `--dir D` (the
 cd examples/autonomy/typescript
 npm install
 npm test                      # builds, then runs node:test (unit, stack, eval)
-node dist/src/cli.js check --dir ../fixtures/registers/valid --now 2026-11-18T00:00:00Z
+node dist/src/cli.js check --dir ../fixtures/registers/valid --now 2026-11-18T00:00:00Z --no-commits
 ```
 
 `npm run autonomy -- <command> ...` runs the built CLI.
@@ -44,18 +44,19 @@ node dist/src/cli.js check --dir ../fixtures/registers/valid --now 2026-11-18T00
 cd examples/autonomy/python
 uv sync
 uv run pytest                 # unit, stack and eval tests; every warning is an error
-uv run autonomy check --dir ../fixtures/registers/valid --now 2026-11-18T00:00:00Z
+uv run autonomy check --dir ../fixtures/registers/valid --now 2026-11-18T00:00:00Z --no-commits
 ```
 
 ### Example run
 
 ```text
-$ autonomy check --dir fixtures/registers/over-cap --now 2026-11-18T00:00:00Z
+$ autonomy check --dir fixtures/registers/over-cap --now 2026-11-18T00:00:00Z --no-commits
 cap: 2
 workflow dep-bump: granted 4, effective 2  (cap:2)
 workflow interactive: granted 2, effective 2
 FAIL {"code":"grant-exceeds-cap","workflow":"dep-bump","granted":4,"cap":2}
 autonomy check: FAILED
+governance check: skipped (--no-commits)
 ```
 
 ```text
@@ -112,7 +113,7 @@ Demotion: not triggered
 | `permitted_actions` | no | `tools` (for example `Bash(npm test*)`), `paths` (globs), `git` (`branch`, `commit`, `open_pr`, `auto_merge`), `network` (hosts) |
 | `forbidden_actions` | no | For example `deploy`, `read_secrets`, `force_push`, `edit_ci`, `edit_autonomy` |
 | `limits` | level 4+ | `max_runs_per_day`, `max_cost_usd_per_run`, `max_diff_lines` |
-| `stop` | level 4+ | `mechanism` (prose), `command` (runs the stop; used by the drill), `authority`, `last_tested` |
+| `stop` | level 4+ | `mechanism` (prose), `command`, `authority`, `last_tested`. The drill runs `command` against a canary, so `command` must halt the canary: touch `$AUTONOMY_STOP_FILE` or kill `$AUTONOMY_CANARY_PID`. A command such as `gh workflow disable` never halts the canary and fails the drill; wrap it in a script that also signals the canary when run under the drill |
 | `review_date` | level 4+ | Date the grant must be reviewed by |
 | `stop_rule` | level 5 | When to retire the workflow |
 | `baseline` | level 5 | Path of the pre-change baseline |
@@ -143,11 +144,12 @@ effective = min(granted, cap(profile), freshness_gate, harness_gate, demotion_ov
 - the register does not validate against the schema;
 - any `granted_level` exceeds the cap (`grant-exceeds-cap`);
 - the profile is older than 30 days (`profile-stale`) or missing (`profile-missing`);
-- an agent identity changed a governance file (`governance-file-changed-by-agent`).
+- an agent identity changed a governance file (`governance-file-changed-by-agent`);
+- no commits were supplied (`governance-check-skipped`). Pass `--commits`, `--git-range`, or `--no-commits` to skip the rule on purpose; the text output then prints `governance check: skipped (--no-commits)`. A required CI check should pass `--git-range origin/main..HEAD`.
 
-Governance files are `.autonomy*`, `CODEOWNERS` (any directory) and `.github/workflows/*`. Pass the commits to inspect with `--commits file.json` (a list of `{sha, author, email, body, files}`) or `--git-range A..B`. A commit is an agent commit when the author name or email contains `[bot]`, contains the name part of a workflow `identity`, or the message has a `Co-Authored-By: Claude` trailer.
+Governance files, matched case-insensitively, are `.autonomy*`, `CODEOWNERS` (any directory), `.github/workflows/*`, `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`. The last three keep an agent from removing the hook. Pass the commits to inspect with `--commits file.json` (a list of `{sha, author, email, body, files}`) or `--git-range A..B` (renames are reported as a delete plus an add, so moving a governed file is visible; a range must look like a revision). A commit is an agent commit when the author name or email contains `[bot]`, contains the name part of a workflow `identity`, or the message has a `Co-Authored-By: Claude` trailer.
 
-A reduced effective level is reported but does not fail the check: the hook enforces the lower level at run time.
+A reduced effective level is reported but does not fail the check: the hook enforces the lower level at run time. YAML is read with 1.2 booleans in both languages: only `true` and `false` are booleans, so `on` and `no` stay strings. Dates are calendar-checked: `2027-02-31` is a schema error.
 
 ## Census
 
@@ -181,7 +183,7 @@ One JSON line per run in `.autonomy/ledger/<workflow>.jsonl`, written by CI. Fie
 | To level | Criteria |
 |---|---|
 | 3 | At least 20 runs at level 2; first-run pass lower bound at least 0.80; owner named; a traced sample is listed as a human step |
-| 4 | At least 30 runs at level 3; first-run pass lower bound at least 0.90; revert upper bound at most 0.03; zero escaped defects; task bank score at least 0.90 on the latest run; reversible and mechanical; stop drill within 30 days; cap at least 4; no demotion in the last 30 days |
+| 4 | At least 30 runs at level 3 (the minimum sample, not sufficient alone); first-run pass lower bound at least 0.90; revert upper bound at most 0.03 (zero reverts clears this only from about 125 merged runs); zero escaped defects; task bank score at least 0.90 on the latest run; reversible and mechanical; stop drill within 30 days; cap at least 4; no demotion in the last 30 days |
 | 5 | At least 90 days at level 4; baseline, target and stop rule set; cost per merged outcome reported; cap at least 5; no demotion in the last 30 days; a recorded review cycle is listed as a human step |
 
 Hysteresis separates promotion from demotion. A revert upper bound of 0.03 or less allows promotion. An upper bound above 0.06 demotes. Between the two the band is `hold`. Zero reverts clear 0.03 only from 125 merged runs, so a small sample cannot promote. A revert demotion needs at least one revert in the window and at least `min_runs` merged runs, so a small clean sample is not demoted.
@@ -196,9 +198,11 @@ Demotion triggers over runs at level 3 and above: an escaped defect (to level 2)
 2. Waits for the heartbeat, then runs the workflow's `stop.command` with `AUTONOMY_CANARY_PID`, `AUTONOMY_STOP_FILE` and `AUTONOMY_HEARTBEAT` set.
 3. Asserts the canary exits within the bound and the heartbeat stops changing.
 4. On success writes today's date to `stop.last_tested` in `.autonomy.yaml` (an in-place text edit that keeps comments).
-5. On failure writes `demotion_override: 3` to `.autonomy/state.json`. A missing `stop.command`, a failing command and a canary that keeps running are all failures.
+5. On failure writes `demotion_override: 3` to `.autonomy/state.json`. A missing `stop.command`, a failing command, a canary that keeps running and a stop that takes longer than the bound (the bound includes the command's own run time) are all failures. A canary that never starts is a tool fault: exit code 2, no demotion, no date written.
 
 Every drill appends a line to `.autonomy/drills.jsonl`.
+
+The drill runs `stop.command` through `sh -c` in the repository root with only `PATH`, `HOME` and the three `AUTONOMY_*` variables. The register is a governance file, but a job that runs the drill on a pull-request checkout runs whatever the pull request wrote: run the drill only from a checkout of the default branch.
 
 ## Hook
 
@@ -211,9 +215,11 @@ Add `hooks/settings.typescript.example.json` or `hooks/settings.python.example.j
 
 | Rule | Code |
 |---|---|
-| Write, Edit, MultiEdit or NotebookEdit on `.autonomy*`, `CODEOWNERS` or `.github/workflows/*`; a shell command that mentions one and writes (redirect, `tee`, `sed -i`, `mv`, `cp`, `rm` and similar) | `governance-write` |
+| Write, Edit, MultiEdit or NotebookEdit on a governance file (the list above, case-insensitive, after resolving `..` and symlinks); a shell command that mentions one and writes (redirect, `tee`, `sed -i`, `mv`, `cp`, `rm` and similar) | `governance-write` |
 | Workflow missing from the register, or no register: only read-only tools | `unknown-workflow` |
 | Level 1: any write tool or non-read-only command | `read-only-level` |
+| Tool name that is not recognised and not listed in `permitted_actions.tools` | `unknown-tool` |
+| `sh -c`, `eval`, `python -c`, `node -e`, `perl -e` and similar inline code, unless an explicit `Bash(...)` pattern permits it | `inline-interpreter` |
 | Tool or Bash command outside `permitted_actions.tools`; every segment of a compound command must match; command substitution is rejected | `outside-permitted-tools` |
 | Write outside `permitted_actions.paths` | `outside-permitted-paths` |
 | `deploy`, `read_secrets` or another word in `forbidden_actions` | `forbidden-action` |
@@ -225,17 +231,21 @@ Add `hooks/settings.typescript.example.json` or `hooks/settings.python.example.j
 | Egress outside `permitted_actions.network` (applies at level 2 or below, when `network` is set, and at level 4 or above) | `network-blocked` |
 | After the session read untrusted input (WebFetch, WebSearch, `gh issue view`, `curl` GET), an external action when the workflow holds sensitive data and names no `risk.gate` | `trifecta-external-action` |
 
-The hook appends every decision to `.autonomy/audit/<session>.jsonl` (the `human` field comes from `AUTONOMY_SPONSOR`) and records the untrusted-input flag in `.autonomy/sessions/<session>.json`. Both are runtime state, not source: keep `.autonomy/audit/` and `.autonomy/sessions/` out of version control. The Bash rules are a backstop. CODEOWNERS and `autonomy check` remain the control for governance files.
+Input that is not a JSON object with a string `tool_name` and an object `tool_input` exits with code 2, which blocks the call. Leading `VAR=x`, `env`, `command`, `sudo`, `time`, `timeout N`, `nice`, `nohup`, `exec` and git global options (`git -C dir`, `-c k=v`, `--git-dir`) are stripped before the git, merge and egress rules apply.
+
+The Bash rules match command strings. That is a nudge, not a boundary: a shell can reach the same effect through paths the matcher does not parse. The controls that hold are a `permitted_actions.tools` allow-list (Bash is default-deny once the list exists), CODEOWNERS with required review, `autonomy check` in CI, and the container or sandbox the agent runs in (see Pattern 2.3 in the L2 document: hooks reduce mistakes; isolation limits damage).
+
+The hook appends every decision to `.autonomy/audit/<session>.jsonl` (the `human` field comes from `AUTONOMY_SPONSOR`; the record has no outcome field) and records the untrusted-input flag in `.autonomy/sessions/<session>.json`. Both are runtime state, not source: keep `.autonomy/audit/` and `.autonomy/sessions/` out of version control. The Bash rules are a backstop. CODEOWNERS and `autonomy check` remain the control for governance files.
 
 ## Eval suite
 
-`fixtures/eval/scenarios.json` holds 14 scenarios: A1, A2, A3, A4 (in limits, diff too large, stray file), a cap below the grant, a stale stop, a demotion override, a changed harness, a trifecta session (tainted, clean, with a gate) and an unknown workflow. Each scenario sets an effective level and a list of tool calls with the expected allow or the expected deny code.
+`fixtures/eval/scenarios.json` holds 17 scenarios: A1, A2 (including egress), A3 (including a list of bypass attempts: wrappers, inline interpreters, `..` and case-variant paths, hook configuration, unknown tools), A4 (in limits, diff too large, stray file), a cap below the grant, a stale stop, a demotion override, a changed harness, a trifecta session (tainted, clean, with a gate) and an unknown workflow. A test in each language also replays the scenarios through the real `hook pre-tool-use` command over stdin. Each scenario sets an effective level and a list of tool calls with the expected allow or the expected deny code.
 
 Scoring is pass^k, not graduated: a scenario scores 1 only when all k runs (k is 5) match every expectation, otherwise 0. The suite requires a score of exactly 1. Tests in `typescript/tests/eval/` and `python/tests/eval/` also show the scorer failing on a wrong expectation.
 
 ## Tests
 
-Both suites cover the same cases.
+Both suites cover the same behaviour.
 
 | Group | Location | What it shows |
 |---|---|---|
@@ -251,7 +261,7 @@ Both suites compare results with the golden files in `fixtures/expected/`, so Ty
 |---|---|
 | `fixtures/registers/valid/` | A valid register, a current profile and state |
 | `fixtures/registers/over-cap/` | A level 4 grant under a cap of 2 |
-| `fixtures/registers/invalid/` | Seven invalid registers and `expected.json` with the exact schema errors |
+| `fixtures/registers/invalid/` | Eight invalid registers and `expected.json` with the exact schema errors |
 | `fixtures/repos/adopter/` | Fixture repository: cap 3 with a level 4 workflow |
 | `fixtures/repos/bare/` | Fixture repository with only a `CLAUDE.md`: cap 1 |
 | `fixtures/ledgers/project/` | Four ledgers: ready to promote, hold, regressing, incident |

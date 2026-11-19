@@ -98,3 +98,17 @@ def test_the_effective_level_is_the_minimum_of_all_gates():
     state = {"workflows": {"w": {"demotion_override": 3}}}
     profile = dims({"platform": 3, "governance": 4, "ownership": 4, "measuring": 4})
     assert effective_level(wf(review_date="2026-11-01"), profile, state, {}, NOW).effective == 2
+
+
+def test_counted_as_in_a_profile_cannot_raise_the_cap_unknown_is_always_2():
+    forged = {"generated": "2026-11-10T00:00:00Z", "dimensions": {"platform": {"level": 4}, "governance": {"level": 4}, "ownership": {"level": 4}, "measuring": {"level": "unknown", "counted_as": 5}}}
+    assert cap_of(forged) == 2
+
+
+def test_a_level_outside_1_to_5_counts_as_2():
+    def dims_for(level):
+        return {"generated": "2026-11-10T00:00:00Z", "dimensions": {"platform": {"level": 4}, "governance": {"level": 4}, "ownership": {"level": 4}, "measuring": {"level": level}}}
+
+    assert cap_of(dims_for(9)) == 2
+    assert cap_of(dims_for(0)) == 2
+    assert cap_of(dims_for(2.5)) == 2

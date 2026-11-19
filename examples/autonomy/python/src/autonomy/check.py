@@ -6,13 +6,21 @@ from typing import Any
 
 from autonomy.levels import all_workflows, cap_of, effective_level, profile_status
 from autonomy.register import load_register_file, validate_register
-from autonomy.util import age_days, git, parse_time, read_json_if_exists
+from autonomy.util import age_days, git, inside_dir, parse_time, read_json_if_exists
 
-GOVERNANCE = [re.compile(r"^\.autonomy"), re.compile(r"(^|/)CODEOWNERS$"), re.compile(r"^\.github/workflows/")]
+GOVERNANCE = [
+    re.compile(r"^\.autonomy"),
+    re.compile(r"(^|/)codeowners$"),
+    re.compile(r"^\.github/workflows/"),
+    re.compile(r"^\.claude/settings[^/]*\.json$"),
+    re.compile(r"^\.claude/hooks/"),
+    re.compile(r"^\.harness\.yaml$"),
+]
 
 
 def is_governance_file(path: str) -> bool:
-    return any(p.search(path) for p in GOVERNANCE)
+    lower = path.lower()
+    return any(p.search(lower) for p in GOVERNANCE)
 
 
 def agent_tokens(register: dict) -> list[str]:
@@ -33,15 +41,20 @@ def is_agent_commit(commit: dict, tokens: list[str]) -> bool:
     return re.search(r"^co-authored-by:\s*claude", commit.get("body") or "", re.I | re.M) is not None
 
 
+RANGE = re.compile(r"^[\w./^~@{:+][\w./^~@{}:+-]*(\.\.\.?[\w./^~@{}:+-]+)?\Z")
+
+
 def commits_from_git(directory: str | Path, range_: str) -> list[dict]:
-    out = git(directory, ["log", "--name-only", "--format=@@%H%x1f%an%x1f%ae%x1f%b%x1e", range_])
+    if not RANGE.match(range_):
+        raise ValueError(f"invalid git range: {range_}")
+    out = git(directory, ["log", "--no-renames", "--name-only", "--format=%x1e%H%x1f%an%x1f%ae%x1f%B%x1d", range_])
     if out is None:
         raise RuntimeError(f"git log failed for range {range_}")
     commits = []
-    for chunk in [c for c in out.split("@@") if c.strip()]:
-        head, files_text = chunk.split("\x1e")
-        sha, author, email, body = head.split("\x1f")
-        commits.append({"sha": sha, "author": author, "email": email, "body": body, "files": [f for f in files_text.split("\n") if f]})
+    for chunk in [c for c in out.split("\x1e") if c.strip()]:
+        head, files_text = chunk.split("\x1d")
+        sha, author, email, *body = head.split("\x1f")
+        commits.append({"sha": sha, "author": author, "email": email, "body": "\x1f".join(body), "files": [f for f in files_text.split("\n") if f]})
     return commits
 
 
@@ -56,7 +69,10 @@ def run_check(directory: str | Path, now: int, register_path: str | Path | None 
     if errors:
         result["ok"] = False
         return result
-    profile_path = root / register.get("profile", ".autonomy/profile.json")
+    profile_rel = register.get("profile", ".autonomy/profile.json")
+    if not inside_dir(root, profile_rel):
+        raise ValueError(f"profile path escapes the repository: {profile_rel}")
+    profile_path = root / profile_rel
     profile = read_json_if_exists(profile_path)
     state = read_json_if_exists(root / ".autonomy" / "state.json")
     status = profile_status(profile, now)

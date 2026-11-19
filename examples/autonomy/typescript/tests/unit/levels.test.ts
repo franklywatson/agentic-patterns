@@ -93,3 +93,15 @@ test("the effective level is the minimum of all gates", () => {
   const e = effectiveLevel(wf({ review_date: "2026-11-01" }), dims({ platform: 3, governance: 4, ownership: 4, measuring: 4 }), state, {}, NOW);
   assert.equal(e.effective, 2);
 });
+
+test("counted_as in a profile cannot raise the cap: unknown is always 2", () => {
+  const forged = { generated: "2026-11-10T00:00:00Z", dimensions: { platform: { level: 4 }, governance: { level: 4 }, ownership: { level: 4 }, measuring: { level: "unknown", counted_as: 5 } } };
+  assert.equal(capOf(forged), 2);
+});
+
+test("a level outside 1 to 5 counts as 2", () => {
+  const dimensionsFor = (level: unknown) => ({ generated: "2026-11-10T00:00:00Z", dimensions: { platform: { level: 4 }, governance: { level: 4 }, ownership: { level: 4 }, measuring: { level } } });
+  assert.equal(capOf(dimensionsFor(9)), 2);
+  assert.equal(capOf(dimensionsFor(0)), 2);
+  assert.equal(capOf(dimensionsFor(2.5)), 2);
+});

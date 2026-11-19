@@ -1370,6 +1370,338 @@
           "code": "unknown-workflow"
         }
       ]
+    },
+    {
+      "id": "a2-egress-blocked",
+      "description": "A2 without a network allowlist cannot reach any host",
+      "workflow": "scout",
+      "register": {
+        "version": 1,
+        "defaults": {
+          "interactive_level": 2
+        },
+        "workflows": [
+          {
+            "id": "scout",
+            "owner": "team-platform",
+            "sponsor": "@alice",
+            "granted_level": 2,
+            "identity": "github-app:bot",
+            "access_expires": "2027-02-01",
+            "risk": {
+              "reversible": true,
+              "verification": "partial",
+              "blast_radius": "repo",
+              "trifecta": {
+                "untrusted_input": false,
+                "sensitive_data": false,
+                "external_action": false
+              }
+            }
+          }
+        ]
+      },
+      "profile_cap": 4,
+      "state": {
+        "workflows": {}
+      },
+      "now": "2026-11-18T00:00:00Z",
+      "untrusted_seen": false,
+      "current_branch": "feature/x",
+      "diff": null,
+      "expect_effective": 2,
+      "calls": [
+        {
+          "name": "curl",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "curl http://example.invalid/x"
+          },
+          "expect": "deny",
+          "code": "network-blocked"
+        },
+        {
+          "name": "env-curl",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "env curl http://example.invalid/x"
+          },
+          "expect": "deny",
+          "code": "network-blocked"
+        },
+        {
+          "name": "web-fetch",
+          "tool_name": "WebFetch",
+          "tool_input": {
+            "url": "http://example.invalid/x",
+            "prompt": "x"
+          },
+          "expect": "deny",
+          "code": "network-blocked"
+        }
+      ]
+    },
+    {
+      "id": "a3-no-allowlist-egress",
+      "description": "A3 without a network allowlist is not egress restricted",
+      "workflow": "scout",
+      "register": {
+        "version": 1,
+        "defaults": {
+          "interactive_level": 2
+        },
+        "workflows": [
+          {
+            "id": "scout",
+            "owner": "team-platform",
+            "sponsor": "@alice",
+            "granted_level": 3,
+            "identity": "github-app:bot",
+            "access_expires": "2027-02-01",
+            "risk": {
+              "reversible": true,
+              "verification": "partial",
+              "blast_radius": "repo",
+              "trifecta": {
+                "untrusted_input": false,
+                "sensitive_data": false,
+                "external_action": false
+              }
+            }
+          }
+        ]
+      },
+      "profile_cap": 4,
+      "state": {
+        "workflows": {}
+      },
+      "now": "2026-11-18T00:00:00Z",
+      "untrusted_seen": false,
+      "current_branch": "feature/x",
+      "diff": null,
+      "expect_effective": 3,
+      "calls": [
+        {
+          "name": "curl",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "curl http://example.invalid/x"
+          },
+          "expect": "allow"
+        }
+      ]
+    },
+    {
+      "id": "a3-bypass-attempts",
+      "description": "Wrappers, inline interpreters, odd paths and config files do not get past the hook",
+      "workflow": "scout",
+      "register": {
+        "version": 1,
+        "defaults": {
+          "interactive_level": 2
+        },
+        "workflows": [
+          {
+            "id": "scout",
+            "owner": "team-platform",
+            "sponsor": "@alice",
+            "granted_level": 3,
+            "identity": "github-app:bot",
+            "access_expires": "2027-02-01",
+            "risk": {
+              "reversible": true,
+              "verification": "partial",
+              "blast_radius": "repo",
+              "trifecta": {
+                "untrusted_input": false,
+                "sensitive_data": false,
+                "external_action": false
+              }
+            }
+          }
+        ]
+      },
+      "profile_cap": 4,
+      "state": {
+        "workflows": {}
+      },
+      "now": "2026-11-18T00:00:00Z",
+      "untrusted_seen": false,
+      "current_branch": "feature/x",
+      "diff": null,
+      "expect_effective": 3,
+      "calls": [
+        {
+          "name": "git-C-push-main",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git -C . push origin main"
+          },
+          "expect": "deny",
+          "code": "protected-branch-push"
+        },
+        {
+          "name": "env-push-main",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "env GIT_TRACE=1 git push origin main"
+          },
+          "expect": "deny",
+          "code": "protected-branch-push"
+        },
+        {
+          "name": "var-prefix-push-main",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "FOO=1 git push origin main"
+          },
+          "expect": "deny",
+          "code": "protected-branch-push"
+        },
+        {
+          "name": "sudo-timeout-push-force",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "timeout 30 git push -f origin feature/x"
+          },
+          "expect": "deny",
+          "code": "force-push"
+        },
+        {
+          "name": "bash-c",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "bash -c \"git push origin main\""
+          },
+          "expect": "deny",
+          "code": "inline-interpreter"
+        },
+        {
+          "name": "eval",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "eval 'git push origin main'"
+          },
+          "expect": "deny",
+          "code": "inline-interpreter"
+        },
+        {
+          "name": "python-c",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "python3 -c \"open('.autonomy.yaml','w')\""
+          },
+          "expect": "deny",
+          "code": "inline-interpreter"
+        },
+        {
+          "name": "node-e",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "node -e \"require('fs').rmSync('CODEOWNERS')\""
+          },
+          "expect": "deny",
+          "code": "inline-interpreter"
+        },
+        {
+          "name": "perl-pi",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "perl -pi -e 's/a/b/' .autonomy.yaml"
+          },
+          "expect": "deny",
+          "code": "inline-interpreter"
+        },
+        {
+          "name": "dotdot-path",
+          "tool_name": "Edit",
+          "tool_input": {
+            "file_path": "/work/project/x/../.autonomy.yaml",
+            "old_string": "a",
+            "new_string": "b"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "upper-case-path",
+          "tool_name": "Write",
+          "tool_input": {
+            "file_path": "/work/project/.AUTONOMY.yaml",
+            "content": "x"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "lower-case-codeowners",
+          "tool_name": "Edit",
+          "tool_input": {
+            "file_path": "/work/project/docs/codeowners",
+            "old_string": "a",
+            "new_string": "b"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "claude-settings",
+          "tool_name": "Write",
+          "tool_input": {
+            "file_path": "/work/project/.claude/settings.json",
+            "content": "{}"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "claude-hook-script",
+          "tool_name": "Edit",
+          "tool_input": {
+            "file_path": "/work/project/.claude/hooks/guard.sh",
+            "old_string": "a",
+            "new_string": "b"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "shell-redirect-settings",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "echo {} > .claude/settings.local.json"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "unknown-tool",
+          "tool_name": "Frobnicate",
+          "tool_input": {
+            "x": 1
+          },
+          "expect": "deny",
+          "code": "unknown-tool"
+        },
+        {
+          "name": "subagent",
+          "tool_name": "Task",
+          "tool_input": {
+            "prompt": "x"
+          },
+          "expect": "allow"
+        },
+        {
+          "name": "plain-source-edit",
+          "tool_name": "Edit",
+          "tool_input": {
+            "file_path": "/work/project/src/a.ts",
+            "old_string": "a",
+            "new_string": "b"
+          },
+          "expect": "allow"
+        }
+      ]
     }
   ]
 }

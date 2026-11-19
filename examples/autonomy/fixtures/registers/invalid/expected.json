@@ -1,20 +1,70 @@
 {
   "level4-missing-stop": [
-    { "path": "/workflows/0/limits", "keyword": "required" },
-    { "path": "/workflows/0/review_date", "keyword": "required" },
-    { "path": "/workflows/0/stop", "keyword": "required" }
+    {
+      "path": "/workflows/0/limits",
+      "keyword": "required"
+    },
+    {
+      "path": "/workflows/0/review_date",
+      "keyword": "required"
+    },
+    {
+      "path": "/workflows/0/stop",
+      "keyword": "required"
+    }
   ],
-  "level4-person-identity": [{ "path": "/workflows/0/identity", "keyword": "pattern" }],
+  "level4-person-identity": [
+    {
+      "path": "/workflows/0/identity",
+      "keyword": "pattern"
+    }
+  ],
   "level4-not-mechanical": [
-    { "path": "/workflows/0/risk/reversible", "keyword": "const" },
-    { "path": "/workflows/0/risk/verification", "keyword": "const" }
+    {
+      "path": "/workflows/0/risk/reversible",
+      "keyword": "const"
+    },
+    {
+      "path": "/workflows/0/risk/verification",
+      "keyword": "const"
+    }
   ],
   "level5-missing-stop-rule": [
-    { "path": "/workflows/0/baseline", "keyword": "required" },
-    { "path": "/workflows/0/stop_rule", "keyword": "required" },
-    { "path": "/workflows/0/target", "keyword": "required" }
+    {
+      "path": "/workflows/0/baseline",
+      "keyword": "required"
+    },
+    {
+      "path": "/workflows/0/stop_rule",
+      "keyword": "required"
+    },
+    {
+      "path": "/workflows/0/target",
+      "keyword": "required"
+    }
   ],
-  "trifecta-no-gate": [{ "path": "/workflows/0/risk/gate", "keyword": "required" }],
-  "exception-field": [{ "path": "/workflows/0/exception", "keyword": "additionalProperties" }],
-  "level-out-of-range": [{ "path": "/workflows/0/granted_level", "keyword": "minimum" }]
+  "trifecta-no-gate": [
+    {
+      "path": "/workflows/0/risk/gate",
+      "keyword": "required"
+    }
+  ],
+  "exception-field": [
+    {
+      "path": "/workflows/0/exception",
+      "keyword": "additionalProperties"
+    }
+  ],
+  "level-out-of-range": [
+    {
+      "path": "/workflows/0/granted_level",
+      "keyword": "minimum"
+    }
+  ],
+  "bad-calendar-date": [
+    {
+      "path": "/workflows/0/review_date",
+      "keyword": "format"
+    }
+  ]
 }

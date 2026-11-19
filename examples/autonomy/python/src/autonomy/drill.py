@@ -68,37 +68,49 @@ def _read_beat(path: Path) -> str:
     return path.read_text() if path.exists() else ""
 
 
-def run_drill(directory: str | Path, register_path: str | Path, workflow: dict, bound_ms: int, now: int) -> dict[str, Any]:
+def run_drill(
+    directory: str | Path,
+    register_path: str | Path,
+    workflow: dict,
+    bound_ms: int,
+    now: int,
+    canary_command: list[str] | None = None,
+    start_timeout_s: float = 5.0,
+) -> dict[str, Any]:
     work = Path(tempfile.mkdtemp(prefix="autonomy-drill-"))
     heartbeat, stop_file = work / "heartbeat", work / "stop"
-    env = {**os.environ, "AUTONOMY_HEARTBEAT": str(heartbeat), "AUTONOMY_STOP_FILE": str(stop_file)}
-    canary = subprocess.Popen([sys.executable, "-c", CANARY], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    env = {"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", ""), "AUTONOMY_HEARTBEAT": str(heartbeat), "AUTONOMY_STOP_FILE": str(stop_file)}
+    canary = subprocess.Popen(canary_command or [sys.executable, "-c", CANARY], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def result(passed: bool, reason: str | None, ms: int | None) -> dict[str, Any]:
         return {"workflow": workflow["id"], "passed": passed, "reason": reason, "halted_in_ms": ms, "bound_ms": bound_ms}
 
     try:
-        beating = _wait_for(lambda: int(_read_beat(heartbeat) or 0) >= 2, 5.0)
+        beating = _wait_for(lambda: int(_read_beat(heartbeat) or 0) >= 2, start_timeout_s)
         if not beating:
             outcome = result(False, "canary-never-started", None)
         elif not (workflow.get("stop") or {}).get("command"):
             outcome = result(False, "no-stop-command", None)
         else:
+            started = time.monotonic()
             try:
                 stop = subprocess.run(
                     ["sh", "-c", workflow["stop"]["command"]],
                     env={**env, "AUTONOMY_CANARY_PID": str(canary.pid)},
+                    cwd=directory,
                     timeout=10,
                     capture_output=True,
                 )
                 stop_ok = stop.returncode == 0
             except subprocess.TimeoutExpired:
                 stop_ok = False
-            started = time.monotonic()
+            stop_took = int((time.monotonic() - started) * 1000)
             if not stop_ok:
                 outcome = result(False, "stop-command-failed", None)
+            elif stop_took > bound_ms:
+                outcome = result(False, "bound-exceeded", stop_took)
             else:
-                halted = _wait_for(lambda: canary.poll() is not None, bound_ms / 1000)
+                halted = _wait_for(lambda: canary.poll() is not None, max(0.0, bound_ms / 1000 - (time.monotonic() - started)))
                 took = int((time.monotonic() - started) * 1000)
                 if not halted:
                     outcome = result(False, "canary-still-running", None)
@@ -115,6 +127,8 @@ def run_drill(directory: str | Path, register_path: str | Path, workflow: dict, 
     (root / ".autonomy").mkdir(parents=True, exist_ok=True)
     with open(root / ".autonomy" / "drills.jsonl", "a") as log:
         log.write(json.dumps({"ts": iso_seconds(now), "workflow": workflow["id"], "passed": outcome["passed"], "reason": outcome["reason"]}, separators=(",", ":")) + "\n")
+    if outcome["reason"] == "canary-never-started":
+        return outcome
     if outcome["passed"]:
         path = Path(register_path)
         path.write_text(set_last_tested(path.read_text(), workflow["id"], iso_date(now)))

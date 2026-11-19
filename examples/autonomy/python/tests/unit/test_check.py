@@ -1,5 +1,7 @@
 import subprocess
 
+import pytest
+
 from autonomy.check import commits_from_git, is_agent_commit, is_governance_file, run_check
 from autonomy.util import parse_time
 from tests.conftest import NOW, fixture, fixture_json
@@ -109,3 +111,67 @@ def test_commits_from_git_reads_authors_and_changed_files_from_a_real_repository
     assert commits[0]["author"] == "deps-bot[bot]"
     result = run_check(directory, NOW_MS, commits=commits)
     assert any(f["code"] == "governance-file-changed-by-agent" for f in result["failures"])
+
+
+def _git(directory, name, *args):
+    subprocess.run(["git", "-c", f"user.name={name}", "-c", "user.email=a@example.invalid", *args], cwd=directory, check=True, capture_output=True)
+
+
+def test_a_commit_body_containing_double_at_and_unit_separators_is_parsed_intact(copy_fixture):
+    directory = copy_fixture("registers", "valid")
+    _git(directory, "Alice", "init", "-q")
+    _git(directory, "Alice", "add", "-A")
+    _git(directory, "Alice", "commit", "-q", "-m", "base")
+    with open(directory / ".autonomy.yaml", "a") as handle:
+        handle.write("# edited\n")
+    _git(directory, "Alice", "commit", "-q", "-am", "edit\n\n@@ hunk @@ in the body\nCo-Authored-By: Claude <c@example.invalid>")
+    commits = commits_from_git(directory, "HEAD~1..HEAD")
+    assert len(commits) == 1
+    assert commits[0]["files"] == [".autonomy.yaml"]
+    assert "@@ hunk @@ in the body" in commits[0]["body"]
+    assert is_agent_commit(commits[0], []) is True
+
+
+def test_a_rename_out_of_a_governed_path_still_lists_the_old_path(copy_fixture):
+    directory = copy_fixture("registers", "valid")
+    (directory / ".github" / "workflows").mkdir(parents=True)
+    (directory / ".github" / "workflows" / "ci.yml").write_text("name: ci\non: push\njobs: {}\n")
+    _git(directory, "deps-bot[bot]", "init", "-q")
+    _git(directory, "deps-bot[bot]", "add", "-A")
+    _git(directory, "deps-bot[bot]", "commit", "-q", "-m", "base")
+    (directory / "elsewhere").mkdir()
+    _git(directory, "deps-bot[bot]", "mv", ".github/workflows/ci.yml", "elsewhere/ci.yml")
+    _git(directory, "deps-bot[bot]", "commit", "-q", "-m", "move")
+    commits = commits_from_git(directory, "HEAD~1..HEAD")
+    assert sorted(commits[0]["files"]) == [".github/workflows/ci.yml", "elsewhere/ci.yml"]
+    result = run_check(directory, NOW_MS, commits=commits)
+    assert result["failures"] == [{"code": "governance-file-changed-by-agent", "commit": commits[0]["sha"], "file": ".github/workflows/ci.yml"}]
+
+
+def test_commits_from_git_rejects_ranges_that_are_not_revisions():
+    with pytest.raises(ValueError, match="invalid git range"):
+        commits_from_git(fixture("registers", "valid"), "--output=x")
+    with pytest.raises(ValueError, match="invalid git range"):
+        commits_from_git(fixture("registers", "valid"), "a b")
+
+
+def test_governance_patterns_are_case_insensitive_and_cover_hook_configuration():
+    for p in [".AUTONOMY.yaml", "codeowners", "Docs/CodeOwners", ".GitHub/Workflows/ci.yml", ".claude/settings.json", ".claude/settings.local.json", ".claude/hooks/guard.sh", ".harness.yaml"]:
+        assert is_governance_file(p) is True, p
+    assert is_governance_file(".claude/commands/review.md") is False
+
+
+def test_a_profile_path_that_escapes_the_repository_is_an_error(copy_fixture):
+    directory = copy_fixture("registers", "valid")
+    path = directory / ".autonomy.yaml"
+    path.write_text(path.read_text().replace("profile: .autonomy/profile.json", "profile: ../../elsewhere/profile.json"))
+    with pytest.raises(ValueError, match="escapes the repository"):
+        run_check(directory, NOW_MS)
+
+
+def test_an_impossible_calendar_date_is_a_schema_error_not_a_crash(copy_fixture):
+    directory = copy_fixture("registers", "valid")
+    path = directory / ".autonomy.yaml"
+    path.write_text(path.read_text().replace("review_date: 2027-02-01", "review_date: 2027-02-31"))
+    result = run_check(directory, NOW_MS)
+    assert result["failures"] == [{"code": "schema", "path": "/workflows/0/review_date", "keyword": "format"}]

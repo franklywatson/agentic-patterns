@@ -8,10 +8,10 @@ import { parseTime } from "../../src/util.js";
 import { NOW, copyFixture } from "../helpers.js";
 
 const now = parseTime(NOW);
-const drill = (dir: string, id: string, boundMs = 2000) => {
+const drill = (dir: string, id: string, boundMs = 2000, extra: { canary?: string[]; startTimeoutMs?: number } = {}) => {
   const register = loadRegisterFile(join(dir, ".autonomy.yaml"));
   const workflow = register.workflows.find((w: { id: string }) => w.id === id);
-  return runDrill({ dir, registerPath: join(dir, ".autonomy.yaml"), workflow, boundMs, now });
+  return runDrill({ dir, registerPath: join(dir, ".autonomy.yaml"), workflow, boundMs, now, ...extra });
 };
 
 test("setLastTested replaces an existing date and keeps the rest of the file", () => {
@@ -83,4 +83,27 @@ test("a workflow without a stop command fails the drill", async () => {
   const result = await drill(dir, "flaky-test-triage", 500);
   assert.equal(result.passed, false);
   assert.equal(result.reason, "no-stop-command");
+});
+
+test("setLastTested does not treat the id as a pattern", () => {
+  const text = "workflows:\n  - id: axb\n    stop:\n      last_tested: 2026-01-01\n";
+  assert.throws(() => setLastTested(text, "a.b", "2026-11-18"), /not found/);
+});
+
+test("a stop command that is slower than the bound fails the drill", async () => {
+  const dir = copyFixture("registers", "valid");
+  const path = join(dir, ".autonomy.yaml");
+  writeFileSync(path, readFileSync(path, "utf8").replace(`'touch "$AUTONOMY_STOP_FILE"'`, `'sleep 1; touch "$AUTONOMY_STOP_FILE"'`));
+  const result = await drill(dir, "dep-bump", 300);
+  assert.equal(result.passed, false);
+  assert.equal(result.reason, "bound-exceeded");
+  assert.equal(JSON.parse(readFileSync(join(dir, ".autonomy", "state.json"), "utf8")).workflows["dep-bump"].demotion_override, 3);
+});
+
+test("a canary that never starts is a tool fault: no demotion and no date change", async () => {
+  const dir = copyFixture("registers", "valid");
+  const result = await drill(dir, "dep-bump", 500, { canary: ["sh", "-c", "sleep 3"], startTimeoutMs: 300 });
+  assert.equal(result.reason, "canary-never-started");
+  assert.deepEqual(JSON.parse(readFileSync(join(dir, ".autonomy", "state.json"), "utf8")), { workflows: {} });
+  assert.equal(loadRegisterFile(join(dir, ".autonomy.yaml")).workflows[0].stop.last_tested, "2026-11-02");
 });

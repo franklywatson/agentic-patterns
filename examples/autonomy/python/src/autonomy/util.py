@@ -57,6 +57,12 @@ def read_json_if_exists(path: str | Path) -> Any | None:
     return read_json(path) if Path(path).exists() else None
 
 
+def inside_dir(directory: str | Path, rel: str) -> bool:
+    root = Path(directory).resolve()
+    target = (root / rel).resolve()
+    return target == root or root in target.parents
+
+
 def glob_to_regex(glob: str, any_slash: bool) -> re.Pattern[str]:
     out = ""
     i = 0

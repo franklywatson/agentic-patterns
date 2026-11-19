@@ -38,3 +38,15 @@ def test_a_level_2_workflow_with_a_full_trifecta_needs_no_gate():
 def test_dates_stay_strings_so_the_schema_pattern_applies():
     register = load_register_file(fixture("registers", "valid", ".autonomy.yaml"))
     assert register["workflows"][0]["stop"]["last_tested"] == "2026-11-02"
+
+
+def test_yaml_1_1_words_stay_strings_on_yes_and_no_are_not_booleans(tmp_path):
+    path = tmp_path / "r.yaml"
+    path.write_text("trigger: on\nname: yes\nother: no\nflag: true\n")
+    assert load_register_file(path) == {"trigger": "on", "name": "yes", "other": "no", "flag": True}
+
+
+def test_a_trailing_newline_does_not_satisfy_the_date_pattern():
+    register = load_register_file(fixture("registers", "valid", ".autonomy.yaml"))
+    register["workflows"][0]["review_date"] = "2027-02-01\n"
+    assert [f"{e['path']}:{e['keyword']}" for e in validate_register(register)] == ["/workflows/0/review_date:pattern"]

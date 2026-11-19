@@ -69,7 +69,7 @@ test("a skill worksheet result older than 90 days reverts to unknown", () => {
 test("check fails on the census output of the adopter repository because dep-bump exceeds the cap", () => {
   const dir = gitFixtureRepo("adopter");
   assert.equal(cli(["census", "--dir", dir, "--now", NOW]).status, 0);
-  const run = cli(["check", "--dir", dir, "--now", NOW, "--json"]);
+  const run = cli(["check", "--dir", dir, "--now", NOW, "--json", "--no-commits"]);
   assert.equal(run.status, 1);
   assert.deepEqual(JSON.parse(run.stdout).failures, [{ code: "grant-exceeds-cap", workflow: "dep-bump", granted: 4, cap: 3 }]);
 });
@@ -82,5 +82,5 @@ test("check passes after the grant is lowered to the cap", () => {
   const lowered = original.replace("granted_level: 4", "granted_level: 3");
   assert.notEqual(lowered, original);
   writeFileSync(path, lowered);
-  assert.equal(cli(["check", "--dir", dir, "--now", NOW]).status, 0);
+  assert.equal(cli(["check", "--dir", dir, "--now", NOW, "--no-commits"]).status, 0);
 });

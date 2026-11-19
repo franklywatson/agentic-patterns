@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { appendFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import { commitsFromGit, isAgentCommit, isGovernanceFile, runCheck } from "../../src/check.js";
@@ -101,4 +101,63 @@ test("commitsFromGit reads authors and changed files from a real repository", ()
   assert.equal(commits[0].author, "deps-bot[bot]");
   const result = runCheck({ dir, now, commits });
   assert.ok(result.failures.some((f) => f.code === "governance-file-changed-by-agent"));
+});
+
+test("a commit body containing @@ and unit separators is parsed intact", () => {
+  const dir = copyFixture("registers", "valid");
+  const git = (...args: string[]) => execFileSync("git", ["-c", "user.name=Alice", "-c", "user.email=alice@example.invalid", ...args], { cwd: dir, stdio: "ignore" });
+  git("init", "-q");
+  git("add", "-A");
+  git("commit", "-q", "-m", "base");
+  appendFileSync(join(dir, ".autonomy.yaml"), "# edited\n");
+  git("commit", "-q", "-am", "edit\n\n@@ hunk @@ in the body\nCo-Authored-By: Claude <c@example.invalid>");
+  const commits = commitsFromGit(dir, "HEAD~1..HEAD");
+  assert.equal(commits.length, 1);
+  assert.deepEqual(commits[0].files, [".autonomy.yaml"]);
+  assert.match(commits[0].body ?? "", /@@ hunk @@ in the body/);
+  assert.equal(isAgentCommit(commits[0], []), true);
+});
+
+test("a rename out of a governed path still lists the old path", () => {
+  const dir = copyFixture("registers", "valid");
+  mkdirSync(join(dir, ".github", "workflows"), { recursive: true });
+  writeFileSync(join(dir, ".github", "workflows", "ci.yml"), "name: ci\non: push\njobs: {}\n");
+  const git = (...args: string[]) => execFileSync("git", ["-c", "user.name=deps-bot[bot]", "-c", "user.email=bot@example.invalid", ...args], { cwd: dir, stdio: "ignore" });
+  git("init", "-q");
+  git("add", "-A");
+  git("commit", "-q", "-m", "base");
+  mkdirSync(join(dir, "elsewhere"));
+  git("mv", ".github/workflows/ci.yml", "elsewhere/ci.yml");
+  git("commit", "-q", "-m", "move");
+  const commits = commitsFromGit(dir, "HEAD~1..HEAD");
+  assert.deepEqual([...commits[0].files].sort(), [".github/workflows/ci.yml", "elsewhere/ci.yml"]);
+  const result = runCheck({ dir, now, commits });
+  assert.deepEqual(result.failures, [{ code: "governance-file-changed-by-agent", commit: commits[0].sha, file: ".github/workflows/ci.yml" }]);
+});
+
+test("commitsFromGit rejects ranges that are not revisions", () => {
+  assert.throws(() => commitsFromGit(fixture("registers", "valid"), "--output=x"), /invalid git range/);
+  assert.throws(() => commitsFromGit(fixture("registers", "valid"), "a b"), /invalid git range/);
+});
+
+test("governance patterns are case-insensitive and cover hook configuration", () => {
+  for (const p of [".AUTONOMY.yaml", "codeowners", "Docs/CodeOwners", ".GitHub/Workflows/ci.yml", ".claude/settings.json", ".claude/settings.local.json", ".claude/hooks/guard.sh", ".harness.yaml"]) {
+    assert.equal(isGovernanceFile(p), true, p);
+  }
+  assert.equal(isGovernanceFile(".claude/commands/review.md"), false);
+});
+
+test("a profile path that escapes the repository is an error", () => {
+  const dir = copyFixture("registers", "valid");
+  const path = join(dir, ".autonomy.yaml");
+  writeFileSync(path, readFileSync(path, "utf8").replace("profile: .autonomy/profile.json", "profile: ../../elsewhere/profile.json"));
+  assert.throws(() => runCheck({ dir, now }), /escapes the repository/);
+});
+
+test("an impossible calendar date is a schema error, not a crash", () => {
+  const dir = copyFixture("registers", "valid");
+  const path = join(dir, ".autonomy.yaml");
+  writeFileSync(path, readFileSync(path, "utf8").replace("review_date: 2027-02-01", "review_date: 2027-02-31"));
+  const result = runCheck({ dir, now });
+  assert.deepEqual(result.failures, [{ code: "schema", path: "/workflows/0/review_date", keyword: "format" }]);
 });
