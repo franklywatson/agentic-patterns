@@ -30,6 +30,16 @@ checks them.
    in CI, and the task-bank re-baseline at each model upgrade, run by hand ([Pattern
    0.10](docs/L0-foundation.md#pattern-010--prune-and-re-baseline-context)). Link to docs for anything longer.
 
+## High-Tier Paths
+
+High tier in the [risk model](docs/L1-patterns/1.8-reversibility-blast-radius.md#risk-model): `.github/workflows/`,
+`.autonomy.yaml`, `CODEOWNERS`, `.claude/settings*.json`, `.claude/hooks/`, `examples/autonomy/hooks/`. The
+`Autonomy Check` job fails a pull request when an agent commit (a `Co-Authored-By:` trailer naming Claude or
+Anthropic, or a `[bot]` identity) changes one of the first five, except `.github/workflows/` with a later non-agent
+`Governance-Approved: <sha>` line ([rules](examples/autonomy/README.md#governance-files)). The job runs only when a
+pull request touches its path filter, and `main` has no branch protection, so a failed job does not block a merge.
+Enforced by: that job and the reviewer; the reviewer alone for `examples/autonomy/hooks/`.
+
 ## Index
 
 Pattern numbers are stable identifiers and are not contiguous.
@@ -57,7 +67,7 @@ Pattern numbers are stable identifiers and are not contiguous.
 - [docs/L1-patterns/1.5-real-dependencies.md](docs/L1-patterns/1.5-real-dependencies.md) — Real dependencies in stack/E2E tests
 - [docs/L1-patterns/1.6-test-integrity.md](docs/L1-patterns/1.6-test-integrity.md) — Test integrity rules
 - [docs/L1-patterns/1.7-incident-to-stack-test.md](docs/L1-patterns/1.7-incident-to-stack-test.md) — Incident-to-stack-test
-- [docs/L1-patterns/1.8-reversibility-blast-radius.md](docs/L1-patterns/1.8-reversibility-blast-radius.md) — Reversibility and blast-radius classes
+- [docs/L1-patterns/1.8-reversibility-blast-radius.md](docs/L1-patterns/1.8-reversibility-blast-radius.md) — Reversibility and blast-radius classes, risk model
 - [docs/L1-patterns/1.9-repair-loop-frozen-oracle.md](docs/L1-patterns/1.9-repair-loop-frozen-oracle.md) — Repair loop with a frozen oracle
 - [docs/L1-patterns/1.10-production-gate-progressive-confirmation.md](docs/L1-patterns/1.10-production-gate-progressive-confirmation.md) — Production gate and progressive confirmation
 - [docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md](docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md) — Repair budget, circuit breaker, stop authority

@@ -128,13 +128,18 @@ One sentence on what this project does, then a tree of the major directories.
 1. Real dependencies in stack tests (enforced by: required CI stack-test job)
 2. Zero-defect tolerance (enforced by: lint and test jobs fail on any warning)
 
+## High-Tier Paths
+- `migrations/`, `.github/workflows/` (enforced by: CODEOWNERS and two required approvals)
+
 ## Index
 - [docs/L0-foundation.md](docs/L0-foundation.md) — Project structure
 ```
 
 Every doc is reachable from AGENTS.md by following relative links, so it is the master index. Each rule names its
 enforcement point; a rule held only by prose is guidance ([Pattern
-2.4](L2-behavioral-guardrails.md#pattern-24--constitutional-rules)). Claude Code expands `@path` imports into context
+2.4](L2-behavioral-guardrails.md#pattern-24--constitutional-rules)). The high-tier list names your own paths and
+commands that the [risk model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) puts in the high tier, each
+with its enforcement point. Claude Code expands `@path` imports into context
 when the importing file loads ([imports](https://code.claude.com/docs/en/memory#import-additional-files)), so imports do not reduce context cost: use plain links for the index, and `@` only for
 content that must load in every session, such as `@AGENTS.md` in CLAUDE.md.
 

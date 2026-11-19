@@ -183,7 +183,9 @@ monorepo see the [FAQ](faq.md#monorepo-or-multi-repo-for-agents).
 
 Layers say what to build. Grants and the cap say how far a workflow may run without a person; the definitions are in
 [Earned Autonomy](../earned-autonomy.md#the-curve-and-the-cap). The census runs per repository, so each repository
-has its own cap and a workflow that acts in several repositories answers to each one.
+has its own cap and a workflow that acts in several repositories answers to each one. The risk tier of a change
+decides its review, and the grant decides who acts unattended ([risk
+model](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model)).
 
 A new repository starts at C1, which allows only A1, read-only suggestions. A session that edits files needs A2, so
 a new repository first reaches C2 ([Reaching C2](../earned-autonomy.md#reaching-c2)). C3 needs a committed baseline,

@@ -179,8 +179,9 @@ sponsor, grant, identity, limits, stop and review date. No agent may write it. S
 [L1](../L1-feedback-loops.md#the-repl-fractal--closed-loops-at-every-scale).
 
 **Reversibility Class** — How a change can be undone, classified from its diff: R0 inert, R1 flag-reversible, R2
-deploy-reversible, R3 data-forward, R4 external or irreversible. An unknown change is R4. See
-[Pattern 1.8](../L1-patterns/1.8-reversibility-blast-radius.md).
+deploy-reversible, R3 data-forward, R4 external or irreversible. An unknown change is R4. With the blast-radius
+class it sets the risk tier (low, medium or high), which decides the review; the grant decides who acts unattended.
+See the [risk model](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model).
 
 **Skill** — A prompt-level instruction file the agent loads when relevant. A skill shapes behavior and guarantees
 nothing. A skill overlay adds project rules to a base skill. See

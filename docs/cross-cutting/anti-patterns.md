@@ -36,7 +36,7 @@ modes. Two anti-patterns that cut across layers are described in full at the end
 | Mock setup outweighs test code, or tests pass while production fails | [1.5 Real Dependencies](../L1-patterns/1.5-real-dependencies.md) |
 | Assertions sit inside `if`, behind optional chaining or after an early return | [1.6 Test Integrity Rules](../L1-patterns/1.6-test-integrity.md) |
 | A production incident is fixed without a test that reproduces it first | [1.7 Incident-to-Stack-Test](../L1-patterns/1.7-incident-to-stack-test.md) |
-| Every change gets the same review, or risk is judged from the commit message | [1.8 Reversibility and Blast-Radius Classes](../L1-patterns/1.8-reversibility-blast-radius.md) |
+| Every change gets the same review, or risk is judged from the commit message | [1.8 Reversibility and Blast-Radius Classes](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model) (risk model) |
 | The agent that fixes a bug also writes or edits the test that proves it | [1.9 Repair Loop with a Frozen Oracle](../L1-patterns/1.9-repair-loop-frozen-oracle.md) |
 | The agent summarizes its own canary results, or a gate warns and lets the change through | [1.10 Production Gate and Progressive Confirmation](../L1-patterns/1.10-production-gate-progressive-confirmation.md) |
 | A repair workflow that keeps reverting is only alerted on, and nobody can stop it | [1.11 Repair Budget, Circuit Breaker and Stop Authority](../L1-patterns/1.11-repair-budget-circuit-breaker-stop.md) |

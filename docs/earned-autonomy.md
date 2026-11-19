@@ -89,13 +89,13 @@ An interactive developer session is a workflow too.
 | A1 | Assisted | Suggest, with read-only tools. A human applies the change. | none |
 | A2 | Reviewed | Edit files and commit in a working tree. A human reads every change, pushes the branch and opens the pull request. | C2 |
 | A3 | Gated | Pushes branches and opens pull requests. Changes pass required checks before a human sees them. A human merges. Every change has a named owner. | C3 |
-| A4 | Unattended, reversible | Acts on an event, schedule or backlog within its permitted actions, and may merge with no human. Has an owner, limits, an audit record and a tested stop. Unattended repair covers R0 and R1 changes at B0 ([Pattern 1.8](L1-patterns/1.8-reversibility-blast-radius.md)). | C4 |
-| A5 | Portfolio-managed | A4 plus a baseline, a target, a review date and a stop rule. The grant moves on evidence. The workflow can be retired. Unattended repair also covers R2 changes in named classes. | C5 |
+| A4 | Unattended, reversible | Acts on an event, schedule or backlog within its permitted actions, and may merge with no human. Has an owner, limits, an audit record and a tested stop. | C4 |
+| A5 | Portfolio-managed | A4 plus a baseline, a target, a review date and a stop rule. The grant moves on evidence. The workflow can be retired. | C5 |
 
-A4 applies only where verification is mechanical and the action is reversible. Apart from R2 repair, A5 grants no
-more power than A4: it is A4 managed as an investment. No grant repairs R3 or R4 changes unattended. A merge with no
-human, including the low tier of [Pattern 2.13](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review), needs
-A4 or above. The register stores a grant as a number (`granted_level: 4` is A4).
+A4 applies only where verification is mechanical and the action is reversible. Which change classes merge with no
+person at A4 and A5, and which review tier each class gets, is the [risk
+model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model). In what it may merge, A5 adds only R2 changes on
+named paths to A4. The register stores a grant as a number (`granted_level: 4` is A4).
 
 ### Why Stack Tests Earn Autonomy
 

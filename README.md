@@ -44,7 +44,7 @@ The library has five layers, L0 to L4. A layer is a group of patterns that depen
 
 ## How Far a Workflow May Run Without a Person
 
-The layers make an agent's work checkable. Two more scales, defined in [Earned Autonomy](docs/earned-autonomy.md), say how far one workflow may run without a person watching.
+The layers make an agent's work checkable. Two more scales, defined in [Earned Autonomy](docs/earned-autonomy.md), say how far one workflow may run without a person watching. The risk tier of a change decides its review, and the grant decides who acts unattended: the [risk model](docs/L1-patterns/1.8-reversibility-blast-radius.md#risk-model) joins the two.
 
 - **Grant (A1-A5), per workflow.** A1: the agent reads and suggests; a person makes every change. A2: the agent edits and commits; a person reads every change, pushes the branch and opens the pull request. A3: the agent pushes branches and opens pull requests, changes pass required checks before a person merges. A4: the workflow acts on an event or schedule with an owner, limits, an audit record and a tested stop, only where verification is mechanical and the action reversible. A5: A4 managed as an investment, with a baseline, a target, a review date and a stop rule.
 - **Curve (C1-C5) and cap, per repository.** `autonomy census` ([examples/autonomy](examples/autonomy/README.md)) places one repository, the directory you pass with `--dir`, on seven dimensions. The cap is the lowest of four: platform, security and governance, production ownership and measuring value. Grant An needs a cap of at least Cn, and `autonomy check` fails CI when a grant exceeds the cap.

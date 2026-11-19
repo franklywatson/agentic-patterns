@@ -644,17 +644,12 @@ their own change adds nothing: GitHub does not count the requester's approval of
 
 ### Solution
 
-Tier changes and actions by reversibility and blast radius ([Pattern
-1.8](L1-patterns/1.8-reversibility-blast-radius.md)). Spend human attention where mistakes are costly.
-
-| Tier | 1.8 classes | Examples | Control | Grant |
-|------|-------------|----------|---------|-------|
-| Low | R0-R2 at B0 | A docs edit, a refactor behind passing stack tests | Automated checks, then one human approval | Checks alone, with no human, need A4 (R0, R1) or A5 (named R2 classes) |
-| Medium | R0-R2 at B1-B2 | A normal feature change | One human reviewer who is not the requester, plus checks | A human reviews at every grant |
-| High | R3, R4 or B3 | Migrations, permission changes, payments, deploys, publishing | A second human approver, a scoped credential and a downstream control | A human approves at every grant |
-
-A grant needs a cap ([The Grants](earned-autonomy.md#the-grants)). A workflow below A4, which includes every
-workflow in a repository capped at C2, keeps one human approval on every tier.
+Tier changes and actions by reversibility and blast radius, and spend human attention where mistakes are costly.
+The [risk model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) gives each class its tier (low, medium,
+high), the review each tier needs, the lowest grant that may merge with no person and the enforcement points. Below
+A4, which includes every workflow in a repository capped at C2, every tier keeps one human approval. Low: a
+docs edit, a refactor behind passing stack tests. Medium: a normal feature change. High: migrations, permission
+changes, payments, deploys, publishing.
 
 Rules at every tier:
 
@@ -669,8 +664,10 @@ Rules at every tier:
 
 ### In Practice
 
-Write the high-tier list in the instruction file ("migrations, `.github/workflows/`, permission or role changes,
-release publishing") and map it to paths and commands, so a rule decides the tier. Review the approve rate for
+Write the high-tier list in the instruction file ([Pattern
+0.4](L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution)): "migrations,
+`.github/workflows/`, permission or role changes, release publishing", mapped to paths and commands, so a rule
+decides the tier. Review the approve rate for
 each prompt monthly. At review, check:
 
 - The author of record is named and is not the approver ([Pattern
