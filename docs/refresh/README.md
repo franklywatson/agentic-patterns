@@ -4,9 +4,9 @@ This directory holds a critical review of this repository and the plans to act o
 that any session, human or agent, can take over the refresh without the conversation that
 produced it.
 
-Status: **analysis complete; Phase 0 is complete on branch `refresh/phase-0-correct` (PR pending
-merge) and has changed pattern docs and examples.** Next: confirm the open decisions in
-[decisions.md](decisions.md), then Phase 1.
+Status: **analysis complete; Phase 0 is merged. Phase 1 is in progress on branch
+`refresh/phase-1-reframe`.** D2-D6 are decided (see [decisions.md](decisions.md)); D1 and D7 are
+open and gate Phases 3-4.
 
 ## What happened
 
@@ -21,7 +21,7 @@ different lens. Their reports were combined into one synthesis.
 
 Neither input is committed. The reviews name them by the plain-text extracts made during the review,
 `research/industry-baseline.txt` and `research/anthropic-companion.txt`. Instead,
-[sources.md](sources.md) restates the baseline's structure (curve, cap rule, findings, chapters) and
+[sources.md](../references/sources.md) restates the baseline's structure (curve, cap rule, findings, chapters) and
 lists every source the corpus cites, with its public URL, so every reference ID can be checked
 without the inputs. `python3 docs/refresh/tools/sourcecheck.py` confirms that each cited ID
 resolves.
@@ -35,7 +35,7 @@ The synthesis is committed twice: as a page snapshot,
 | File | Purpose |
 |------|---------|
 | [synthesis.md](synthesis.md) | The combined findings, the reframe, both goals, the prerequisite track, pruning, defects, roadmap and decisions |
-| [sources.md](sources.md) | Every cited source with its public URL, and the baseline's structure, so each reference ID resolves |
+| [sources.md](../references/sources.md) | Every cited source with its public URL, and the baseline's structure, so each reference ID resolves |
 | [decisions.md](decisions.md) | Decisions (open, partly decided and decided) with recommendations. **Read first**: several plans are gated on them. |
 | [plans/](plans/) | One scoped plan per phase, each written to be executed by a session that has read only this directory |
 | [reviews/review-evidence.md](reviews/review-evidence.md) | Evidence auditor: holds the repo to its own "every claim verifiable" rule |
@@ -56,7 +56,7 @@ PR #4.
 | Phase | Plan | Depends on | Gated by decisions |
 |-------|------|-----------|--------------------|
 | 0 | [Correct defects](plans/phase-0-correct.md) | none | none |
-| 1 | [Reframe and prune](plans/phase-1-reframe.md) | Phase 0 | D2, D4, D5; D3 partly open (TOON cut); D6 decided |
+| 1 | [Reframe and prune](plans/phase-1-reframe.md) | Phase 0 | D2, D3, D4, D5, D6 (all decided 2026-11-19) |
 | 2 | [Containment, ownership and people](plans/phase-2-contain.md) | Phase 1 | D5 |
 | 3 | [Earned autonomy](plans/phase-3-earned-autonomy.md) | Phase 2 | D2, D7 |
 | 4 | [Self-repair](plans/phase-4-self-repair.md) | Phase 3 (A.1-A.3) | D1 |
@@ -65,7 +65,7 @@ PR #4.
 ## How to take over
 
 1. Read [synthesis.md](synthesis.md), then [decisions.md](decisions.md).
-2. Confirm with the maintainer any decision still marked **Open** or **Partially decided** before
+2. Confirm with the maintainer any decision still marked **Open** before
    starting a plan it gates.
    Phase 0 needs no decision and can start immediately.
 3. Pick one plan. Each lists its tasks, the files it touches, its acceptance checks and what is out

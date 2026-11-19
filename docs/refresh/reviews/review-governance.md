@@ -4,7 +4,7 @@
 > guidance companion (cited as AC). Findings are otherwise unchanged.
 > Edited again on 2026-11-19: Anthropic source IDs renamed from the A27 form to the AN-27 form, and citations of the
 > companion's own positions, stances and recommendations replaced with the Anthropic or baseline sources
-> beneath them. Every ID resolves in [../sources.md](../sources.md).
+> beneath them. Every ID resolves in [../sources.md](../../references/sources.md).
 > Edited again on 2026-11-19: references to a removed case study deleted by maintainer decision.
 
 Reviewer 4 of 5. Lens: agent identity, containment, prompt injection, supply chain, audit, ownership,

@@ -4,7 +4,7 @@ Combined findings of five independent reviews of `franklywatson/agentic-patterns
 written 2026-11-19. The full reviewer reports are in [reviews/](reviews/). Reference IDs (MC-, PL-,
 SC-, OM-, SG-, PO-, IS-, MV-) belong to the research baseline described in [README.md](README.md). AN-numbers are
 Anthropic publications cited by the Anthropic guidance companion (vendor guidance, not independent
-evidence). Every ID resolves to a public source in [sources.md](sources.md).
+evidence). Every ID resolves to a public source in [sources.md](../references/sources.md).
 
 Lens tags in brackets show which reviewer raised a finding:
 

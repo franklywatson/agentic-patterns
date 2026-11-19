@@ -103,6 +103,7 @@ See [README.md](README.md) for detailed project overview.
 
 - [docs/references/reference-telegram-trading-bot-case-study.md](docs/references/reference-telegram-trading-bot-case-study.md) — Production reference implementation
 - [docs/references/further-reading.md](docs/references/further-reading.md) — External resources
+- [docs/references/sources.md](docs/references/sources.md) — Citation bibliography for reference IDs
 
 ## Active Work
 

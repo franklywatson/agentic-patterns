@@ -1,10 +1,10 @@
 # Refresh Sources
 
-Every reference ID cited in this directory, with its public source. The two research inputs described in
-[README.md](README.md) are not committed, so this page carries what a reader needs to check a citation
+Every reference ID cited in `docs/refresh/` and the pattern docs, with its public source. The two research inputs described in
+[README.md](../refresh/README.md) are not committed, so this page carries what a reader needs to check a citation
 without them: the baseline's structure, and the bibliography entries for each cited source.
 
-Run `python3 docs/refresh/tools/sourcecheck.py` to confirm that every ID cited in `docs/refresh/` has a
+Run `python3 docs/refresh/tools/sourcecheck.py` to confirm that every ID cited in `docs/refresh/` and `docs/` has a
 row on this page.
 
 ## How to resolve a reference
@@ -16,7 +16,7 @@ row on this page.
 | `baseline 3.7`, `BL §4.5`, `IB 4.4`, `finding 2` | A section or finding of the baseline document | [Baseline structure](#baseline-structure) |
 | `BL level 4`, `baseline 4.2 level 5` | A cell of the baseline's maturity grid | [The grid](#the-grid) |
 | `AC` | The Anthropic guidance companion as a whole | Its citations are the `AN-n` sources |
-| `A1`-`A5`, `A.1`-`A.7` | Autonomy grants and earned-autonomy patterns proposed in [synthesis.md](synthesis.md) | Not sources |
+| `A1`-`A5`, `A.1`-`A.7` | Autonomy grants and earned-autonomy patterns proposed in [synthesis.md](../refresh/synthesis.md) | Not sources |
 
 Anthropic sources were numbered `A-n` when the reviews were written. They were renamed `AN-n` so that they
 cannot be confused with the autonomy grants `A1`-`A5` or the patterns `A.1`-`A.7`.

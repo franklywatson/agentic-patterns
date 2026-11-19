@@ -22,7 +22,7 @@ it, and update the affected plans.
 
 ## D2. Restructure depth
 
-- **Status:** Open
+- **Status:** Decided (2026-11-19): (a) full reframe
 - **Gates:** Phases 1 and 3
 - **Options:**
   - (a) Rename levels to layers, add the autonomy axis and cap line, replace the pyramid as the
@@ -32,7 +32,7 @@ it, and update the affected plans.
 
 ## D3. What happens to L3
 
-- **Status:** Partially decided (2026-11-19): TOON (3.7) cut in Phase 0; session lifecycle and routing internals still open
+- **Status:** Decided (2026-11-19): (b) — TOON cut in Phase 0; 3.8 and routing internals removed from this repo with a pointer to rig's code (no edits to the rig repo)
 - **Gates:** Phase 1
 - **Options:**
   - (a) Keep L3 as written.
@@ -43,7 +43,7 @@ it, and update the affected plans.
 
 ## D4. Constitutional rule 6 (CLAUDE.md 150-line limit)
 
-- **Status:** Open
+- **Status:** Decided (2026-11-19): (b) "short, owned, tested, re-baselined", with a CI warning at about 200 lines
 - **Gates:** Phase 1 and the ongoing re-baseline
 - **Options:**
   - (a) Keep the 150-line limit.
@@ -52,7 +52,7 @@ it, and update the affected plans.
 
 ## D5. Vendor posture
 
-- **Status:** Open
+- **Status:** Decided (2026-11-19): (a) neutral contracts with bindings, AGENTS.md as the shared instruction file, rig disclosure line
 - **Gates:** Phases 1 and 2
 - **Options:**
   - (a) Neutral contracts, with Claude Code as the first binding and a disclosure line about rig.
@@ -92,4 +92,10 @@ it, and update the affected plans.
 | 2026-11-19 | Remove the former design-rinsing case study and all references to it | Yes | Maintainer |
 | 2026-11-19 | Cut TOON (L3 Pattern 3.7) | Yes | Maintainer |
 | 2026-11-19 | D6: delete `docs/plans/` and `specs/` | (a) | Maintainer |
-| 2026-11-19 | Replace Excalidraw with the archify skill for all diagrams (JSON source, rendered HTML, PNG export); separate PR after Phase 0 | Yes | Maintainer |
+| 2026-11-19 | Replace Excalidraw with the archify skill for all diagrams (JSON source, rendered HTML, PNG export); separate PR after Phase 0 — timing superseded: after all phases | Yes | Maintainer |
+| 2026-11-19 | D2: restructure depth | (a) full reframe | Maintainer |
+| 2026-11-19 | D3: what happens to L3 | (b) completed: TOON cut in Phase 0; 3.8 and routing internals removed with a pointer to rig's code | Maintainer |
+| 2026-11-19 | D4: constitutional rule 6 | (b) short, owned, tested, re-baselined; CI warning at about 200 lines | Maintainer |
+| 2026-11-19 | D5: vendor posture | (a) neutral contracts with bindings; AGENTS.md as shared instruction file; rig disclosure line | Maintainer |
+| 2026-11-19 | T10: `examples/guardrails` TypeScript-only | Keep examples/guardrails; amend the writing rule for optional L3 | Maintainer |
+| 2026-11-19 | Diagram work | Deferred until all phases complete (supersedes "separate PR after Phase 0") | Maintainer |
