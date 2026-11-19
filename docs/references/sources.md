@@ -15,10 +15,9 @@ Run `python3 scripts/sourcecheck.py` to confirm that every ID cited under `docs/
 | `baseline 3.7`, `BL §4.5`, `IB 4.4`, `finding 2` | A section or finding of the baseline document | [Baseline structure](#baseline-structure) |
 | `BL level 4`, `baseline 4.2 level 5` | A cell of the baseline's maturity grid | [The grid](#the-grid) |
 | `AC` | The Anthropic guidance companion as a whole | Its citations are the `AN-n` sources |
-| `A1`-`A5`, `A.1`-`A.7` | Autonomy grants (A1-A5) and earned-autonomy patterns (A.1-A.7) | Not sources |
+| `A1`-`A5` | Autonomy grants | Not sources |
 
-Anthropic sources use the prefix `AN-n`, which is distinct from the autonomy grants `A1`-`A5` and the patterns
-`A.1`-`A.7`.
+Anthropic sources use the prefix `AN-n`, which is distinct from the autonomy grants `A1`-`A5`.
 
 ## Baseline structure
 

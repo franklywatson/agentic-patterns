@@ -48,7 +48,7 @@ def main():
         print(f"::warning file={rel}::Orphaned doc: {rel} is not reachable from AGENTS.md")
         orphans += 1
     print(f"{orphans} orphan warning(s); {len(seen)} files reachable from AGENTS.md")
-    return 0
+    return 1 if orphans else 0
 
 
 if __name__ == "__main__":

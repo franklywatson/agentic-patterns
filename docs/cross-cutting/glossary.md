@@ -113,7 +113,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 ### Evidence Label
 
-**Definition**: The closing line of a pattern, `Evidence: Strong`, `Partial` or `Thin`, followed by the basis for the rating and the source IDs. Strong means independent sources agree, Partial means support exists but is incomplete or contested, and Thin means the pattern is reasoned or first-party only. Source IDs resolve in [Sources](../references/sources.md).
+**Definition**: The closing line of a pattern, `Evidence: Strong`, `Partial` or `Thin`, followed by the basis for the rating and the source IDs. Strong means the claim is measured or corroborated by independent sources, Partial means support exists but is incomplete or contested, and Thin means the pattern rests on reasoning, first-party experience or unmeasured vendor claims. Source IDs resolve in [Sources](../references/sources.md).
 
 ### Focused Integration Test
 

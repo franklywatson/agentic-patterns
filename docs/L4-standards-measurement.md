@@ -114,7 +114,7 @@ Teams adopt agentic practices based on intuition and anecdote. Without measureme
 
 ### Solution
 
-**Establish metrics that measure the outcomes agentic practices are designed to improve.** Metrics serve three purposes: validate that practices are working, identify where to focus next, and close the feedback loop on the practices themselves.
+**Establish metrics that measure the outcomes agentic practices are designed to improve.** Metrics serve three purposes: check whether practices are working, identify where to focus next, and close the feedback loop on the practices themselves.
 
 This is not about tracking agent activity for its own sake. Tokens consumed, commands executed, and sessions started are activity metrics — they measure effort, not outcomes. The metrics that matter measure whether the codebase is getting better and whether agents are becoming more effective over time.
 
