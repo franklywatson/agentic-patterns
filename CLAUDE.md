@@ -102,7 +102,6 @@ See [README.md](README.md) for detailed project overview.
 ## References
 
 - [docs/references/reference-telegram-trading-bot-case-study.md](docs/references/reference-telegram-trading-bot-case-study.md) — Production reference implementation
-- [docs/references/reference-my-claw-case-study.md](docs/references/reference-my-claw-case-study.md) — Design rinsing reference implementation
 - [docs/references/further-reading.md](docs/references/further-reading.md) — External resources
 
 ## Active Work
@@ -122,4 +121,4 @@ See [README.md](README.md) for detailed project overview.
 ---
 
 **Last updated**: 2026-11-19
-**Status**: v0.2.0 — added design rinsing, my-claw case study
+**Status**: v0.2.0 — added design rinsing

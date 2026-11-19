@@ -106,11 +106,11 @@ Design rinsing works with diverse source materials:
 
 | Source Type | What You Extract | Example |
 |-------------|-----------------|---------|
-| Codebase (different language) | Architecture, design patterns, testing strategy, module boundaries | Rust multi-agent system → Python voice assistant agent coordination |
+| Codebase (different language) | Architecture, design patterns, testing strategy, module boundaries | Rust multi-agent system → agent coordination design for a Python service |
 | Codebase (same ecosystem) | Implementation patterns, tool choices, configuration conventions | Node.js trading bot stack tests → Python testing infrastructure |
-| YouTube demo / walkthrough | Concrete architecture, agent roles, pipeline design, routing logic | Multi-agent command center demo → war room with 5 agents, Pipecat pipeline, 3-tier routing |
-| YouTube talk / lecture | Core concepts, design principles, mental models | UC Berkeley talk on autonomous system design → graduated autonomy, context bundling |
-| Article / blog post | Distilled observations, failure modes, trade-off analysis | Karpathy's LLM coding pitfalls → runtime behavioral skills |
+| YouTube demo / walkthrough | Concrete architecture, agent roles, pipeline design, routing logic | Multi-agent demo video → agent roles and message routing for the target system |
+| YouTube talk / lecture | Core concepts, design principles, mental models | Conference talk on autonomous system design → graduated autonomy and context bundling for the target system |
+| Article / blog post | Distilled observations, failure modes, trade-off analysis | Blog post on LLM coding pitfalls → behavioral rules for the target project's agent skills |
 
 #### When to Use Design Rinsing
 
@@ -130,8 +130,6 @@ Design rinsing is overkill when:
 #### Design Rinsing and the REPL Fractal
 
 Design rinsing operates at the **system-level** of the REPL fractal described earlier. It extends the Read phase beyond the current project — the agent reads external architecture to inform its mental model before acting. This is context harvesting at its broadest scope: not "what does this function do?" but "what design philosophy produced this system?"
-
-The [my-claw project](references/reference-my-claw-case-study.md) demonstrates design rinsing across three phases: a YouTube demo video rinsed into concrete architecture (war room, agents, pipeline, routing), multiple external sources (academic talk, Rust codebase, behavioral specification) rinsed for agent design principles and autonomy models, and the agentic-patterns repository plus compound engineering plugin rinsed to establish the project's development approach.
 
 ---
 

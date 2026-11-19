@@ -33,7 +33,6 @@ The lineage: patterns were extracted from the reference project, organized into 
 |--------|-------------------|----------|
 | [rig](https://github.com/franklywatson/claude-rig) | Guardrails framework: L2 enforcement pipeline, L3 tool routing + token-optimized scout agent, L4 context eval, skill chain with phase transitions, CI guardrails. Configurable via `.harness.yaml`. | TypeScript |
 | [superpowers](https://github.com/obra/superpowers) | L2 base skills (brainstorming, TDD, verification, review), automated worktree management | Markdown/JS |
-| [my-claw](docs/references/reference-my-claw-case-study.md) | L1 design rinsing reference: autonomous multi-agent system whose architecture evolved through three phases of cross-domain design rinsing — YouTube demo to architecture, academic talk + codebases to agent design, agentic-patterns + compound engineering to development approach | Python |
 
 ## The Pattern Pyramid
 
@@ -82,7 +81,7 @@ examples/           # Working code examples (TypeScript + Python)
                     #   Intent classification, smart routing, environment detection
   project-structure/ # Before/after directory layouts
 docs/cross-cutting/ # Anti-patterns, adoption guide, FAQ, glossary
-docs/references/    # Case studies (trading bot + my-claw) and further reading
+docs/references/    # Case study (trading bot) and further reading
 ```
 
 The TypeScript and Python stack-test examples cover the same core pattern (Docker-based stack tests with full-loop assertions) but differ in scope: the TypeScript example extends to browser-based testing with Playwright, while the Python example demonstrates API-level testing with pytest conventions. Both are self-contained and runnable independently.
@@ -99,7 +98,6 @@ This is a living pattern library. Contributions welcome:
 ## Background and Further Reading
 
 - [Reference Telegram Trading Bot Case Study](docs/references/reference-telegram-trading-bot-case-study.md) — the production system these patterns were extracted from
-- [Reference my-claw Case Study](docs/references/reference-my-claw-case-study.md) — design rinsing in practice: autonomous multi-agent system architecture evolved through cross-domain extraction across three phases
 - [FAQ](docs/cross-cutting/faq.md) — deployment, operations, and other SDLC concerns beyond the patterns
 - [Further Reading](docs/references/further-reading.md) — articles, videos, and tools that informed this work
 - [Glossary](docs/cross-cutting/glossary.md) — terminology reference
