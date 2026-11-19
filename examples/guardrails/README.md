@@ -60,6 +60,17 @@ if (resolution.action === 'advise') {
 }
 ```
 
+## Build and Test
+
+Requires Node.js 21 or later (the test script passes a quoted glob to `node --test`).
+
+```bash
+npm install
+npm test        # runs `npm run build` (tsc) first, then node:test on dist/**/*.test.js
+```
+
+Tests live in `src/__tests__/`. They cover intent classification, environment-aware resolution, the docker default-allow rule, and the known string-matching bypasses. Environment detection (`detectEnvironment`) shells out to `which rtk` and has no injectable seam, so the tests exercise `resolve()` with hand-built `Environment` values instead.
+
 ## Intent Types
 
 | Intent | Description | Default Resolution |

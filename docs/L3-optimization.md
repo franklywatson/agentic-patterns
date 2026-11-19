@@ -607,6 +607,8 @@ See [examples/guardrails](../examples/guardrails/) for a complete TypeScript imp
 - Smart router ([`router.ts`](../examples/guardrails/src/core/router.ts))
 - Data-driven config ([`routing.config.ts`](../examples/guardrails/src/config/routing.config.ts))
 
+Run the unit tests with `cd examples/guardrails && npm install && npm test` (Node.js 21 or later).
+
 ---
 
 ## Further Reading
