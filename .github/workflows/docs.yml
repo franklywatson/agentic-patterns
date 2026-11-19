@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - '**.md'
+      - 'scripts/**'
+      - '**.py'
       - '.markdownlint-cli2.jsonc'
       - 'package.json'
       - '.github/workflows/docs.yml'
@@ -12,6 +14,8 @@ on:
     branches: [main]
     paths:
       - '**.md'
+      - 'scripts/**'
+      - '**.py'
       - '.markdownlint-cli2.jsonc'
       - 'package.json'
       - '.github/workflows/docs.yml'
@@ -61,42 +65,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check internal markdown links resolve
-        run: |
-          errors=0
-
-          # Find all markdown links in docs/, examples/, CLAUDE.md, README.md
-          # Exclude specs/ (planning docs with aspirational links)
-          while IFS= read -r file; do
-            dir=$(dirname "$file")
-
-            # Extract markdown links: [text](path.md) and [text](path.md#anchor)
-            # Only from prose lines (skip code blocks and inline code)
-            sed '/^```/,/^```/d' "$file" | grep -oP '\[.*?\]\(\K[^)]+\.md(?:#[^)]*)?(?=\))' 2>/dev/null | while IFS= read -r link; do
-              # Strip anchor
-              target="${link%%#*}"
-
-              # Skip URLs and regex-like patterns from examples
-              case "$target" in
-                http://*|https://*|*\**) continue ;;
-              esac
-
-              # Resolve relative path
-              resolved="$dir/$target"
-              if [ ! -f "$resolved" ]; then
-                echo "::error file=$file::Broken link: $link -> $resolved (file not found)"
-                # Write to a temp file since we're in a subshell
-                echo "1" >> /tmp/link_errors
-              fi
-            done
-          done < <(find . -name '*.md' -not -path './node_modules/*' -not -path './.git/*' -not -path './specs/*')
-
-          if [ -f /tmp/link_errors ]; then
-            count=$(wc -l < /tmp/link_errors)
-            echo "::error::$count broken link(s) found"
-            exit 1
-          fi
-          echo "All internal links resolve."
+      - name: Check internal markdown links and anchors resolve
+        run: python3 scripts/check-doc-links.py .
 
   doc-reachability:
     name: Doc Reachability from CLAUDE.md

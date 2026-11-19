@@ -48,7 +48,7 @@ A skill is a markdown file that declares:
 - **Integration points**: what other skills compose with this
 - **Checklist**: steps the agent follows when using the skill
 
-Skills are the mechanism by which a project's constitution (@L0-foundation.md#pattern-04-claude-md-as-project-constitution) becomes executable. CLAUDE.md declares the rules; skills enforce them.
+Skills are the mechanism by which a project's constitution ([Pattern 0.4](L0-foundation.md#pattern-04--claudemd-as-project-constitution)) becomes executable. CLAUDE.md declares the rules; skills enforce them.
 
 ### In Practice
 
@@ -67,7 +67,7 @@ Copying the same rules into every prompt. This creates drift—prompts get updat
 
 ### Cross-References
 
-- @L0-foundation.md#pattern-04-claude-md-as-project-constitution — CLAUDE.md as rule source
+- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claudemd-as-project-constitution) — CLAUDE.md as rule source
 
 ---
 
@@ -97,7 +97,7 @@ The chain enforces a complete development lifecycle. Each skill validates its in
 
 1. **brain+**: Design with stack testing in mind. What needs Docker? What are the full-loop assertions?
 2. **plan+**: Create implementation plan with explicit testing strategy. Which tests cover which requirements?
-3. **tdd+**: RED-GREEN-REFACTOR with full-loop assertions. (@L1-feedback-loops.md#pattern-12-full-loop-assertion-layering)
+3. **tdd+**: RED-GREEN-REFACTOR with full-loop assertions. ([Pattern 1.2](L1-patterns/1.2-full-loop-assertions.md))
 4. **verify+**: Evidence-based claims. Run commands, show output, then claim done.
 5. **review+**: Checklist-based compliance review. Tests pass, docs updated, constitutional rules followed.
 
@@ -111,7 +111,7 @@ A typical workflow session:
 4. Agent activates `verify+` skill, runs tests and shows output before claiming success
 5. Agent activates `review+` skill, confirms all checklist items complete
 
-The `review+` skill also integrates `test-integrity` for test file review, ensuring tests follow @L1-feedback-loops.md#pattern-16-test-integrity-rules.
+The `review+` skill also integrates `test-integrity` for test file review, ensuring tests follow [Pattern 1.6 — Test Integrity Rules](L1-patterns/1.6-test-integrity.md).
 
 **Superpowers framework integration:** The [obra/superpowers](https://github.com/obra/superpowers) library provides the base skills that the chain builds on:
 
@@ -133,9 +133,9 @@ Jumping directly to implementation without planning or testing. This produces co
 
 ### Cross-References
 
-- @L1-feedback-loops.md#pattern-11-stack-tests — Stack testing foundation
-- @L1-feedback-loops.md#pattern-12-full-loop-assertion-layering — Assertion requirements
-- @docs/cross-cutting/glossary.md — Skill chain terminology
+- [Pattern 1.1 — Stack Tests](L1-patterns/1.1-stack-tests.md) — Stack testing foundation
+- [Pattern 1.2 — Full-Loop Assertion Layering](L1-patterns/1.2-full-loop-assertions.md) — Assertion requirements
+- [Glossary](cross-cutting/glossary.md) — Skill chain terminology
 
 ### Reference Implementation
 
@@ -234,8 +234,8 @@ Writing hooks that are too permissive or too restrictive. Permissive hooks fail 
 
 ### Cross-References
 
-- @L3-optimization.md#pattern-31-smart-routing--tool-selection — Command routing patterns
-- @docs/examples/guardrails/ — Hook implementation examples
+- [Pattern 3.1 — Smart Routing / Tool Selection](L3-optimization.md#pattern-31--smart-routing--tool-selection) — Command routing patterns
+- [examples/guardrails](../examples/guardrails/) — Hook implementation examples
 
 ### Reference Implementation
 
@@ -259,7 +259,7 @@ Constitutional rules are hard constraints declared in CLAUDE.md that never relax
 - **Full accounting for every state change** — every inventory change, every order, every transaction fee must be logged and queryable.
 - **Evidence-based claims only** — show command output before claiming done. "Tests pass" is not evidence; show the test output.
 - **Docker-first development** — no local OS execution. Everything runs in containers.
-- **No conditional test assertions** — tests must be able to fail. (@L1-feedback-loops.md#pattern-16-test-integrity-rules)
+- **No conditional test assertions** — tests must be able to fail. ([Pattern 1.6](L1-patterns/1.6-test-integrity.md))
 
 **The rules flow:**
 
@@ -286,8 +286,8 @@ Writing "soft" rules with exceptions. Constitutional rules must have no escape h
 
 ### Cross-References
 
-- @L0-foundation.md#pattern-04-claude-md-as-project-constitution — CLAUDE.md format
-- @L1-patterns/1.5-no-mock-philosophy.md — Real dependencies in E2E/integration and stack tests
+- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claudemd-as-project-constitution) — CLAUDE.md format
+- [Pattern 1.5 — Real Dependencies](L1-patterns/1.5-no-mock-philosophy.md) — Real dependencies in E2E/integration and stack tests
 
 ### Reference Implementation
 
@@ -350,8 +350,8 @@ Classifying errors as "relevant" or "irrelevant" without evidence. Unless you ca
 
 ### Cross-References
 
-- @L1-feedback-loops.md#pattern-13-sequential--additive-test-design — Sequential test ordering
-- @L4-standards-measurement.md#pattern-41--evidence-based-claims — Evidence standards
+- [Pattern 1.3 — Sequential / Additive Test Design](L1-patterns/1.3-sequential-design.md) — Sequential test ordering
+- [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) — Evidence standards
 
 ### Reference Implementation
 

@@ -80,7 +80,7 @@
 
 - **Type:** Video / Framework
 - **Creator:** Cole Medin (original), DIY Smart Code (adaptation)
-- **Summary:** Context engineering framework — **W**rite, **I**solate, **S**elect, **C**ompress. Core thesis (as claimed in the video by Cole Medin, from a single uncontrolled source; evidence level: Thin): ~80% of agent failures come from context management, not the model, and the video title claims 90.2% better AI coding results. Write externalizes memory (structured commits, progress files, separate planning/implementation sessions). Isolate splits work across sub-agents (scout pattern, research delegation). Select loads only what's needed via a 3-tier context system (global rules, on-demand rules, reference docs). Compress provides focused compaction and session handoffs. The Scout Pattern used in [Pattern 3.4](../L3-optimization.md#pattern-34--context-engineering-the-scout-pattern) maps to WISC's Isolate strategy.
+- **Summary:** Context engineering framework — **W**rite, **I**solate, **S**elect, **C**ompress. Core thesis (as claimed in the video by Cole Medin, from a single uncontrolled source; evidence level: Thin): ~80% of agent failures come from context management, not the model, and the video title claims 90.2% better AI coding results. Write externalizes memory (structured commits, progress files, separate planning/implementation sessions). Isolate splits work across sub-agents (scout pattern, research delegation). Select loads only what's needed via a 3-tier context system (global rules, on-demand rules, reference docs). Compress provides focused compaction and session handoffs. The Scout Pattern used in [Pattern 3.4](../L3-optimization.md#pattern-34--context-engineering--the-scout-pattern) maps to WISC's Isolate strategy.
 - **Related to:** L3
 - **URL:** <https://youtu.be/gyo0eRgsUWk>
 - **GitHub:** <https://github.com/coleam00/context-engineering-intro/tree/main/use-cases/ai-coding-wisc-framework>
@@ -98,10 +98,10 @@
 ### jcodemunch
 
 - **Type:** Tool
-- **Creator:** Nicolo Ribaudo
+- **Creator:** J. Gravelle
 - **Summary:** Structured code search and symbol navigation tool that indexes repositories for AI-efficient code exploration, returning typed, summarized results instead of raw text.
 - **Related to:** L3
-- **URL:** <https://github.com/nicolo-ribaudo/jcodemunch>
+- **URL:** <https://github.com/jgravelle/jcodemunch-mcp>
 
 ### RTK (Rust Token Killer)
 

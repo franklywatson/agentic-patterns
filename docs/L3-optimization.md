@@ -296,7 +296,7 @@ target = map.exports.find("processPayment")  # O(1) lookup
 
 - [WISC Framework](https://youtu.be/gyo0eRgsUWk) — Write, Isolate, Select, Compress context engineering strategies
 - [WISC GitHub repo](https://github.com/coleam00/context-engineering-intro/tree/main/use-cases/ai-coding-wisc-framework) — Full framework with examples
-- [jcodemunch](https://github.com/jeromedecock/jcodemunch) — Tool for indexing codebases
+- [jcodemunch](https://github.com/jgravelle/jcodemunch-mcp) — Tool for indexing codebases
 
 ---
 
@@ -353,7 +353,7 @@ search_symbols({ kind: "function" }).map(s => s.file)
 ### Cross-References
 
 - [Pattern 3.1](#pattern-31--smart-routing--tool-selection) — Routing to structured tools
-- [jcodemunch](https://github.com/jeromedecock/jcodemunch) — Codebase indexing tool
+- [jcodemunch](https://github.com/jgravelle/jcodemunch-mcp) — Codebase indexing tool
 
 ---
 
@@ -410,7 +410,7 @@ This is a **subjective trade-off, not a hard rule**. The point is that agentic d
 ### Cross-References
 
 - [Pattern 0.2 — Progressive Disclosure](L0-foundation.md#pattern-02--progressive-disclosure) — Context bloat undermines progressive disclosure
-- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04-claude-md-as-project-constitution) — Each repo needs its own entry point
+- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claudemd-as-project-constitution) — Each repo needs its own entry point
 - [Pattern 3.4 — The Scout Pattern](#pattern-34--context-engineering--the-scout-pattern) — Structured exploration across repos
 
 ---

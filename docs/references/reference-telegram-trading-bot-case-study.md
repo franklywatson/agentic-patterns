@@ -355,7 +355,7 @@ When `tdd+` is invoked, it knows to reject mocked loggers and mocked ethers beca
 
 ### Intent-Based Command Routing
 
-The project implements L3's smart routing pattern ([Pattern 3.1](../L3-optimization.md#pattern-31--smart-routing-tool-selection)) through a combination of skills and hooks. Raw shell commands — `grep`, `cat`, `find` — are intercepted by PreToolUse hooks (which fire before the command runs; PostToolUse fires after it has already run and cannot redirect) that classify intent ([Pattern 3.2](../L3-optimization.md#pattern-32--intent-classification)) and redirect to structured tools. `grep -r "export.*function" .` becomes a symbol search; `cat file.ts` becomes a targeted read; `find . -name "*.ts"` becomes a glob query. Environment-aware routing ([Pattern 3.3](../L3-optimization.md#pattern-33--environment-aware-routing)) detects whether jcodemunch indexes are available and degrades gracefully to raw tools when they aren't.
+The project implements L3's smart routing pattern ([Pattern 3.1](../L3-optimization.md#pattern-31--smart-routing--tool-selection)) through a combination of skills and hooks. Raw shell commands — `grep`, `cat`, `find` — are intercepted by PreToolUse hooks (which fire before the command runs; PostToolUse fires after it has already run and cannot redirect) that classify intent ([Pattern 3.2](../L3-optimization.md#pattern-32--intent-classification)) and redirect to structured tools. `grep -r "export.*function" .` becomes a symbol search; `cat file.ts` becomes a targeted read; `find . -name "*.ts"` becomes a glob query. Environment-aware routing ([Pattern 3.3](../L3-optimization.md#pattern-33--environment-aware-routing)) detects whether jcodemunch indexes are available and degrades gracefully to raw tools when they aren't.
 
 ### RTK Integration
 
@@ -363,7 +363,7 @@ The [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk) CLI proxy filters n
 
 ### jcodemunch for Structured Code Search
 
-When the repository is indexed by [jcodemunch](https://github.com/nicolo-ribaudo/jcodemunch), agent searches bypass raw grep entirely. `search_symbols` returns typed results with file locations and summaries — the same information as `grep -r` output in fewer tokens. The scout pattern ([Pattern 3.4](../L3-optimization.md#pattern-34--context-engineering-the-scout-pattern)) applies here: a sub-agent maps the codebase structure first, then the implementer works with a concise index instead of re-deriving file locations each session.
+When the repository is indexed by [jcodemunch](https://github.com/jgravelle/jcodemunch-mcp), agent searches bypass raw grep entirely. `search_symbols` returns typed results with file locations and summaries — the same information as `grep -r` output in fewer tokens. The scout pattern ([Pattern 3.4](../L3-optimization.md#pattern-34--context-engineering--the-scout-pattern)) applies here: a sub-agent maps the codebase structure first, then the implementer works with a concise index instead of re-deriving file locations each session.
 
 ### TOON Serialization for MCP Responses
 

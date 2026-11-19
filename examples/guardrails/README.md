@@ -167,4 +167,4 @@ Savings depend on the repository, the query, and the tools installed. Measure th
 
 - [L3 Optimization Documentation](../../docs/L3-optimization.md)
 - [RTK](https://github.com/rtk-ai/rtk) — Token-optimized CLI proxy
-- [jcodemunch](https://github.com/jeromedecock/jcodemunch) — Codebase indexing
+- [jcodemunch](https://github.com/jgravelle/jcodemunch-mcp) — Codebase indexing

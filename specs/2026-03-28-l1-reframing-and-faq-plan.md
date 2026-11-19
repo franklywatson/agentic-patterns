@@ -220,7 +220,7 @@ to:
 Use `replace_all` for these specific text changes:
 
 - `L1 Feedback Loops` (in table cells, phase headers, and descriptions) → `L1 Closed Loop Design` where it appears as a standalone title/label
-- Line 1454: `[L1 Feedback Loops](../L1-feedback-loops.md) — Stack tests and assertions` → `[L1 Closed Loop Design](../L1-feedback-loops.md) — Design-led verification with closed-loop testing`
+- Line 1454: `[L1 Feedback Loops](../docs/L1-feedback-loops.md) — Stack tests and assertions` → `[L1 Closed Loop Design](../docs/L1-feedback-loops.md) — Design-led verification with closed-loop testing`
 
 Do NOT change "Feedback Loops" where it appears in general prose about feedback mechanisms (those are about the concept, not the document title).
 

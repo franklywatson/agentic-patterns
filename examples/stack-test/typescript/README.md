@@ -27,7 +27,7 @@ API-level tests drive the stack through HTTP calls — the same interface a mobi
 
 Browser-level tests drive the stack through a real browser — the same interface an end user would use. They catch problems API tests cannot: broken JavaScript, missing CSS assets, rendering failures, and client-side logic errors.
 
-This maps to the **"Beyond API Testing"** concept from [L1 Closed Loop Design](../../../docs/L1-feedback-loops.md#beyond-api-testing):
+This maps to the **"Beyond API Testing"** concept from [L1 Closed Loop Design](../../../docs/L1-patterns/1.1-stack-tests.md#beyond-api-testing):
 
 > Stack tests are not limited to driving backend APIs directly. For web applications, the same pattern applies with a browser automation layer like Playwright: spin up the full stack, then drive user journeys through the actual UI — form submissions, page transitions, rendered output — to verify that the combined frontend and backend work correctly end-to-end. The principle remains the same: real system, real dependencies, no mocks. Only the entry point changes from HTTP API calls to browser interactions.
 
