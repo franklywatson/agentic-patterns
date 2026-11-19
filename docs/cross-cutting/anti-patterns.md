@@ -420,7 +420,7 @@ esac
 
 **Why This Happens**: grep is familiar and always available. Reaching for it is muscle memory. But when the repository is indexed by a tool like jcodemunch, raw grep returns more tokens for the same information - and misses symbols that match text patterns inexactly.
 
-**Pattern**: Apply [Pattern 3.1 - Smart Routing](../L3-optimization.md#pattern-31--smart-routing--tool-selection):
+**Pattern**: Apply [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits):
 
 - Route to structured search when available
 - Use `search_symbols` for typed results
@@ -445,7 +445,7 @@ search_symbols(query="function", kind="function")
 
 **Why This Happens**: Reading the whole file feels thorough. But context window space is finite - every irrelevant line displaces something useful. With large codebases, this scales into a real constraint on what the agent can reason about simultaneously.
 
-**Pattern**: Apply [Pattern 3.5 - Structured Output over Raw Text](../L3-optimization.md#pattern-35--structured-output-over-raw-text):
+**Pattern**: Apply [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits):
 
 - Use targeted reads with line ranges
 - Use `get_symbol` to extract specific functions
@@ -473,7 +473,7 @@ get_file_outline(file_path="src/ecommerce/orders/execute.ts")
 
 **Why This Happens**: Without environment detection, the agent defaults to the lowest common denominator. It has no way to know that better tools are available unless someone tells it - and that knowledge does not persist between sessions.
 
-**Pattern**: Apply [Pattern 3.3 - Environment-Aware Routing](../L3-optimization.md#pattern-33--environment-aware-routing):
+**Pattern**: Apply [Pattern 3.3 - Environment-Aware Routing and Session Lifecycle](../L3-optimization.md#pattern-33--environment-aware-routing-and-session-lifecycle):
 
 - Detect available tools before routing
 - Use RTK when installed for git operations

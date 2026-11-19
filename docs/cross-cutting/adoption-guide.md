@@ -59,7 +59,7 @@ Document every assumption they had to make. Each assumption is a gap.
 | **L0 Foundation** | Structure, CLAUDE.md, doc freshness, cleanup | No CLAUDE.md, layer-based organization, stale docs | Write CLAUDE.md, restructure by domain |
 | **L1 Closed Loop Design** | Design-led verification with stack tests and focused integration tests | No stack tests, shallow assertions, no edge-case coverage for complex external deps | Add app-startup stack test |
 | **L2 Guardrails** | Skills, hooks, behavioral rules | No enforcement, agents make common errors | Add test-integrity skill |
-| **L3 Optimization** | Smart routing, structured search | Raw grep/cat commands, token waste | Set up jcodemunch indexing |
+| **L3 Optimization (optional)** | Native structured tools, context isolation | Raw grep/cat commands, token waste | Route grep and cat to native tools |
 | **L4 Standards & Measurement** | Evidence, drift detection, metrics, context eval | Claims without evidence, spec drift | Establish evidence standard |
 
 ---
@@ -75,7 +75,7 @@ Start with L0, the highest-impact, lowest-effort starting point. Then build upwa
 1. **L0 Foundation** — Restructure by domain, write CLAUDE.md, establish doc freshness and cleanup practices. See [L0-foundation.md](../L0-foundation.md).
 2. **L1 Closed Loop Design** — Add stack tests for your most critical user journeys. See [L1-feedback-loops.md](../L1-feedback-loops.md) and the working examples in [examples/stack-test/](../../examples/stack-test/).
 3. **L2 Guardrails** — Add skills and hooks for your project's most common errors. See [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md).
-4. **L3 Optimization** — Set up structured search and routing. See [L3-optimization.md](../L3-optimization.md) and the working example in [examples/guardrails/](../../examples/guardrails/).
+4. **L3 Optimization (optional)** — Reduce token spend with structured tools and context isolation, when token cost is a measured problem. See [L3-optimization.md](../L3-optimization.md) and the working example in [examples/guardrails/](../../examples/guardrails/).
 5. **L4 Standards & Measurement** — Add drift detection, metrics, and context eval when the earlier levels are stable. See [L4-standards-measurement.md](../L4-standards-measurement.md).
 
 ### Path B: Testing-First (Teams with Testing Gaps)
@@ -105,7 +105,7 @@ The pattern docs contain the detailed guidance. This guide links to them rather 
 | L0 | [L0-foundation.md](../L0-foundation.md) — Deep modules, CLAUDE.md, progressive disclosure | [examples/project-structure/](../../examples/project-structure/) |
 | L1 | [L1-feedback-loops.md](../L1-feedback-loops.md) — Context harvesting, stack tests, full-loop assertions | [examples/stack-test/typescript/](../../examples/stack-test/typescript/) or [examples/stack-test/python/](../../examples/stack-test/python/) |
 | L2 | [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md) — Skills, hooks, constitutional rules | [superpowers](https://github.com/obra/superpowers) or [rig](https://github.com/franklywatson/claude-rig) |
-| L3 | [L3-optimization.md](../L3-optimization.md) — Smart routing, structured search, scout pattern | [examples/guardrails/](../../examples/guardrails/) |
+| L3 | [L3-optimization.md](../L3-optimization.md) — Native structured tools, context isolation | [examples/guardrails/](../../examples/guardrails/) |
 | L4 | [L4-standards-measurement.md](../L4-standards-measurement.md) — Evidence, drift detection, metrics, context eval | — |
 
 ### Reference Implementations
@@ -139,7 +139,7 @@ The pattern docs contain the detailed guidance. This guide links to them rather 
 - [L0 Foundation](../L0-foundation.md) — Project structure patterns
 - [L1 Closed Loop Design](../L1-feedback-loops.md) — Design-led verification
 - [L2 Behavioral Guardrails](../L2-behavioral-guardrails.md) — Skills and hooks
-- [L3 Optimization](../L3-optimization.md) — Token efficiency
+- [L3 Optimization](../L3-optimization.md) — Optional token efficiency
 - [L4 Standards & Measurement](../L4-standards-measurement.md) — Evidence, drift detection, metrics
 - [Anti-Patterns](./anti-patterns.md) — Common mistakes to avoid
 - [Reference Implementation Case Study](../references/reference-telegram-trading-bot-case-study.md) — Production validation

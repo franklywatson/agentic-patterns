@@ -52,11 +52,11 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **Definition**: Four mechanisms (unique container names, dynamic port allocation, transient volumes, per-test compose files) ensuring tests never interfere with each other.
 **See**: [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation)
 
-### Context Engineering
+### Context Isolation
 
-**Level**: L3 - Optimization
-**Definition**: Practice of investing tokens upfront in structured exploration (Scout pattern) to reduce wasted context from blind searches.
-**See**: [Pattern 3.4 - Context Engineering](../L3-optimization.md#pattern-34--context-engineering--the-scout-pattern)
+**Level**: L3 - Optimization (optional)
+**Definition**: Delegating exploration to a sub-agent that returns a short map, so search noise stays out of the main session.
+**See**: [Pattern 3.2 - Context Isolation](../L3-optimization.md#pattern-32--context-isolation-scout)
 
 ---
 
@@ -135,9 +135,9 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 ### Intent Classification
 
-**Level**: L3 - Optimization
+**Level**: L3 - Optimization (optional)
 **Definition**: Parsing bash commands into intent categories (file_read, text_search, file_modify, docker, etc.) to enable correct routing and blocking of dangerous operations.
-**See**: [Pattern 3.2 - Intent Classification](../L3-optimization.md#pattern-32--intent-classification)
+**See**: [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)
 
 ---
 
@@ -189,9 +189,9 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 ### Routing Table
 
-**Level**: L3 - Optimization
-**Definition**: Data structure mapping common commands to their optimal implementations based on intent detection and available tools.
-**See**: [Pattern 3.1 - Smart Routing](../L3-optimization.md#pattern-31--smart-routing--tool-selection)
+**Level**: L3 - Optimization (optional)
+**Definition**: Data structure mapping shell commands to the native or structured tool that does the same job.
+**See**: [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)
 
 ---
 
@@ -199,15 +199,15 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 ### Scout Pattern
 
-**Level**: L3 - Optimization
-**Definition**: Lightweight agent that maps codebase structure (file tree, key exports, dependencies) before implementation, reducing blind searches and token waste.
-**See**: [Pattern 3.4 - Context Engineering](../L3-optimization.md#pattern-34--context-engineering--the-scout-pattern)
+**Level**: L3 - Optimization (optional)
+**Definition**: Lightweight read-only sub-agent that maps codebase structure (relevant files, entry points, key symbols) and returns a short summary before implementation.
+**See**: [Pattern 3.2 - Context Isolation](../L3-optimization.md#pattern-32--context-isolation-scout)
 
 ### Session Lifecycle
 
-**Level**: L3 - Optimization
-**Definition**: Session start hook that detects environment, auto-indexes project, and caches results with TTL to prevent redundant detection on every tool call.
-**See**: [Pattern 3.8 - Session Lifecycle](../L3-optimization.md#pattern-38--session-lifecycle)
+**Level**: L3 - Optimization (optional)
+**Definition**: Detecting available tools once at session start and caching the result, instead of re-detecting on every tool call.
+**See**: [Pattern 3.3 - Environment-Aware Routing and Session Lifecycle](../L3-optimization.md#pattern-33--environment-aware-routing-and-session-lifecycle)
 
 ### Shallow Module
 
@@ -229,9 +229,9 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 ### Smart Routing
 
-**Level**: L3 - Optimization
+**Level**: L3 - Optimization (optional)
 **Definition**: Directing commands to the most efficient tool based on intent detection (e.g., Grep tool instead of raw grep, jcodemunch instead of find).
-**See**: [Pattern 3.1 - Smart Routing](../L3-optimization.md#pattern-31--smart-routing--tool-selection)
+**See**: [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)
 
 ### Spec Drift
 
@@ -247,9 +247,9 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 ### Structured Output
 
-**Level**: L3 - Optimization
+**Level**: L3 - Optimization (optional)
 **Definition**: Tool results returned as typed, summarized data structures instead of raw text, enabling agents to reason about data rather than parse strings.
-**See**: [Pattern 3.5 - Structured Output](../L3-optimization.md#pattern-35--structured-output-over-raw-text)
+**See**: [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)
 
 ---
 
@@ -263,9 +263,9 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 ### Token Efficiency
 
-**Level**: L3 - Optimization
-**Definition**: Lower token consumption per task, pursued through smart routing, structured output, and context engineering patterns. Measure it on your own sessions, in tokens.
-**See**: [L3 Optimization Overview](../L3-optimization.md)
+**Level**: L3 - Optimization (optional)
+**Definition**: Lower token consumption per task, pursued through native structured tools and context isolation. Measure it on your own sessions, in tokens.
+**See**: [L3: Optimization](../L3-optimization.md)
 
 ### Transient Volume
 
@@ -290,5 +290,5 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 - **L0 Foundation**: Project structure and entry points
 - **L1 Closed Loop Design**: Design-led verification and closed-loop testing
 - **L2 Behavioral Guardrails**: Skills, hooks, and enforcement
-- **L3 Optimization**: Token efficiency and routing
+- **L3 Optimization (optional)**: Token efficiency and routing
 - **L4 Standards & Measurement**: Evidence, drift detection, metrics, context eval, maturity

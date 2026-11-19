@@ -1,6 +1,8 @@
 # Guardrail Middleware Example
 
-A simplified implementation demonstrating smart routing and intent classification for token-optimized agent behavior.
+A simplified implementation demonstrating tool routing and intent classification for token-optimized agent behavior.
+
+This is a single-language (TypeScript) example for the optional [L3: Optimization](../../docs/L3-optimization.md) layer. It illustrates Pattern 3.1, Prefer Native Structured Tools; Block Destructive Edits.
 
 ## Overview
 
