@@ -160,7 +160,9 @@ The ledger lives at `.autonomy/ledger/<workflow>.jsonl` on a bot-only branch or 
 
 Three fields arrive late. A nightly job fills `reverted_at` (it scans for reverts), `rework_commits_14d` (follow-up commits touching the same lines) and `escaped_defect` (issues linked to the merge commit). Revert count alone is easy to game: do not revert. Rework and escaped defects close that gap.
 
-`harness_hash` covers the model id, the agent instruction file, `.claude/**`, skills, hooks and the harness configuration. A change to it is a release of the workflow. The workflow is capped at A3 until its task bank passes on the new hash.
+`harness_hash` covers the model id, the agent instruction file, `.claude/**`, skills, hooks and the harness configuration. A change to it is a release of the workflow. The workflow is capped at A3 until its [task
+bank](L4-standards-measurement.md#pattern-46--context-eval) passes on the new hash. The `context-eval` check in the
+record is the task-bank score that Pattern 4.6 defines: the share of tasks that pass at pass^k.
 
 The `autonomy ledger` command reads a ledger and prints the evidence report that a promotion pull request attaches (Pattern A.3).
 

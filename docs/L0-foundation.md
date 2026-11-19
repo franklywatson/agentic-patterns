@@ -511,12 +511,10 @@ skill, a hook, a deny rule, a routing note, a memory file. The steps:
    file (instruction file, skill, doc). A hook or setting has no front matter, so record them in the
    [agent register](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register). An artefact past its
    expiry is retired or re-reviewed; there is no third state.
-2. **A fixed task bank, run against a pinned model.** 10 to 30 tasks that represent the work agents do in the
-   project. Each task has a prompt, an expected artefact and a check that does not depend on the agent's own report.
-   The bank changes only by recorded additions. The model id is pinned for each run so that a difference between two
-   runs comes from the artefact or the model, not from both. This repository's bank is
-   [the task bank](references/task-bank.md). Its expected answers and seeds are held outside the agent's workspace by
-   `scripts/task-bank/run.py`, so a run cannot pass by reading them.
+2. **A fixed task bank, run against a pinned model.** [Pattern
+   4.6](L4-standards-measurement.md#pattern-46--context-eval) defines the bank, its scoring and its runner. Pin the
+   model id for each run so that a difference between two runs comes from the artefact or the model, not from both.
+   This repository's bank is [the task bank](references/task-bank.md).
 3. **Delete first at each model upgrade, and at least quarterly.** Run the bank without the artefact. If every task
    passes, delete it. If a task regresses, add the artefact back and record the task that justified it next to the
    artefact. An artefact with no justifying task is guidance nobody can show is needed.
@@ -591,7 +589,7 @@ bank has no task that exercises the rule, add the task before deleting.
 **Cross-References**: [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) sets the instruction
 file's owner and review date. [Pattern 0.8](#pattern-08--aggressive-cleanup) is the same discipline for code. [Pattern
 2.4](L2-behavioral-guardrails.md#pattern-24--constitutional-rules) places each rule at an enforcement point. [Pattern
-4.6](L4-standards-measurement.md#pattern-46--context-eval) supplies the scoring method for a task bank. [Pattern
+4.6](L4-standards-measurement.md#pattern-46--context-eval) defines the task bank, its scoring and its runner. [Pattern
 4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) holds owner and expiry for hooks and
 settings.
 
@@ -604,8 +602,8 @@ settings.
 - **L1: Closed Loop Design** — Testing at module boundaries validates deep module design
 - **L2: Behavioral Guardrails** — Skills enforce structural conventions during implementation
 - **L3: Optimization** — Good structure reduces token overhead for navigation
-- **L4: Standards & Measurement** — Evidence-based claims, metrics, CI guardrails, context eval; the task bank scoring
-  in Pattern 0.10 uses [Pattern 4.6](L4-standards-measurement.md#pattern-46--context-eval)
+- **L4: Standards & Measurement** — Evidence-based claims, metrics, CI guardrails, context eval; the task bank that
+  Pattern 0.10 runs is defined in [Pattern 4.6](L4-standards-measurement.md#pattern-46--context-eval)
 
 ## Further Reading
 

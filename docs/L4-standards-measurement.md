@@ -321,208 +321,90 @@ Putting thresholds in CI workflow files rather than project config. When thresho
 
 ### Problem
 
-Agent behavior is governed by layers of decision logic — routing rules, intent classifiers, skill selection, enforcement pipelines, guardrail checks. Without systematic evaluation, there is no evidence that any of these layers make correct decisions. Changes to rules, new environment configurations, or updated patterns can introduce regressions that go undetected until an agent session wastes tokens, violates a constitutional rule, or takes a wrong path. L4 requires evidence-based claims ([Pattern 4.1](#pattern-41--evidence-based-claims)); agent decision-making needs the same rigor.
+Agent behavior changes when its context changes: the instruction file, a skill, a hook, a routing rule, the harness
+configuration or the model version. Decision code that an agent's work passes through (a production gate, an
+autonomy hook) changes the outcome too. Without a fixed set of tasks to run before and after, a change is accepted
+because it feels better, and a regression shows up sessions later. One run of a stochastic agent shows nothing,
+because two runs of the same configuration can differ ([PO-25](references/sources.md)).
 
 ### Solution
 
-**Context eval** is a structured evaluation pattern that scores an agent's decisions against expected outcomes across multiple scenarios and configurations. The pattern is general — it applies to any agent decision layer where correctness can be defined as a mapping from input to expected output. The evaluation runs actual decision logic (not mocks), compares results to expectations, and produces a scored report that catches regressions before they reach production sessions.
+Keep a **task bank**: a fixed set of tasks, scored by checks the agent cannot influence, run by a runner on every
+change to the agent's context and at each model upgrade. This pattern is the library's single definition of the task
+bank. [Pattern 0.10](L0-foundation.md#pattern-010--prune-and-re-baseline-context) runs it to decide which context
+artefacts to delete, and [Pattern A.2](earned-autonomy.md#pattern-a2--evidence-ledger) records its score in the
+evidence ledger.
 
-**Evaluation targets — where context eval applies:**
+**The bank.** 10 to 30 tasks that represent the work agents do in the project. Each task has:
 
-| Agent Decision Layer | What Gets Evaluated | Example Scenarios |
-|---------------------|--------------------|--------------------|
-| Tool routing | Does the agent select the right tool for each command? | `grep` routes to structured search; `sed -i` gets blocked |
-| Intent classification | Does the classifier correctly identify operation type? | `cat file` → `file_read`; `sed -i` → `file_modify` |
-| Enforcement pipeline | Do guardrails fire at the right severity? | Mock in stack test → `block`; mock in unit test → `allow` |
-| Skill selection | Does the agent activate the right skill for the task? | Bug report → `debug+`; new feature → `plan+` |
-| Environment detection | Does the system adapt when tools are missing? | No RTK → degrade to `Grep`; no jcodemunch → raw search |
-| Constitutional compliance | Do rules hold across edge cases? | `sed -i` always blocked regardless of environment |
-| Language environment routing | Does the system detect and route to venv/uv? | Python `.venv/bin/pytest` rewrite when venv detected |
-| Config overrides | Do per-rule overrides change behavior correctly? | `native_read: block` blocks Read; `native_read: silent` suppresses advice |
-| Session state | Does cached state affect routing correctly? | Stale environment (5h old) clears cache; phase-aware routing still works |
-| Determinism | Does the same input always produce the same output? | Repeated `grep` routing produces identical result |
+- a prompt, given verbatim, that names no pattern, so the agent has to find what applies;
+- an expected artefact and where it is written;
+- a check that does not read the agent's own report: a command's exit code, an exact comparison, an allow or deny
+  decision;
+- the docs and examples it relies on.
 
-**The closed loop:**
+Expected values and seeds are held outside the agent's workspace, so a run cannot pass by reading them. The bank
+changes only by recorded additions, and a task is retired only with a recorded reason.
 
-```
-Define scenarios (input + expected outcome per configuration)
-    ↓
-Run scenarios against actual decision logic
-    ↓
-Score each result (1.0 exact, 0.5 partial, 0.0 miss)
-    ↓
-Generate report (overall score, per-category, per-configuration, failures)
-    ↓
-Fail build if overall score below threshold (e.g., 0.7)
-    ↓
-Fix decision logic or update scenarios → re-evaluate
-```
+**Scoring.**
 
-**Why context eval matters:** Agent decisions are high-frequency and compound — a tool-routing error on every `grep` call wastes thousands of tokens per session; a misfiring enforcement pipeline lets violations through or blocks legitimate work. Context eval provides the evidence that these decision layers work correctly and continue to work as they evolve.
+| Check | Score | Used for |
+|-------|-------|----------|
+| Deterministic (exit code, exact comparison, decision) | Exact pass^k: a task passes only when all k runs pass. No partial credit | Every gate, and every task whose outcome a command can decide |
+| Judged (a written explanation, a design choice) | Graded against a rubric fixed before the run | Reported beside the deterministic result; never turns a failed check into a pass |
 
-**Key concepts:**
+k is at least 3 for tasks run by an agent; the decision-code evals in this repository use k = 5. The **bank score**
+is the share of tasks that pass. Each gate states its floor: a configuration change passes when no task that passed at
+baseline fails; a promotion criterion sets a floor such as 0.90 ([Pattern
+A.3](earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate)); a suite for a safety or governance
+decision requires exactly 1.
 
-- **Scenarios**: Each scenario specifies an input (command, context, tool call) and the expected outcome for each configuration variant
-- **Configuration variants**: Different environmental conditions (tool availability, project type, agent phase, rule set). Logic that works in one configuration may fail in another
-- **Graduated scoring**: 1.0 for exact match, 0.5 for partial match (correct category, wrong detail), 0.0 for miss. Binary scoring misses nuance — suggesting `Grep` when `rtk grep` is unavailable is correct behavior, not a failure
-- **Category coverage**: Scenarios organized by category with per-category score reporting, directing attention to weak areas
-- **Threshold gate**: Minimum overall score that must be met; build fails if unmet, with detailed failure output
-- **Bidirectional coverage**: Not just "does the right thing happen?" but also "does the wrong thing get prevented?" — destructive operations must be blocked, violations must be caught, regardless of configuration
+**The runner.** For each task it copies the repository into a scratch directory without the expected values, plants
+any seed, removes each artefact under test, runs the harness command with a pinned model id, scores the artefact and
+appends one line to a run log. A dry-run mode scores a known-good and a known-bad artefact per task, so a broken
+check is caught before a real run. The runner is a required check on any pull request that changes a skill, a hook,
+the instruction file, the harness configuration or the model version ([Pattern 4.1](#pattern-41--evidence-based-claims),
+[Pattern 4.5](#pattern-45--ci-guardrails)).
 
-### In Practice — Tool Routing Example
+### In Practice
 
-The following example shows context eval applied to tool routing — evaluating whether the routing layer selects the correct tool for each command across different environment configurations.
-
-```typescript
-// Scenario definition — what should happen for each environment
-const scenario: EvalScenario = {
-  id: 'grep-should-route-to-rtk-or-grep-tool',
-  category: 'bash',
-  description: 'grep command routes to rtk grep (if available) or Grep tool',
-  toolCall: { tool: 'Bash', command: 'grep -r "processOrder" src/' },
-  expected: {
-    full:       { action: 'rewrite', tool: 'rtk grep' },
-    rtk_only:   { action: 'rewrite', tool: 'rtk grep' },
-    jm_only:    { action: 'advise',  tool: 'Grep' },
-    neither:    { action: 'advise',  tool: 'Grep' },
-    jm_not_indexed: { action: 'advise', tool: 'Grep' },
-  }
-};
-
-// Scoring: graduated, not binary
-function scoreResult(expected: ExpectedOutcome, actual: ActualOutcome): number {
-  if (expected.action === actual.action) {
-    if (!expected.tool || expected.tool === actual.tool) return 1.0; // exact
-    return 0.5; // correct action, wrong tool
-  }
-  return 0.0; // miss
-}
-
-// Evaluation loop: every scenario × every configuration
-describe('Context Eval: tool routing', () => {
-  const results: EvalResult[] = [];
-  const MIN_OVERALL_SCORE = 0.7;
-
-  for (const scenario of ALL_SCENARIOS) {
-    for (const preset of ENV_PRESETS) {
-      it(`${scenario.id} [${preset.name}]`, () => {
-        const actual = handlePreToolUse(scenario.toolCall, preset.env);
-        const expected = scenario.expected[preset.name];
-        const score = scoreResult(expected, actual);
-        results.push({ scenario, preset: preset.name, score, actual, expected });
-        expect(score).toBeGreaterThanOrEqual(0.5);
-      });
-    }
-  }
-
-  it('overall score meets minimum threshold', () => {
-    const report = buildReport(results);
-    if (report.overallScore < MIN_OVERALL_SCORE) {
-      // Detailed failure output for diagnosis
-      console.log(`Overall: ${report.overallScore} (min: ${MIN_OVERALL_SCORE})`);
-      for (const [cat, score] of Object.entries(report.byCategory)) {
-        console.log(`  ${cat}: ${score}`);
-      }
-      for (const f of report.failures) {
-        console.log(`  FAIL: ${f.scenario} [${f.preset}] — ${f.reason}`);
-      }
-    }
-    expect(report.overallScore).toBeGreaterThanOrEqual(MIN_OVERALL_SCORE);
-  });
-});
-```
-
-### In Practice — Enforcement Pipeline Example
-
-The same pattern applies to evaluating guardrail behavior. Here, scenarios test whether the enforcement pipeline fires at the correct severity for different code changes.
-
-```typescript
-const enforcementScenario: EvalScenario = {
-  id: 'mock-in-stack-test-should-block',
-  category: 'constitutional',
-  description: 'Mock pattern in stack test file triggers block',
-  input: {
-    filePath: 'tests/stack/04-checkout.stack.test.ts',
-    editContent: 'const mockDb = { getUser: () => ({}) }',
-  },
-  expected: {
-    default: { action: 'block', reason: 'constitutional_rule_1_no_mocks_in_stack_tests' },
-    unit_test_file: { action: 'allow' },  // mocks allowed in unit tests
-  }
-};
-```
-
-The evaluation structure is the same — scenarios define inputs and expected outputs, the actual enforcement logic runs, results are scored and reported.
-
-**Report structure** — the eval produces a structured report, not just pass/fail:
-
-```
-{
-  overallScore: 0.83,
-  totalScenarios: 90,    // 18 scenarios × 5 configurations
-  passCount: 75,
-  byCategory: {
-    bash: 0.89,
-    native: 1.0,
-    agent: 0.78,
-    pipe: 0.80,
-    edge: 0.67           ← edge cases need attention
-  },
-  byConfiguration: {
-    full: 0.94,
-    rtk_only: 0.83,
-    jm_only: 0.78,
-    neither: 0.72,
-    jm_not_indexed: 0.89
-  },
-  failures: [
-    { scenario: 'sed-i-blocks', configuration: 'neither', expected: 'block', actual: 'allow', reason: 'Destructive edit not blocked' }
-  ]
-}
-```
-
-The category and configuration breakdowns direct attention: a low `edge` score says "improve edge-case handling"; a low `neither` score says "test the degraded path more carefully."
-
-### Reference Implementation
-
-The [rig](https://github.com/franklywatson/claude-rig) repo implements context eval across multiple decision layers in [`tests/eval/`](https://github.com/franklywatson/claude-rig/tree/main/tests/eval):
-
-**Shared infrastructure:**
-
-- [`scenarios.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/scenarios.ts) — Scenario definitions: 21 base routing scenarios (5 env presets), 6 Python scenarios (4 Python env presets), mock rtk rewrite
-- [`score.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/score.ts) — Graduated scoring, report generation with per-category and per-environment breakdowns
-- [`score.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/score.test.ts) — Unit tests for scoring functions
-
-**Evaluation suites (each runs independently with its own threshold):**
-
-- [`eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/eval.test.ts) — Tool routing: 21 scenarios × 5 environment presets
-- [`python-eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/python-eval.test.ts) — Python environment routing: 6 scenarios × 4 Python env presets (venv, uv, both, none)
-- [`enforcement-eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/enforcement-eval.test.ts) — Enforcement pipeline: stale test detection, constitutional compliance, zero-defect parsing
-- [`determinism-eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/determinism-eval.test.ts) — Idempotency verification: same input produces identical output across routing and enforcement
-- [`session-state-eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/session-state-eval.test.ts) — Session state routing: cached Python env, stale environment, phase-aware routing, edited file tracking
-- [`config-override-eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/config-override-eval.test.ts) — Configurable override routing: block/silent modes for native Read, Grep, and path expansion
+- **This repository's bank** is [the task bank](references/task-bank.md): 15 tasks, the run procedure and the run log.
+  The runner is `scripts/task-bank/run.py`; `--remove PATH` takes an artefact out, `--model` pins the model id and
+  `--dry-run` checks the checks.
+- **Decision-code evals** use the same scoring without an agent in the loop. The autonomy example's eval
+  ([examples/autonomy](../examples/autonomy/README.md#eval-suite)) runs 17 scenarios through the real hook and
+  requires a score of exactly 1 at pass^5. The repair-loop gate eval ([examples/repair-loop](../examples/repair-loop/README.md))
+  runs 35 scenarios at pass^5.
+- **Tool routing** is another decision layer evaluated this way: scenarios of commands and expected routes, run
+  against the real router in each environment variant ([Pattern
+  3.1](L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)).
 
 ### Anti-Pattern
 
-- **Binary pass/fail**: Agent decisions have nuance — degrading gracefully when a tool is unavailable is correct, not a failure. Graduated scoring captures this.
-- **Single-configuration testing**: Logic that works in one environment may fail in another. Test across configuration variants.
-- **Evaluating mocked logic**: Running eval against a mock of the decision layer tests the mock, not the logic. Context eval exercises the actual production code path.
-- **Threshold too low**: A threshold of 0.0 means every decision can be wrong and the build still passes. A meaningful threshold (0.7+) forces quality to improve or the build fails.
-- **Scenarios that never change**: As decision logic evolves, scenarios must evolve with it. Stale scenarios test a system that no longer exists.
-- **Evaluating only one layer**: Tool routing is the most obvious evaluation target, but enforcement pipelines, skill selection, and constitutional compliance all benefit from the same structured eval approach.
+- **One run per configuration.** A single pass or fail of a stochastic agent does not show a difference.
+- **Partial credit on a deterministic check.** "Right action, wrong target" counted as half a pass lets a gate pass
+  with wrong decisions.
+- **A floor below 1 on a safety or governance suite.** One wrong allow on an irreversible action is a failure.
+- **Checks that read the agent's report.** The agent's account of its work is a claim, not a result.
+- **Evaluating a mock of the decision layer.** That tests the mock. Run the production code path.
+- **Expected values in the agent's workspace.** The agent can read them and pass without doing the task.
+- **A bank that is never run.** A bank with no run in its log supports no claim about any artefact.
 
 ### Cross-References
 
-- [Pattern 3.1 — Prefer Native Structured Tools](L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits) — Tool routing and intent classification are context eval applications
-- [Pattern 3.3 — Environment-Aware Routing](L3-optimization.md#pattern-33--environment-aware-routing-and-session-lifecycle) — Configuration variants in eval ensure degraded paths work
-- [Pattern 2.4 — Constitutional Rules](L2-behavioral-guardrails.md#pattern-24--constitutional-rules) — Constitutional compliance can be eval'd through scenarios
-- [Pattern 2.3 — Composing Checks](L2-behavioral-guardrails.md#composing-checks) — Pipeline behavior can be eval'd through scenarios
-- [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — Context eval produces evidence for decision-layer effectiveness claims
-- [Pattern 4.5 — CI Guardrails](#pattern-45--ci-guardrails) — Context eval runs in CI as a non-negotiable quality gate
-- [Pattern 0.10](L0-foundation.md#pattern-010--prune-and-re-baseline-context) — A task bank scored with this method
-  decides which context artefacts to delete
+- [Pattern 0.10 — Prune and Re-baseline Context](L0-foundation.md#pattern-010--prune-and-re-baseline-context) —
+  runs the bank without each artefact to decide what to delete
+- [Pattern A.2 — Evidence Ledger](earned-autonomy.md#pattern-a2--evidence-ledger) — the bank score is a ledger field;
+  a changed harness holds a workflow at A3 until the bank passes
+- [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — configuration changes are releases
+- [Pattern 4.5 — CI Guardrails](#pattern-45--ci-guardrails) — the runner as a required check
+- [Pattern 1.7 — Incident-to-Stack-Test](L1-patterns/1.7-incident-to-stack-test.md) — an agent configuration
+  incident becomes a task
+- [Pattern 2.3 — Composing Checks](L2-behavioral-guardrails.md#composing-checks) — hook decisions are evaluated with
+  exact scoring
 
-**Evidence:** Partial — task banks, repeated trials and reading transcripts are documented practice from two vendors; no independent outcome evidence that scored routing improves results (MV-9, MV-10)
+**Evidence:** Partial — task banks, repeated trials and reading transcripts are documented practice from two vendors;
+no independent outcome evidence that a task bank improves results (MV-9, MV-10, PO-25)
 
 ---
 
@@ -763,7 +645,7 @@ L4 holds the practices that check L0-L3 and measure their impact:
 1. **Pattern 4.1 (Evidence-Based Claims):** Run the check and show its output; the reviewer reads the CI run
 2. **Pattern 4.4 (Agentic Development Metrics):** Measure outcomes, close the feedback loop
 3. **Pattern 4.5 (CI Guardrails):** Non-negotiable enforcement through CI workflows
-4. **Pattern 4.6 (Context Eval):** Score routing decisions against expected outcomes across environments
+4. **Pattern 4.6 (Context Eval):** A fixed task bank, scored by exact pass^k, gates every context or model change
 5. **Pattern 4.7 (Author of Record and Agent Register):** Name a person for agent-written code; list every agent
    and its owner
 6. **Pattern 4.9 (Deliberate Practice):** Keep the skill to supervise the agent alive
