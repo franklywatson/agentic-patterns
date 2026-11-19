@@ -3,7 +3,7 @@
 - **Status:** Not started
 - **Depends on:** Phase 3 for A.1-A.3 (register, ledger, promotion and the cap gate). Phase 0 T4 for
   the real minimal app.
-- **Gated by decisions:** D1 (scope: bring in the seam and the repair patterns)
+- **Gated by decisions:** D1 (scope: bring in the seam and the repair patterns); decided 2026-11-19
 - **Suggested branch:** `refresh/phase-4-self-repair`. 1.7 can ship ahead of the rest.
 
 ## Goal

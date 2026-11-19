@@ -9,7 +9,7 @@ it, and update the affected plans.
 
 ## D1. Scope: development library or full lifecycle?
 
-- **Status:** Open
+- **Status:** Decided (2026-11-19): (b) — bring in the seam (incident record in; reproduction test and evidence bundle out) and repair patterns 1.7-1.12; deployment tooling stays out
 - **Gates:** Phase 4
 - **Question:** The FAQ (`docs/cross-cutting/faq.md`) keeps production out of scope. Self-repair
   needs production signals.
@@ -75,7 +75,7 @@ it, and update the affected plans.
 
 ## D7. Where the autonomy tooling lives
 
-- **Status:** Open
+- **Status:** Decided (2026-11-19): (a) — minimal runnable `examples/autonomy/` in TypeScript and Python in this repo, dogfooded here; rig is the fuller implementation
 - **Gates:** Phase 3
 - **Options:**
   - (a) A minimal runnable example in `examples/autonomy/`, with rig as the fuller implementation.
@@ -99,3 +99,5 @@ it, and update the affected plans.
 | 2026-11-19 | D5: vendor posture | (a) neutral contracts with bindings; AGENTS.md as shared instruction file; rig disclosure line | Maintainer |
 | 2026-11-19 | T10: `examples/guardrails` TypeScript-only | Keep examples/guardrails; amend the writing rule for optional L3 | Maintainer |
 | 2026-11-19 | Diagram work | Deferred until all phases complete (supersedes "separate PR after Phase 0") | Maintainer |
+| 2026-11-19 | D1: scope | (b) the seam (incident record in; reproduction test and evidence bundle out) and repair patterns 1.7-1.12; deployment tooling stays out | Maintainer |
+| 2026-11-19 | D7: where the autonomy tooling lives | (a) minimal runnable `examples/autonomy/` in TypeScript and Python, dogfooded here; rig is the fuller implementation | Maintainer |

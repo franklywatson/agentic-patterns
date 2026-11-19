@@ -5,8 +5,8 @@ that any session, human or agent, can take over the refresh without the conversa
 produced it.
 
 Status: **analysis complete; Phase 0 is merged. Phase 1 is in progress on branch
-`refresh/phase-1-reframe`.** D2-D6 are decided (see [decisions.md](decisions.md)); D1 and D7 are
-open and gate Phases 3-4.
+`refresh/phase-1-reframe`.** All decisions D1-D7 are decided (2026-11-19; see
+[decisions.md](decisions.md)).
 
 ## What happened
 
@@ -36,7 +36,7 @@ The synthesis is committed twice: as a page snapshot,
 |------|---------|
 | [synthesis.md](synthesis.md) | The combined findings, the reframe, both goals, the prerequisite track, pruning, defects, roadmap and decisions |
 | [sources.md](../references/sources.md) | Every cited source with its public URL, and the baseline's structure, so each reference ID resolves |
-| [decisions.md](decisions.md) | Decisions (open, partly decided and decided) with recommendations. **Read first**: several plans are gated on them. |
+| [decisions.md](decisions.md) | All decisions D1-D7, decided 2026-11-19, with options and the choice made. **Read first**: the plans follow them. |
 | [plans/](plans/) | One scoped plan per phase, each written to be executed by a session that has read only this directory |
 | [reviews/review-evidence.md](reviews/review-evidence.md) | Evidence auditor: holds the repo to its own "every claim verifiable" rule |
 | [reviews/review-autonomy.md](reviews/review-autonomy.md) | Autonomy-ladder architect: maps L0-L4 onto the curve and designs earned autonomy |
@@ -58,15 +58,15 @@ PR #4.
 | 0 | [Correct defects](plans/phase-0-correct.md) | none | none |
 | 1 | [Reframe and prune](plans/phase-1-reframe.md) | Phase 0 | D2, D3, D4, D5, D6 (all decided 2026-11-19) |
 | 2 | [Containment, ownership and people](plans/phase-2-contain.md) | Phase 1 | D5 |
-| 3 | [Earned autonomy](plans/phase-3-earned-autonomy.md) | Phase 2 | D2, D7 |
-| 4 | [Self-repair](plans/phase-4-self-repair.md) | Phase 3 (A.1-A.3) | D1 |
-| Ongoing | [Prune and re-baseline](plans/phase-5-rebaseline.md) | Phase 1 | D4 |
+| 3 | [Earned autonomy](plans/phase-3-earned-autonomy.md) | Phase 2 | D2, D7 (decided 2026-11-19) |
+| 4 | [Self-repair](plans/phase-4-self-repair.md) | Phase 3 (A.1-A.3) | D1 (decided) |
+| Ongoing | [Prune and re-baseline](plans/phase-5-rebaseline.md) | Phase 1 | D4 (decided) |
 
 ## How to take over
 
 1. Read [synthesis.md](synthesis.md), then [decisions.md](decisions.md).
-2. Confirm with the maintainer any decision still marked **Open** before
-   starting a plan it gates.
+2. All decisions are decided; if a plan's task conflicts with one, ask the maintainer before
+   proceeding.
    Phase 0 needs no decision and can start immediately.
 3. Pick one plan. Each lists its tasks, the files it touches, its acceptance checks and what is out
    of scope. Work on a branch, one PR per phase. If a phase is large, split it into one PR per
