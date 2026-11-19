@@ -406,3 +406,64 @@ def test_commits_from_git_reads_the_committer_so_an_agent_committer_is_an_agent_
     assert commits[0]["author"] == "Alice"
     assert commits[0]["committer"] == "deps-bot[bot]"
     assert is_agent_commit(commits[0], []) is True
+
+
+def _octopus_repo(copy_fixture, merge_author):
+    directory = _repo(copy_fixture, "Alice")
+    _git(directory, "Alice", "branch", "-M", "master")
+    for b in ["b1", "b2"]:
+        _git(directory, "Alice", "checkout", "-q", "-b", b, "master")
+        (directory / f"{b}.txt").write_text(f"{b}\n")
+        _git(directory, "Alice", "add", "-A")
+        _git(directory, "Alice", "commit", "-q", "-m", b)
+    _git(directory, "Alice", "checkout", "-q", "-b", "trunk", "master")
+    _git(directory, merge_author, "merge", "--no-ff", "--no-commit", "b1", "b2")
+    (directory / ".claude" / "hooks").mkdir(parents=True)
+    (directory / ".claude" / "hooks" / "x.sh").write_text("true\n")
+    _git(directory, merge_author, "add", "-A")
+    _git(directory, merge_author, "commit", "-q", "-m", "octopus")
+    return directory
+
+
+def test_an_agent_commit_with_more_than_two_parents_fails_with_merge_unsupported(copy_fixture):
+    directory = _octopus_repo(copy_fixture, "deps-bot[bot]")
+    commits = commits_from_git(directory, "master..HEAD")
+    assert commits[-1]["parents"] == 3
+    assert run_check(directory, NOW_MS, commits=commits)["failures"] == [{"code": "merge-unsupported", "commit": commits[-1]["sha"]}]
+
+
+def test_a_non_agent_octopus_merge_is_not_checked_and_lists_files_against_its_first_parent(copy_fixture):
+    directory = _octopus_repo(copy_fixture, "Alice")
+    commits = commits_from_git(directory, "master..HEAD")
+    assert sorted(commits[-1]["files"]) == [".claude/hooks/x.sh", "b1.txt", "b2.txt"]
+    assert run_check(directory, NOW_MS, commits=commits)["ok"] is True
+
+
+def test_a_crlf_acknowledgement_read_from_git_does_not_count(copy_fixture):
+    directory = _repo(copy_fixture, "deps-bot[bot]")
+    (directory / ".github" / "workflows").mkdir(parents=True)
+    (directory / ".github" / "workflows" / "ci.yml").write_text("name: ci\n")
+    _git(directory, "deps-bot[bot]", "add", "-A")
+    _git(directory, "deps-bot[bot]", "commit", "-q", "-m", "add ci")
+    sha = _out(directory, "deps-bot[bot]", "rev-parse", "HEAD").strip()
+    _git(directory, "Alice", "commit", "-q", "--allow-empty", "--cleanup=verbatim", "-m", f"Approve\r\n\r\nGovernance-Approved: {sha[:7]}\r\n")
+    commits = commits_from_git(directory, "HEAD~2..HEAD")
+    assert "\r\n" in commits[1]["body"]
+    assert run_check(directory, NOW_MS, commits=commits)["failures"] == [unacknowledged(sha, ".github/workflows/ci.yml")]
+
+
+def test_a_path_that_is_not_valid_utf_8_fails_closed_as_path_undecodable(copy_fixture):
+    directory = _repo(copy_fixture, "deps-bot[bot]")
+    blob = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=directory, input=b"x\n", check=True, capture_output=True).stdout.decode().strip()
+    entry = f"100644 {blob}\t.github/workflows/".encode() + b"\xff" + b".yml\n"
+    subprocess.run(["git", "update-index", "--add", "--index-info"], cwd=directory, input=entry, check=True, capture_output=True)
+    _git(directory, "deps-bot[bot]", "commit", "-q", "-m", "bad path")
+    commits = commits_from_git(directory, "HEAD~1..HEAD")
+    assert run_check(directory, NOW_MS, commits=commits)["failures"] == [
+        {"code": "path-undecodable", "commit": commits[0]["sha"], "file": ".github/workflows/\ufffd.yml"}
+    ]
+
+
+def test_fail_lines_print_non_ascii_paths_as_they_are():
+    result = run_check(fixture("registers", "valid"), NOW_MS, commits=[agent_commit([".autonomy/ledger/r\u00e9view.jsonl"])])
+    assert '"file":".autonomy/ledger/r\u00e9view.jsonl"' in format_check(result)

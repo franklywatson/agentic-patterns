@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -73,24 +74,40 @@ RANGE = re.compile(r"^[\w./^~@{:+][\w./^~@{}:+-]*(\.\.\.?[\w./^~@{}:+-]+)?\Z")
 SHA = re.compile(r"([0-9a-f]{40}|[0-9a-f]{64})")
 
 
+def git_raw(directory: str | Path, args: list[str]) -> tuple[str, str] | None:
+    """Run git, decode stdout as UTF-8 without newline translation (invalid bytes become U+FFFD), keep stderr."""
+    run = subprocess.run(["git", *args], cwd=directory, capture_output=True)
+    if run.returncode != 0:
+        return None
+    return run.stdout.decode("utf-8", errors="replace"), run.stderr.decode("utf-8", errors="replace")
+
+
 def commits_from_git(directory: str | Path, range_: str) -> list[dict]:
     """Commits in the range, oldest first. Each commit is read in its own git call and parsed by NUL, which git
     refuses in a message, so a message cannot forge a record. Paths are read with -z and quotePath off, and a
     merge lists what it changed beyond the automatic merge (remerge)."""
     if not RANGE.match(range_):
         raise ValueError(f"invalid git range: {range_}")
-    listing = git(directory, ["rev-list", "--reverse", range_])
+    listing = git_raw(directory, ["rev-list", "--reverse", range_])
     if listing is None:
         raise RuntimeError(f"git rev-list failed for range {range_}")
     commits = []
-    for sha in [line for line in listing.split("\n") if line]:
+    for sha in [line for line in listing[0].split("\n") if line]:
         if not SHA.fullmatch(sha):
             raise RuntimeError(f"git returned a malformed sha: {sha}")
-        meta = git(directory, ["-c", "core.quotePath=false", "show", "-s", "--format=%an%x00%ae%x00%cn%x00%ce%x00%B", sha])
-        names = git(directory, ["-c", "core.quotePath=false", "show", "-z", "--name-only", "--no-renames", "--diff-merges=remerge", "--format=", sha])
+        meta = git_raw(directory, ["-c", "core.quotePath=false", "show", "-s", "--format=%an%x00%ae%x00%cn%x00%ce%x00%P%x00%B", sha])
+        names = git_raw(directory, ["-c", "core.quotePath=false", "show", "-z", "--name-only", "--no-renames", "--diff-merges=remerge", "--format=", sha])
         if meta is None or names is None:
             raise RuntimeError(f"git show failed for {sha}")
-        author, email, committer, committer_email, *body = meta.split("\0")
+        author, email, committer, committer_email, parent_list, *body = meta[0].split("\0")
+        parents = len([p for p in parent_list.split(" ") if p])
+        files = [f for f in names[0].split("\0") if f]
+        if parents > 1 and "warning:" in names[0] + names[1]:
+            # remerge was skipped (git prints a warning): list against the first parent instead of trusting the output.
+            fallback = git_raw(directory, ["-c", "core.quotePath=false", "diff-tree", "-z", "--name-only", "-r", "--no-renames", f"{sha}^1", sha])
+            if fallback is None:
+                raise RuntimeError(f"git diff-tree failed for {sha}")
+            files = [f for f in fallback[0].split("\0") if f]
         commits.append(
             {
                 "sha": sha,
@@ -98,8 +115,9 @@ def commits_from_git(directory: str | Path, range_: str) -> list[dict]:
                 "email": email,
                 "committer": committer,
                 "committer_email": committer_email,
+                "parents": parents,
                 "body": "\0".join(body),
-                "files": [f for f in names.split("\0") if f],
+                "files": files,
             }
         )
     return commits
@@ -141,6 +159,9 @@ def run_check(directory: str | Path, now: int, register_path: str | Path | None 
     for index, commit in enumerate(ordered):
         if not is_agent_commit(commit, tokens):
             continue
+        if (commit.get("parents") or 0) > 2:
+            result["failures"].append({"code": "merge-unsupported", "commit": commit["sha"]})
+            continue
         sha = commit["sha"].lower()
         acknowledger = next(
             (
@@ -152,7 +173,9 @@ def run_check(directory: str | Path, now: int, register_path: str | Path | None 
             None,
         )
         for file in commit["files"]:
-            if is_tier1_file(file):
+            if "\ufffd" in file:
+                result["failures"].append({"code": "path-undecodable", "commit": commit["sha"], "file": file})
+            elif is_tier1_file(file):
                 result["failures"].append({"code": "governance-file-changed-by-agent", "commit": commit["sha"], "file": file})
             elif is_tier2_file(file):
                 if acknowledger:
@@ -174,6 +197,6 @@ def format_check(result: dict) -> str:
     for a in result["acknowledged"]:
         lines.append(f"governance: {a['commit'][:7]} changed {a['file']} (acknowledged by {a['by'][:7]})")
     for f in result["failures"]:
-        lines.append(f"FAIL {json.dumps(f, separators=(',', ':'))}")
+        lines.append(f"FAIL {json.dumps(f, separators=(',', ':'), ensure_ascii=False)}")
     lines.append("autonomy check: ok" if result["ok"] else "autonomy check: FAILED")
     return "\n".join(lines)

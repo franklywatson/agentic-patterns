@@ -367,3 +367,65 @@ test("commitsFromGit reads the committer, so an agent committer is an agent comm
   assert.equal(commits[0].committer, "deps-bot[bot]");
   assert.equal(isAgentCommit(commits[0], []), true);
 });
+
+const octopusRepo = (mergeAuthor: string) => {
+  const { dir, run } = repoWith("Alice");
+  run("Alice", ["branch", "-M", "master"]);
+  for (const b of ["b1", "b2"]) {
+    run("Alice", ["checkout", "-q", "-b", b, "master"]);
+    writeFileSync(join(dir, `${b}.txt`), `${b}\n`);
+    run("Alice", ["add", "-A"]);
+    run("Alice", ["commit", "-q", "-m", b]);
+  }
+  run("Alice", ["checkout", "-q", "-b", "trunk", "master"]);
+  run(mergeAuthor, ["merge", "--no-ff", "--no-commit", "b1", "b2"]);
+  mkdirSync(join(dir, ".claude", "hooks"), { recursive: true });
+  writeFileSync(join(dir, ".claude", "hooks", "x.sh"), "true\n");
+  run(mergeAuthor, ["add", "-A"]);
+  run(mergeAuthor, ["commit", "-q", "-m", "octopus"]);
+  return { dir, run };
+};
+
+test("an agent commit with more than two parents fails with merge-unsupported", () => {
+  const { dir } = octopusRepo("deps-bot[bot]");
+  const commits = commitsFromGit(dir, "master..HEAD");
+  const octopus = commits[commits.length - 1];
+  assert.equal(octopus.parents, 3);
+  assert.deepEqual(runCheck({ dir, now, commits }).failures, [{ code: "merge-unsupported", commit: octopus.sha }]);
+});
+
+test("a non-agent octopus merge is not checked and lists files against its first parent", () => {
+  const { dir } = octopusRepo("Alice");
+  const commits = commitsFromGit(dir, "master..HEAD");
+  const octopus = commits[commits.length - 1];
+  assert.deepEqual([...octopus.files].sort(), [".claude/hooks/x.sh", "b1.txt", "b2.txt"]);
+  assert.equal(runCheck({ dir, now, commits }).ok, true);
+});
+
+test("a CRLF acknowledgement read from git does not count", () => {
+  const { dir, run } = repoWith("deps-bot[bot]");
+  mkdirSync(join(dir, ".github", "workflows"), { recursive: true });
+  writeFileSync(join(dir, ".github", "workflows", "ci.yml"), "name: ci\n");
+  run("deps-bot[bot]", ["add", "-A"]);
+  run("deps-bot[bot]", ["commit", "-q", "-m", "add ci"]);
+  const sha = run("deps-bot[bot]", ["rev-parse", "HEAD"]).trim();
+  run("Alice", ["commit", "-q", "--allow-empty", "--cleanup=verbatim", "-m", `Approve\r\n\r\nGovernance-Approved: ${sha.slice(0, 7)}\r\n`]);
+  const commits = commitsFromGit(dir, "HEAD~2..HEAD");
+  assert.match(commits[1].body ?? "", /\r\n/);
+  assert.deepEqual(runCheck({ dir, now, commits }).failures, [unacknowledged(sha, ".github/workflows/ci.yml")]);
+});
+
+test("a path that is not valid UTF-8 fails closed as path-undecodable", () => {
+  const { dir, run } = repoWith("deps-bot[bot]");
+  const blob = execFileSync("git", ["hash-object", "-w", "--stdin"], { cwd: dir, input: "x\n", encoding: "utf8" }).trim();
+  const entry = Buffer.concat([Buffer.from(`100644 ${blob}\t.github/workflows/`), Buffer.from([0xff]), Buffer.from(".yml\n")]);
+  execFileSync("git", ["update-index", "--add", "--index-info"], { cwd: dir, input: entry });
+  run("deps-bot[bot]", ["commit", "-q", "-m", "bad path"]);
+  const commits = commitsFromGit(dir, "HEAD~1..HEAD");
+  assert.deepEqual(runCheck({ dir, now, commits }).failures, [{ code: "path-undecodable", commit: commits[0].sha, file: ".github/workflows/\ufffd.yml" }]);
+});
+
+test("FAIL lines print non-ASCII paths as they are", () => {
+  const result = runCheck({ dir: fixture("registers", "valid"), now, commits: [agentCommit([".autonomy/ledger/réview.jsonl"])] });
+  assert.ok(formatCheck(result).includes('"file":".autonomy/ledger/réview.jsonl"'));
+});

@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { allWorkflows, effectiveLevel, capOf, profileStatus } from "./levels.js";
@@ -38,6 +39,7 @@ export interface Commit {
   email: string;
   committer?: string;
   committer_email?: string;
+  parents?: number;
   body?: string;
   files: string[];
 }
@@ -92,6 +94,18 @@ export function isAgentCommit(commit: Commit, tokens: string[]): boolean {
 const RANGE = /^[\w./^~@{:+][\w./^~@{}:+-]*(\.\.\.?[\w./^~@{}:+-]+)?$/;
 const SHA = /^([0-9a-f]{40}|[0-9a-f]{64})$/;
 
+interface GitOutput {
+  out: string;
+  err: string;
+}
+
+/** Run git, decode stdout as UTF-8 without newline translation (invalid bytes become U+FFFD), keep stderr. */
+function gitRaw(dir: string, args: string[]): GitOutput | null {
+  const run = spawnSync("git", args, { cwd: dir, maxBuffer: 1 << 28 });
+  if (run.error || run.status !== 0) return null;
+  return { out: new TextDecoder("utf-8").decode(run.stdout), err: run.stderr.toString("utf8") };
+}
+
 /**
  * Commits in the range, oldest first. Each commit is read in its own git call and parsed by NUL, which git
  * refuses in a message, so a message cannot forge a record. Paths are read with -z and quotePath off, and a
@@ -99,16 +113,24 @@ const SHA = /^([0-9a-f]{40}|[0-9a-f]{64})$/;
  */
 export function commitsFromGit(dir: string, range: string): Commit[] {
   if (!RANGE.test(range)) throw new Error(`invalid git range: ${range}`);
-  const list = git(dir, ["rev-list", "--reverse", range]);
+  const list = gitRaw(dir, ["rev-list", "--reverse", range]);
   if (list === null) throw new Error(`git rev-list failed for range ${range}`);
   const commits: Commit[] = [];
-  for (const sha of list.split("\n").filter(Boolean)) {
+  for (const sha of list.out.split("\n").filter(Boolean)) {
     if (!SHA.test(sha)) throw new Error(`git returned a malformed sha: ${sha}`);
-    const meta = git(dir, ["-c", "core.quotePath=false", "show", "-s", "--format=%an%x00%ae%x00%cn%x00%ce%x00%B", sha]);
-    const names = git(dir, ["-c", "core.quotePath=false", "show", "-z", "--name-only", "--no-renames", "--diff-merges=remerge", "--format=", sha]);
+    const meta = gitRaw(dir, ["-c", "core.quotePath=false", "show", "-s", "--format=%an%x00%ae%x00%cn%x00%ce%x00%P%x00%B", sha]);
+    const names = gitRaw(dir, ["-c", "core.quotePath=false", "show", "-z", "--name-only", "--no-renames", "--diff-merges=remerge", "--format=", sha]);
     if (meta === null || names === null) throw new Error(`git show failed for ${sha}`);
-    const [author, email, committer, committer_email, ...body] = meta.split("\0");
-    commits.push({ sha, author, email, committer, committer_email, body: body.join("\0"), files: names.split("\0").filter(Boolean) });
+    const [author, email, committer, committer_email, parentList, ...body] = meta.out.split("\0");
+    const parents = parentList.split(" ").filter(Boolean).length;
+    let files = names.out.split("\0").filter(Boolean);
+    if (parents > 1 && /warning:/.test(names.out + names.err)) {
+      // remerge was skipped (git prints a warning): list against the first parent instead of trusting the output.
+      const fallback = gitRaw(dir, ["-c", "core.quotePath=false", "diff-tree", "-z", "--name-only", "-r", "--no-renames", `${sha}^1`, sha]);
+      if (fallback === null) throw new Error(`git diff-tree failed for ${sha}`);
+      files = fallback.out.split("\0").filter(Boolean);
+    }
+    commits.push({ sha, author, email, committer, committer_email, parents, body: body.join("\0"), files });
   }
   return commits;
 }
@@ -156,12 +178,18 @@ export function runCheck(opts: CheckOptions): CheckResult {
   commits.forEach((commit, index) => {
     if (!isAgentCommit(commit, tokens)) return;
     const sha = commit.sha.toLowerCase();
+    if ((commit.parents ?? 0) > 2) {
+      result.failures.push({ code: "merge-unsupported", commit: commit.sha });
+      return;
+    }
     const names = (prefix: string) => agentShas.filter((other) => other.startsWith(prefix)).length;
     const acknowledger = commits
       .slice(index + 1)
       .find((later) => !isAgentCommit(later, tokens) && approvedPrefixes(later.body).some((p) => sha.startsWith(p) && names(p) === 1));
     for (const file of commit.files) {
-      if (isTier1File(file)) {
+      if (file.includes("\ufffd")) {
+        result.failures.push({ code: "path-undecodable", commit: commit.sha, file });
+      } else if (isTier1File(file)) {
         result.failures.push({ code: "governance-file-changed-by-agent", commit: commit.sha, file });
       } else if (isTier2File(file)) {
         if (acknowledger) result.acknowledged.push({ commit: commit.sha, file, by: acknowledger.sha });
