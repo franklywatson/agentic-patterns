@@ -190,6 +190,11 @@ The testing infrastructure demonstrates rinsing at the practice level — the tr
 
 Test markers: `pytest -m "not integration"` for unit (no network), `pytest -m integration` for real API tests (auto-skip if no .env). Unit tests use no mocks — they test against the module interfaces directly.
 
+**Deviations from the patterns:**
+
+- Unit tests without mocks are my-claw's choice, not the pattern. [Pattern 1.5](../L1-patterns/1.5-no-mock-philosophy.md) and [L0 Pattern 0.5](../L0-foundation.md#pattern-05--unit-tests-as-contract) treat mocks in unit tests as appropriate for isolation.
+- Integration tests that auto-skip when `.env` is absent deviate from [Pattern 1.6](../L1-patterns/1.6-test-integrity.md). A skipped test reports no failure, so a run without credentials passes without exercising the real APIs. Under Pattern 1.6 those tests must fail, or be skipped explicitly with a documented reason that the CI run reports.
+
 ---
 
 ## Cross-Level Integration

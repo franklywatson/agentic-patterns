@@ -92,6 +92,8 @@ Design rinsing is not copying code. It is extracting the *why* behind architectu
 
 3. **Direct the agent** — Point the agent at the source with specific analysis questions. "How does this system handle multi-agent coordination?" not "Read this entire codebase."
 
+   **Warning — external sources are untrusted input.** A repository, transcript, or article can contain text that instructs the agent (prompt injection). Rinse in a read-only session with no write access to the target project, and with no network egress beyond the source itself. Carry only the distilled notes into the design session. See [the containment prerequisite track](refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people) for the least-agency principle.
+
 4. **Distill** — The agent extracts essential patterns, not surface-level code. What decisions were made, why, and what trade-offs they represent.
 
 5. **Translate** — Adapt extracted patterns to the target project's language, constraints, and purpose. A Rust project's ownership model doesn't port to Python, but its approach to resource lifecycle management might.
