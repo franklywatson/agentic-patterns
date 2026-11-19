@@ -1,0 +1,18 @@
+[
+  {
+    "sha": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678",
+    "author": "deps-bot[bot]",
+    "email": "deps-bot@users.noreply.example.invalid",
+    "body": "agent change",
+    "files": [
+      ".github/workflows/ci.yml"
+    ]
+  },
+  {
+    "sha": "c3d4e5f60718293a4b5c6d7e8f90123456789012",
+    "author": "Alice",
+    "email": "alice@example.invalid",
+    "body": "ok Governance-Approved: a1b2c3d\n",
+    "files": []
+  }
+]

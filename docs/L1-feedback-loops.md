@@ -1,3 +1,8 @@
+---
+last-validated-model: claude-opus-5-5
+reviewed: 2026-11-19
+---
+
 # L1 Closed Loop Design and Verification
 
 **Layer 1** of the agentic patterns: the layer where agents stop guessing and start designing. L0 provides navigable structure — deep modules, progressive disclosure, the agent instruction file as constitution, unit tests as contract. L1 is where the agent uses that structure to gather evidence, form hypotheses, propose architectural changes, and validate the result through closed-loop verification.

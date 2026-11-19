@@ -27,7 +27,8 @@ agentic-patterns/
 │   ├── references/
 │   │   ├── reference-telegram-trading-bot-case-study.md
 │   │   ├── further-reading.md
-│   │   └── sources.md
+│   │   ├── sources.md
+│   │   └── task-bank.md
 │   └── refresh/                 # Working material for the current revision
 ├── examples/                    # Working code (TS + Python)
 └── docs/diagrams/               # Diagrams for L1-L4
@@ -58,6 +59,16 @@ See [README.md](README.md) for detailed project overview.
 - If you modify code in `examples/`, update the corresponding `docs/` file in the same session.
 - Code changes without doc updates are incomplete work.
 
+**Front matter on pattern docs:**
+
+- Every pattern doc (`docs/L0` to `docs/L4`, `docs/L1-patterns/`, `docs/earned-autonomy.md`, the cross-cutting
+  guides except glossary and FAQ) starts with YAML front matter holding `last-validated-model:` (the model id the
+  content was last checked against) and `reviewed:` (`YYYY-MM-DD`).
+- Quoted dates and a trailing `# comment` are accepted. A future date fails, and an optional `expires:` key fails
+  once it has passed. Tests: `python3 -m unittest discover -s scripts/tests`.
+- Update both keys when you review or change a doc. `scripts/check-doc-freshness.py` warns at 90 days and fails at 180
+  days or when a key is missing ([Pattern 0.10](docs/L0-foundation.md#pattern-010--prune-and-re-baseline-context)).
+
 **Master index requirement:**
 
 - Every doc in this repo must be reachable from AGENTS.md (this file), which CLAUDE.md imports.
@@ -76,7 +87,8 @@ See [README.md](README.md) for detailed project overview.
 
 **Foundation:**
 
-- [docs/L0-foundation.md](docs/L0-foundation.md) — Deep modules, progressive disclosure, agent instruction file patterns
+- [docs/L0-foundation.md](docs/L0-foundation.md) — Deep modules, progressive disclosure, agent instruction file
+  patterns, prune and re-baseline context (Pattern 0.10)
 
 **Closed Loop Design and Verification:**
 
@@ -127,6 +139,8 @@ See [README.md](README.md) for detailed project overview.
 - [docs/references/reference-telegram-trading-bot-case-study.md](docs/references/reference-telegram-trading-bot-case-study.md) — Production reference implementation
 - [docs/references/further-reading.md](docs/references/further-reading.md) — External resources
 - [docs/references/sources.md](docs/references/sources.md) — Citation bibliography for reference IDs
+- [docs/references/task-bank.md](docs/references/task-bank.md) — 15 tasks and a run log for re-baselining context
+  artefacts
 
 ## Active Work
 
@@ -140,7 +154,10 @@ See [README.md](README.md) for detailed project overview.
 3. **Zero-defect tolerance** — Every error/warning must be addressed
 4. **Doc freshness mandatory** — Code changes require doc updates in same session
 5. **No conditional test assertions** — Tests that can silently pass are forbidden
-6. **Short, owned, tested, re-baselined** — This file has a named owner and a reviewed date, CI checks it (a warning above about 200 lines), and it is pruned against the current model at each model upgrade. Link to docs for anything longer.
+6. **Short, owned, tested, re-baselined** — This file has a named owner and a reviewed date, CI checks it (a warning
+   above about 200 lines), and it is pruned against the current model at each model upgrade by running the [task
+   bank](docs/references/task-bank.md) without each rule ([Pattern
+   0.10](docs/L0-foundation.md#pattern-010--prune-and-re-baseline-context)). Link to docs for anything longer.
 
 ---
 

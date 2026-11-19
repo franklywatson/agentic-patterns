@@ -1,3 +1,8 @@
+---
+last-validated-model: claude-opus-5-5
+reviewed: 2026-11-19
+---
+
 # Pattern Diagnostic Catalog
 
 Recognize when a pattern is missing by the symptoms it leaves behind. Each entry describes a symptom, explains why it surfaces, and points to the pattern that resolves it.
@@ -161,6 +166,45 @@ cd .worktrees/feature-x
 # Remove when done
 git worktree remove .worktrees/feature-x
 ```
+
+---
+
+### We Added It So It Must Help
+
+**Symptom**: Skills, hooks, routing notes and instruction-file rules have only ever been added. No one can say which
+task each one fixed. The configuration was last changed months ago while the model changed generation.
+
+**Why This Happens**: Each addition answered a real failure, so removing it feels like reintroducing the failure.
+Nothing measures an artefact's contribution, so it keeps its place by default. Most committed AI configuration is never
+changed after it is added, so this is the usual state rather than an exception. Rules written for an older model can
+also push a newer one away from what it does well.
+
+**Pattern**: Apply [Pattern 0.10 - Prune and Re-baseline
+Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context):
+
+- Give each artefact an owner, a `reviewed:` date and an expiry
+- Run a fixed task bank without the artefact at each model upgrade
+- Keep the artefact only if a task regresses, and record that task next to it
+- Move rules that must always hold into a hook, deny rule or CI check
+
+---
+
+### Line Caps as a Proxy for Signal
+
+**Symptom**: The instruction file passes a line-count check, so it is treated as healthy. It holds rules the agent
+discovers from the code anyway, stale commands and rules for weaknesses the current model no longer has. Alternatively,
+a useful rule is cut because the file is at its cap.
+
+**Why This Happens**: A line count is the one property of the file that CI can measure cheaply. Length does cost context
+on every session, but the count says nothing about which lines change what the agent does.
+
+**Pattern**: Keep the length warning as a prompt to look, and test the content with [Pattern 0.10 - Prune and
+Re-baseline
+Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context):
+
+- Remove a rule, run the task bank, and keep the rule only if a task regresses
+- Do not trim rules to meet a number before testing them
+- Check the rules that matter in a hook or CI, where file length does not affect them
 
 ---
 

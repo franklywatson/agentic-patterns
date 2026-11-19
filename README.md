@@ -55,7 +55,12 @@ The library has five layers, L0 to L4. A layer is a group of patterns that depen
 
 **[L3: Optimization (optional)](docs/L3-optimization.md)** — Reduces tokens spent on exploration and tool output. It is not on the path to verified or unattended work. Covers preferring native structured tools and blocking destructive shell edits, context isolation with a scout sub-agent (from the WISC framework), and a pointer to rig's code for environment-aware routing.
 
-**[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, development metrics, CI guardrails, and context eval for routing effectiveness. Measures whether L0-L3 are holding and what they change. Drift detection and the new-starter audit live in L0 ([Pattern 0.7](docs/L0-foundation.md#pattern-07--documentation-as-system-map) and [Pattern 0.9](docs/L0-foundation.md#pattern-09--ai-as-new-starter-standard)).
+**[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, development metrics, CI
+guardrails, and context eval for routing effectiveness. Measures whether L0-L3 are holding and what they change. Drift
+detection, the new-starter audit and pruning of context artefacts live in L0 ([Pattern
+0.7](docs/L0-foundation.md#pattern-07--documentation-as-system-map), [Pattern
+0.9](docs/L0-foundation.md#pattern-09--ai-as-new-starter-standard) and [Pattern
+0.10](docs/L0-foundation.md#pattern-010--prune-and-re-baseline-context)).
 
 ## How Far a Team Can Let Go
 

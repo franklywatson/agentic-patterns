@@ -1,0 +1,11 @@
+--- a/examples/stack-test/typescript/app/src/api.ts
++++ b/examples/stack-test/typescript/app/src/api.ts
+@@ -61,7 +61,7 @@
+     await client.query('BEGIN');
+     const inserted = await client.query(
+       `INSERT INTO users (id, email, username, password_hash) VALUES ($1, $2, $3, $4)
+-       ON CONFLICT (email) DO NOTHING RETURNING id, email, username, created_at`,
++       ON CONFLICT (emial) DO NOTHING RETURNING id, email, username, created_at`,
+       [id, email, username, hashPassword(password)],
+     );
+     if (inserted.rowCount === 0) {

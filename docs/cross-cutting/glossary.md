@@ -84,6 +84,13 @@ Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-
 **Definition**: GitHub Actions workflows for docs quality and test coverage, providing non-negotiable enforcement independent of session-scoped hooks. Thresholds defined in project config, not CI workflow.
 **See**: [Pattern 4.5 - CI Guardrails](../L4-standards-measurement.md#pattern-45--ci-guardrails)
 
+### Context Artefact
+
+**Layer**: L0 - Foundation
+**Definition**: Any file or setting that adds instructions to an agent session: instruction file, skill, hook, deny
+rule, routing note or memory file. Each carries an owner, a `reviewed:` date and an expiry.
+**See**: [Pattern 0.10 - Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context)
+
 ### Context Eval
 
 **Layer**: L4 - Standards & Measurement
@@ -162,6 +169,13 @@ Approvals are relaxed only inside it.
 **Definition**: Module with a small interface that hides complex implementation details behind a clean facade. As a heuristic, 3-5 exports; more suggests the module has more than one job.
 **See**: [Pattern 0.1 - Deep Modules](../L0-foundation.md#pattern-01--deep-modules)
 
+### Delete-First Re-baselining
+
+**Layer**: L0 - Foundation
+**Definition**: At each model upgrade, run the task bank with an artefact removed and keep the artefact only if a task
+regresses. The justifying task is recorded next to it.
+**See**: [Pattern 0.10 - Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context)
+
 ### Docker Resource Limits
 
 **Layer**: L1 - Closed Loop Design
@@ -238,6 +252,13 @@ Approvals are relaxed only inside it.
 **Definition**: A control that holds a rule at one layer: prompt (guidance), hook (deterministic policy inside the harness), CI (required check), sandbox or credential scope (boundary), or downstream authorisation. Each rule is only as strong as the layer that holds it. A hook is not a security boundary.
 **See**: [L2 Behavioral Guardrails Overview](../L2-behavioral-guardrails.md)
 
+### Guidance
+
+**Layer**: L0 - Foundation
+**Definition**: A rule held only as prose in an instruction file or skill. It shapes how the agent works and is
+prunable by re-baselining. A rule that must always hold is an invariant instead.
+**See**: [Pattern 0.10 - Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context)
+
 ---
 
 ## H
@@ -263,6 +284,13 @@ Approvals are relaxed only inside it.
 **Layer**: L1 - Closed Loop Design
 **Definition**: A stable key for a production failure, built from the journey and error class rather than line numbers, so a recurrence after a repair can be detected.
 **See**: [Pattern 1.7 - Incident-to-Stack-Test](../L1-patterns/1.7-incident-to-stack-test.md)
+
+### Invariant
+
+**Layer**: L0 - Foundation
+**Definition**: A rule that holds regardless of the model, enforced by a hook, deny rule, sandbox setting or required
+CI check and never by prose alone. Re-baselining does not remove it.
+**See**: [Pattern 2.4 - Constitutional Rules](../L2-behavioral-guardrails.md#pattern-24--constitutional-rules)
 
 ---
 
@@ -293,6 +321,13 @@ Composition](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-sessio
 ---
 
 ## M
+
+### Maintained Configuration
+
+**Layer**: L0 - Foundation
+**Definition**: Context artefacts that are kept current, measured by last change date, invocation counts and the share
+of rules with a justifying task. The opposite of configuration that is present but never changed.
+**See**: [Pattern 0.10 - Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context)
 
 ### Master Index
 
@@ -417,6 +452,13 @@ Composition](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-sessio
 ---
 
 ## T
+
+### Task Bank
+
+**Layer**: L0 - Foundation
+**Definition**: A fixed set of 10 to 30 representative tasks, each with a prompt, an expected artefact and a
+mechanical check, run against a pinned model to test whether a context artefact is needed.
+**See**: [Task Bank](../references/task-bank.md)
 
 ### Test Integrity
 

@@ -1,3 +1,8 @@
+---
+last-validated-model: claude-opus-5-5
+reviewed: 2026-11-19
+---
+
 # Earned Autonomy
 
 How much one workflow may do without a human is a grant. A named person gives it, evidence supports it, and it is withdrawn when the evidence stops. This guide defines the grants, the records that justify them and the checks that enforce them.
@@ -229,8 +234,11 @@ This inverts the ratchet in [Pattern 1.1](L1-patterns/1.1-stack-tests.md): auton
 
 - Any `granted_level` exceeds the computed cap. There is no exception field.
 - Any schema rule in Pattern A.1 fails.
-- `.autonomy.yaml`, `.autonomy/**`, CODEOWNERS, branch-protection workflows or hook configuration changed in a commit by an agent identity.
+- A tier 1 governance file changed in a commit by an agent identity: `.autonomy*`, CODEOWNERS, `.claude/settings*.json`, `.claude/hooks/*` or `.harness.yaml`. No acknowledgement relaxes this (`governance-file-changed-by-agent`).
+- A tier 2 file, `.github/workflows/*`, changed in a commit by an agent identity with no acknowledgement (`workflow-change-unacknowledged`).
 - The census profile is older than 30 days.
+
+The two tiers of governance files, and the acknowledgement that relaxes tier 2, are defined in [Pattern A.6](#pattern-a6--enforcement-through-hooks).
 
 ### Anti-Pattern
 
@@ -346,6 +354,10 @@ Bind the register to the harness. Three hooks and one eval suite make the effect
 - **Context eval** gains an `autonomy` suite covering A2, A3, A4, a cap below the grant, a stale stop and a trifecta session. It scores exactly, not on a graduated scale. It tests the gate, so a refactor cannot widen grants silently.
 
 ### In Practice
+
+**Two tiers of governance files.** `autonomy check` matches governance files case-insensitively in two tiers. Tier 1 files define what an agent may do or remove the hook, so an agent commit never changes them: `.autonomy*`, CODEOWNERS, `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`. Tier 2 files, `.github/workflows/*`, are ordinary CI work that a person may want an agent to do. An agent commit may change them when a later commit in the same range, made by a non-agent identity, carries a whole line `Governance-Approved: <sha>` in the message body (not the subject line). The `<sha>` is a hex prefix of at least 7 characters that matches exactly one agent commit in the range, one line per agent commit, and an empty commit (`git commit --allow-empty`) is enough. An agent commit cannot acknowledge any commit, an acknowledgement before the agent commit does not count, and a malformed, short, ambiguous or different sha never matches. With `--git-range` the commits are read oldest first; with `--commits` the list order is the order. A commit is an agent commit when its author or committer name or email contains `[bot]` or a workflow identity name, or its message has a `Co-Authored-By:` trailer naming Claude or Anthropic in any case. Merge commits are checked for what the merge changed beyond the automatic merge, and an agent commit with more than two parents fails with `merge-unsupported`. A changed path that is not valid UTF-8 in an agent commit fails with `path-undecodable`. Each acknowledged change prints `governance: <sha7> changed <file> (acknowledged by <sha7>)` and does not fail the check.
+
+The acknowledgement is a trailer-based record, not a cryptographic control: anyone who can write a commit message can write the line, and author and committer identity are self-asserted. The boundary that holds is CODEOWNERS and required review by a non-author, which a repository must configure itself. The register and the checker code live under `examples/` in this repository, so reviewers must read changes to them. Tier 2 relief applies only to agent commits made outside the Claude Code hook: the hook below still denies a hooked session's writes to tier 1 and tier 2 files, so the acknowledgement covers agents such as dependency bots or an unhooked session.
 
 The hooks block agent writes to `.autonomy*`, CODEOWNERS, `.github/workflows/*` and hook or harness configuration. An agent cannot promote itself or weaken its own gate.
 
