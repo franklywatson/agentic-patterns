@@ -43,7 +43,7 @@ A grant needs its row and every row above it.
 | A4 | 4.6 context eval as a task bank, 3.8 session lifecycle, 4.4 metrics with thresholds and owners | 2.10 least agency (trifecta gate), 2.11 agent identity, 4.7 register with sponsor, expiry and stop authority | A.3, A.4, A.5, A.6 |
 | A5 | 2.8 compound engineering with pruning, 0.8 aggressive cleanup applied to skills and rules, 0.9 new-starter standard | A retirement record per workflow | A.7 |
 
-Pattern 3 (L3) is on no row. It reduces cost per outcome, which A5 reports, but it is not a safety prerequisite at any grant.
+Layer L3 is on no row. It reduces cost per outcome, which A5 reports, but it is not a safety prerequisite at any grant.
 
 Containment patterns 2.9 to 2.13 and the register pattern 4.7 are named here by number. Read them in the L2 and L4 documents when those sections are present in your copy of the library.
 
