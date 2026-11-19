@@ -1,0 +1,52 @@
+# Stack template. The runtime copies it next to a workspace's app/ directory and
+# sets APP_PORT, POSTGRES_PORT and REDIS_PORT to free ports. Ports bind to 127.0.0.1.
+services:
+  app:
+    build: ./app
+    ports:
+      - "127.0.0.1:${APP_PORT:?set APP_PORT}:3000"
+    environment:
+      - NODE_ENV=test
+      - PORT=3000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=testdb
+      - DB_USER=testuser
+      - DB_PASSWORD=testpass
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:?set POSTGRES_PORT}:5432"
+    environment:
+      - POSTGRES_DB=testdb
+      - POSTGRES_USER=testuser
+      - POSTGRES_PASSWORD=testpass
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U testuser -d testdb"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:${REDIS_PORT:?set REDIS_PORT}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 10

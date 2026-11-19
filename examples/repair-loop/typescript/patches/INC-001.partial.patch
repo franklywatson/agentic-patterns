@@ -1,0 +1,13 @@
+--- a/app/src/routes/users.ts
++++ b/app/src/routes/users.ts
+@@ -31,6 +31,10 @@
+ });
+ 
+ users.get('/users/:id', async (req, res) => {
++  if (req.params.id === 'undefined') {
++    res.status(404).json({ error: 'User not found' });
++    return;
++  }
+   const { rows } = await pool.query(
+     'SELECT id, email, username, created_at FROM users WHERE id = $1',
+     [req.params.id],
