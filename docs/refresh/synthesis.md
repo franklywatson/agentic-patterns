@@ -317,7 +317,7 @@ of Claude Code's system prompt for the Claude 5 generation with no eval loss (AN
 | CLAUDE.md `@docs/...` imports load the whole library into context | `CLAUDE.md` | `[evidence]` |
 | Mock rules contradict each other. 1.1 says failures "always indicate real bugs". A former case study (removed 2026-11-19) said unit tests use no mocks, and its integration tests auto-skip without `.env`. | 1.1, 1.5, L0.5, a former case study | `[evidence]` |
 | Broken internal anchors (13 by one check, 27 by another); CI strips anchors; L4.5 references a `scripts/` directory that does not exist | across docs; L4 4.5 | `[adopter]` `[evidence]` |
-| jcodemunch linked to two owners; `specs/` and `docs/plans/` are not in the master index | L3, further-reading, CLAUDE.md | `[evidence]` `[governance]` `[autonomy]` |
+| jcodemunch linked to two owners; `specs/` and `docs/plans/` are not in the master index (resolved by D6: both deleted) | L3, further-reading, CLAUDE.md | `[evidence]` `[governance]` `[autonomy]` |
 | Design rinsing feeds untrusted content into a session with write, shell and network access, with no prompt-injection warning | L1 design rinsing | `[governance]` |
 
 Already done: gstack references removed and two pre-existing lint errors fixed (PR #4).

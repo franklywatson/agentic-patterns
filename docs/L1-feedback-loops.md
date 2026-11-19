@@ -109,7 +109,7 @@ Design rinsing works with diverse source materials:
 | Codebase (different language) | Architecture, design patterns, testing strategy, module boundaries | Rust multi-agent system → agent coordination design for a Python service |
 | Codebase (same ecosystem) | Implementation patterns, tool choices, configuration conventions | Node.js trading bot stack tests → Python testing infrastructure |
 | YouTube demo / walkthrough | Concrete architecture, agent roles, pipeline design, routing logic | Multi-agent demo video → agent roles and message routing for the target system |
-| YouTube talk / lecture | Core concepts, design principles, mental models | Conference talk on autonomous system design → graduated autonomy and context bundling for the target system |
+| YouTube talk / lecture | Core concepts, design principles, mental models | Conference talk on distributed systems → retry and escalation policy for the target system |
 | Article / blog post | Distilled observations, failure modes, trade-off analysis | Blog post on LLM coding pitfalls → behavioral rules for the target project's agent skills |
 
 #### When to Use Design Rinsing

@@ -1,6 +1,6 @@
 # Phase 0: Correct Defects
 
-- **Status:** Not started
+- **Status:** In progress (branch `refresh/phase-0-correct`)
 - **Depends on:** none
 - **Gated by decisions:** none
 - **Suggested branch:** `refresh/phase-0-correct`
@@ -25,15 +25,8 @@ editing.
 
 ### T1. Correct the TOON example and savings table
 
-- **File:** `docs/L3-optimization.md`, Pattern 3.7.
-- Recount the JSON and TOON strings in the worked example. The review measured 117 and 79
-  characters, about 32%.
-- Fix the "46 characters" example, which is 38.
-- Either remove the "typical savings" table or label it as an estimate. Note that it counts
-  characters, not tokens.
-- Make the record separator consistent between prose and example (pipes vs newlines).
-- If decision D3 later moves TOON out of the repo, this fix still applies to wherever it moves.
-- Superseded: Task 8 cut Pattern 3.7 entirely (2026-11-19), so this task's fixes no longer apply.
+Superseded: the fixes to the Pattern 3.7 example and savings table were applied, then Task 8 cut
+Pattern 3.7 entirely (2026-11-19). Nothing remains to do under T1.
 
 ### T2. Remove or attribute unsourced figures
 
@@ -76,7 +69,6 @@ editing.
   once isolation (1.4) holds". The doc's own brittleness section contradicts the absolute.
 - **The 1.1 comparison table.** It rates unit tests "Low" confidence, which conflicts with L0.5.
   Reword it to the scope each test type proves.
-- Superseded: the case study was removed by maintainer decision (2026-11-19).
 - Superseded: the case study was removed by maintainer decision (2026-11-19).
 
 ### T6. Links, anchors and the master index
