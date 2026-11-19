@@ -1,0 +1,39 @@
+version: 1
+defaults:
+  interactive_level: 2
+profile: .autonomy/profile.json
+
+workflows:
+  - id: dep-bump
+    owner: team-platform
+    sponsor: "@alice"
+    granted_level: 4
+    identity: github-app:deps-bot
+    access_expires: 2027-02-01
+    permitted_actions:
+      tools: ["Read", "Edit"]
+      paths: ["package.json", "package-lock.json"]
+      git: [branch, commit, open_pr, auto_merge]
+    risk:
+      reversible: true
+      verification: mechanical
+      blast_radius: repo
+      trifecta: { untrusted_input: true, sensitive_data: false, external_action: false }
+    limits: { max_runs_per_day: 5, max_diff_lines: 400 }
+    stop:
+      mechanism: "disable the workflow and revoke the app token"
+      command: 'touch "$AUTONOMY_STOP_FILE"'
+      authority: ["team-platform"]
+      last_tested: 2026-11-02
+    review_date: 2027-02-01
+
+  - id: flaky-test-triage
+    owner: team-qa
+    sponsor: "@bob"
+    granted_level: 3
+    identity: github-app:triage-bot
+    risk:
+      reversible: true
+      verification: partial
+      blast_radius: repo
+      trifecta: { untrusted_input: false, sensitive_data: false, external_action: false }

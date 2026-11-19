@@ -1,0 +1,55 @@
+version: 1
+defaults:
+  interactive_level: 3
+  evidence_window: { min_runs: 30, max_days: 60 }
+  review_cadence_days: 90
+  stop_test_max_age_days: 30
+profile: .autonomy/profile.json
+
+workflows:
+  - id: dep-bump
+    description: Patch and minor dependency bumps with lockfile regeneration
+    owner: team-platform
+    sponsor: "@alice"
+    granted_level: 4
+    target_level: 4
+    trigger: schedule:weekly
+    identity: github-app:deps-bot
+    access_expires: 2027-02-01
+    permitted_actions:
+      tools: ["Read", "Edit", "Bash(npm install*)", "Bash(npm test*)"]
+      paths: ["package.json", "package-lock.json"]
+      git: [branch, commit, open_pr, auto_merge]
+      network: ["registry.npmjs.org"]
+    forbidden_actions: [deploy, read_secrets, force_push, edit_ci, edit_autonomy]
+    risk:
+      reversible: true
+      verification: mechanical
+      blast_radius: repo
+      trifecta:
+        untrusted_input: true
+        sensitive_data: false
+        external_action: false
+    limits: { max_runs_per_day: 5, max_cost_usd_per_run: 2.00, max_diff_lines: 400 }
+    verification:
+      required_checks: [unit, stack, context-eval, autonomy-check]
+      task_bank: tests/eval/dep-bump.bank.json
+    stop:
+      mechanism: "gh workflow disable deps-bot.yml; revoke app installation token"
+      command: 'touch "$AUTONOMY_STOP_FILE"'
+      authority: ["team-platform", "@oncall"]
+      last_tested: 2026-11-02
+    review_date: 2027-02-01
+    stop_rule: "retire if fewer than 2 merged PRs per month over 90 days"
+
+  - id: flaky-test-triage
+    owner: team-qa
+    sponsor: "@bob"
+    granted_level: 3
+    target_level: 4
+    identity: github-app:triage-bot
+    risk:
+      reversible: true
+      verification: partial
+      blast_radius: repo
+      trifecta: { untrusted_input: false, sensitive_data: false, external_action: false }

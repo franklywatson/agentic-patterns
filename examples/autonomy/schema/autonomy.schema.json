@@ -1,0 +1,401 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.invalid/autonomy.schema.json",
+  "title": "Autonomy register (.autonomy.yaml)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "workflows"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "interactive_level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "evidence_window": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "min_runs": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_days": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "review_cadence_days": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "stop_test_max_age_days": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "profile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workflows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/workflow"
+      }
+    }
+  },
+  "definitions": {
+    "date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}(?![\\s\\S])"
+    },
+    "trifecta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "untrusted_input",
+        "sensitive_data",
+        "external_action"
+      ],
+      "properties": {
+        "untrusted_input": {
+          "type": "boolean"
+        },
+        "sensitive_data": {
+          "type": "boolean"
+        },
+        "external_action": {
+          "type": "boolean"
+        }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "owner",
+        "sponsor",
+        "granted_level",
+        "identity",
+        "risk"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "description": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sponsor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "granted_level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "target_level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "trigger": {
+          "type": "string"
+        },
+        "identity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "access_expires": {
+          "$ref": "#/definitions/date"
+        },
+        "permitted_actions": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tools": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "paths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "git": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "branch",
+                  "commit",
+                  "open_pr",
+                  "auto_merge"
+                ]
+              }
+            },
+            "network": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "forbidden_actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "risk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "reversible",
+            "verification",
+            "blast_radius",
+            "trifecta"
+          ],
+          "properties": {
+            "reversible": {
+              "type": "boolean"
+            },
+            "verification": {
+              "enum": [
+                "mechanical",
+                "partial",
+                "judgement"
+              ]
+            },
+            "blast_radius": {
+              "enum": [
+                "file",
+                "repo",
+                "service",
+                "external"
+              ]
+            },
+            "trifecta": {
+              "$ref": "#/definitions/trifecta"
+            },
+            "gate": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max_runs_per_day": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_cost_usd_per_run": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "max_diff_lines": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "required_checks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "task_bank": {
+              "type": "string"
+            }
+          }
+        },
+        "stop": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mechanism": {
+              "type": "string",
+              "minLength": 1
+            },
+            "command": {
+              "type": "string",
+              "minLength": 1
+            },
+            "authority": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "last_tested": {
+              "$ref": "#/definitions/date"
+            }
+          }
+        },
+        "review_date": {
+          "$ref": "#/definitions/date"
+        },
+        "stop_rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baseline": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "granted_level": {
+                "type": "integer",
+                "minimum": 4
+              }
+            },
+            "required": [
+              "granted_level"
+            ]
+          },
+          "then": {
+            "required": [
+              "stop",
+              "review_date",
+              "limits"
+            ],
+            "properties": {
+              "identity": {
+                "type": "string",
+                "pattern": "^(github-app|service-account|bot|oidc):\\S+$"
+              },
+              "stop": {
+                "type": "object",
+                "required": [
+                  "mechanism",
+                  "command",
+                  "last_tested"
+                ]
+              },
+              "risk": {
+                "type": "object",
+                "properties": {
+                  "reversible": {
+                    "const": true
+                  },
+                  "verification": {
+                    "const": "mechanical"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "granted_level": {
+                "const": 5
+              }
+            },
+            "required": [
+              "granted_level"
+            ]
+          },
+          "then": {
+            "required": [
+              "stop_rule",
+              "baseline",
+              "target"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "granted_level": {
+                "type": "integer",
+                "minimum": 3
+              },
+              "risk": {
+                "type": "object",
+                "properties": {
+                  "trifecta": {
+                    "type": "object",
+                    "properties": {
+                      "untrusted_input": {
+                        "const": true
+                      },
+                      "sensitive_data": {
+                        "const": true
+                      },
+                      "external_action": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "untrusted_input",
+                      "sensitive_data",
+                      "external_action"
+                    ]
+                  }
+                },
+                "required": [
+                  "trifecta"
+                ]
+              }
+            },
+            "required": [
+              "granted_level",
+              "risk"
+            ]
+          },
+          "then": {
+            "properties": {
+              "risk": {
+                "type": "object",
+                "required": [
+                  "gate"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

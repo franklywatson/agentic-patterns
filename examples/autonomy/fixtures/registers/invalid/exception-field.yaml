@@ -1,0 +1,9 @@
+version: 1
+workflows:
+  - id: w
+    owner: t
+    sponsor: "@a"
+    granted_level: 3
+    identity: github-app:bot
+    exception: cap-waiver
+    risk: { reversible: true, verification: partial, blast_radius: repo, trifecta: { untrusted_input: false, sensitive_data: false, external_action: false } }

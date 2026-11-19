@@ -1,0 +1,94 @@
+{
+  "generated": "2026-11-18T00:00:00Z",
+  "dimensions": {
+    "platform": {
+      "level": 3,
+      "evidence": [
+        "agent-config",
+        "check-command",
+        "ci-identity",
+        "sandbox-locked"
+      ],
+      "missing_for_next": [
+        "egress-allowlist",
+        "audit-log"
+      ]
+    },
+    "shared_context": {
+      "level": 3,
+      "evidence": [
+        "claude-md",
+        "claude-md-short",
+        "claude-md-fresh",
+        "claude-md-owner",
+        "decision-log",
+        "blocking-hook-tested"
+      ],
+      "missing_for_next": [
+        "human-only:c4"
+      ]
+    },
+    "operating_model": {
+      "level": 4,
+      "evidence": [
+        "ci-tests-lint",
+        "ci-on-pr",
+        "automated-review",
+        "skill-chain",
+        "review-tiers"
+      ],
+      "missing_for_next": [
+        "retired-rules-recorded"
+      ]
+    },
+    "governance": {
+      "level": 3,
+      "evidence": [
+        "constitutional-rules",
+        "sandbox-locked",
+        "deny-rules",
+        "extensions-pinned",
+        "non-author-approval",
+        "secret-scanning"
+      ],
+      "missing_for_next": [
+        "audit-names-agent"
+      ]
+    },
+    "ownership": {
+      "level": 3,
+      "evidence": [
+        "register-owners",
+        "owners-in-codeowners",
+        "sponsors-and-expiry",
+        "author-trailer"
+      ],
+      "missing_for_next": [
+        "harness-eval-in-ci",
+        "stop-authority"
+      ]
+    },
+    "skill": {
+      "level": "unknown",
+      "counted_as": 2,
+      "evidence": [],
+      "missing_for_next": [
+        "worksheet:skill"
+      ]
+    },
+    "measuring": {
+      "level": 3,
+      "evidence": [
+        "outcome-tracking",
+        "baseline"
+      ],
+      "missing_for_next": [
+        "task-banks"
+      ]
+    }
+  },
+  "cap": 3,
+  "workflows_over_cap": [
+    "dep-bump"
+  ]
+}
