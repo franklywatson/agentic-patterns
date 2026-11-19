@@ -23,16 +23,35 @@ Drift detection, the new-starter audit and pruning of context artefacts are in L
 
 ### Problem
 
-Agents make claims without backing them with evidence. "Tests should pass" is not evidence—it's a prediction. Without verification, claims waste tokens when they're wrong, and erode trust when failures are dismissed as "unrelated."
+Agents make claims without evidence. "Tests should pass" is a prediction, not evidence. An agent's report that it
+finished is a claim by the party being checked, and a person's report that AI made them faster is also a claim. Both
+can be wrong in ways their authors cannot see. In a randomised trial, experienced open-source developers took longer
+to finish tasks with AI tools than without, while expecting and believing that the tools made them faster
+([IS-6](references/sources.md)). A 1,300-engineer survey measures what engineers say about their practice, not what
+they produce ([MC-22](references/sources.md)).
+
+This pattern is **Strong** for the finding that self-report is unreliable. It is **Partial** for the practice of
+gating configuration changes on evals, which rests on vendor guidance.
 
 ### Solution
 
-**The verify+ pattern:** Run the commands, show the output, then make the claim. Every completion claim must be backed by actual command output.
+Run the check, show its output, then make the claim. The shown output tells the reviewer what was run and what it
+printed. The evidence is the result of a system the agent cannot edit, and the reviewer reads that result.
 
-**Where the evidence comes from matters.** Output the agent pastes into its own message is a claim about output.
-Evidence is the result of a system the agent cannot edit: a CI log, a required check, a signed build record. The
-reviewer reads that source, and the agent has no write access to it. [Pattern
-4.8](#pattern-48--evidence-over-self-report) states the rule in full.
+**Contract.**
+
+1. **Run before claiming.** Every completion claim names the command that backs it and shows that command's output.
+2. **Completion evidence comes from outside the agent.** A CI log, a required check result, a signed build record
+   and the repository history count. Output the agent pastes into its own message, with no CI run behind it, is a
+   claim about output. The reviewer reads the CI run.
+3. **The agent cannot edit the evidence source.** It has no write access to the CI workflow, branch protection or
+   the build signing step ([Pattern 2.3](L2-behavioral-guardrails.md#pattern-23--hook-automation), [Pattern
+   2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
+4. **Productivity claims rest on artefacts.** Use cycle time, rework, revert rate and escaped defects from version
+   control and CI. A survey adds context. It does not stand alone ([IS-3, MV-8](references/sources.md)).
+5. **Configuration changes are releases.** A change to a skill, hook, prompt, instruction file or model version runs
+   against the task bank before it ships ([Pattern 4.6](#pattern-46--context-eval)). Run each task more than once,
+   because agent runs vary, and pass the change only if it holds across runs ([PO-25](references/sources.md)).
 
 **Evidence format template:**
 
@@ -43,13 +62,14 @@ $ <command>
 # Step 2: Show actual output
 <actual output>
 
-# Step 3: Make claim based on output
+# Step 3: Make claim based on output, and point at the run the reviewer reads
 Claim: <what the output proves>
+CI run: <link to the required check>
 ```
 
 **Claims that REQUIRE evidence:**
 
-- "Tests pass" → Show test output
+- "Tests pass" → Show test output and link the CI run
 - "Build succeeds" → Show build log
 - "Function works" → Show example execution
 - "Performance improved" → Show before/after metrics
@@ -76,6 +96,7 @@ tests/test_auth.py::test_token_refresh PASSED
 tests/test_auth.py::test_invalid_credentials PASSED
 
 Claim: All authentication tests pass. The login, token refresh, and error handling paths work correctly.
+CI run: the `tests` required check on this pull request
 ```
 
 **Before/after evidence:**
@@ -105,6 +126,14 @@ $ git diff abc123^..abc123 -- myfile.py
 Claim: The error existed before this commit. Changes in abc123 don't touch the relevant code.
 ```
 
+**Around the claim:**
+
+- The completion template in the instruction file asks for the command, its output and a link to the CI run.
+- The reviewer opens the required check, not the agent's summary.
+- A monthly report takes cycle time, revert rate and rework from the repository and CI, with the survey beside it.
+- A pull request that edits a skill or the instruction file attaches the task-bank run. The eval job is a required
+  check.
+
 ### Anti-Pattern
 
 - **Prediction-based claims:** "Tests should pass" without running them.
@@ -112,14 +141,25 @@ Claim: The error existed before this commit. Changes in abc123 don't touch the r
 - **Selective evidence:** Showing passing tests while hiding failing ones.
 - **Hand-wavy verification:** "I checked it manually" with no output.
 - **Evidence-free refutation:** "That failure is a flaky test" without logs.
+- **Pasted output as proof:** accepting "all tests pass" with a pasted block the agent could have written, and no
+  CI run to read.
+- **Editable evidence:** letting the agent edit the workflow that produces the evidence.
+- **Survey as productivity evidence:** reporting AI productivity from a satisfaction survey.
+- **Untested configuration change:** changing a prompt or model version because it feels better, with no task set
+  to compare.
 
 ### Cross-References
 
 - [Pattern 1.2 — Full-Loop Assertion Layering](L1-patterns/1.2-full-loop-assertions.md): Evidence is part of tertiary assertions
 - [Pattern 0.8 — Aggressive Cleanup](L0-foundation.md#pattern-08--aggressive-cleanup): Remove dead code that wastes verification tokens
 - [Pattern 0.7 — Documentation as System Map](L0-foundation.md#pattern-07--documentation-as-system-map): Automated checks replace manual verification
+- [Pattern 2.5 — Zero-Defect Tolerance](L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance): required checks
+- [Pattern 4.4 — Agentic Development Metrics](#pattern-44--agentic-development-metrics): artefact-based metrics
+- [Pattern 4.6 — Context Eval](#pattern-46--context-eval): the task bank that gates configuration changes
 
-**Evidence:** Strong — developers believed AI sped them up 20% after a measured 19% slowdown, so self-report cannot stand in for output (IS-6, MV-8, MC-22)
+**Evidence:** Strong for the finding that self-report cannot stand in for output: developers believed AI sped them
+up 20% after a measured 19% slowdown. Partial for eval-gated configuration releases, which rest on vendor guidance
+(IS-6, IS-3, MC-22, MV-8, PO-25)
 
 ---
 
@@ -577,66 +617,6 @@ to PO-17, PO-19, PO-20, PO-31, AN-42)
 
 ---
 
-## Pattern 4.8 — Evidence Over Self-Report
-
-### Problem
-
-An agent's report that it finished is a claim by the party being checked. A person's report that AI made them
-faster is also a claim. Both can be wrong in ways their authors cannot see. In a randomised trial, experienced
-open-source developers took longer to finish tasks with AI tools than without, while expecting and believing
-that the tools made them faster ([IS-6](references/sources.md)). A 1,300-engineer survey measures what
-engineers say about their practice, not what they produce ([MC-22](references/sources.md)).
-
-This pattern is **Strong** for the finding that self-report is unreliable. It is **Partial** for the practice
-of gating configuration changes on evals, which rests on vendor guidance.
-
-### Solution
-
-Take completion evidence from systems the agent cannot edit. Take productivity evidence from artefacts, not opinion.
-
-**Contract.**
-
-1. **Completion evidence comes from outside the agent.** A CI log, a required check result, a signed build record
-   and the repository history count. Command output that the agent pastes into its own message is a claim about
-   output. The reviewer reads the CI result.
-2. **The agent cannot edit the evidence source.** It has no write access to the CI workflow, branch protection or
-   the build signing step ([Pattern 2.3](L2-behavioral-guardrails.md#pattern-23--hook-automation), [Pattern
-   2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
-3. **Productivity claims rest on artefacts.** Use cycle time, rework, revert rate and escaped defects from
-   version control and CI. A survey adds context. It does not stand alone ([IS-3, MV-8](references/sources.md)).
-4. **Configuration changes are releases.** A change to a skill, hook, prompt, instruction file or model version
-   runs against a fixed task set before it ships ([Pattern 4.6](#pattern-46--context-eval)). Run each task more
-   than once, because agent runs vary, and pass the change only if it holds across runs
-   ([PO-25](references/sources.md)).
-
-### In Practice
-
-- The completion template in the instruction file says "link the CI run", not "paste the test output".
-- The reviewer opens the required check, not the agent's summary.
-- A monthly report takes cycle time, revert rate and rework from the repository and CI, with the survey beside it.
-- A pull request that edits a skill or the instruction file attaches the eval run for the task set. The eval job
-  is a required check.
-
-### Anti-Pattern
-
-- Accepting "all tests pass" with a pasted block the agent could have written.
-- Letting the agent edit the workflow that produces the evidence.
-- Reporting AI productivity from a satisfaction survey.
-- Changing a prompt or model version because it feels better, with no task set to compare.
-
-### Cross-References
-
-- [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — the claim format this pattern anchors
-- [Pattern 4.4 — Agentic Development Metrics](#pattern-44--agentic-development-metrics) — artefact-based metrics
-- [Pattern 4.6 — Context Eval](#pattern-46--context-eval) — the eval gate for configuration changes
-- [Pattern 2.5 — Zero-Defect Tolerance](L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance)
-  — required checks
-
-**Evidence:** Partial — the finding that self-report is unreliable is Strong (independent trial); eval-gated
-releases rest on vendor guidance (IS-6, IS-3, MC-22, MV-8, PO-25)
-
----
-
 ## Pattern 4.9 — Deliberate Practice
 
 ### Problem
@@ -739,7 +719,7 @@ Adopt this checklist for code reviews, PR reviews, and task completion verificat
 
 - [ ] Claims backed by command output
 - [ ] Completion evidence comes from CI or another system the agent cannot edit ([Pattern
-  4.8](#pattern-48--evidence-over-self-report))
+  4.1](#pattern-41--evidence-based-claims))
 - [ ] Test results shown (not just "tests pass")
 - [ ] Before/after evidence for bug fixes
 - [ ] Performance claims include metrics
@@ -780,14 +760,13 @@ Adopt this checklist for code reviews, PR reviews, and task completion verificat
 
 L4 holds the practices that check L0-L3 and measure their impact:
 
-1. **Pattern 4.1 (Evidence-Based Claims):** Verify before claiming, show output
+1. **Pattern 4.1 (Evidence-Based Claims):** Run the check and show its output; the reviewer reads the CI run
 2. **Pattern 4.4 (Agentic Development Metrics):** Measure outcomes, close the feedback loop
 3. **Pattern 4.5 (CI Guardrails):** Non-negotiable enforcement through CI workflows
 4. **Pattern 4.6 (Context Eval):** Score routing decisions against expected outcomes across environments
 5. **Pattern 4.7 (Author of Record and Agent Register):** Name a person for agent-written code; list every agent
    and its owner
-6. **Pattern 4.8 (Evidence Over Self-Report):** Completion evidence comes from systems the agent cannot edit
-7. **Pattern 4.9 (Deliberate Practice):** Keep the skill to supervise the agent alive
+6. **Pattern 4.9 (Deliberate Practice):** Keep the skill to supervise the agent alive
 
 **The review checklist is the enforcement mechanism.** Apply it to every task, every PR, every completion.
 

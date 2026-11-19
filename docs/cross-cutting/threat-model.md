@@ -27,7 +27,7 @@ behaving can fail when the agent is steered ([Pattern
 |-------|----------------|------------------|
 | Source code | Unreviewed or malicious changes; leaked private code | Author of record and a non-requester approver ([2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review), [4.7](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)); write confinement ([2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)) |
 | Secrets | API keys, tokens, cloud credentials, `.env` files read or sent out | Credentials outside the boundary, short-lived and scoped ([2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax), [2.11](../L2-behavioral-guardrails.md#pattern-211--agent-identity-and-delegation)); sessions never hold secrets with untrusted input ([2.10](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition)) |
-| CI | Workflow edits that remove checks, steal secrets or forge evidence | Agent cannot edit workflows or branch protection ([2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax), [2.3](../L2-behavioral-guardrails.md#pattern-23--hook-automation)); evidence from CI, not the agent ([4.8](../L4-standards-measurement.md#pattern-48--evidence-over-self-report)); high-tier review for workflow paths ([2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)) |
+| CI | Workflow edits that remove checks, steal secrets or forge evidence | Agent cannot edit workflows or branch protection ([2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax), [2.3](../L2-behavioral-guardrails.md#pattern-23--hook-automation)); evidence from CI, not the agent ([4.1](../L4-standards-measurement.md#pattern-41--evidence-based-claims)); high-tier review for workflow paths ([2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)) |
 | Production | Deploys, migrations, data access, permission changes | Downstream authorisation and scoped tokens ([2.11](../L2-behavioral-guardrails.md#pattern-211--agent-identity-and-delegation)); second human approver for the high tier ([2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)); no production credentials in agent sessions ([2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)) |
 
 ## Untrusted entry points
@@ -59,7 +59,7 @@ Each of these can carry text that instructs the agent (prompt injection) or code
 | Hooks and deny rules on command strings | Run inside the agent's environment; bypassed by another spelling or a script | Nudges and workflow checks |
 | Approval prompts | People approve by habit ([Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)) | A short list of irreversible actions |
 | A review agent's approval | Not a human approval | Extra findings |
-| The agent's own completion report | A claim by the checked party ([Pattern 4.8](../L4-standards-measurement.md#pattern-48--evidence-over-self-report)) | Pointing the reviewer to the CI result |
+| The agent's own completion report | A claim by the checked party ([Pattern 4.1](../L4-standards-measurement.md#pattern-41--evidence-based-claims)) | Pointing the reviewer to the CI result |
 
 ## Gaps
 

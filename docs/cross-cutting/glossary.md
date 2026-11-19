@@ -217,7 +217,7 @@ regresses. The justifying task is recorded next to it.
 ### Evidence-Based Claim
 
 **Layer**: L4 - Standards & Measurement
-**Definition**: Completion claim backed by actual command output showing verification results; "tests should pass" is not evidence.
+**Definition**: Completion claim backed by the output of the command that was run and by the CI run the reviewer reads; output the agent pastes with no CI run behind it is a claim, and "tests should pass" is not evidence.
 **See**: [Pattern 4.1 - Evidence-Based Claims](../L4-standards-measurement.md#pattern-41--evidence-based-claims)
 
 ### Evidence Ledger

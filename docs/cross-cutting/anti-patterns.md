@@ -531,7 +531,7 @@ and Agent Register](../L4-standards-measurement.md#pattern-47--author-of-record-
 - A person grants each permission increase, and the register records it
 - The requester or the agent cannot approve its own promotion
 - Judge promotion on evidence from systems the agent cannot edit ([Pattern
-  4.8](../L4-standards-measurement.md#pattern-48--evidence-over-self-report))
+  4.1](../L4-standards-measurement.md#pattern-41--evidence-based-claims))
 
 ---
 

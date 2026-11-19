@@ -61,7 +61,7 @@ Check this block before any team moves from attended work (a person watches each
 - [ ] Every agent-written change has an author of record, and every agent has an owner in a register ([Pattern
   4.7](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register))
 - [ ] Completion evidence comes from CI, not from the agent's message ([Pattern
-  4.8](../L4-standards-measurement.md#pattern-48--evidence-over-self-report))
+  4.1](../L4-standards-measurement.md#pattern-41--evidence-based-claims))
 - [ ] The team can supervise without the agent: the work sample passes ([Pattern
   4.9](../L4-standards-measurement.md#pattern-49--deliberate-practice))
 

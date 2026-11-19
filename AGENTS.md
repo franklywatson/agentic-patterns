@@ -24,11 +24,11 @@ agentic-patterns/
 │   │   ├── threat-model.md
 │   │   ├── faq.md
 │   │   └── glossary.md
-│   ├── references/
-│   │   ├── reference-telegram-trading-bot-case-study.md
-│   │   ├── further-reading.md
-│   │   ├── sources.md
-│   │   └── task-bank.md
+│   └── references/
+│       ├── reference-telegram-trading-bot-case-study.md
+│       ├── further-reading.md
+│       ├── sources.md
+│       └── task-bank.md
 ├── examples/                    # Working code (TS + Python)
 └── docs/diagrams/               # Diagrams for L1-L4
 ```
@@ -144,7 +144,9 @@ See [README.md](README.md) for detailed project overview.
 ## Constitutional Rules (Never Violate)
 
 1. **Real dependencies in E2E/integration and stack tests** — Use real databases, services, and caches; mocks are appropriate in unit tests
-2. **Evidence-based claims only** — "Tests pass" must show test output
+2. **Evidence-based claims only** — "Tests pass" shows the test output, and the reviewer reads the CI run; output
+   the agent pastes with no CI run behind it is a claim, not evidence
+   ([Pattern 4.1](docs/L4-standards-measurement.md#pattern-41--evidence-based-claims))
 3. **Zero-defect tolerance** — Every error/warning must be addressed
 4. **Doc freshness mandatory** — Code changes require doc updates in same session
 5. **No conditional test assertions** — Tests that can silently pass are forbidden
