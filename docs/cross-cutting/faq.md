@@ -41,4 +41,24 @@ This separation is a preference, not a rule. Some teams prefer a single repo wit
 
 ---
 
+## What passes between the application and operations?
+
+Production repair sits on the line between the application repo and the DevOps repo. Either side can own the loop if the contract is written down.
+
+**In: the incident record.** The operations side sends one record per incident, in a fixed schema:
+
+| Field | Content |
+|-------|---------|
+| `fingerprint` | A stable key for the failure: journey plus error class, not line numbers |
+| `journey` | The user journey that failed, in one sentence |
+| `request` | The failing request with personal data removed |
+| `observed` / `expected` | What happened and what should have happened |
+| `dependencies` | Each dependency's state, copied from the production health response |
+
+**Out: a reproduction and an evidence bundle.** The application side returns a reproduction stack test that fails on the production commit ([Pattern 1.7](../L1-patterns/1.7-incident-to-stack-test.md)), and an evidence bundle: before and after test output, the diff, its reversibility and blast-radius classes, and the anti-masking result ([Pattern 1.9](../L1-patterns/1.9-repair-loop-frozen-oracle.md)).
+
+The application owns the health endpoint, including its production mode ([Pattern 1.1](../L1-patterns/1.1-stack-tests.md#production-mode)). Operations owns detection, deployment, the gate and rollback. "Cannot reproduce" is a valid return: it routes to a person.
+
+---
+
 **Related:** [Adoption Guide](adoption-guide.md) | [Anti-Patterns](anti-patterns.md) | [Glossary](glossary.md) | [Back to Overview](../../README.md)

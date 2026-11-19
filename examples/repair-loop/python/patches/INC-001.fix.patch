@@ -1,0 +1,26 @@
+--- a/app/src/routes/users.py
++++ b/app/src/routes/users.py
+@@ -1,3 +1,4 @@
++import re
+ import uuid
+ 
+ from fastapi import APIRouter
+@@ -9,7 +10,9 @@
+ 
+ router = APIRouter()
+ 
++UUID_PATTERN = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", re.I)
+ 
++
+ class NewUser(BaseModel):
+     email: str
+     username: str
+@@ -40,6 +43,8 @@
+ 
+ @router.get("/users/{id}")
+ def get_user(id: str):
++    if not UUID_PATTERN.fullmatch(id):
++        return JSONResponse(status_code=404, content={"error": "User not found"})
+     with infra.connect_db() as conn:
+         row = conn.execute(
+             "SELECT id, email, username, created_at FROM users WHERE id = %s", (id,)

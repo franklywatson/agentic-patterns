@@ -90,6 +90,8 @@ Two dimensions that cap unattended work are covered only in part or not at all:
   rollback, are not covered. The [FAQ](docs/cross-cutting/faq.md) names deployment as out of scope.
 - **Measuring value against a baseline.** L4 describes metrics. It does not describe how to set a baseline before adopting a pattern or how to compare against it afterwards.
 
+What is covered: the development-time loop (L0 to L4), and the seam where production incidents enter it. [Patterns 1.7 to 1.12](docs/L1-feedback-loops.md#closing-the-loop-in-production) define the incident record, reproduction, classification, gate, limits and stop for repairing owned code, with a runnable gate in [examples/repair-loop](examples/repair-loop/README.md). What is out of scope: deployment pipelines, feature-flag services and production telemetry. The [FAQ](docs/cross-cutting/faq.md#what-passes-between-the-application-and-operations) defines the contract between the application and operations. Unattended repair of data-forward or irreversible changes is not supported at any grant.
+
 Security and governance is covered by [Patterns 2.9 to
 2.13](docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax), the [threat
 model](docs/cross-cutting/threat-model.md) and [Patterns 4.7 to
@@ -118,6 +120,8 @@ by platform and measuring value, which sit at C2-C3.
 ```
 docs/               # Pattern documentation (layers L0-L4) and guides
 examples/           # Working code examples (TypeScript + Python for core patterns; the optional L3 example is TypeScript only)
+  repair-loop/      # Incident to reproduction to gate decision, no LLM; production confirmation simulated
+                    #   Stack: Node.js or Python + PostgreSQL + Redis in Docker
   stack-test/
     typescript/     # Jest-based stack tests + Playwright browser tests
                     #   Demonstrates: API-level AND browser-driven verification

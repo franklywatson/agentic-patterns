@@ -1,0 +1,47 @@
+# Autonomy register for the repair-loop example. Owner, sponsor, identity and dates below are example
+# values for illustration, not real people or accounts. Schema: examples/autonomy/schema/autonomy.schema.json;
+# design: docs/refresh/reviews/review-autonomy.md (pattern A.1). The cap check needs a census profile
+# that this example does not ship. The repair workflow is granted
+# A3: changes pass the required checks before a person sees them, and a person merges.
+# The example shows the gate. It does not grant A4.
+version: 1
+defaults:
+  interactive_level: 3
+  evidence_window: { min_runs: 30, max_days: 60 }
+  review_cadence_days: 90
+  stop_test_max_age_days: 30
+
+workflows:
+  - id: repair-loop
+    description: Reproduce an incident in owned code, verify a candidate fix, and open a pull request with an evidence bundle
+    owner: team-platform
+    sponsor: "@repair-sponsor"
+    granted_level: 3
+    target_level: 3
+    trigger: event:incident
+    identity: github-app:repair-bot
+    access_expires: 2027-03-01
+    permitted_actions:
+      tools: ["Read", "Edit", "Bash(npm test*)", "Bash(uv run pytest*)"]
+      paths: ["app/src/**"]
+      git: [branch, commit, open_pr]
+      network: []
+    forbidden_actions: [deploy, read_secrets, force_push, merge, edit_ci, edit_autonomy, edit_tests]
+    risk:
+      reversible: true            # R0-R2 only: the gate sends R3 and R4 to a person
+      verification: mechanical    # frozen reproduction, regression suite, anti-masking scan
+      blast_radius: service       # the gate ceiling is B1
+      trifecta:
+        untrusted_input: true     # incident records come from production
+        sensitive_data: false     # incident records are PII-free by schema
+        external_action: false
+    limits: { max_runs_per_day: 5, max_cost_usd_per_run: 2.00, max_diff_lines: 100 }
+    verification:
+      required_checks: [unit, stack, gate-eval]
+      task_bank: typescript/tests/eval/gate-eval.test.ts
+    stop:
+      mechanism: "engage the stop switch in the breaker state; revoke the app installation token"
+      authority: [team-platform, "@oncall"]
+      last_tested: 2026-11-18      # exercised by stack test 05
+    review_date: 2027-02-18
+    stop_rule: "retire if fewer than 2 confirmed repairs in 90 days, or any repair is reverted twice"

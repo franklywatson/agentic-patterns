@@ -418,6 +418,8 @@ this rule. The agent's prompt and the verification skill state it; they do not h
 
 **Why this matters for agents:** Agents process feedback systematically. When output contains errors, agents must be able to assume those errors are relevant. If some errors are "okay to ignore," the agent cannot distinguish which require action, and the feedback loop breaks.
 
+**In production, zero-defect governs what must be addressed, not what is auto-repaired.** Every production error is triaged, fingerprinted and owned. That does not mean every error triggers an automatic fix. Automatic action on every alert flaps. Which errors may be repaired without a person is decided by grant and class ([Pattern 1.11](L1-patterns/1.11-repair-budget-circuit-breaker-stop.md)).
+
 ### In Practice
 
 A test run produces output:
@@ -623,7 +625,7 @@ A planted instruction that becomes a learning is read by every later session. Us
 2. A person reads it, checks the claim against the code or a test, and checks that it contains no instruction
    aimed at the agent ("always run", "ignore", "send").
 3. The person promotes it by moving it to the loaded location, with the date and the reviewer's name.
-4. After a repair or fix, promote only after the confirmation window for that change has passed without a regression.
+4. After a repair or fix, promote only after the confirmation window for that change has passed and the recurrence check shows the fingerprint has not returned ([Pattern 1.9](L1-patterns/1.9-repair-loop-frozen-oracle.md)). A repair that masked a defect looks like a solution until the failure returns.
 5. Learnings carry a review date and an owner. Prune on a schedule ([Pattern
    0.8](L0-foundation.md#pattern-08--aggressive-cleanup)).
 

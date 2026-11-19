@@ -14,7 +14,7 @@ agentic-patterns/
 ├── docs/
 │   ├── L0-foundation.md         # Deep modules, progressive disclosure
 │   ├── L1-feedback-loops.md     # Closed loop design and verification (overview)
-│   ├── L1-patterns/             # Individual L1 patterns (1.1-1.6 + testing infra)
+│   ├── L1-patterns/             # Individual L1 patterns (1.1-1.12 + testing infra)
 │   ├── L2-behavioral-guardrails.md  # Skills, hooks, constitutional rules
 │   ├── L3-optimization.md       # Token efficiency, tool routing
 │   ├── L4-standards-measurement.md # Evidence, metrics, CI guardrails, context eval
@@ -48,7 +48,8 @@ See [README.md](README.md) for detailed project overview.
 - Working code only. No TODOs, no placeholders.
 - All examples must run as-is.
 - Examples that exist: stack tests (Pattern 1.1, TypeScript and Python), containment (Pattern 2.9, TypeScript and
-  Python), guardrail middleware (Pattern 3.1, TypeScript only) and project structure (L0, documentation only).
+  Python), repair loop (Patterns 1.7 to 1.11, TypeScript and Python), guardrail middleware (Pattern 3.1,
+  TypeScript only) and project structure (L0, documentation only).
 - A new example for a core pattern (L0-L2, L4) ships in TypeScript and Python; examples for the optional L3 may be
   single-language.
 
@@ -86,6 +87,13 @@ See [README.md](README.md) for detailed project overview.
 - [docs/L1-patterns/1.4-container-isolation.md](docs/L1-patterns/1.4-container-isolation.md) — Container isolation
 - [docs/L1-patterns/1.5-no-mock-philosophy.md](docs/L1-patterns/1.5-no-mock-philosophy.md) — Real dependencies in stack/E2E tests
 - [docs/L1-patterns/1.6-test-integrity.md](docs/L1-patterns/1.6-test-integrity.md) — Test integrity rules
+- [docs/L1-patterns/1.7-incident-to-stack-test.md](docs/L1-patterns/1.7-incident-to-stack-test.md) — Incident-to-stack-test
+- [docs/L1-patterns/1.8-reversibility-blast-radius.md](docs/L1-patterns/1.8-reversibility-blast-radius.md) — Reversibility and blast-radius classes
+- [docs/L1-patterns/1.9-repair-loop-frozen-oracle.md](docs/L1-patterns/1.9-repair-loop-frozen-oracle.md) — Repair loop with a frozen oracle
+- [docs/L1-patterns/1.10-production-gate-progressive-confirmation.md](docs/L1-patterns/1.10-production-gate-progressive-confirmation.md) — Production gate and progressive confirmation
+- [docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md](docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md) — Repair budget, circuit breaker, stop authority
+- [docs/L1-patterns/1.12-self-healing-tests-vs-systems.md](docs/L1-patterns/1.12-self-healing-tests-vs-systems.md) — Self-healing tests vs self-healing systems
+- [examples/repair-loop/README.md](examples/repair-loop/README.md) — Runnable repair loop with a deterministic gate
 - [docs/L1-patterns/testing-infrastructure.md](docs/L1-patterns/testing-infrastructure.md) — Testing infrastructure is production code
 
 **Behavioral Guardrails:**

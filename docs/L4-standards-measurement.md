@@ -45,6 +45,8 @@ Claim: <what the output proves>
 - "Performance improved" → Show before/after metrics
 - "Bug fixed" → Show reproduction failing before, passing after
 
+**Graded production evidence.** Confirming a fix in production is statistical: error rates over a sample, not a single pass or fail. Accept it only under a rule declared before the change ships, which code evaluates, with a minimum sample size. Use it only for gates on reversible actions. A claim such as "no errors since deploy" on a path with no traffic is not evidence ([Pattern 1.10](L1-patterns/1.10-production-gate-progressive-confirmation.md)).
+
 ### In Practice
 
 **Bad claims:**
@@ -151,6 +153,20 @@ This is not about tracking agent activity for its own sake. Tokens consumed, com
 - Spec drift detected — broken links, stale docs, orphaned tests — tracked over time with the checks in [Pattern 0.7](L0-foundation.md#pattern-07--documentation-as-system-map)
 - Rollback frequency — how often agent changes must be reverted
 - Audit completeness — percentage of agent changes with full evidence trail
+
+**5. Repair** (for teams that run a repair loop, [Patterns 1.7 to 1.12](L1-feedback-loops.md#closing-the-loop-in-production))
+
+Speed and stability are read together, so a fast number cannot hide a weak one.
+
+- Time to reproduce — from the incident record to a reproduction that is red on the production commit
+- Time to confirmed repair — from the incident record to a fix that passed the confirmation window
+- Repair revert rate — share of repairs rolled back or reverted
+- Recurrence rate per fingerprint — share of confirmed repairs whose fingerprint returns within a set number of days
+- Mitigation-to-fix ratio — mitigations shipped for every root-cause fix
+- Masked-defect rate — runtime recoveries with no repair ticket, as a share of all recoveries ([Pattern 1.12](L1-patterns/1.12-self-healing-tests-vs-systems.md))
+- Cost per confirmed repair — total spend divided by repairs that passed confirmation
+
+The number of auto-repairs is never a target. Raising it means lowering the bar for what counts as a repair. The revert rate and recurrence rate also feed the circuit breaker ([Pattern 1.11](L1-patterns/1.11-repair-budget-circuit-breaker-stop.md)).
 
 ### In Practice
 

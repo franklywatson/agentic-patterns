@@ -1,0 +1,22 @@
+--- a/app/src/routes/users.py
++++ b/app/src/routes/users.py
+@@ -40,10 +40,13 @@
+ 
+ @router.get("/users/{id}")
+ def get_user(id: str):
+-    with infra.connect_db() as conn:
+-        row = conn.execute(
+-            "SELECT id, email, username, created_at FROM users WHERE id = %s", (id,)
+-        ).fetchone()
+-    if row is None:
++    try:
++        with infra.connect_db() as conn:
++            row = conn.execute(
++                "SELECT id, email, username, created_at FROM users WHERE id = %s", (id,)
++            ).fetchone()
++        if row is None:
++            return JSONResponse(status_code=404, content={"error": "User not found"})
++        return view(row)
++    except Exception:
+         return JSONResponse(status_code=404, content={"error": "User not found"})
+-    return view(row)

@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "unknown": {
+    "reversibility": "R4",
+    "blast": "B3"
+  },
+  "paths": [
+    {
+      "glob": "tests/**",
+      "reversibility": "R0",
+      "blast": "B0"
+    },
+    {
+      "glob": "**/*.md",
+      "reversibility": "R0",
+      "blast": "B0"
+    },
+    {
+      "glob": "app/src/routes/**",
+      "reversibility": "R2",
+      "blast": "B0"
+    },
+    {
+      "glob": "app/src/health.*",
+      "reversibility": "R2",
+      "blast": "B1"
+    },
+    {
+      "glob": "app/src/index.*",
+      "reversibility": "R2",
+      "blast": "B1"
+    },
+    {
+      "glob": "app/openapi.*",
+      "reversibility": "R2",
+      "blast": "B2"
+    },
+    {
+      "glob": "app/src/main.*",
+      "reversibility": "R2",
+      "blast": "B1"
+    },
+    {
+      "glob": "app/src/infra.*",
+      "reversibility": "R2",
+      "blast": "B1"
+    },
+    {
+      "glob": "app/src/auth.*",
+      "reversibility": "R2",
+      "blast": "B3"
+    },
+    {
+      "glob": "app/migrations/**",
+      "reversibility": "R3",
+      "blast": "B1"
+    },
+    {
+      "glob": ".autonomy.yaml",
+      "reversibility": "R4",
+      "blast": "B3"
+    },
+    {
+      "glob": ".github/**",
+      "reversibility": "R4",
+      "blast": "B3"
+    }
+  ],
+  "content": [
+    {
+      "name": "schema-or-data-write",
+      "pattern": "\\b(CREATE|ALTER|DROP)\\s+TABLE\\b|\\bTRUNCATE\\b|\\bDELETE\\s+FROM\\b|\\bUPDATE\\s+\\w+\\s+SET\\b",
+      "reversibility": "R3"
+    },
+    {
+      "name": "external-effect",
+      "pattern": "\\b(sendMail|sendmail|smtplib)\\b|\\bfetch\\(|\\baxios\\.|\\brequests\\.|\\bhttpx\\.",
+      "reversibility": "R4"
+    },
+    {
+      "name": "money-auth-pii",
+      "pattern": "\\b(password|passwd|secret|payment|refund|ssn)\\b",
+      "blast": "B3"
+    }
+  ]
+}
