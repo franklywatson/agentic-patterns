@@ -3,6 +3,7 @@ import { Router, type Request, type Response, type NextFunction } from 'express'
 import jwt from 'jsonwebtoken';
 import { pool, redis } from './infra.js';
 
+// Demo-only fallback. Production deployments must inject a real secret.
 const JWT_SECRET = process.env.JWT_SECRET ?? 'stack-test-secret';
 const TOKEN_TTL_SECONDS = 3600;
 

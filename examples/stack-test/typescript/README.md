@@ -6,9 +6,9 @@ A minimal, working example of stack tests in TypeScript using Jest and Playwrigh
 
 - **User journey framing**: Each test is one complete user interaction, not a component check
 - **Dynamic port allocation**: Ports assigned from available range (10000-65535)
-- **Unique container naming**: `{test-name}-{pid}-{random}-{service}` prevents collisions
+- **Unique compose project**: `docker compose -p stack-test-{pid}-{hex}` isolates containers, network and volumes; the compose file sets no fixed `container_name`
 - **Transient volumes**: Data disappears when containers stop
-- **Per-test compose files**: `docker-compose-{test-name}-{pid}-{random}-{timestamp}.yml`
+- **Per-test compose files**: generated as `docker-compose-stack-test-{pid}-{hex}-{timestamp}.yml` from the template and deleted on cleanup
 - **Full-loop assertions**: Primary response, second-order cross-API verification, third-order audit/observability
 - **Sequential ordering**: Tests numbered `01-`, `02-` to establish dependency ladder
 - **Two test modes**: API-level (Jest) and browser-level (Playwright)
@@ -80,7 +80,7 @@ npm install
 npx playwright install chromium
 
 # API-level stack tests (Jest). Each test file starts its own stack
-# (unique compose project, container names and ports) and removes it afterwards.
+# (unique compose project and ports) and removes it afterwards.
 npm run test:stack
 ```
 
@@ -130,7 +130,7 @@ Each test verifies at multiple levels:
 
 ### 3. Container Isolation
 
-Every API test gets a unique compose file with unique container names and ports. Tests can run concurrently without collision. Browser tests share the same running stack (since a single browser session tests the UI against it).
+Every API test gets a generated compose file, a unique compose project name (`stack-test-{pid}-{hex}`) and dynamically allocated ports. Tests can run concurrently without collision. Browser tests share the same running stack (since a single browser session tests the UI against it).
 
 ### 4. Aggressive Cleanup
 

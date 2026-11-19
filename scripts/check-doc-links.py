@@ -11,6 +11,9 @@ spaces removed, spaces replaced by hyphens. Fenced code blocks and inline
 code are ignored. node_modules, .git, .superpowers, .worktrees and the
 verbatim review records in docs/refresh/reviews/ are skipped.
 
+Not handled: duplicate heading suffixes (-1, -2) that GitHub adds to repeated
+headings, and indented or `~~~` code fences.
+
 Usage: python3 scripts/check-doc-links.py [ROOT]
 Exit status: 0 when no issues are found, 1 otherwise.
 """

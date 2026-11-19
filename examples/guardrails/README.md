@@ -75,7 +75,7 @@ Tests live in `src/__tests__/`. They cover intent classification, environment-aw
 
 The classifier (`src/core/intent.ts`) and the router (`src/config/routing.config.ts`) use different patterns for `sed -i`:
 
-- The classifier is anchored to the start of each segment (`^\s*sed\s+(-i|--in-place)`). It misses `/usr/bin/sed -i` and `sed -E -i`.
+- The classifier is anchored to the start of each segment (`^\s*sed\s+(-i|--in-place)\b`). It misses `/usr/bin/sed -i` and `sed -E -i`.
 - The router rule is unanchored (`\bsed\s+(-i|--in-place)\b`). It catches `/usr/bin/sed -i` but also blocks harmless text such as `echo sed -i` (false positive). It misses `sed -E -i`.
 - Neither matches `perl -pi`, `python -c` file writes, or commands assembled at runtime (`$(echo sed) -i ...`).
 
