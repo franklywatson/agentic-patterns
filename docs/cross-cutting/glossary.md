@@ -9,8 +9,11 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Agent Register
 
 **Layer**: L4 - Standards & Measurement
-**Definition**: One list of every agent, unattended workflow, skill, hook pack and MCP server in use, with its owner, sponsor, permitted actions, access expiry, state, last review, retirement rule and stop. It can start as a table and grow into a machine-readable file checked in CI.
-**See**: [Pattern 4.7 - Author of Record and Agent Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)
+**Definition**: One list of every agent, unattended workflow, skill, hook pack and MCP server in use, with its
+owner, sponsor, permitted actions, access expiry, state, last review, retirement rule and stop. It can start
+as a table and grow into a machine-readable file checked in CI.
+**See**: [Pattern 4.7 - Author of Record and Agent
+Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)
 
 ### Agentic Testing
 
@@ -21,7 +24,8 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Approval Fatigue
 
 **Layer**: L2 - Behavioral Guardrails
-**Definition**: The effect of asking for confirmation too often: people approve without reading, and the prompt stops working as a control. The remedy is to tier approvals by risk and to measure the approve rate.
+**Definition**: The effect of asking for confirmation too often: people approve without reading, and the
+prompt stops working as a control. The remedy is to tier approvals by risk and to measure the approve rate.
 **See**: [Pattern 2.13 - Risk-Tiered Review](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)
 
 ### Assertion Layering (Full-Loop)
@@ -33,8 +37,10 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Author of Record
 
 **Layer**: L4 - Standards & Measurement
-**Definition**: The person who asked an agent for a change. They read it and answer for it, and they cannot approve it; a different person approves.
-**See**: [Pattern 4.7 - Author of Record and Agent Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)
+**Definition**: The person who asked an agent for a change. They read it and answer for it, and they cannot
+approve it; a different person approves.
+**See**: [Pattern 4.7 - Author of Record and Agent
+Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)
 
 ---
 
@@ -55,7 +61,8 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Cognitive Debt
 
 **Layer**: L4 - Standards & Measurement
-**Definition**: The gap that grows when a team ships code it does not understand: the code works, and nobody can explain or debug it. Agents widen the gap when people stop reading what they produce.
+**Definition**: The gap that grows when a team ships code it does not understand: the code works, and nobody
+can explain or debug it. Agents widen the gap when people stop reading what they produce.
 **See**: [Pattern 4.9 - Deliberate Practice](../L4-standards-measurement.md#pattern-49--deliberate-practice)
 
 ### Conditional Assertion (Anti-Pattern)
@@ -79,7 +86,9 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Containment
 
 **Layer**: L2 - Behavioral Guardrails
-**Definition**: Running the agent inside a boundary it cannot change: writes confined to the working tree, reads bounded, network allowlisted, credentials held outside, and no session if the boundary cannot start. Approvals are relaxed only inside it.
+**Definition**: Running the agent inside a boundary it cannot change: writes confined to the working tree,
+reads bounded, network allowlisted, credentials held outside, and no session if the boundary cannot start.
+Approvals are relaxed only inside it.
 **See**: [Pattern 2.9 - Contain Before You Relax](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)
 
 ### Context Isolation
@@ -176,14 +185,19 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Least Agency
 
 **Layer**: L2 - Behavioral Guardrails
-**Definition**: Giving a session only the tools, permissions and autonomy its task needs. Each unneeded capability is something an injected instruction can use.
-**See**: [Pattern 2.10 - Least Agency and Session Composition](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition)
+**Definition**: Giving a session only the tools, permissions and autonomy its task needs. Each unneeded
+capability is something an injected instruction can use.
+**See**: [Pattern 2.10 - Least Agency and Session
+Composition](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition)
 
 ### Lethal Trifecta / Rule of Two
 
 **Layer**: L2 - Behavioral Guardrails
-**Definition**: The lethal trifecta is the combination of untrusted input, access to sensitive data and a way to act outside, in one session. The Rule of Two says a session holds at most two of the three unless a deterministic or human gate sits between them.
-**See**: [Pattern 2.10 - Least Agency and Session Composition](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition)
+**Definition**: The lethal trifecta is the combination of untrusted input, access to sensitive data and a way
+to act outside, in one session. The Rule of Two says a session holds at most two of the three unless a
+deterministic or human gate sits between them.
+**See**: [Pattern 2.10 - Least Agency and Session
+Composition](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition)
 
 ---
 
@@ -304,8 +318,11 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Tested Stop
 
 **Layer**: L4 - Standards & Measurement
-**Definition**: A way to halt an unattended workflow that someone has used in a drill: a named person who can invoke it, a mechanism such as credential revocation or a queue pause, and a named role that approves restart. The agent register records whether one exists.
-**See**: [Pattern 4.7 - Author of Record and Agent Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)
+**Definition**: A way to halt an unattended workflow that someone has used in a drill: a named person who can
+invoke it, a mechanism such as credential revocation or a queue pause, and a named role that approves restart.
+The agent register records whether one exists.
+**See**: [Pattern 4.7 - Author of Record and Agent
+Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)
 
 ### Token Efficiency
 

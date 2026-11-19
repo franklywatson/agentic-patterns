@@ -415,25 +415,32 @@ esac
 
 ### Hooks as a Security Boundary
 
-**Symptom**: The only control on credential access, destructive commands or network use is a hook or a deny rule that matches command strings. The team believes the rule holds.
+**Symptom**: The only control on credential access, destructive commands or network use is a hook or a deny
+rule that matches command strings. The team believes the rule holds.
 
-**Why This Happens**: A hook is easy to write and visible in review, so it feels like a wall. It runs inside the agent's environment and matches text. `/usr/bin/sed -i`, `perl -pi`, `bash -c` and `$(...)` all pass a rule written for `sed -i`. The agent can often edit project hook files.
+**Why This Happens**: A hook is easy to write and visible in review, so it feels like a wall. It runs inside
+the agent's environment and matches text. `/usr/bin/sed -i`, `perl -pi`, `bash -c` and `$(...)` all pass a
+rule written for `sed -i`. The agent can often edit project hook files.
 
-**Pattern**: Apply [Pattern 2.9 - Contain Before You Relax](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax):
+**Pattern**: Apply [Pattern 2.9 - Contain Before You
+Relax](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax):
 
 - Put what must never happen in a sandbox or container, with credentials outside it
 - Keep hooks as ergonomic nudges and workflow checks
 - Test the boundary with a command that must fail
 
-The [containment example](../../examples/containment/) runs the bypass commands through a policy function and a container, and shows which one stops them.
+The [containment example](../../examples/containment/) runs the bypass commands through a policy function and
+a container, and shows which one stops them.
 
 ---
 
 ### Approval as a Safety Valve
 
-**Symptom**: Every command asks for confirmation. People approve in a rhythm without reading. The team treats the prompt as the safety control.
+**Symptom**: Every command asks for confirmation. People approve in a rhythm without reading. The team treats
+the prompt as the safety control.
 
-**Why This Happens**: A prompt looks like oversight. Frequent prompts for low-risk actions train people to approve all of them, and then the one risky prompt gets approved too.
+**Why This Happens**: A prompt looks like oversight. Frequent prompts for low-risk actions train people to
+approve all of them, and then the one risky prompt gets approved too.
 
 **Pattern**: Apply [Pattern 2.13 - Risk-Tiered Review](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review):
 
@@ -446,11 +453,15 @@ The [containment example](../../examples/containment/) runs the bypass commands 
 
 ### Unvetted Skill Install
 
-**Symptom**: Skills, plugins and MCP servers are installed from a README one-liner. Nobody has read them. They follow a moving branch and update without review.
+**Symptom**: Skills, plugins and MCP servers are installed from a README one-liner. Nobody has read them. They
+follow a moving branch and update without review.
 
-**Why This Happens**: Installing a skill feels like adding a prompt, not a dependency. A skill steers the model, a plugin can add hooks, and an MCP server is code on the machine. One scan found a critical issue in 13.4% of 3,984 public skills ([SG-28](../references/sources.md)).
+**Why This Happens**: Installing a skill feels like adding a prompt, not a dependency. A skill steers the
+model, a plugin can add hooks, and an MCP server is code on the machine. One scan found a critical issue in
+13.4% of 3,984 public skills ([SG-28](../references/sources.md)).
 
-**Pattern**: Apply [Pattern 2.12 - Skill, Plugin and MCP Supply Chain](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain):
+**Pattern**: Apply [Pattern 2.12 - Skill, Plugin and MCP Supply
+Chain](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain):
 
 - Keep an allowlist enforced where the agent cannot edit it
 - Pin a version or commit, and read the instructions and code before install
@@ -461,25 +472,34 @@ The [containment example](../../examples/containment/) runs the bypass commands 
 
 ### Self-Promoting Autonomy Tiers
 
-**Symptom**: An agent, or the workflow around it, raises its own permissions after a run of successes: more tools, fewer approvals, wider access. No person decided.
+**Symptom**: An agent, or the workflow around it, raises its own permissions after a run of successes: more
+tools, fewer approvals, wider access. No person decided.
 
-**Why This Happens**: Automatic promotion looks like earned trust. But the success count comes from the same system that gets the new permission, and a streak of easy tasks says nothing about a hard one.
+**Why This Happens**: Automatic promotion looks like earned trust (the autonomy grants A1 to A5 are defined in
+[the README](../../README.md#how-far-a-team-can-let-go)). But the success count comes from the same system
+that gets the new permission, and a streak of easy tasks says nothing about a hard one.
 
-**Pattern**: Apply [Pattern 2.13 - Risk-Tiered Review](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review) and [Pattern 4.7 - Author of Record and Agent Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register):
+**Pattern**: Apply [Pattern 2.13 - Risk-Tiered
+Review](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review) and [Pattern 4.7 - Author of Record
+and Agent Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register):
 
 - A person grants each permission increase, and the register records it
 - The requester or the agent cannot approve its own promotion
-- Judge promotion on evidence from systems the agent cannot edit ([Pattern 4.8](../L4-standards-measurement.md#pattern-48--evidence-over-self-report))
+- Judge promotion on evidence from systems the agent cannot edit ([Pattern
+  4.8](../L4-standards-measurement.md#pattern-48--evidence-over-self-report))
 
 ---
 
 ### Orphaned Agent
 
-**Symptom**: An agent, scheduled workflow, skill or hook set keeps running after its creator has left the team. Nobody knows what it may do, whether it is needed or how to stop it. Its credentials are still valid.
+**Symptom**: An agent, scheduled workflow, skill or hook set keeps running after its creator has left the
+team. Nobody knows what it may do, whether it is needed or how to stop it. Its credentials are still valid.
 
-**Why This Happens**: Setting up an agent is a task. Owning it is not, so no one is assigned. Access has no expiry, and nothing prompts a review.
+**Why This Happens**: Setting up an agent is a task. Owning it is not, so no one is assigned. Access has no
+expiry, and nothing prompts a review.
 
-**Pattern**: Apply [Pattern 4.7 - Author of Record and Agent Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register):
+**Pattern**: Apply [Pattern 4.7 - Author of Record and Agent
+Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register):
 
 - List every agent and agent-facing artefact with an owner, a sponsor, an access expiry and a review date
 - Suspend, then remove, any item whose owner has left or whose review has lapsed

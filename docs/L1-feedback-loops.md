@@ -48,7 +48,12 @@ Every agent interaction with the system — a new feature, a bug fix, an archite
 
 7. **Execute** — Use the `executing-tasks` skill to implement the plan as documented. Run tests, fix issues found, verify against the plan's acceptance criteria.
 
-The [rig](https://github.com/franklywatson/claude-rig) framework (a hook and skill pack: review it before installing, per [Pattern 2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)) automates this workflow through its skill chain — enforcing the transition from planning to implementation to verification. The `plan+` skill structures the design-first approach; the phase tracker prevents jumping to `tdd+` without a prior plan. See [L2: Behavioral Guardrails](L2-behavioral-guardrails.md) for the full skill chain architecture.
+The [rig](https://github.com/franklywatson/claude-rig) framework (a hook and skill pack: review it before
+installing, per [Pattern 2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain))
+automates this workflow through its skill chain — enforcing the transition from planning to implementation to
+verification. The `plan+` skill structures the design-first approach; the phase tracker prevents jumping to
+`tdd+` without a prior plan. See [L2: Behavioral Guardrails](L2-behavioral-guardrails.md) for the full skill
+chain architecture.
 
 ### Why Context Harvesting Precedes Testing
 
@@ -92,7 +97,11 @@ Design rinsing is not copying code. It is extracting the *why* behind architectu
 
 3. **Direct the agent** — Point the agent at the source with specific analysis questions. "How does this system handle multi-agent coordination?" not "Read this entire codebase."
 
-   **Warning — external sources are untrusted input.** A repository, transcript, or article can contain text that instructs the agent (prompt injection). Rinse in a read-only session with no write access to the target project, and with no network egress beyond the source itself. Carry only the distilled notes into the design session. See [Pattern 2.10 — Least Agency and Session Composition](L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition) for the principle.
+   **Warning — external sources are untrusted input.** A repository, transcript, or article can contain text
+that instructs the agent (prompt injection). Rinse in a read-only session with no write access to the target
+project, and with no network egress beyond the source itself. Carry only the distilled notes into the design
+session. See [Pattern 2.10 — Least Agency and Session
+Composition](L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition) for the principle.
 
 4. **Distill** — The agent extracts essential patterns, not surface-level code. What decisions were made, why, and what trade-offs they represent.
 

@@ -36,7 +36,8 @@ The lineage: patterns were extracted from the reference project, organized into 
 | [rig](https://github.com/franklywatson/claude-rig) | Guardrails framework: L2 enforcement pipeline, L3 tool routing + token-optimized scout agent, L4 context eval, skill chain with phase transitions, CI guardrails. Configurable via `.harness.yaml`. | TypeScript |
 | [superpowers](https://github.com/obra/superpowers) | L2 base skills (brainstorming, TDD, verification, review), automated worktree management | Markdown/JS |
 
-These install hooks, skills and commands that run with your agent's privileges. Read and pin before installing ([Pattern 2.12](docs/L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)).
+These install hooks, skills and commands that run with your agent's privileges. Read and pin before installing
+([Pattern 2.12](docs/L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)).
 
 ## The Pattern Layers
 
@@ -58,11 +59,17 @@ The library has five layers, L0 to L4. A layer is a group of patterns that depen
 
 ## How Far a Team Can Let Go
 
-The layers say whether letting go is safe. Two further scales say how far a team has got and how much one workflow may do on its own. They are defined in [the refresh synthesis](docs/refresh/synthesis.md#2-where-the-library-stands) and the baseline described in [Baseline structure](docs/references/sources.md#baseline-structure).
+The layers say whether letting go is safe. Two further scales say how far a team has got and how much one
+workflow may do on its own. The baseline they come from is described in [Baseline
+structure](docs/references/sources.md#baseline-structure).
 
 **The curve (C1-C5).** A five-step curve applied separately to each of seven dimensions: C1 Individual, C2 Grounded, C3 Verified delegation, C4 Governed autonomy, C5 Self-correcting. A team has a position per dimension, not one overall score. The steps carry a C prefix so they are not confused with L0-L4.
 
-**Autonomy grants (A1-A5).** A grant is what one named workflow may do. A1 suggests and a human applies the change. A2 opens pull requests that a human reads. A3 passes required checks before a human merges. A4 acts on an event or schedule within permitted actions, with an owner, limits, an audit record and a tested stop, only where verification is mechanical and the action reversible. A5 is A4 managed as an investment: baseline, target, review date and stop rule. Each grant needs a minimum cap, set out below. A guide to earning and withdrawing grants (`docs/earned-autonomy.md`) arrives in Phase 3 of the refresh.
+**Autonomy grants (A1-A5).** A grant is what one named workflow may do. A1 suggests and a human applies the
+change. A2 opens pull requests that a human reads. A3 passes required checks before a human merges. A4 acts on
+an event or schedule within permitted actions, with an owner, limits, an audit record and a tested stop, only
+where verification is mechanical and the action reversible. A5 is A4 managed as an investment: baseline,
+target, review date and stop rule. Each grant needs a minimum cap, set out below.
 
 **The seven dimensions.** Four of them cap unattended work. The table shows the position a team reaches by adopting every pattern as written (synthesis section 2). It is a ceiling set by the content, not an assessment of any team.
 
@@ -82,12 +89,20 @@ The cap line is the lowest position among the four capping dimensions. No workfl
 
 Two dimensions that cap unattended work are covered only in part or not at all:
 
-- **Production ownership.** Partly covered. [Pattern 4.7](docs/L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) names an author of record and starts an agent register. The register's tested stop (a rehearsed way to halt an unattended workflow) and the patterns for running and repairing agent-built software in production, including on-call and rollback, are not covered yet. The [FAQ](docs/cross-cutting/faq.md) names deployment as out of scope.
+- **Production ownership.** Partly covered. [Pattern
+  4.7](docs/L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) names an author of
+  record and starts an agent register. The register's tested stop (a rehearsed way to halt an unattended
+  workflow) and the patterns for running and repairing agent-built software in production, including on-call and
+  rollback, are not covered. The [FAQ](docs/cross-cutting/faq.md) names deployment as out of scope.
 - **Measuring value against a baseline.** L4 describes metrics. It does not describe how to set a baseline before adopting a pattern or how to compare against it afterwards.
 
-Security and governance is now covered by [Patterns 2.9 to 2.13](docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax), the [threat model](docs/cross-cutting/threat-model.md) and [Patterns 4.7 to 4.9](docs/L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register). Data handling and audit retention are not covered.
+Security and governance is covered by [Patterns 2.9 to
+2.13](docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax), the [threat
+model](docs/cross-cutting/threat-model.md) and [Patterns 4.7 to
+4.9](docs/L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register). Data handling, audit
+retention and incident response are not covered.
 
-The consequence: the cap for unattended work is still C1, because production ownership is the lowest capping dimension. It rises when the register, the tested stop and the production patterns exist. The plan is in [docs/refresh/synthesis.md](docs/refresh/synthesis.md).
+The consequence: the cap for unattended work is C1, because production ownership is the lowest capping dimension.
 
 ## Getting Started
 

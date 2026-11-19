@@ -1,12 +1,19 @@
 # Threat Model for an Agentic Repository
 
-This page lists what an agent can reach, what could go wrong, and which pattern holds each risk. Use it to decide where to put a control, and as a checklist when you review a setup.
+This page lists what an agent can reach, what could go wrong, and which pattern holds each risk. Use it to
+decide where to put a control, and as a checklist when you review a setup.
 
-The evidence is **Thin** as a whole. The list of assets, entry points and capabilities is the author's synthesis of the sources cited in the patterns ([SG-1, SG-2, SG-16](../references/sources.md)). The individual patterns carry their own evidence labels. Add your own assets and entry points; this list is a start.
+The list of assets, entry points and capabilities is the author's synthesis of the sources cited in the
+patterns, so the evidence is Thin (see the footer). The individual patterns carry their own evidence labels.
+Add your own assets and entry points; this list is a start.
 
 ## How to read it
 
-An attack needs three things: an untrusted entry point that delivers text or code to the agent, a capability the agent can use, and an asset worth reaching. A control breaks the chain at one of the three. The strongest controls remove the capability or move the asset out of reach, because a control that relies on the agent behaving can fail when the agent is steered ([Pattern 2.10](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition)).
+An attack needs three things: an untrusted entry point that delivers text or code to the agent, a capability
+the agent can use, and an asset worth reaching. A control breaks the chain at one of the three. The strongest
+controls remove the capability or move the asset out of reach, because a control that relies on the agent
+behaving can fail when the agent is steered ([Pattern
+2.10](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition)).
 
 ## Assets
 
@@ -50,7 +57,11 @@ Each of these can carry text that instructs the agent (prompt injection) or code
 
 ## Gaps
 
-This page does not cover data handling, audit retention or incident response. It does not model attackers who already control the developer's machine or the CI platform.
+This page does not cover data handling, audit retention or incident response. It does not model attackers who
+already control the developer's machine or the CI platform.
+
+**Evidence:** Thin — the author's synthesis of the sources behind the patterns, not a tested model ([SG-1,
+SG-2, SG-16](../references/sources.md))
 
 ---
 

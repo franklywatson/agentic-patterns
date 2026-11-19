@@ -34,7 +34,8 @@ L2 decides where each rule is held. A rule is as strong as its weakest enforceme
 
 A sandbox with credentials kept outside it makes hooks such as "block `sed -i`" or "block `docker system
 prune`" unnecessary as safety controls. They remain useful as ergonomic nudges
-([AN-9, SG-10](references/sources.md)). [Pattern 2.9](#pattern-29--contain-before-you-relax) covers sandbox and credential setup.
+([AN-9, SG-10](references/sources.md)). [Pattern 2.9](#pattern-29--contain-before-you-relax) covers sandbox
+and credential setup.
 
 The mechanisms in this document:
 
@@ -42,7 +43,8 @@ The mechanisms in this document:
 - **Hooks**: scripts that fire around tool calls (hook layer)
 - **Constitutional rules**: the hard rules, each with a named enforcement point
 - **Zero-defect tolerance**: the discipline that keeps feedback unambiguous
-- **Containment, least agency, identity, supply chain and tiered review** (Patterns 2.9 to 2.13): the boundary and the controls around it
+- **Containment, least agency, identity, supply chain and tiered review** (Patterns 2.9 to 2.13): the boundary
+  and the controls around it
 - **Skill chain and phase tracking**: optional workflow ceremony, scaled to risk
 
 ---
@@ -150,7 +152,9 @@ brain+ (design with stack-first considerations)
 The phases are a means. The outcome gates (verification evidence, review) are the point, and they are held
 by CI and the merge process, not by whether the agent visited a phase.
 
-**Superpowers framework integration:** The [obra/superpowers](https://github.com/obra/superpowers) library provides base skills the chain builds on. Skills are instructions the agent follows, so read them before you install them ([Pattern 2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)):
+**Superpowers framework integration:** The [obra/superpowers](https://github.com/obra/superpowers) library
+provides base skills the chain builds on. Skills are instructions the agent follows, so read them before you
+install them ([Pattern 2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)):
 
 | Skill | Role in Chain |
 |-------|--------------|
@@ -245,7 +249,7 @@ esac
 exit 0
 ```
 
-The same decision can be returned as JSON on stdout with exit code 0. A `deny` or `ask` carries a reason that
+The same decision can be returned as JSON on stdout with exit code 0. A `deny` carries a reason that
 Claude sees. Exit code 2 always blocks, even if the JSON says `allow`; any other non-zero exit code is a
 non-blocking error and the call proceeds:
 
@@ -277,7 +281,8 @@ Register the script in `.claude/settings.json` with an event, a tool-name matche
 
 A project hook file is editable by the agent. To make hooks the policy of record, put them in managed settings
 and set `allowManagedHooksOnly`, which blocks user, project, local and plugin hooks. Hooks themselves run outside the
-Claude Code sandbox, with the user's full access, so review a hook script as you would any code that runs on the machine.
+Claude Code sandbox, with the user's full access, so review a hook script as you would any code that runs on
+the machine.
 
 A PostToolUse hook is a record, not a gate:
 
@@ -592,10 +597,12 @@ page or a tool result that an outsider controls ([Pattern 2.10](#pattern-210--le
 A planted instruction that becomes a learning is read by every later session. Use a review step:
 
 1. The agent writes the learning to a draft location that sessions do not load automatically.
-2. A person reads it, checks the claim against the code or a test, and checks that it contains no instruction aimed at the agent ("always run", "ignore", "send").
+2. A person reads it, checks the claim against the code or a test, and checks that it contains no instruction
+   aimed at the agent ("always run", "ignore", "send").
 3. The person promotes it by moving it to the loaded location, with the date and the reviewer's name.
 4. After a repair or fix, promote only after the confirmation window for that change has passed without a regression.
-5. Learnings carry a review date and an owner. Prune on a schedule ([Pattern 0.8](L0-foundation.md#pattern-08--aggressive-cleanup)).
+5. Learnings carry a review date and an owner. Prune on a schedule ([Pattern
+   0.8](L0-foundation.md#pattern-08--aggressive-cleanup)).
 
 ### In Practice
 
@@ -616,19 +623,27 @@ The [compound-engineering](https://github.com/EveryInc/compound-engineering-plug
 - **Disposable sessions** — work that produces code but no learnings.
 - **Knowledge silos** — learnings stored in conversation history or personal notes instead of discoverable documentation.
 - **Review without extraction** — approving or rejecting without recording the reasoning.
-- **Unreviewed, unpruned learnings** — agent-written entries promoted to shared context without review, and never removed. Auto-loading the agent's own notes into every session turns one injected instruction into a standing one.
+- **Unreviewed, unpruned learnings** — agent-written entries promoted to shared context without review, and
+  never removed. Auto-loading the agent's own notes into every session turns one injected instruction into a
+  standing one.
 - **Premature abstraction** — compounding knowledge is not building frameworks. Document the why; let patterns emerge before promoting them.
 
 ### Cross-References
 
 - [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — rules that grow through compounding
 - [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) — compounding requires evidence
-- [Pattern 2.10 — Least Agency and Session Composition](#pattern-210--least-agency-and-session-composition) — learnings are untrusted until reviewed
-- [Pattern 2.12 — Skill, Plugin and MCP Supply Chain](#pattern-212--skill-plugin-and-mcp-supply-chain) — review the plugin that writes them
+- [Pattern 2.10 — Least Agency and Session Composition](#pattern-210--least-agency-and-session-composition) —
+  learnings are untrusted until reviewed
+- [Pattern 2.12 — Skill, Plugin and MCP Supply Chain](#pattern-212--skill-plugin-and-mcp-supply-chain) — review
+  the plugin that writes them
 
 ### Reference Implementation
 
-The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin provides `/ce:compound`. It is a dependency that writes to files later sessions read: review it before install ([Pattern 2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)). The [rig](https://github.com/franklywatson/claude-rig) framework implements the brainstorm, plan, work and review portion of the loop.
+The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin provides
+`/ce:compound`. It is a dependency that writes to files later sessions read: review it before install
+([Pattern 2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)). The
+[rig](https://github.com/franklywatson/claude-rig) framework implements the brainstorm, plan, work and review
+portion of the loop.
 
 ---
 
@@ -636,11 +651,19 @@ The [compound-engineering](https://github.com/EveryInc/compound-engineering-plug
 
 ### Problem
 
-Agents run on the developer's machine with the developer's shell, keys, network and Docker socket. Teams then try to make that safe with approval prompts and hooks. Prompts wear out ([Pattern 2.13](#pattern-213--risk-tiered-review)). Hooks run inside the agent's environment and match strings, so a permitted tool can do what the hook forbids by another route.
+Agents run on the developer's machine with the developer's shell, keys, network and Docker socket. Teams then
+try to make that safe with approval prompts and hooks. Prompts wear out ([Pattern
+2.13](#pattern-213--risk-tiered-review)). Hooks run inside the agent's environment and match strings, so a
+permitted tool can do what the hook forbids by another route.
 
-The [containment example](../examples/containment/) shows the gap. A policy function with a deny rule for `sed -i` blocks `sed -i`. It allows `/usr/bin/sed -i`, `sed --in-place`, `perl -pi`, `bash -c "echo new > file"` and a command built from `$(echo sed)`. It also allows two network fetches to a host outside the allowlist. Eight of nine write commands and both network commands pass. A container with a read-only mount and no network stops all of them without parsing a command.
+The [containment example](../examples/containment/) shows the gap. A policy function with a deny rule for `sed
+-i` blocks `sed -i`. It allows `/usr/bin/sed -i`, `sed --in-place`, `perl -pi`, `bash -c "echo new > file"`
+and a command built from `$(echo sed)`. It also allows two network fetches to a host outside the allowlist.
+Eight of nine write commands and both network commands pass. A container with a read-only mount and no network
+stops all of them without parsing a command.
 
-This pattern is **Partial** on evidence: the vendors and one company's engineering report agree, and none of it compares containment designs independently.
+This pattern is **Partial** on evidence: the vendors and one company's engineering report agree, and none of
+it compares containment designs independently.
 
 ### Solution
 
@@ -651,25 +674,42 @@ Start every agent session inside a boundary the agent cannot change. Relax appro
 1. **Writes are confined.** The agent can write to the working tree and a scratch directory, and nowhere else.
 2. **Reads are bounded.** Credential files, home-directory secrets and other projects are unreadable.
 3. **Network is allowlisted.** Egress goes to named hosts only. Everything else fails.
-4. **Secrets live outside.** Credentials are not in the agent's environment or files. A component outside the boundary injects a scoped credential when a call needs one ([Pattern 2.11](#pattern-211--agent-identity-and-delegation)).
-5. **Failure closes.** If the boundary cannot start, the session does not start. The agent never runs unconfined as a fallback.
+4. **Secrets live outside.** Credentials are not in the agent's environment or files. A component outside the
+   boundary injects a scoped credential when a call needs one ([Pattern
+   2.11](#pattern-211--agent-identity-and-delegation)).
+5. **Failure closes.** If the boundary cannot start, the session does not start. The agent never runs unconfined
+   as a fallback.
 
-The agent cannot edit the boundary's configuration. Put it in a layer the agent has no write access to: managed settings, a launcher script, a container definition outside the mounted tree.
+The agent cannot edit the boundary's configuration. Put it in a layer the agent has no write access to:
+managed settings, a launcher script, a container definition outside the mounted tree.
 
-**Stack tests need Docker.** Mounting the host Docker socket into the boundary hands the agent root on the host. Give the session its own Docker daemon instead: a rootless daemon, a daemon inside the session's container or virtual machine, or a per-session remote daemon. [Pattern 1.4](L1-patterns/1.4-container-isolation.md) isolates test runs from each other. This pattern isolates the agent from the host.
+**Stack tests need Docker.** Mounting the host Docker socket into the boundary hands the agent root on the
+host. Give the session its own Docker daemon instead: a rootless daemon, a daemon inside the session's
+container or virtual machine, or a per-session remote daemon. [Pattern
+1.4](L1-patterns/1.4-container-isolation.md) isolates test runs from each other. This pattern isolates the
+agent from the host.
 
-**Order of work.** Contain first, then loosen prompts. A boundary makes "block `docker system prune`" and "block `sed -i`" unnecessary as safety controls. They stay as ergonomic nudges ([Pattern 2.3](#pattern-23--hook-automation)).
+**Order of work.** Contain first, then loosen prompts. A boundary makes "block `docker system prune`" and
+"block `sed -i`" unnecessary as safety controls. They stay as ergonomic nudges ([Pattern
+2.3](#pattern-23--hook-automation)).
 
 ### In Practice
 
 1. Pick the boundary: the harness sandbox, a container, or a virtual machine.
-2. Set the five properties. Keep credentials out of the mounted tree, because the boundary does not hide files inside what it mounts.
-3. Test the boundary. Run a command that must fail (a write outside the tree, a fetch to an unlisted host) and check that it fails. The containment example runs each command twice, once in a permissive container to prove it works and once in the boundary to prove it is stopped.
-4. Allow auto-approval of tool calls inside the boundary. Keep approval for actions that leave it ([Pattern 2.13](#pattern-213--risk-tiered-review)).
+2. Set the five properties. Keep credentials out of the mounted tree, because the boundary does not hide files
+   inside what it mounts.
+3. Test the boundary. Run a command that must fail (a write outside the tree, a fetch to an unlisted host) and
+   check that it fails. The containment example runs each command twice, once in a permissive container to prove
+   it works and once in the boundary to prove it is stopped.
+4. Allow auto-approval of tool calls inside the boundary. Keep approval for actions that leave it ([Pattern
+   2.13](#pattern-213--risk-tiered-review)).
 
 ### Bindings
 
-**Claude Code.** [`examples/containment/claude-code/settings.json`](../examples/containment/claude-code/settings.json) sets each property with keys documented at <https://code.claude.com/docs/en/settings> and <https://code.claude.com/docs/en/sandboxing>:
+**Claude Code.**
+[`examples/containment/claude-code/settings.json`](../examples/containment/claude-code/settings.json) sets
+each property with keys documented at <https://code.claude.com/docs/en/settings> and
+<https://code.claude.com/docs/en/sandboxing>:
 
 | Property | Setting |
 |----------|---------|
@@ -680,31 +720,47 @@ The agent cannot edit the boundary's configuration. Put it in a layer the agent 
 | Failure closes | `sandbox.failIfUnavailable: true`, `sandbox.allowUnsandboxedCommands: false` |
 | Agent cannot edit it | Put the keys above in managed settings, which take precedence over user, project and command-line settings ([SG-12](references/sources.md)) |
 
-Know what the sandbox does not cover. The sandboxing page states that it wraps shell commands and their child processes only. Claude's file tools, WebFetch, local MCP servers and hooks run outside it, so permission rules and managed settings govern those. `docker` does not run inside the sandbox. The documented fix is an `excludedCommands` entry, which runs the command with full access. For Docker stack tests, run the whole Claude Code session inside a container or virtual machine with its own daemon instead.
+Know what the sandbox does not cover. The sandboxing page states that it wraps shell commands and their child
+processes only. Claude's file tools, WebFetch, local MCP servers and hooks run outside it, so permission rules
+and managed settings govern those. `docker` does not run inside the sandbox. The documented fix is an
+`excludedCommands` entry, which runs the command with full access. For Docker stack tests, run the whole
+Claude Code session inside a container or virtual machine with its own daemon instead.
 
-For unattended sessions, `permissions.denyInsteadOfPrompting` (user or managed settings) turns permission prompts into denials, so a session without a person present stops instead of waiting.
+For unattended sessions, `permissions.denyInsteadOfPrompting` (user or managed settings; Claude Code v2.1.319
+or later) turns permission prompts into denials, so a session without a person present stops instead of
+waiting.
 
-**Another harness.** Look for these capabilities in any other agent harness: an operating-system-level sandbox or container mode that confines writes and network; a way to lock that configuration so the user and the agent cannot change it; a fail-closed option; and per-session credential injection. If the harness lacks them, run it inside a container or virtual machine you control and apply the five properties there.
+**Another harness.** Look for these capabilities in any other agent harness: an operating-system-level sandbox
+or container mode that confines writes and network; a way to lock that configuration so the user and the agent
+cannot change it; a fail-closed option; and per-session credential injection. If the harness lacks them, run
+it inside a container or virtual machine you control and apply the five properties there.
 
-**No harness: CI only.** An agent that cannot be confined on the developer machine can still be contained at the merge path. Run it only in an ephemeral CI job or container with no secrets beyond a scoped token, push to a branch that cannot merge itself, and require checks and a human review before merge. This holds the outcome. It does not stop what the agent does on the machine before then.
+**No harness: CI only.** An agent that cannot be confined on the developer machine can still be contained at
+the merge path. Run it only in an ephemeral CI job or container with no secrets beyond a scoped token, push to
+a branch that cannot merge itself, and require checks and a human review before merge. This holds the outcome.
+It does not stop what the agent does on the machine before then.
 
 ### Anti-Pattern
 
 - Treating a hook or deny rule as the boundary. It is a nudge with the same limits as a regex.
 - Mounting the host Docker socket so stack tests work.
-- Running with the sandbox on but `allowUnsandboxedCommands` left open, so the agent retries blocked commands outside it.
+- Running with the sandbox on but `allowUnsandboxedCommands` left open, so the agent retries blocked commands
+  outside it.
 - Storing the boundary's configuration in a file the agent can edit.
 - Skipping the negative test. A boundary nobody has tried to cross is an assumption.
 
 ### Cross-References
 
 - [Pattern 2.3 — Hook Automation](#pattern-23--hook-automation) — what hooks cannot hold
-- [Pattern 2.10 — Least Agency and Session Composition](#pattern-210--least-agency-and-session-composition) — what a session holds inside the boundary
-- [Pattern 2.11 — Agent Identity and Delegation](#pattern-211--agent-identity-and-delegation) — credentials outside the boundary
+- [Pattern 2.10 — Least Agency and Session Composition](#pattern-210--least-agency-and-session-composition) —
+  what a session holds inside the boundary
+- [Pattern 2.11 — Agent Identity and Delegation](#pattern-211--agent-identity-and-delegation) — credentials
+  outside the boundary
 - [Pattern 1.4 — Container Isolation](L1-patterns/1.4-container-isolation.md) — isolating test runs from each other
 - [Threat model](cross-cutting/threat-model.md) — what the boundary protects
 
-**Evidence:** Partial — consistent first-party guidance and one company report, no independent comparison ([PL-14, PL-15, PL-17, SG-10, AN-9, AN-11](references/sources.md))
+**Evidence:** Partial — consistent first-party guidance and one company report, no independent comparison
+([PL-14, PL-15, PL-17, SG-10, SG-12, AN-9, AN-11](references/sources.md))
 
 ---
 
@@ -712,7 +768,15 @@ For unattended sessions, `permissions.denyInsteadOfPrompting` (user or managed s
 
 ### Problem
 
-An agent session becomes dangerous when it combines three things: untrusted input (a web page, an issue, a rinse source, tool output), access to private data or credentials, and a way to act outside (send a request, push, post). With all three, text an attacker plants in the input can steer the agent to leak the data or take the action. Simon Willison named the combination the lethal trifecta ([SG-1](references/sources.md)). Meta's Agents Rule of Two says a session should hold at most two of the three unless a gate sits between them ([SG-2](references/sources.md)). OWASP lists excessive agency (too much functionality, permission or autonomy) among the top risks for LLM applications ([SG-16](references/sources.md)). A research design from Google DeepMind and ETH Zurich separates untrusted data from control flow by construction ([SG-3](references/sources.md)).
+An agent session becomes dangerous when it combines three things: untrusted input (a web page, an issue, a
+source read during [design rinsing](L1-feedback-loops.md), tool output), access to private data or
+credentials, and a way to act outside (send a request, push, post). With all three, text an attacker plants in
+the input can steer the agent to leak the data or take the action. Simon Willison named the combination the
+lethal trifecta ([SG-1](references/sources.md)). Meta's Agents Rule of Two says a session should hold at most
+two of the three unless a gate sits between them ([SG-2](references/sources.md)). OWASP lists excessive agency
+(too much functionality, permission or autonomy) among the top risks for LLM applications
+([SG-16](references/sources.md)). A research design from Google DeepMind and ETH Zurich separates untrusted
+data from control flow by construction ([SG-3](references/sources.md)).
 
 This pattern is **Strong** as a design rule. Independent sources agree. No study measures teams that apply it.
 
@@ -728,7 +792,8 @@ Give each session type the least agency it needs, and declare which of the three
 | Sensitive access | Can it read secrets, private code or customer data? |
 | External action | Can it send, push, publish or change a system outside the boundary? |
 
-A session may hold two. A session that holds all three needs a deterministic gate or a human approval between the input and the action, and the gate sits outside the model.
+A session may hold two. A session that holds all three needs a deterministic gate or a human approval between
+the input and the action, and the gate sits outside the model.
 
 **Defaults.**
 
@@ -736,9 +801,13 @@ A session may hold two. A session that holds all three needs a deterministic gat
 - A session that reads untrusted input gets no credentials and no external action.
 - Output of an untrusted-input session passes to the next session as reviewed text, not as live context.
 
-**Apply it to design rinsing.** [Rinsing](L1-feedback-loops.md) reads outside sources: repositories, transcripts, articles. Run it as a session with untrusted input and nothing else. It has read access to the source, no write access to the target project, no credentials and no network beyond the source. A person reviews the distilled notes before the design session reads them.
+**Apply it to design rinsing.** [Rinsing](L1-feedback-loops.md) reads outside sources: repositories,
+transcripts, articles. Run it as a session with untrusted input and nothing else. It has read access to the
+source, no write access to the target project, no credentials and no network beyond the source. A person
+reviews the distilled notes before the design session reads them.
 
-**Apply it to Pattern 2.8.** A learning an agent writes is untrusted until reviewed. See [Pattern 2.8](#pattern-28--compound-engineering).
+**Apply it to Pattern 2.8.** A learning an agent writes is untrusted until reviewed. See [Pattern
+2.8](#pattern-28--compound-engineering).
 
 ### In Practice
 
@@ -751,36 +820,49 @@ A session register for a small team:
 | Triage public issues | yes | no | draft comment only | A person posts the comment |
 | Release | no | yes | yes | Human approval, scoped token ([2.11](#pattern-211--agent-identity-and-delegation)) |
 
-If a session needs all three, split it: one session reads the input and writes a plain summary; a second session, with the credentials, reads only the summary.
+If a session needs all three, split it: one session reads the input and writes a plain summary; a second
+session, with the credentials, reads only the summary.
 
 ### Bindings
 
 **Claude Code.** Compose the session from documented settings:
 
-- Read-only rinse session: `permissions.deny` entries for `Edit`, `Write` and `Bash`, plus the sandbox with `sandbox.network.allowedDomains` limited to the source host. WebFetch follows permission rules, not the sandbox, so deny `WebFetch` too or allow it only for the source domain.
-- No credentials: do not set them in the environment; use `sandbox.credentials` entries with mode `deny` ([Pattern 2.9](#pattern-29--contain-before-you-relax)).
-- MCP servers are session inputs and capabilities. Restrict them with `allowedMcpServers` and `deniedMcpServers`, and make the managed list the only one with `allowManagedMcpServersOnly` ([Pattern 2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)).
+- Read-only rinse session: `permissions.deny` entries for `Edit` (which also covers `Write`) and `Bash`. If you
+  allow `Bash` for read-only commands, limit `sandbox.network.allowedDomains` to the source host. That allowlist
+  covers shell commands only, so in either case deny `WebFetch` or restrict it to the source domain with a
+  permission rule such as `WebFetch(domain:example.com)`.
+- No credentials: do not set them in the environment; use `sandbox.credentials` entries with mode `deny`
+  ([Pattern 2.9](#pattern-29--contain-before-you-relax)).
+- MCP servers are session inputs and capabilities. Restrict them with `allowedMcpServers` and
+  `deniedMcpServers`, and make the managed list the only one with `allowManagedMcpServersOnly` ([Pattern
+  2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)).
 - Unattended sessions: `permissions.denyInsteadOfPrompting`.
 
-**Another harness.** Look for per-session tool allowlists, a read-only or plan mode that is enforced and not advisory, and per-session network policy. If a harness cannot enforce them, run that session type in a separate container with only the access the row of the register allows.
+**Another harness.** Look for per-session tool allowlists, a read-only or plan mode that is enforced and not
+advisory, and per-session network policy. If a harness cannot enforce them, run that session type in a
+separate container with only the access the row of the register allows.
 
-**No harness: CI only.** Run untrusted-input sessions in a CI job with no secrets and a read-only checkout token. Run the credentialed job as a separate job that consumes only the first job's reviewed output.
+**No harness: CI only.** Run untrusted-input sessions in a CI job with no secrets and a read-only checkout
+token. Run the credentialed job as a separate job that consumes only the first job's reviewed output.
 
 ### Anti-Pattern
 
 - One long-lived session that reads the issue tracker, holds a deploy token and can push.
 - Giving a session every tool "in case". Each tool is capability an injected instruction can use.
-- Asking the model to refuse injected instructions, as the only control. A deterministic gate holds; a prompt reduces risk.
+- Asking the model to refuse injected instructions, as the only control. A deterministic gate holds; a prompt
+  reduces risk.
 - Letting a rinse session read from or write into the target project.
 
 ### Cross-References
 
 - [Pattern 2.9 — Contain Before You Relax](#pattern-29--contain-before-you-relax) — the boundary the session runs in
-- [Pattern 2.12 — Skill, Plugin and MCP Supply Chain](#pattern-212--skill-plugin-and-mcp-supply-chain) — tool inputs that carry untrusted content
+- [Pattern 2.12 — Skill, Plugin and MCP Supply Chain](#pattern-212--skill-plugin-and-mcp-supply-chain) — tool
+  inputs that carry untrusted content
 - [Design rinsing](L1-feedback-loops.md) — the read-only rinse session
 - [Threat model](cross-cutting/threat-model.md) — untrusted entry points
 
-**Evidence:** Strong — independent sources agree on the design rule; no study of its use by teams ([SG-1, SG-2, SG-3, SG-16](references/sources.md))
+**Evidence:** Strong — independent sources agree on the design rule; no study of its use by teams ([SG-1,
+SG-2, SG-3, SG-16](references/sources.md))
 
 ---
 
@@ -788,9 +870,13 @@ If a session needs all three, split it: one session reads the input and writes a
 
 ### Problem
 
-Agents usually act with the developer's own keys. Logs then show the developer, and nobody can tell which commits, API calls or deploys came from an agent. A leaked key grants everything the developer can do, for as long as the key lives.
+Agents usually act with the developer's own keys. Logs then show the developer, and nobody can tell which
+commits, API calls or deploys came from an agent. A leaked key grants everything the developer can do, for as
+long as the key lives.
 
-This pattern is **Partial**. The direction (short-lived, narrowly scoped, audience-bound credentials) is well supported by standards drafts and vendor guidance. Agent-specific identity is still being drafted ([PL-5, PL-6](references/sources.md)), and no source evaluates it in coding-agent teams.
+This pattern is **Partial**. The direction (short-lived, narrowly scoped, audience-bound credentials) is well
+supported by standards drafts and vendor guidance. Agent-specific identity is still being drafted ([PL-5,
+PL-6](references/sources.md)), and no source evaluates it in coding-agent teams.
 
 ### Solution
 
@@ -800,28 +886,46 @@ Give each agent, or each agent session, its own identity and its own credentials
 
 1. **Own identity.** An agent has an identifier distinct from any person. Its actions appear under that identifier.
 2. **Short-lived credentials.** Tokens expire in minutes or hours and are issued per session or per task.
-3. **Narrow scope and audience.** A token names the one service it works for and the actions it allows. A token for service A is rejected by service B.
-4. **Delegation is visible.** Each action records "agent X for person Y": the agent identifier, the requesting person, and the task. Prefer exchanging a person's token for a narrower agent token over reusing the person's token. OAuth token exchange defines this pattern ([PL-7](references/sources.md)).
-5. **No passthrough.** A tool or server never forwards a token it received to another service. The MCP authorization specification and security guidance forbid this ([PL-8, SG-14](references/sources.md)).
-6. **Credentials stay outside the boundary** ([Pattern 2.9](#pattern-29--contain-before-you-relax)). An issuer outside the agent's reach mints them.
+3. **Narrow scope and audience.** A token names the one service it works for and the actions it allows. A token
+   for service A is rejected by service B.
+4. **Delegation is visible.** Each action records "agent X for person Y": the agent identifier, the requesting
+   person, and the task. Prefer exchanging a person's token for a narrower agent token over reusing the person's
+   token. OAuth token exchange defines this pattern ([PL-7](references/sources.md)).
+5. **No passthrough.** A tool or server never forwards a token it received to another service. The MCP
+   authorization specification and security guidance forbid this ([PL-8, SG-14](references/sources.md)).
+6. **Credentials stay outside the boundary** ([Pattern 2.9](#pattern-29--contain-before-you-relax)). An issuer
+   outside the agent's reach mints them.
 
-Microsoft's agent identity guidance adds a **sponsor**: a named person accountable for each agent identity, who answers for it and renews or retires it ([PO-10, PO-11](references/sources.md)). [Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) records sponsors.
+Microsoft's agent identity guidance adds a **sponsor**: a named person accountable for each agent identity,
+who answers for it and renews or retires it ([PO-10, PO-11](references/sources.md)). [Pattern
+4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) records sponsors.
 
 ### In Practice
 
 A coding agent that opens pull requests:
 
-- The CI or launcher mints a token valid for one hour, scoped to one repository, with permission to push to branches and open pull requests, and no permission to merge or change settings.
-- Commits carry a trailer naming the agent and the requester. Pull requests are opened by the agent identity, and the requester is the author of record ([Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)).
-- Branch protection stops the agent identity from merging. A person other than the requester approves ([Pattern 2.13](#pattern-213--risk-tiered-review)).
+- The CI or launcher mints a token valid for one hour, scoped to one repository, with permission to push to
+  branches and open pull requests, and no permission to merge or change settings.
+- Commits carry a trailer naming the agent and the requester. Pull requests are opened by the agent identity,
+  and the requester is the author of record ([Pattern
+  4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)).
+- Branch protection stops the agent identity from merging. A person other than the requester approves ([Pattern
+  2.13](#pattern-213--risk-tiered-review)).
 
 ### Bindings
 
-**Claude Code.** Claude Code does not issue identities. Supply them from outside: a launcher script or CI job that mints the short-lived token, passes it to the session at start, and keeps long-lived keys out of the environment. Mark `sandbox.credentials` entries for long-lived files and variables with mode `deny` ([Pattern 2.9](#pattern-29--contain-before-you-relax)). Put the "agent for person" trailer in the instruction file as a rule and check it in CI, because the model may omit it.
+**Claude Code.** Claude Code does not issue identities. Supply them from outside: a launcher script or CI job
+that mints the short-lived token, passes it to the session at start, and keeps long-lived keys out of the
+environment. Mark `sandbox.credentials` entries for long-lived files and variables with mode `deny` ([Pattern
+2.9](#pattern-29--contain-before-you-relax)). Put the "agent for person" trailer in the instruction file as a
+rule and check it in CI, because the model may omit it.
 
-**Another harness.** Look for a way to inject credentials per session from a secret manager, and a trace or log that records the session and the requesting user. If the harness cannot, wrap the launch in a script that does both.
+**Another harness.** Look for a way to inject credentials per session from a secret manager, and a trace or
+log that records the session and the requesting user. If the harness cannot, wrap the launch in a script that
+does both.
 
-**No harness: CI only.** Use the CI platform's workload identity (OIDC tokens issued per job) to get short-lived cloud credentials. Run agent jobs under a dedicated service account, separate from any person.
+**No harness: CI only.** Use the CI platform's workload identity (OIDC tokens issued per job) to get
+short-lived cloud credentials. Run agent jobs under a dedicated service account, separate from any person.
 
 ### Anti-Pattern
 
@@ -834,10 +938,13 @@ A coding agent that opens pull requests:
 
 - [Pattern 2.9 — Contain Before You Relax](#pattern-29--contain-before-you-relax) — credentials outside the boundary
 - [Pattern 2.13 — Risk-Tiered Review](#pattern-213--risk-tiered-review) — who may approve
-- [Pattern 4.7 — Author of Record and Agent Register](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) — owner and sponsor per agent
+- [Pattern 4.7 — Author of Record and Agent
+  Register](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) — owner and sponsor per
+  agent
 - [Threat model](cross-cutting/threat-model.md) — secrets
 
-**Evidence:** Partial — strong direction in standards drafts and vendor guidance; no evaluation in coding-agent teams ([PL-5, PL-7, PL-8, SG-20](references/sources.md))
+**Evidence:** Partial — strong direction in standards drafts and vendor guidance; no evaluation in
+coding-agent teams ([PL-5, PL-6, PL-7, PL-8, PO-10, PO-11, SG-14, SG-20](references/sources.md))
 
 ---
 
@@ -845,9 +952,15 @@ A coding agent that opens pull requests:
 
 ### Problem
 
-Skills, plugins, hooks and MCP servers run with the agent's privileges. A skill is instructions the model follows. A plugin can bundle skills, hooks and servers. An MCP server is code that runs on the machine and returns text the model reads. Installing one is adding a dependency that can read files, run commands and steer the agent.
+Skills, plugins, hooks and MCP servers run with the agent's privileges. A skill is instructions the model
+follows. A plugin can bundle skills, hooks and servers. An MCP server is code that runs on the machine and
+returns text the model reads. Installing one is adding a dependency that can read files, run commands and
+steer the agent.
 
-The threat is documented. Snyk scanned public skills and reported that 13.4% of 3,984 had a critical issue ([SG-28](references/sources.md)). That is a vendor's own scan. An MCP email server was taken over in an update and began copying mail to an attacker ([SG-29](references/sources.md)). The Thoughtworks Technology Radar has entries on agent plugin marketplaces and on agent skills ([IS-13](references/sources.md)).
+The threat is documented. Snyk scanned public skills and reported that 13.4% of 3,984 had a critical issue
+([SG-28](references/sources.md)). That is a vendor's own scan. An MCP email server was taken over in an update
+and began copying mail to an attacker ([SG-29](references/sources.md)). The Thoughtworks Technology Radar has
+entries on agent plugin marketplaces and on agent skills ([IS-13](references/sources.md)).
 
 This pattern is **Strong** as a statement of the threat. The inspection practice below has less evidence behind it.
 
@@ -859,15 +972,19 @@ Treat every skill, plugin, hook pack and MCP server as a third-party dependency.
 
 1. **Allowlist.** A written list of approved sources and items. Anything else is not installed.
 2. **Pin.** Install a specific version or commit hash, not a moving branch or `latest`.
-3. **Read before install.** A person reads the instruction text and the code or scripts. Skills are prose that steers the model, so read them as you would a shell script.
+3. **Read before install.** A person reads the instruction text and the code or scripts. Skills are prose that
+   steers the model, so read them as you would a shell script.
 4. **Review updates as diffs.** An update is a new change. Read the diff before accepting it.
-5. **Treat fetched content as untrusted.** What a server returns is input ([Pattern 2.10](#pattern-210--least-agency-and-session-composition)).
-6. **Record owner and provenance.** Each item has a named owner, a source and a review date in the register ([Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)).
+5. **Treat fetched content as untrusted.** What a server returns is input ([Pattern
+   2.10](#pattern-210--least-agency-and-session-composition)).
+6. **Record owner and provenance.** Each item has a named owner, a source and a review date in the register
+   ([Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)).
 7. **Enforce outside the agent.** The list lives where the agent cannot edit it.
 
 ### In Practice
 
-Apply the contract to this library's own recommendations. The documents here point to rig, superpowers, the compound-engineering plugin, RTK and jcodemunch. Each is a dependency for your project:
+Apply the contract to this library's own recommendations. The documents here point to rig, superpowers, the
+compound-engineering plugin, RTK and jcodemunch. Each is a dependency for your project:
 
 | Item | Runs as | Review before install | Note |
 |------|---------|----------------------|------|
@@ -884,16 +1001,25 @@ Where this library tells you to install any of these, the instruction assumes yo
 **Claude Code.** Documented settings that enforce the list:
 
 - `strictKnownMarketplaces` (managed settings only) allowlists the marketplace sources users can add.
-- `enabledPlugins` turns plugins on or off per scope; `extraKnownMarketplaces` registers marketplaces for a repository or organization.
-- `allowedMcpServers` and `deniedMcpServers` allow or block servers by URL, command or name. `allowManagedMcpServersOnly` (managed settings only) makes the managed list the only one.
-- `allowManagedHooksOnly` (managed settings) blocks user, project, local and plugin hooks, except plugins force-enabled in managed `enabledPlugins`.
+- `enabledPlugins` turns plugins on or off per scope; `extraKnownMarketplaces` registers marketplaces for a
+  repository or organization.
+- `allowedMcpServers` and `deniedMcpServers` allow or block servers by URL, command or name.
+  `allowManagedMcpServersOnly` (managed settings only) makes the managed list the only one.
+- `allowManagedHooksOnly` (managed settings) blocks user, project, local and plugin hooks, except plugins
+  force-enabled in managed `enabledPlugins`.
 - `allowManagedPermissionRulesOnly` limits permission rules to managed ones.
 
-Project `.claude/settings.json` is a file the agent can edit. A repository can therefore propose a plugin or server, and the managed layer decides whether it installs. Pin by naming a commit or version in the source you install from.
+Project `.claude/settings.json` is a file the agent can edit. A repository can therefore propose a plugin or
+server, and the managed layer decides whether it installs. Pin by naming a commit or version in the source you
+install from.
 
-**Another harness.** Look for an allowlist of tool servers and skill sources that an administrator controls, a way to disable user-installed extensions, and version pinning in the install source. Where these are missing, install through a package manager or vendored directory that CI checks.
+**Another harness.** Look for an allowlist of tool servers and skill sources that an administrator controls, a
+way to disable user-installed extensions, and version pinning in the install source. Where these are missing,
+install through a package manager or vendored directory that CI checks.
 
-**No harness: CI only.** Vendor skills and plugins into the repository at a pinned commit, so every update is a pull request diff. Add a CODEOWNERS entry for the vendored directory and a CI job that fails if installed versions differ from the pinned list.
+**No harness: CI only.** Vendor skills and plugins into the repository at a pinned commit, so every update is
+a pull request diff. Add a CODEOWNERS entry for the vendored directory and a CI job that fails if installed
+versions differ from the pinned list.
 
 ### Anti-Pattern
 
@@ -905,12 +1031,16 @@ Project `.claude/settings.json` is a file the agent can edit. A repository can t
 
 ### Cross-References
 
-- [Pattern 2.10 — Least Agency and Session Composition](#pattern-210--least-agency-and-session-composition) — what a server's output can do
+- [Pattern 2.10 — Least Agency and Session Composition](#pattern-210--least-agency-and-session-composition) —
+  what a server's output can do
 - [Pattern 2.8 — Compound Engineering](#pattern-28--compound-engineering) — learnings as an untrusted source
-- [Pattern 4.7 — Author of Record and Agent Register](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) — owner and provenance per item
+- [Pattern 4.7 — Author of Record and Agent
+  Register](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) — owner and provenance
+  per item
 - [Threat model](cross-cutting/threat-model.md) — dependencies and MCP output
 
-**Evidence:** Strong (threat); Partial (prevalence); Thin (inspection practice) — vendor scan and a reported incident for the threat; no study of review practice ([SG-28, SG-29, IS-13](references/sources.md))
+**Evidence:** Partial — the threat is Strong (vendor scan and a reported incident), prevalence is Partial, and
+the inspection practice is Thin (no study of review practice) ([SG-28, SG-29, IS-13](references/sources.md))
 
 ---
 
@@ -918,9 +1048,15 @@ Project `.claude/settings.json` is a file the agent can edit. A repository can t
 
 ### Problem
 
-Uniform approval produces approval fatigue. When every command asks for confirmation, people approve without reading, and the prompt stops being a control. Thoughtworks calls review that exists without real oversight "human-in-the-loop theater" ([OM-18](references/sources.md)). Analyst commentary reported by ITPro says one governance setting for all agents fails in practice ([SG-26](references/sources.md)). Anthropic describes an auto mode that uses a classifier to reduce prompts ([SG-9](references/sources.md)). A model's approval is not a person's approval, and a requester who approves their own change adds nothing.
+Uniform approval produces approval fatigue. When every command asks for confirmation, people approve without
+reading, and the prompt stops being a control. Thoughtworks calls review that exists without real oversight
+"human-in-the-loop theater" ([OM-18](references/sources.md)). Analyst commentary reported by ITPro says one
+governance setting for all agents fails in practice ([SG-26](references/sources.md)). Anthropic describes an
+auto mode that uses a classifier to reduce prompts ([SG-9](references/sources.md)). A model's approval is not
+a person's approval, and a requester who approves their own change adds nothing.
 
-This pattern is **Partial**: one vendor's telemetry, one company's review design and analyst corroboration ([AN-29](references/sources.md)).
+This pattern is **Partial**: one vendor's telemetry, one company's review design and analyst corroboration
+([AN-29](references/sources.md)).
 
 ### Solution
 
@@ -936,25 +1072,42 @@ Tier changes and actions by reversibility and blast radius. Spend human attentio
 
 Rules that hold at every tier:
 
-1. **The requester cannot approve.** Approval comes from someone other than the person who asked the agent for the change.
-2. **An agent's approval never counts as human approval.** A review agent can add findings. It cannot satisfy a rule that needs a person.
-3. **Human approval is for a short named list.** Name the irreversible and externally visible actions that need a person. Everything else is checked by machines.
-4. **Measure the approve rate.** If people approve nearly every prompt, the prompt is not a control. Remove it or move the rule to a boundary.
-5. **Review depth follows test coverage.** A change covered by a [stack test](L1-patterns/1.1-stack-tests.md) of the journey it touches needs less reading than one that is not.
+1. **The requester cannot approve.** Approval comes from someone other than the person who asked the agent for
+   the change.
+2. **An agent's approval never counts as human approval.** A review agent can add findings. It cannot satisfy a
+   rule that needs a person.
+3. **Human approval is for a short named list.** Name the irreversible and externally visible actions that need a
+   person. Everything else is checked by machines.
+4. **Measure the approve rate.** If people approve nearly every prompt, the prompt is not a control. Remove it or
+   move the rule to a boundary.
+5. **Review depth follows test coverage.** A change covered by a [stack test](L1-patterns/1.1-stack-tests.md) of
+   the journey it touches needs less reading than one that is not.
 
 ### In Practice
 
-- Write the high-tier list in the instruction file: "migrations, `.github/workflows/`, permission or role changes, release publishing".
+- Write the high-tier list in the instruction file: "migrations, `.github/workflows/`, permission or role
+  changes, release publishing".
 - Map the list to paths and commands, so the tier is decided by rule, not by judgement in the moment.
-- Review the approve rate for each prompt monthly. A prompt that people approve almost every time is a candidate for removal or for a boundary.
+- Review the approve rate for each prompt monthly. A prompt that people approve almost every time is a candidate
+  for removal or for a boundary.
 
 ### Bindings
 
-**Claude Code.** Use `permissions.ask` for the named actions (`Bash(git push *)`, `Bash(npm publish *)`), `permissions.deny` for actions nobody should do, and `permissions.denyInsteadOfPrompting` (user or managed settings) for unattended sessions. Auto mode uses a model-based classifier to reduce prompts ([SG-9](references/sources.md)). Treat its decisions as automation, not as human approval. Because these rules match strings, put the real control for high-tier actions downstream: protected branches and scoped tokens ([Pattern 2.11](#pattern-211--agent-identity-and-delegation)).
+**Claude Code.** Use `permissions.ask` for the named actions (`Bash(git push *)`, `Bash(npm publish *)`),
+`permissions.deny` for actions nobody should do, and `permissions.denyInsteadOfPrompting` (user or managed
+settings; Claude Code v2.1.319 or later) for unattended sessions. Auto mode uses a model-based classifier to
+reduce prompts ([SG-9](references/sources.md)). Treat its decisions as automation, not as human approval.
+Because these rules match strings, put the real control for high-tier actions downstream: protected branches
+and scoped tokens ([Pattern 2.11](#pattern-211--agent-identity-and-delegation)).
 
-**Another harness.** Look for an approval policy that is configurable per tool or action, a way to run without prompts inside a sandbox, and a log of approvals. Keep the tier list in the instruction file so it is harness-independent.
+**Another harness.** Look for an approval policy that is configurable per tool or action, a way to run without
+prompts inside a sandbox, and a log of approvals. Keep the tier list in the instruction file so it is
+harness-independent.
 
-**No harness: CI only.** Branch protection holds the tiers: required status checks for low, one required non-author review for medium, CODEOWNERS plus two approvals for high-tier paths. Set the rule to require approval of the most recent push, so a later commit needs fresh approval.
+**No harness: CI only.** Branch protection holds the tiers: required status checks for low, one required
+non-author review for medium, CODEOWNERS plus two approvals for high-tier paths. Enable "Require approval of
+the most recent reviewable push", so that someone other than the pusher approves the last commit. Add "Dismiss
+stale pull request approvals when new commits are pushed", so that each new commit needs fresh approval.
 
 ### Anti-Pattern
 
@@ -969,9 +1122,12 @@ Rules that hold at every tier:
 - [Pattern 2.2 — The Skill Chain](#pattern-22--the-skill-chain) — the scaling-by-risk table uses the same tiers
 - [Pattern 2.9 — Contain Before You Relax](#pattern-29--contain-before-you-relax) — approvals inside a boundary
 - [Pattern 2.11 — Agent Identity and Delegation](#pattern-211--agent-identity-and-delegation) — downstream controls
-- [Pattern 4.7 — Author of Record and Agent Register](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) — who answers for the change
+- [Pattern 4.7 — Author of Record and Agent
+  Register](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) — who answers for the
+  change
 
-**Evidence:** Partial — vendor telemetry and design, analyst corroboration ([SG-9, SG-26, OM-18, AN-29](references/sources.md))
+**Evidence:** Partial — vendor telemetry and design, analyst corroboration ([SG-9, SG-26, OM-18,
+AN-29](references/sources.md))
 
 ---
 
