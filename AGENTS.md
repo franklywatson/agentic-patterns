@@ -29,7 +29,6 @@ agentic-patterns/
 │   │   ├── further-reading.md
 │   │   ├── sources.md
 │   │   └── task-bank.md
-│   └── refresh/                 # Working material for the current revision
 ├── examples/                    # Working code (TS + Python)
 └── docs/diagrams/               # Diagrams for L1-L4
 ```
@@ -141,11 +140,6 @@ See [README.md](README.md) for detailed project overview.
 - [docs/references/sources.md](docs/references/sources.md) — Citation bibliography for reference IDs
 - [docs/references/task-bank.md](docs/references/task-bank.md) — 15 tasks and a run log for re-baselining context
   artefacts
-
-## Active Work
-
-- [docs/refresh/README.md](docs/refresh/README.md) — Nov 2026 refresh: critical review, decisions and phased plans.
-  Plain link, not an `@` import, so the review corpus does not load into every session.
 
 ## Constitutional Rules (Never Violate)
 

@@ -8,8 +8,8 @@ Scans every .md file under the root directory and reports:
 
 Slugs follow GitHub rules: lowercase, punctuation other than hyphens and
 spaces removed, spaces replaced by hyphens. Fenced code blocks and inline
-code are ignored. node_modules, .git, .superpowers, .worktrees and the
-verbatim review records in docs/refresh/reviews/ are skipped.
+code are ignored. node_modules, .git, .superpowers and .worktrees are
+skipped.
 
 Not handled: duplicate heading suffixes (-1, -2) that GitHub adds to repeated
 headings, and indented or `~~~` code fences.
@@ -36,8 +36,6 @@ def collect_files(root):
     for path in glob.glob(os.path.join(root, "**", "*.md"), recursive=True):
         parts = os.path.relpath(path, root).split(os.sep)
         if any(part in SKIP for part in parts):
-            continue
-        if "/".join(parts).startswith("docs/refresh/reviews/"):
             continue
         files.append(path)
     return files
