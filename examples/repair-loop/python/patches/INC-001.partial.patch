@@ -1,0 +1,11 @@
+--- a/app/src/routes/users.py
++++ b/app/src/routes/users.py
+@@ -40,6 +40,8 @@
+ 
+ @router.get("/users/{id}")
+ def get_user(id: str):
++    if id == "undefined":
++        return JSONResponse(status_code=404, content={"error": "User not found"})
+     with infra.connect_db() as conn:
+         row = conn.execute(
+             "SELECT id, email, username, created_at FROM users WHERE id = %s", (id,)
