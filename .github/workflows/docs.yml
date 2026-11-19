@@ -43,21 +43,22 @@ jobs:
       - name: Run markdownlint
         run: npm run lint:md
 
-  claude-md-line-limit:
-    name: CLAUDE.md Line Limit
+  instruction-file-length:
+    name: Instruction File Length
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check CLAUDE.md is under 150 lines
+      - name: Warn when AGENTS.md or CLAUDE.md is over 200 lines
         run: |
-          lines=$(wc -l < CLAUDE.md)
-          echo "CLAUDE.md: $lines lines"
-          if [ "$lines" -gt 150 ]; then
-            echo "::error::CLAUDE.md is $lines lines (limit: 150). Move content to linked docs."
-            exit 1
-          fi
-          echo "Within limit."
+          for f in AGENTS.md CLAUDE.md; do
+            lines=$(wc -l < "$f")
+            echo "$f: $lines lines"
+            if [ "$lines" -gt 200 ]; then
+              echo "::warning file=$f::$f is $lines lines (warning threshold: 200). Prune rules that no longer change behaviour or move content to linked docs."
+            fi
+          done
+          exit 0
 
   link-integrity:
     name: Link Integrity
@@ -69,32 +70,32 @@ jobs:
         run: python3 scripts/check-doc-links.py .
 
   doc-reachability:
-    name: Doc Reachability from CLAUDE.md
+    name: Doc Reachability from AGENTS.md
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check all docs are reachable from CLAUDE.md
+      - name: Check all docs are reachable from AGENTS.md
         run: |
           # Collect all markdown files in docs/
           all_docs=$(find docs -name '*.md' | sort)
 
-          # Collect all files referenced from CLAUDE.md (@ syntax and markdown links)
-          referenced=$(grep -oP '(?:@|]\()\.?/?docs/[^)\s]+\.md' CLAUDE.md | sed 's/^@//' | sed 's/^](//' | sed 's/^(//' | sort -u)
+          # Collect all files referenced from AGENTS.md (@ syntax and markdown links)
+          referenced=$(grep -oP '(?:@|]\()\.?/?docs/[^)\s]+\.md' AGENTS.md | sed 's/^@//' | sed 's/^](//' | sed 's/^(//' | sort -u)
 
           orphans=0
           for doc in $all_docs; do
             # Normalize path (strip leading ./)
             doc_clean="${doc#./}"
             if ! echo "$referenced" | grep -qF "$doc_clean"; then
-              echo "::warning file=$doc_clean::Orphaned doc: $doc_clean is not referenced from CLAUDE.md"
+              echo "::warning file=$doc_clean::Orphaned doc: $doc_clean is not referenced from AGENTS.md"
               orphans=$((orphans + 1))
             fi
           done
 
           if [ "$orphans" -gt 0 ]; then
-            echo "$orphans orphaned doc(s) found. All docs should be reachable from CLAUDE.md."
-            echo "This is a warning, not a failure - add links to CLAUDE.md or delete orphaned files."
+            echo "$orphans orphaned doc(s) found. All docs should be reachable from AGENTS.md."
+            echo "This is a warning, not a failure - add links to AGENTS.md or delete orphaned files."
           fi
           echo "Reachability check complete."
 
@@ -106,7 +107,7 @@ jobs:
 
       - name: Check for filler words in docs
         run: |
-          # CLAUDE.md writing rule: "No filler (basically, just, simply)"
+          # AGENTS.md writing rule: "No filler (basically, just, simply)"
           warnings=0
 
           while IFS= read -r file; do
@@ -122,7 +123,7 @@ jobs:
           done < <(find docs -name '*.md')
 
           if [ "$warnings" -gt 0 ]; then
-            echo "$warnings filler word(s) found. Per CLAUDE.md: 'No filler (basically, just, simply)'"
+            echo "$warnings filler word(s) found. Per AGENTS.md: 'No filler (basically, just, simply)'"
             echo "This is a warning - review and remove where possible."
           fi
           echo "Writing conventions check complete."

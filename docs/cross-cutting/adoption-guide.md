@@ -12,9 +12,9 @@ Before choosing a path, assess your current state. Run through this checklist to
 
 ### Entry Points
 
-- [ ] CLAUDE.md exists and is under 150 lines
+- [ ] An agent instruction file (AGENTS.md, imported by CLAUDE.md) exists, has a named owner and a reviewed date, and is short enough that every line earns its place
 - [ ] README.md clearly explains what the project does
-- [ ] CLAUDE.md links to all relevant documentation
+- [ ] The instruction file links to all relevant documentation
 - [ ] File structure is grouped by domain, not layer
 
 ### Testing
@@ -30,7 +30,7 @@ Before choosing a path, assess your current state. Run through this checklist to
 - [ ] Every pattern is documented with examples
 - [ ] Code examples in docs match current codebase
 - [ ] Documentation is linked from CLAUDE.md
-- [ ] No orphaned docs (all reachable from master index)
+- [ ] No orphaned docs (all reachable from the master index)
 
 ### Tooling
 

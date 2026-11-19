@@ -71,28 +71,29 @@ After: src/
 
 ### Concise Project Constitution
 
-**Symptom**: CLAUDE.md has grown past 500 lines, contains detailed tutorials and inline examples, or reads like a documentation site rather than a contract.
+**Symptom**: The agent instruction file has grown past 500 lines, contains detailed tutorials and inline examples, or reads like a documentation site rather than a contract. It has no owner or reviewed date, and no one has re-tested its rules since the last model upgrade.
 
 **Why This Happens**: Every important insight feels like it belongs in the file agents read first. But each line of constitution displaces context the agent needs for its actual task. Critical rules get buried in prose. The agent spends tokens reading the map instead of navigating the territory.
 
-**Pattern**: Apply [Pattern 0.4 - CLAUDE.md as Project Constitution](../L0-foundation.md#pattern-04--claudemd-as-project-constitution):
+**Pattern**: Apply [Pattern 0.4 - Agent instruction file as project constitution](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution):
 
-- Hard limit: **150 lines maximum**
+- Keep the file short; CI warns at about 200 lines
+- Name an owner, record a reviewed date, and re-test the rules at each model upgrade
 - Link to external docs for detailed explanations
-- Keep CLAUDE.md focused on: what is this, structure, constitutional rules, doc links
+- Keep the file focused on: what is this, structure, constitutional rules, doc links
 - Move tutorials, examples, and extended guides to dedicated docs
 
 Example refactor:
 
 ```
-Before: CLAUDE.md (500 lines)
+Before: AGENTS.md (500 lines)
 |- 50 lines: project description
 |- 200 lines: detailed pattern explanations
 |- 100 lines: inline examples
 |- 50 lines: constitutional rules
 +- 100 lines: setup instructions
 
-After: CLAUDE.md (140 lines)
+After: AGENTS.md (140 lines)
 |- 10 lines: project description
 |- 30 lines: structure overview
 |- 20 lines: constitutional rules
@@ -107,13 +108,13 @@ Plus: docs/patterns/*.md (moved from inline)
 
 ### Linked Documentation
 
-**Symptom**: Documentation files exist that are unreachable from CLAUDE.md. README files sit in subdirectories with no links to them. Multiple documentation files cover overlapping content.
+**Symptom**: Documentation files exist that are unreachable from AGENTS.md. README files sit in subdirectories with no links to them. Multiple documentation files cover overlapping content.
 
 **Why This Happens**: Documentation grows organically - someone writes a useful doc and commits it, but never links it from the master index. Over time, docs duplicate each other as different authors explain the same thing. Agents can only discover what's linked; everything else is invisible.
 
-**Pattern**: Apply [Pattern 0.4 - CLAUDE.md as Project Constitution](../L0-foundation.md#pattern-04--claudemd-as-project-constitution):
+**Pattern**: Apply [Pattern 0.4 - Agent instruction file as project constitution](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution):
 
-- CLAUDE.md is the master index - every doc must be reachable from it
+- AGENTS.md is the master index (CLAUDE.md imports it) - every doc must be reachable from it
 - Use plain relative markdown links (`[title](path.md)`), not `@` imports, which load the linked doc into every session
 - Run link validation to find orphans
 - Consolidate overlapping docs into single sources

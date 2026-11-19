@@ -56,11 +56,11 @@ export function parseAddress(...) { }               // internal
 
 **Problem**: A flat directory with 50 files forces the AI to read everything to understand relationships. Deep nesting hides important files behind many clicks. Both extremes waste context — the agent can't discover structure incrementally.
 
-**Solution**: Directory structure mirrors mental models. AI discovers complexity gradually: README → CLAUDE.md → module interfaces → implementation. Each layer gives enough context to decide whether to go deeper.
+**Solution**: Directory structure mirrors mental models. AI discovers complexity gradually: README → AGENTS.md → module interfaces → implementation. Each layer gives enough context to decide whether to go deeper.
 
 **In Practice**:
 
-- Put entry points at the root: `README.md`, `CLAUDE.md`
+- Put entry points at the root: `README.md`, `AGENTS.md`
 - Group related files into directories by domain
 - Keep depth to 3-4 levels maximum
 - Each directory should have a clear purpose
@@ -69,7 +69,8 @@ export function parseAddress(...) { }               // internal
 Good — progressive disclosure
 project/
 ├── README.md                    # Overview, entry point
-├── CLAUDE.md                    # Agent contract
+├── AGENTS.md                    # Agent contract
+├── CLAUDE.md                    # Imports AGENTS.md
 ├── ecommerce/                   # Domain module
 │   ├── index.ts                 # Public interface
 │   ├── fulfillment/             # Sub-domain
@@ -160,16 +161,23 @@ src/
 
 ---
 
-## Pattern 0.4 — CLAUDE.md as Project Constitution
+## Pattern 0.4 — Agent instruction file as project constitution
 
 **Problem**: An agent entering a project needs to know: what is this, how is it structured, what must I never do, what patterns must I follow. Scattering this across READMEs, CONTRIBUTING files, and wiki pages forces the agent to hunt for rules it may violate before finding them.
 
-**Solution**: CLAUDE.md is the single source of truth — a contract, not a tutorial. It answers the essential questions in one place. Hard limit: **150 lines maximum**. Beyond that, link to external docs.
+**Solution**: One agent instruction file is the single source of truth: a contract, not a tutorial. It answers the essential questions in one place. Use AGENTS.md as the shared file, which several coding agents read, and have CLAUDE.md import it. Claude Code reads CLAUDE.md, not AGENTS.md, unless CLAUDE.md imports AGENTS.md or settings say otherwise ([SC-8, AN-8](references/sources.md)).
+
+Keep the file short, owned, tested and re-baselined:
+
+- **Short**: link to docs for anything long. CI warns at about 200 lines. Length costs context on every session, and long files see lower adherence.
+- **Owned**: a named person owns the file and records a reviewed date in it.
+- **Tested**: CI checks the file (line count, links, reachability of every doc).
+- **Re-baselined**: at each model upgrade, test whether each rule still changes behaviour, and delete the rules that no longer do.
 
 **In Practice**:
 
 ```markdown
-# Project — Agent Contract
+# Project — Agent Contract (AGENTS.md)
 
 ## Project Description
 One-sentence summary of what this project does.
@@ -187,13 +195,19 @@ Tree diagram showing major directories and their purposes.
 - [docs/L1-feedback-loops.md](docs/L1-feedback-loops.md)
 ```
 
-Every referenced doc must be reachable from CLAUDE.md — it serves as the master index. An agent discovers any project document by starting here and following the relative markdown links.
+Every doc must be reachable from AGENTS.md, which serves as the master index. An agent discovers any project document by starting here and following the relative markdown links.
 
-Claude Code expands `@path` imports into context when CLAUDE.md loads, so an index of `@` imports loads every listed doc into every session. Use plain markdown links for an index, and `@` only for content that must always load.
+Claude Code expands `@path` imports into context when CLAUDE.md loads, so an index of `@` imports loads every listed doc into every session. Use plain markdown links for an index, and `@` only for content that must always load. The one-line `@AGENTS.md` import in CLAUDE.md is the intended use:
 
-**Anti-Pattern**: Writing tutorials or extensive guides in CLAUDE.md. Every line beyond 150 displaces context the agent needs for the actual task. Link to docs instead.
+```markdown
+# Claude Code
 
-**Cross-References**: [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether CLAUDE.md succeeds. [Pattern 0.7 — Documentation as System Map](#pattern-07--documentation-as-system-map) covers keeping the system map in sync with code.
+@AGENTS.md
+```
+
+**Anti-Pattern**: Writing tutorials or extensive guides in the instruction file. Every line displaces context the agent needs for the actual task. A file with no owner and no review date, whose rules nobody has re-tested since the last model upgrade, accumulates rules that no longer help.
+
+**Cross-References**: [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether the instruction file succeeds. [Pattern 0.7 — Documentation as System Map](#pattern-07--documentation-as-system-map) covers keeping the system map in sync with code.
 
 ---
 
@@ -233,7 +247,7 @@ During a refactoring session:
 
 **Anti-Pattern**: Relying on documentation as the primary contract. Documentation drifts. Tests execute. Treating unit tests as subordinate to stack tests — both layers provide distinct, necessary signals. Writing tests for coverage metrics rather than diagnostic value.
 
-**Cross-References**: [L1: Stack Tests](L1-feedback-loops.md#pattern-11--stack-tests) — the system-level complement to unit tests. [Pattern 0.4](#pattern-04--claudemd-as-project-constitution) — CLAUDE.md as the human-readable contract layer. [L2: Zero-Defect Tolerance](L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance) — every test failure matters, unit or stack.
+**Cross-References**: [L1: Stack Tests](L1-feedback-loops.md#pattern-11--stack-tests) — the system-level complement to unit tests. [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) — the instruction file as the human-readable contract layer. [L2: Zero-Defect Tolerance](L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance) — every test failure matters, unit or stack.
 
 ---
 
@@ -276,12 +290,12 @@ Convention: `.worktrees/<branch-name>/` directory.
 
 **Solution**: **Treat documentation as the system map — the navigational layer that maps structure, intent, and conventions.** When code changes, update the corresponding documentation in the SAME task—not deferred to "later." Every change that affects behavior must include a corresponding documentation update.
 
-The CLAUDE.md master index pattern (from [Pattern 0.4](#pattern-04--claudemd-as-project-constitution)) is the enforcement mechanism: documentation not linked from CLAUDE.md is orphaned and therefore dead. Link validation is part of keeping the map current.
+The AGENTS.md master index pattern (from [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution)) is the enforcement mechanism: documentation not linked from AGENTS.md is orphaned and therefore dead. Link validation is part of keeping the map current.
 
 **Key principles:**
 
 - **Synchronous updates:** Code changes and doc updates happen in the same task
-- **Reference integrity:** All docs must be reachable from CLAUDE.md via link chains
+- **Reference integrity:** All docs must be reachable from AGENTS.md via link chains
 - **Version-aware docs:** When patterns evolve, mark old versions as deprecated and link to current ones
 - **Example currency:** Code examples in docs must match the current codebase
 
@@ -297,7 +311,7 @@ The CLAUDE.md master index pattern (from [Pattern 0.4](#pattern-04--claudemd-as-
 
 1. Make code changes
 2. IMMEDIATELY update affected docs
-3. Update CLAUDE.md links if structure changed
+3. Update AGENTS.md links if structure changed
 4. Run link validation to catch orphans
 
 **Example task flow:**
@@ -308,7 +322,7 @@ Task: Refactor authentication flow
 1. Read L1/L2 patterns for auth
 2. Implement new auth logic
 3. Update L1/L2 pattern docs with new flow
-4. Update CLAUDE.md if patterns moved
+4. Update AGENTS.md if patterns moved
 5. Verify: grep -r "old_auth_function" docs/
 6. Commit: Code + docs together
 ```
@@ -319,9 +333,9 @@ Task: Refactor authentication flow
 - "The docs are close enough for now"
 - "I'll document this when the feature is complete"
 
-**Anti-Pattern**: "Good enough" documentation ("the agent can figure it out"). Deferred updates (code changes + doc ticket for "later"). Orphaned content not linked from CLAUDE.md. Unverified examples. Zombie docs kept around — version control is the archive.
+**Anti-Pattern**: "Good enough" documentation ("the agent can figure it out"). Deferred updates (code changes + doc ticket for "later"). Orphaned content not linked from AGENTS.md. Unverified examples. Zombie docs kept around — version control is the archive.
 
-**Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) — file structure is the physical map; docs are the conceptual map. Together they provide complete navigability. [Pattern 0.4](#pattern-04--claudemd-as-project-constitution) establishes the master index mechanism. [Pattern 4.2 — Spec Drift Detection](L4-standards-measurement.md#pattern-42--spec-drift-detection) provides automated checks for doc freshness. [Pattern 4.3 — New Starter Standard](L4-standards-measurement.md#pattern-43--new-starter-standard) is the ultimate test for entry point clarity.
+**Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) — file structure is the physical map; docs are the conceptual map. Together they provide complete navigability. [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) establishes the master index mechanism. [Pattern 4.2 — Spec Drift Detection](L4-standards-measurement.md#pattern-42--spec-drift-detection) provides automated checks for doc freshness. [Pattern 4.3 — New Starter Standard](L4-standards-measurement.md#pattern-43--new-starter-standard) is the ultimate test for entry point clarity.
 
 ---
 
@@ -414,18 +428,18 @@ Cleanup:
 
 **Problem**: Projects accumulate implicit knowledge. "Oh, we always put types in `src/types/`" or "utils files are in `shared/`" — assumptions never written down. Each assumption is a point where an agent will go wrong.
 
-**Solution**: If someone with zero context cannot understand your project from CLAUDE.md + README + file structure alone, the project is not agentic-ready. Every assumption not codified in these entry points creates friction for AI agents.
+**Solution**: If someone with zero context cannot understand your project from AGENTS.md + README + file structure alone, the project is not agentic-ready. Every assumption not codified in these entry points creates friction for AI agents.
 
 **In Practice**:
 
 - Test by asking: "Would a new developer understand this from README alone?"
-- Put answers in CLAUDE.md, not tribal knowledge
+- Put answers in AGENTS.md, not tribal knowledge
 - Let file structure tell the story
 - Explicit conventions over implicit ones
 
 **Anti-Pattern**: "They should just read the code." Code shows what exists, not why. AI agents need intent and structure, not just implementation.
 
-**Cross-References**: [Pattern 0.4](#pattern-04--claudemd-as-project-constitution) specifies CLAUDE.md format. [L4: New Starter Audit](L4-standards-measurement.md#pattern-43--new-starter-standard) covers maintaining this over time.
+**Cross-References**: [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) specifies the instruction file format. [L4: New Starter Audit](L4-standards-measurement.md#pattern-43--new-starter-standard) covers maintaining this over time.
 
 ---
 
