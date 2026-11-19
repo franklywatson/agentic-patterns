@@ -1,3 +1,5 @@
+import pytest
+
 from autonomy.levels import cap_of, dimension_level, effective_level, profile_status
 from autonomy.util import parse_time
 
@@ -20,22 +22,57 @@ FULL = dims({"platform": 4, "governance": 4, "ownership": 4, "measuring": 4})
 
 
 def test_cap_is_the_minimum_of_the_four_capping_dimensions():
-    assert cap_of(dims({"platform": 5, "governance": 3, "ownership": 4, "measuring": 5})) == 3
+    assert cap_of(dims({"platform": 5, "governance": 3, "ownership": 4, "measuring": 5}), NOW) == 3
 
 
 def test_a_dimension_outside_the_capping_four_does_not_lower_the_cap():
-    assert cap_of(dims({"platform": 4, "governance": 4, "ownership": 4, "measuring": 4, "skill": 1})) == 4
+    assert cap_of(dims({"platform": 4, "governance": 4, "ownership": 4, "measuring": 4, "skill": 1}), NOW) == 4
 
 
-def test_unknown_counts_as_level_2():
-    assert dimension_level(dims({"measuring": "unknown"}), "measuring") == 2
-    assert cap_of(dims({"platform": 4, "governance": 4, "ownership": 4, "measuring": "unknown"})) == 2
+def test_skill_recorded_as_unknown_does_not_lower_the_cap():
+    assert cap_of(dims({"platform": 4, "governance": 4, "ownership": 4, "measuring": 4, "skill": "unknown"}), NOW) == 4
+
+
+def test_a_capping_dimension_recorded_as_unknown_counts_as_1():
+    assert dimension_level(dims({"measuring": "unknown"}), "measuring") == 1
+    assert cap_of(dims({"platform": 4, "governance": 4, "ownership": 4, "measuring": "unknown"}), NOW) == 1
+
+
+def test_an_absent_capping_dimension_counts_as_1():
+    assert cap_of(dims({"platform": 4, "governance": 4, "ownership": 4}), NOW) == 1
+
+
+def test_a_profile_with_no_capping_dimensions_caps_at_1():
+    assert cap_of({"generated": "2026-11-10T00:00:00Z"}, NOW) == 1
+    assert cap_of({"generated": "2026-11-10T00:00:00Z", "dimensions": {}}, NOW) == 1
+    assert cap_of({"generated": "2026-11-10T00:00:00Z", "dimensions": []}, NOW) == 1
+    assert cap_of({"generated": "2026-11-10T00:00:00Z", "dimensions": "x"}, NOW) == 1
+
+
+def test_a_dimension_entry_that_is_not_an_object_counts_as_1():
+    profile = {"generated": "2026-11-10T00:00:00Z", "dimensions": {"platform": 4, "governance": {"level": 4}, "ownership": {"level": 4}, "measuring": {"level": 4}}}
+    assert cap_of(profile, NOW) == 1
 
 
 def test_a_missing_profile_caps_at_1():
-    assert cap_of(None) == 1
-    assert cap_of({"dimensions": FULL["dimensions"]}) == 1
-    assert cap_of([]) == 1
+    assert cap_of(None, NOW) == 1
+    assert cap_of({"dimensions": FULL["dimensions"]}, NOW) == 1
+    assert cap_of([], NOW) == 1
+    assert cap_of("x", NOW) == 1
+    assert cap_of(5, NOW) == 1
+
+
+@pytest.mark.parametrize("generated", ["2099-01-01", "2026-11-18T00:00:01Z", "November 18, 2026", "", "2026-11-18T00:00:00", "20261118", "2026-02-31"])
+def test_a_generated_time_in_the_future_or_not_an_iso_date_counts_as_a_missing_profile(generated):
+    profile = {**FULL, "generated": generated}
+    assert cap_of(profile, NOW) == 1
+    assert profile_status(profile, NOW) == "missing"
+    assert effective_level(wf(), profile, None, {}, NOW).effective == 1
+
+
+def test_a_generated_time_up_to_now_with_any_offset_is_accepted():
+    assert cap_of({**FULL, "generated": "2026-11-18T00:00:00Z"}, NOW) == 4
+    assert cap_of({**FULL, "generated": "2026-11-18T01:00:00+02:00"}, NOW) == 4
 
 
 def test_a_missing_profile_holds_every_grant_at_1():
@@ -108,15 +145,22 @@ def test_the_effective_level_is_the_minimum_of_all_gates():
     assert effective_level(wf(review_date="2026-11-01"), profile, state, {}, NOW).effective == 2
 
 
-def test_counted_as_in_a_profile_cannot_raise_the_cap_unknown_is_always_2():
+def test_counted_as_in_a_profile_cannot_raise_the_cap_an_unknown_capping_dimension_is_1():
     forged = {"generated": "2026-11-10T00:00:00Z", "dimensions": {"platform": {"level": 4}, "governance": {"level": 4}, "ownership": {"level": 4}, "measuring": {"level": "unknown", "counted_as": 5}}}
-    assert cap_of(forged) == 2
+    assert cap_of(forged, NOW) == 1
 
 
-def test_a_level_outside_1_to_5_counts_as_2():
+def test_a_level_outside_1_to_5_counts_as_1():
     def dims_for(level):
         return {"generated": "2026-11-10T00:00:00Z", "dimensions": {"platform": {"level": 4}, "governance": {"level": 4}, "ownership": {"level": 4}, "measuring": {"level": level}}}
 
-    assert cap_of(dims_for(9)) == 2
-    assert cap_of(dims_for(0)) == 2
-    assert cap_of(dims_for(2.5)) == 2
+    assert cap_of(dims_for(9), NOW) == 1
+    assert cap_of(dims_for(0), NOW) == 1
+    assert cap_of(dims_for(2.5), NOW) == 1
+    assert cap_of(dims_for("4"), NOW) == 1
+    assert cap_of(dims_for(True), NOW) == 1
+
+
+@pytest.mark.parametrize("state", [[], "x", 5, {"workflows": []}, {"workflows": {"w": "x"}}])
+def test_a_state_file_that_is_not_an_object_applies_no_override_and_does_not_raise(state):
+    assert effective_level(wf(), FULL, state, {}, NOW).effective == 4

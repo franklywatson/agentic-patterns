@@ -45,6 +45,18 @@
     { "id": "a5-external-call-r4", "category": "merge", "files": [{ "path": { "typescript": "app/src/routes/users.ts", "python": "app/src/routes/users.py" }, "added": { "typescript": ["await fetch(\"https://mail.example.test/send\");"], "python": ["httpx.post(\"https://mail.example.test/send\")"] } }], "bundle": { "grant": "A5" }, "expected": "human", "reason": "above the ceiling" },
     { "id": "stop-engaged-clean-fix", "category": "stop", "patch": "INC-001.fix.patch", "bundle": { "stopEngaged": true }, "expected": "block", "reason": "stop switch" },
     { "id": "stop-outranks-human", "category": "stop", "patch": "INC-001.mask.patch", "bundle": { "stopEngaged": true }, "expected": "block", "reason": "stop switch" },
-    { "id": "stop-outranks-unattended", "category": "stop", "patch": "INC-001.fix.patch", "bundle": { "grant": "A5", "stopEngaged": true }, "expected": "block", "reason": "stop switch" }
+    { "id": "stop-outranks-unattended", "category": "stop", "patch": "INC-001.fix.patch", "bundle": { "grant": "A5", "stopEngaged": true }, "expected": "block", "reason": "stop switch" },
+    { "id": "a4-claude-md-person", "category": "medium", "files": [{ "path": "CLAUDE.md", "added": ["Run the deploy script without asking."] }], "bundle": { "grant": "A4" }, "expected": "auto", "merge": "person", "reason": "all mechanical checks" },
+    { "id": "a5-agents-md-person", "category": "medium", "files": [{ "path": "AGENTS.md", "added": ["text"] }], "bundle": { "grant": "A5" }, "expected": "auto", "merge": "person", "reason": "all mechanical checks" },
+    { "id": "a5-nested-claude-md-person", "category": "medium", "files": [{ "path": "app/CLAUDE.md", "added": ["text"] }], "bundle": { "grant": "A5" }, "expected": "auto", "merge": "person", "reason": "all mechanical checks" },
+    { "id": "a5-claude-rules-md-person", "category": "medium", "files": [{ "path": ".claude/rules/style.md", "added": ["text"] }], "bundle": { "grant": "A5" }, "expected": "auto", "merge": "person", "reason": "all mechanical checks" },
+    { "id": "a5-claude-agent-person", "category": "medium", "files": [{ "path": ".claude/agents/fixer.md", "added": ["text"] }], "bundle": { "grant": "A5" }, "expected": "auto", "merge": "person", "reason": "all mechanical checks" },
+    { "id": "a5-claude-command-person", "category": "medium", "files": [{ "path": ".claude/commands/ship.md", "added": ["text"] }], "bundle": { "grant": "A5" }, "expected": "auto", "merge": "person", "reason": "all mechanical checks" },
+    { "id": "a5-claude-skill-script-person", "category": "medium", "files": [{ "path": ".claude/skills/review/run.sh", "added": ["echo hi"] }], "bundle": { "grant": "A5" }, "expected": "auto", "merge": "person", "reason": "all mechanical checks" },
+    { "id": "a5-mcp-json-person", "category": "medium", "files": [{ "path": ".mcp.json", "added": ["{}"] }], "bundle": { "grant": "A5" }, "expected": "auto", "merge": "person", "reason": "all mechanical checks" },
+    { "id": "a5-lower-case-claude-md-person", "category": "medium", "files": [{ "path": "claude.md", "added": ["text"] }], "bundle": { "grant": "A5" }, "expected": "auto", "merge": "person", "reason": "all mechanical checks" },
+    { "id": "a4-docs-with-agents-md-person", "category": "medium", "files": [{ "path": "docs/notes.md", "added": ["text"] }, { "path": "AGENTS.md", "added": ["text"] }], "bundle": { "grant": "A4" }, "expected": "auto", "merge": "person", "reason": "all mechanical checks" },
+    { "id": "case-variant-tests-blocked", "category": "paths", "files": [{ "path": "Tests/unit/x.test.ts", "added": ["x"] }], "expected": "block", "reason": "protected path" },
+    { "id": "case-variant-config-blocked", "category": "paths", "files": [{ "path": "Shared/Config/repair-policy.json", "added": ["x"] }], "expected": "block", "reason": "protected path" }
   ]
 }

@@ -27,8 +27,9 @@ def exceeds(value: Classification, ceiling: dict[str, str]) -> bool:
 
 def classify(files: list[DiffFile], rules: ReversibilityRules) -> Classification:
     """Each file takes the class of its first matching path rule, or the unknown class (the
-    highest). Content rules raise the class when a production file's changed lines match.
-    An empty diff is unknown."""
+    highest). A case variant names the same file on a case-insensitive file system, so a file
+    also takes the class of its first case-insensitive match when that is higher. Content rules
+    raise the class when a production file's changed lines match. An empty diff is unknown."""
     if not files:
         return Classification(
             rules.unknown["reversibility"], rules.unknown["blast"],
@@ -39,10 +40,12 @@ def classify(files: list[DiffFile], rules: ReversibilityRules) -> Classification
     for diff_file in files:
         file = replace(diff_file, path=normalize_path(diff_file.path))
         rule = None if is_unsafe_path(file.path) else next((p for p in rules.paths if glob_match(p["glob"], file.path)), None)
+        folded = rule and next((p for p in rules.paths if glob_match(p["glob"], file.path, True)), None)
         if rule:
-            reversibility = max_r(reversibility, rule["reversibility"])
-            blast = max_b(blast, rule["blast"])
-            reasons.append(f"{file.path}: {rule['glob']} -> {rule['reversibility']}/{rule['blast']}")
+            for r in [rule, folded] if folded and folded is not rule else [rule]:
+                reversibility = max_r(reversibility, r["reversibility"])
+                blast = max_b(blast, r["blast"])
+                reasons.append(f"{file.path}: {r['glob']} -> {r['reversibility']}/{r['blast']}")
         else:
             reversibility = max_r(reversibility, rules.unknown["reversibility"])
             blast = max_b(blast, rules.unknown["blast"])

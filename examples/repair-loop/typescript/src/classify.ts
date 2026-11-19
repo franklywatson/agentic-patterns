@@ -17,8 +17,10 @@ export const exceeds = (
 
 /**
  * Classify a diff deterministically. Each file takes the class of its first matching path
- * rule; a file with no rule takes the "unknown" class (the highest). Content rules raise
- * the class when a production file's changed lines match. An empty diff is unknown.
+ * rule; a file with no rule takes the "unknown" class (the highest). A case variant names the
+ * same file on a case-insensitive file system, so a file also takes the class of its first
+ * case-insensitive match when that is higher. Content rules raise the class when a production
+ * file's changed lines match. An empty diff is unknown.
  */
 export function classify(files: DiffFile[], rules: ReversibilityRules): Classification {
   if (files.length === 0) {
@@ -30,10 +32,13 @@ export function classify(files: DiffFile[], rules: ReversibilityRules): Classifi
   for (const diffFile of files) {
     const file = { ...diffFile, path: normalizePath(diffFile.path) };
     const rule = isUnsafePath(file.path) ? undefined : rules.paths.find((p) => globMatch(p.glob, file.path));
+    const folded = rule && rules.paths.find((p) => globMatch(p.glob, file.path, true));
     if (rule) {
-      reversibility = maxR(reversibility, rule.reversibility);
-      blast = maxB(blast, rule.blast);
-      reasons.push(`${file.path}: ${rule.glob} -> ${rule.reversibility}/${rule.blast}`);
+      for (const r of folded && folded !== rule ? [rule, folded] : [rule]) {
+        reversibility = maxR(reversibility, r.reversibility);
+        blast = maxB(blast, r.blast);
+        reasons.push(`${file.path}: ${r.glob} -> ${r.reversibility}/${r.blast}`);
+      }
     } else {
       reversibility = maxR(reversibility, rules.unknown.reversibility);
       blast = maxB(blast, rules.unknown.blast);

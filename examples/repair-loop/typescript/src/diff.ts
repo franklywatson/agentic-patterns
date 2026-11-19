@@ -122,8 +122,8 @@ export function isUnsafePath(path: string): boolean {
 /** Normalize a safe path; an unsafe path is returned unchanged so that callers keep it visible. */
 export const normalizePath = (path: string): string => (isUnsafePath(path) ? path : posix.normalize(path));
 
-/** Match a path against a glob. `**` crosses directories, `*` does not. */
-export function globMatch(glob: string, path: string): boolean {
+/** Match a path against a glob. `**` crosses directories, `*` does not. `ignoreCase` folds ASCII letters only. */
+export function globMatch(glob: string, path: string, ignoreCase = false): boolean {
   let source = '';
   for (let i = 0; i < glob.length; i++) {
     const c = glob[i];
@@ -137,5 +137,5 @@ export function globMatch(glob: string, path: string): boolean {
       source += c.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
     }
   }
-  return new RegExp(`^${source}$`).test(path);
+  return new RegExp(`^${source}$`, ignoreCase ? 'i' : '').test(path);
 }

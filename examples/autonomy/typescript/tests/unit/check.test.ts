@@ -39,6 +39,38 @@ test("check fails when the profile is missing", () => {
   ]);
 });
 
+const MISSING_FAILURES = [
+  { code: "profile-missing" },
+  { code: "grant-exceeds-cap", workflow: "dep-bump", granted: 4, cap: 1 },
+  { code: "grant-exceeds-cap", workflow: "flaky-test-triage", granted: 3, cap: 1 },
+  { code: "grant-exceeds-cap", workflow: "interactive", granted: 3, cap: 1 },
+];
+
+for (const [name, text] of [
+  ["a JSON array", "[]"],
+  ["a JSON string", "\"x\""],
+  ["a date that is not ISO", "{\"generated\":\"November 18, 2026\"}"],
+  ["a date in the future", "{\"generated\":\"2099-01-01\",\"dimensions\":{\"platform\":{\"level\":5},\"governance\":{\"level\":5},\"ownership\":{\"level\":5},\"measuring\":{\"level\":5}}}"],
+] as const) {
+  test(`a profile that is ${name} counts as missing and does not throw`, () => {
+    const dir = copyFixture("registers", "valid");
+    writeFileSync(join(dir, ".autonomy", "profile.json"), text);
+    const result = runCheck({ dir, now });
+    assert.equal(result.cap, 1);
+    assert.equal(result.profile_age_days, null);
+    assert.deepEqual(result.failures, MISSING_FAILURES);
+  });
+}
+
+test("a profile with no capping dimensions caps at 1 without being missing", () => {
+  const dir = copyFixture("registers", "valid");
+  writeFileSync(join(dir, ".autonomy", "profile.json"), JSON.stringify({ generated: "2026-11-17T00:00:00Z", dimensions: {} }));
+  const result = runCheck({ dir, now });
+  assert.equal(result.cap, 1);
+  assert.equal(result.profile_age_days, 1);
+  assert.deepEqual(result.failures, MISSING_FAILURES.slice(1));
+});
+
 test("check reports schema errors and stops", () => {
   const dir = copyFixture("registers", "valid");
   const text = `version: 1\nworkflows:\n  - id: w\n    owner: t\n    sponsor: s\n    granted_level: 3\n    identity: x\n    exception: waiver\n    risk: { reversible: true, verification: partial, blast_radius: repo, trifecta: { untrusted_input: false, sensitive_data: false, external_action: false } }\n`;

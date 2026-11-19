@@ -46,6 +46,40 @@ def test_check_fails_when_the_profile_is_missing(copy_fixture):
     ]
 
 
+MISSING_FAILURES = [
+    {"code": "profile-missing"},
+    {"code": "grant-exceeds-cap", "workflow": "dep-bump", "granted": 4, "cap": 1},
+    {"code": "grant-exceeds-cap", "workflow": "flaky-test-triage", "granted": 3, "cap": 1},
+    {"code": "grant-exceeds-cap", "workflow": "interactive", "granted": 3, "cap": 1},
+]
+
+NON_PROFILES = {
+    "a-json-array": "[]",
+    "a-json-string": '"x"',
+    "a-date-that-is-not-iso": '{"generated":"November 18, 2026"}',
+    "a-date-in-the-future": '{"generated":"2099-01-01","dimensions":{"platform":{"level":5},"governance":{"level":5},"ownership":{"level":5},"measuring":{"level":5}}}',
+}
+
+
+@pytest.mark.parametrize("name", NON_PROFILES)
+def test_a_profile_that_is_not_valid_counts_as_missing_and_does_not_raise(copy_fixture, name):
+    directory = copy_fixture("registers", "valid")
+    (directory / ".autonomy" / "profile.json").write_text(NON_PROFILES[name])
+    result = run_check(directory, NOW_MS)
+    assert result["cap"] == 1
+    assert result["profile_age_days"] is None
+    assert result["failures"] == MISSING_FAILURES
+
+
+def test_a_profile_with_no_capping_dimensions_caps_at_1_without_being_missing(copy_fixture):
+    directory = copy_fixture("registers", "valid")
+    (directory / ".autonomy" / "profile.json").write_text('{"generated": "2026-11-17T00:00:00Z", "dimensions": {}}')
+    result = run_check(directory, NOW_MS)
+    assert result["cap"] == 1
+    assert result["profile_age_days"] == 1
+    assert result["failures"] == MISSING_FAILURES[1:]
+
+
 def test_check_reports_schema_errors_and_stops(copy_fixture):
     directory = copy_fixture("registers", "valid")
     (directory / ".autonomy.yaml").write_text(

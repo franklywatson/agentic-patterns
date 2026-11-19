@@ -4,8 +4,9 @@ reviewed: 2026-11-19
 
 # Reference Project: Telegram Trading Bot
 
-This case study is this project's own experience, n=1: one private project by the author of these patterns, with no independent
-replication. It describes what the project does; it is not evidence that a pattern works elsewhere.
+This case study is this project's own experience, n=1: one private project by the author of these patterns, with
+no independent replication. It describes what the project does; it is not evidence that a pattern works elsewhere.
+Read it to see one project's concrete setup for each layer.
 
 **Project:** Telegram trading bot: DEX swaps, bridges, limit orders, DCA strategies, stop-loss and trailing stops.
 
@@ -78,7 +79,8 @@ focused modules. Direct database verification breaks
 `tests/config/stack-container-manager.js` isolates concurrent runs
 ([Pattern 1.4](../L1-patterns/1.4-container-isolation.md)):
 
-- container names built from the test name, process id and a random suffix
+- container names built from the test name, process id and a random suffix (Pattern 1.4 uses compose project
+  names instead)
 - ports from a `PortAllocator` class in the range 10000-65535
 - one generated compose file per test run
 - volumes removed with `docker compose down -v`

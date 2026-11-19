@@ -1,4 +1,4 @@
-import { ageDays, parseTime } from "./util.js";
+import { ageDays, parseTime, tryParseTime } from "./util.js";
 import type { Json } from "./util.js";
 
 export const CAPPING_DIMENSIONS = ["platform", "governance", "ownership", "measuring"] as const;
@@ -27,25 +27,34 @@ export interface Effective {
   reasons: string[];
 }
 
-/** Level of one dimension as the cap sees it: unknown counts as 2. */
+const isObject = (v: unknown): v is Json => typeof v === "object" && v !== null && !Array.isArray(v);
+
+/** Level of one capping dimension: an absent, unknown or invalid entry counts as 1. */
 export function dimensionLevel(profile: Json | null, dimension: string): number {
-  const entry = profile?.dimensions?.[dimension];
-  if (entry === undefined || entry === null) return 2;
-  return Number.isInteger(entry.level) && entry.level >= 1 && entry.level <= 5 ? entry.level : 2;
+  const dimensions = isObject(profile) && isObject(profile.dimensions) ? profile.dimensions : {};
+  const entry = dimensions[dimension];
+  if (!isObject(entry)) return 1;
+  return Number.isInteger(entry.level) && entry.level >= 1 && entry.level <= 5 ? entry.level : 1;
 }
 
-/** A profile is missing when there is none, it is not an object, or it has no `generated` time. */
-const isMissing = (profile: Json | null): boolean =>
-  profile === null || typeof profile !== "object" || Array.isArray(profile) || typeof profile.generated !== "string";
+/**
+ * A profile is missing when there is none, it is not an object, or its `generated` time is absent, not an ISO
+ * date or time, or later than `now`.
+ */
+function isMissing(profile: Json | null, now: number): boolean {
+  if (!isObject(profile)) return true;
+  const generated = tryParseTime(profile.generated);
+  return generated === null || generated > now;
+}
 
 /** Lowest capping dimension; a missing profile caps at 1, because nothing has been measured. */
-export function capOf(profile: Json | null): number {
-  if (isMissing(profile)) return 1;
+export function capOf(profile: Json | null, now: number): number {
+  if (isMissing(profile, now)) return 1;
   return Math.min(...CAPPING_DIMENSIONS.map((d) => dimensionLevel(profile, d)));
 }
 
 export function profileStatus(profile: Json | null, now: number): "ok" | "missing" | "stale" {
-  if (isMissing(profile)) return "missing";
+  if (isMissing(profile, now)) return "missing";
   return ageDays(now, parseTime(profile.generated)) > PROFILE_MAX_AGE_DAYS ? "stale" : "ok";
 }
 
@@ -63,17 +72,18 @@ function freshnessReasons(wf: Json, defaults: Json, now: number): string[] {
 
 export function effectiveLevel(wf: Json, profile: Json | null, state: Json | null, defaults: Json, now: number): Effective {
   const granted: number = wf.granted_level;
-  const cap = capOf(profile);
+  const cap = capOf(profile, now);
   const reasons: string[] = [];
   const stale = profileStatus(profile, now);
   const fresh = freshnessReasons(wf, defaults, now);
   if (stale !== "ok") fresh.push(`profile-${stale}`);
   const freshness = fresh.length > 0 ? FRESHNESS_LEVEL : 5;
-  const entry = state?.workflows?.[wf.id] ?? {};
+  const workflows = isObject(state) && isObject(state.workflows) ? state.workflows : {};
+  const entry = isObject(workflows[wf.id]) ? workflows[wf.id] : {};
   const harnessChanged =
     typeof entry.harness_hash === "string" && entry.harness_hash !== entry.task_bank_passed_hash;
   const harness = harnessChanged ? HARNESS_LEVEL : 5;
-  const override: number = typeof entry.demotion_override === "number" ? entry.demotion_override : 5;
+  const override: number = Number.isInteger(entry.demotion_override) ? entry.demotion_override : 5;
   const effective = Math.min(granted, cap, freshness, harness, override);
   if (cap < granted) reasons.push(`cap:${cap}`);
   if (freshness < granted) for (const r of fresh) reasons.push(`freshness:${r}`);

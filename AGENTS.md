@@ -27,24 +27,31 @@ required on `main`.
    job compares code changes with doc changes; the `Doc Freshness` job checks only review dates.
 5. **No conditional test assertions** — Tests that can silently pass are forbidden. Enforced by: reviewer, with
    [Pattern 1.6](docs/L1-patterns/1.6-test-integrity.md) as the check to adopt.
-6. **Short, owned, tested, re-baselined** — This file has a named owner and a reviewed date. Enforced by: the
-   `Instruction File Length` job (warns above 200 lines), `Doc Reachability from AGENTS.md` and `Link Integrity`
-   in CI, and the task-bank re-baseline at each model upgrade, run by hand and with no run recorded yet ([Pattern
-   0.10](docs/L0-foundation.md#pattern-010--prune-and-re-baseline-context)). Link to docs for anything longer.
+6. **Short, owned, tested, re-baselined** — This file has a named owner and a reviewed date. Enforced by: the CI
+   jobs `Instruction File Length` (warns above 200 lines), `Doc Reachability from AGENTS.md` and `Link Integrity`;
+   and the task-bank re-baseline at each model upgrade, run by hand ([Pattern
+   0.10](docs/L0-foundation.md#pattern-010--prune-and-re-baseline-context)). The [run
+   log](docs/references/task-bank.md#run-log) has no recorded run. Link to docs for anything longer.
 
 ## High-Tier Paths
 
 High tier in the [risk model](docs/L1-patterns/1.8-reversibility-blast-radius.md#risk-model). Locked files, which
 `autonomy check` always blocks for agent commits: `.autonomy*` (including the `.autonomy/` state and the demotion
-override), `CODEOWNERS`, `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`. Workflow files,
-`.github/workflows/*`, are allowed with a later non-agent `Governance-Approved: <sha>` line
-([rules](examples/autonomy/README.md#governance-files)); `examples/autonomy/hooks/` is also high tier. An agent commit
-is one with a `Co-Authored-By:` trailer naming Claude or Anthropic, or a `[bot]` identity.
+override), `CODEOWNERS`, `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`. They cover permission and
+hook surfaces. Workflow files, `.github/workflows/*`, are allowed with a later non-agent `Governance-Approved: <sha>`
+line ([rules](examples/autonomy/README.md#governance-files)); `examples/autonomy/hooks/` is also high tier. An agent
+commit has a `Co-Authored-By:` trailer naming Claude or Anthropic, a `[bot]` identity, or the name part of a workflow
+`identity` in the register (`person:` identities are excluded).
+
+**Medium-tier paths** cover behavior surfaces and never merge unattended: `CLAUDE.md`, `AGENTS.md`,
+`.claude/**/*.md`, `.claude/agents|commands|skills/**` and `.mcp.json`. Agents edit them in ordinary pull requests.
 
 The `Autonomy Check` job fails a pull request that breaks these rules; it is advisory until the check is required on
-`main`. `docs.yml`'s path filter starts the workflow only for docs, scripts, `.autonomy.yaml` and `examples/autonomy/`
-changes, so a pull request that touches only a locked file such as `CODEOWNERS` or another workflow gets no
-Autonomy Check run. Enforced by: that job where it runs, and the reviewer, who alone covers `examples/autonomy/hooks/`.
+`main`. The path filter in `docs.yml` starts the workflow only for Markdown and Python files anywhere, `scripts/`,
+`package.json`, the lint config, `docs.yml`, `.autonomy.yaml` and `examples/autonomy/`. A pull request that touches
+only another locked file (`CODEOWNERS`, `.autonomy/`, `.claude/settings*.json`, `.claude/hooks/*`) or another
+workflow gets no Autonomy Check run. Enforced by: that job where it runs, and the reviewer, who alone covers
+`examples/autonomy/hooks/`.
 
 ## Index
 
@@ -78,7 +85,7 @@ Pattern numbers are stable identifiers and are not contiguous.
 - [docs/L1-patterns/1.10-production-gate-progressive-confirmation.md](docs/L1-patterns/1.10-production-gate-progressive-confirmation.md) — Production gate and progressive confirmation
 - [docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md](docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md) — Repair budget, circuit breaker, stop authority
 - [docs/L1-patterns/1.12-self-healing-tests-vs-systems.md](docs/L1-patterns/1.12-self-healing-tests-vs-systems.md) — Self-healing tests vs self-healing systems
-- [examples/stack-test/typescript/README.md](examples/stack-test/typescript/README.md) — Stack tests with Playwright
+- [examples/stack-test/typescript/README.md](examples/stack-test/typescript/README.md) — Stack tests with Jest (API) and Playwright (browser)
 - [examples/stack-test/python/README.md](examples/stack-test/python/README.md) — Stack tests with pytest
 - [examples/repair-loop/README.md](examples/repair-loop/README.md) — Runnable repair loop with a deterministic gate
 
@@ -121,28 +128,6 @@ Pattern numbers are stable identifiers and are not contiguous.
 - [docs/references/further-reading.md](docs/references/further-reading.md) — External resources
 - [docs/references/sources.md](docs/references/sources.md) — Citation bibliography for reference IDs
 
-## Repository Structure
-
-```
-agentic-patterns/
-├── README.md                    # Overview, scales, reading path by role
-├── AGENTS.md                    # Agent contract + master index (this file)
-├── CLAUDE.md                    # Imports AGENTS.md; Claude Code-specific lines
-├── docs/
-│   ├── L0-foundation.md         # Deep modules, progressive disclosure
-│   ├── L1-feedback-loops.md     # Closed loop design and verification (overview)
-│   ├── L1-patterns/             # Individual L1 patterns
-│   ├── L2-behavioral-guardrails.md  # Skills, hooks, constitutional rules, containment
-│   ├── L3-optimization.md       # Token efficiency, tool routing (optional)
-│   ├── L4-standards-measurement.md # Evidence, metrics, CI guardrails, context eval
-│   ├── earned-autonomy.md       # Curve, cap, grants, register, ledger, census
-│   ├── diagrams/                # Diagrams for the README and layer docs
-│   ├── cross-cutting/           # Adoption guide, anti-patterns, threat model, FAQ, glossary
-│   └── references/              # Case study, further reading, sources, task bank
-├── examples/                    # Working code (TS + Python)
-└── scripts/                     # Doc checks: links, reachability, freshness, sources
-```
-
 ## Writing Rules for This Repository
 
 **When writing docs:**
@@ -168,12 +153,9 @@ agentic-patterns/
 **Front matter on pattern docs:**
 
 - Every pattern doc (`docs/L0` to `docs/L4`, `docs/L1-patterns/`, `docs/earned-autonomy.md`, the cross-cutting
-  guides except glossary and FAQ) starts with YAML front matter holding `last-validated-model:` (the model id the
-  content was last checked against) and `reviewed:` (`YYYY-MM-DD`).
-- Quoted dates and a trailing `# comment` are accepted. A future date fails, and an optional `expires:` key fails
-  once it has passed. Tests: `python3 -m unittest discover -s scripts/tests`.
-- Update both keys when you review or change a doc. `scripts/check-doc-freshness.py` warns at 90 days and fails at 180
-  days or when a key is missing ([Pattern 0.10](docs/L0-foundation.md#pattern-010--prune-and-re-baseline-context)).
+  guides except glossary and FAQ) starts with YAML front matter holding `last-validated-model:` and `reviewed:`
+  (`YYYY-MM-DD`). Update both when you review or change a doc. Rules, thresholds and tests:
+  [Pattern 0.10](docs/L0-foundation.md#pattern-010--prune-and-re-baseline-context).
 
 **Master index requirement:**
 
@@ -183,7 +165,7 @@ agentic-patterns/
 ## Markdown Conventions
 
 - Headers: `#` for page title, `##` for main sections, `###` for subsections
-- Code blocks: Specify language (\`\`\`typescript, \`\`\`python)
+- Code blocks: Specify the language on every fence (typescript, python, text)
 - Links: Relative paths for internal docs (`../docs/L0-foundation.md`)
 - Lists: Use `-` for bullet points, numbered lists for sequences
 - No emoji in code files or docs (exception: README.md may use sparingly for visual impact)

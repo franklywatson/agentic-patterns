@@ -135,8 +135,8 @@ def normalize_path(path: str) -> str:
     return path if is_unsafe_path(path) else posixpath.normpath(path)
 
 
-def glob_match(glob: str, path: str) -> bool:
-    """Match a path against a glob. `**` crosses directories, `*` does not."""
+def glob_match(glob: str, path: str, ignore_case: bool = False) -> bool:
+    """Match a path against a glob. `**` crosses directories, `*` does not. `ignore_case` folds ASCII letters only."""
     source = ""
     i = 0
     while i < len(glob):
@@ -151,4 +151,4 @@ def glob_match(glob: str, path: str) -> bool:
         else:
             source += re.escape(c)
         i += 1
-    return re.fullmatch(source, path) is not None
+    return re.fullmatch(source, path, re.I | re.A if ignore_case else 0) is not None

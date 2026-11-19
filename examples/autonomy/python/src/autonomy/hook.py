@@ -17,12 +17,35 @@ from autonomy.util import git, inside_dir, match_command, match_path, read_json_
 READ_TOOLS = {"Read", "Grep", "Glob", "LS", "TodoWrite", "NotebookRead", "Task", "Agent", "Skill", "ToolSearch", "AskUserQuestion", "ExitPlanMode", "EnterPlanMode", "TaskOutput", "TaskStop"}
 WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 NETWORK_TOOLS = {"WebFetch", "WebSearch"}
-READ_ONLY_COMMANDS = {"ls", "cat", "head", "tail", "grep", "rg", "find", "pwd", "echo", "wc", "which", "sort", "diff", "stat"}
+READ_ONLY_ORDER = ["ls", "cat", "head", "tail", "grep", "rg", "find", "pwd", "echo", "wc", "which", "sort", "diff", "stat"]
+READ_ONLY_COMMANDS = set(READ_ONLY_ORDER)
 PROTECTED = {"main", "master"}
 SECRET_PATH = re.compile(r"(^|/)\.env(\.|$)|\.ssh/|\.aws/|\.npmrc|(^|/)secrets?(/|\.)")
-GOV_WORDS = re.compile(r"\.autonomy|codeowners|\.github/workflows|\.claude/(settings|hooks)|\.harness", re.I)
-WRITE_HINT = re.compile(r">|\btee\b|\bsed\s+-i|\bmv\b|\bcp\b|\brm\b|\btouch\b|\btruncate\b|\bdd\b|\binstall\b|\bchmod\b|git\s+(checkout|restore|apply)\b")
+GOV_WORDS = re.compile(r"\.autonomy|codeowners|\.github/workflows|\.claude/(settings|hooks)|\.harness", re.I | re.A)
+WRITE_HINT = re.compile(
+    "|".join(
+        [
+            ">", r"\btee\b", r"\bsed\s+-i", "--in-place", r"\bmv\b", r"\bcp\b", r"\brm\b", r"\bln\b", r"\brsync\b", r"\btouch\b",
+            r"\btruncate\b", r"\bdd\b", r"\binstall\b", r"\bchmod\b", r"\bunzip\b", "--output",
+            r"\btar\s+(?:\S+\s+)*?(?:-?[A-Za-z]*x[A-Za-z]*|--extract|--get)(?:\s|$)",
+            r"\bfind\b.*\s-(?:delete|exec|execdir|ok|okdir|fprint0?|fprintf|fls)\b",
+            r"\bsort\b.*\s-[^-\s]*o", r"git\s+(checkout|restore|apply|mv|rm)\b",
+        ]
+    )
+)
+PR_WRITE = re.compile(r"^gh\s+pr\s+(create|edit|close|reopen|ready|review|comment|lock|unlock|update-branch|revert)\b")
+API_WRITE = re.compile(r"(-X\s*(POST|PUT|DELETE|PATCH)|--method\s+(POST|PUT|DELETE|PATCH)|\s-f\b|\s-F\b)")
 
+
+def _governance_shell_write(command: str) -> bool:
+    """True when a command names a locked or workflow path and a write verb, before or after removing quotes."""
+    unquoted = re.sub(r"[\"'\\]", "", command)
+    forms = (command, unquoted)
+    return any(GOV_WORDS.search(c) for c in forms) and any(WRITE_HINT.search(c) for c in forms)
+
+
+def _is_pr_write(seg: str) -> bool:
+    return PR_WRITE.match(seg) is not None or (re.match(r"^gh\s+api\b", seg) is not None and re.search(r"\bpulls\b", seg) is not None and API_WRITE.search(seg) is not None)
 
 @dataclass
 class HookContext:
@@ -92,7 +115,7 @@ def _external_action(seg: str) -> bool:
         return True
     if re.match(r"^gh\s+api\b", seg) and re.search(r"(-X\s*(POST|PUT|DELETE|PATCH)|--method\s+(POST|PUT|DELETE|PATCH)|\s-f\b|\s-F\b)", seg):
         return True
-    return re.search(r"\bdeploy\b", seg, re.I) is not None
+    return re.search(r"\bdeploy\b", seg, re.I | re.A) is not None
 
 
 def _untrusted_read(seg: str) -> bool:
@@ -172,29 +195,39 @@ def _is_inline_code(seg: str) -> bool:
     return any(p.search(seg) for p in INLINE_CODE)
 
 
-# Git reads allowed at A1: only `-C dir`, `--no-pager` and `-P` before the subcommand; no `-c`, no env prefix.
-A1_GIT = re.compile(r"^git\s+(?:(?:-C\s+\S+|--no-pager|-P)\s+)*(status|diff|log|show)\b")
-FIND_WRITES = re.compile(r"(^|\s)-(delete|exec|execdir|ok|okdir|fprint|fprint0|fprintf|fls)(\s|$)")
+# A word at A1: letters, digits and `_ . / : = @ % + , -` only, so the shell cannot expand or redirect it.
+PLAIN_WORD = re.compile(r"[A-Za-z0-9_./:=@%+,-]+")
+A1_GIT_SUBCOMMANDS = {"status", "diff", "log", "show"}
+A1_GIT_DENIED = re.compile(r"--(ou|ext|textc)")
+FIND_WRITES = re.compile(r"-(delete|exec|execdir|ok|okdir|fprint|fprint0|fprintf|fls)")
 
 
-def read_only_segment(raw: str) -> bool:
-    """True when a raw segment is provably read-only. The segment is not stripped of wrappers or variable
-    assignments (GIT_EXTERNAL_DIFF=x, env PAGER=x), and quotes are removed so "-delete" still matches."""
-    seg = re.sub(r"[\"'\\]", "", raw.strip())
-    if re.search(r"[>`]|\$\(|<\(", seg):
-        return False
-    words = seg.split()
-    cmd = words[0] if words else ""
+def _read_only_words(words: list[str]) -> bool:
+    cmd, args = words[0], words[1:]
     if cmd == "git":
-        return bool(A1_GIT.match(seg)) and not re.search(r"\s--ou", seg)
+        i = 0
+        while i < len(args) and args[i] in ("--no-pager", "-P"):
+            i += 1
+        return i < len(args) and args[i] in A1_GIT_SUBCOMMANDS and not any(A1_GIT_DENIED.match(w) for w in args[i + 1 :])
     if cmd not in READ_ONLY_COMMANDS:
         return False
     if cmd == "find":
-        return not FIND_WRITES.search(seg)
+        return not any(FIND_WRITES.fullmatch(w) for w in args)
     if cmd == "sort":
-        return not any(re.match(r"^-[^-]*o", w) or re.match(r"^--(o|co)", w) for w in words[1:])
+        return not any(re.match(r"-[^-]*o", w) or re.match(r"--(o|co)", w) for w in args)
     if cmd == "rg":
-        return not any(re.match(r"^--(pre|hostname-bin)\b", w) for w in words)
+        return not any(re.match(r"--(pre|hostname-bin)", w) for w in args)
+    return True
+
+
+def plain_read_only(command: str) -> bool:
+    """The A1 rule: one or more commands from the read-only list joined by `|`, every word plain. Quotes, `$`,
+    braces, globs, redirects, `;`, `&`, newlines and backticks are refused before any flag is checked, because
+    the shell can rebuild a write flag from them after the check (`-del$'e'te`, `{-delete,-print}`)."""
+    for segment in (s.strip() for s in command.split("|")):
+        words = re.split(r"[ \t]+", segment)
+        if segment == "" or not all(PLAIN_WORD.fullmatch(w) for w in words) or not _read_only_words(words):
+            return False
     return True
 
 
@@ -231,13 +264,16 @@ def _decide_bash(ctx: HookContext, command: str) -> Decision:
     segments = split_segments(command)
     perm = wf.get("permitted_actions") or {}
     forbidden: list[str] = wf.get("forbidden_actions") or []
-    if GOV_WORDS.search(command) and WRITE_HINT.search(command):
+    if _governance_shell_write(command):
         return _deny("governance-write", "shell command writes to a governance file")
     if isinstance(perm.get("tools"), list):
         if re.search(r"\$\(|`|<\(|>\(", command):
             return _deny("outside-permitted-tools", "command substitution cannot be matched against permitted_actions")
         if not _permitted_tool(perm["tools"], "Bash", None, segments):
             return _deny("outside-permitted-tools", f"Bash command not in permitted_actions.tools: {command}")
+    if level <= 1 and not plain_read_only(command):
+        allowed = ", ".join(sorted(READ_ONLY_COMMANDS, key=READ_ONLY_ORDER.index))
+        return _deny("a1-plain-commands-only", f"level 1 allows only plain read-only commands joined by |: {allowed}, git status|diff|log|show")
     network = perm.get("network")
     restrict_egress = level <= 2 or network is not None or level >= 4
     mark = False
@@ -246,8 +282,6 @@ def _decide_bash(ctx: HookContext, command: str) -> Decision:
         explicit = isinstance(perm.get("tools"), list) and any(e.startswith("Bash(") and _permitted_tool([e], "Bash", None, [raw]) for e in perm["tools"])
         if _is_inline_code(seg) and not explicit:
             return _deny("inline-interpreter", "inline shell or interpreter code cannot be inspected; permit it with an explicit Bash(...) pattern")
-        if level <= 1 and not read_only_segment(raw):
-            return _deny("read-only-level", "level 1 allows read-only commands only")
         if _is_push(seg):
             if _is_force(seg):
                 return _deny("force-push", "force push is never permitted")
@@ -264,12 +298,14 @@ def _decide_bash(ctx: HookContext, command: str) -> Decision:
             blocked = _limits_decision(ctx, wf)
             if blocked:
                 return blocked
+        if _is_pr_write(seg) and level <= 2:
+            return _deny("pr-write-blocked", "opening or changing a pull request is blocked below level 3")
         if _is_egress(seg) and restrict_egress:
             hosts = _hosts_in(seg)
             allow = network or []
             if not hosts or not all(_host_allowed(h, allow) for h in hosts):
                 return _deny("network-blocked", f"egress outside permitted_actions.network: {seg}")
-        if "deploy" in forbidden and re.search(r"\bdeploy\b", seg, re.I):
+        if "deploy" in forbidden and re.search(r"\bdeploy\b", seg, re.I | re.A):
             return _deny("forbidden-action", "deploy is forbidden")
         if "read_secrets" in forbidden and SECRET_PATH.search(seg):
             return _deny("forbidden-action", "read_secrets is forbidden")

@@ -97,6 +97,6 @@ After verify+ passes:
 Report one of these states when the skill finishes:
 
 - **DONE** — Full test suite passes, all acceptance criteria met with evidence, no spec drift.
-- **DONE_WITH_CONCERNS** — All tests pass but minor spec deviations exist (documented).
+- **DONE_WITH_CONCERNS** — All tests pass but the code deviates from the spec in a way that does not change tested behavior; each deviation is listed.
 - **BLOCKED** — Tests failing, cannot proceed without fixing regressions.
 - **NEEDS_CONTEXT** — Need user input to resolve an acceptance criterion or spec drift question.

@@ -2,9 +2,9 @@
 
 Terms used across the library, in alphabetical order. Each entry links to the doc that defines it.
 
-Three scales are easy to confuse. A layer (L0 to L4) is a group of patterns. An enforcement point (prompt, hook,
-CI, sandbox, downstream) is where a rule holds. The curve positions (C1 to C5) and grants (A1 to A5) say how far a
-workflow may run without a person.
+Four scales are easy to confuse. A layer (L0 to L4) is a group of patterns. An enforcement point (prompt, hook,
+CI, sandbox, downstream) is where a rule holds. A review tier (low, medium, high) sets the approvals a change
+needs. The curve positions (C1 to C5) and grants (A1 to A5) say how far a workflow may run without a person.
 
 **Anti-Masking Scan** — A text scan of a repair diff for code that hides an error instead of fixing it, such as a
 new catch, a retry or a longer timeout. A flagged change is reclassified as a mitigation. See
@@ -12,19 +12,20 @@ new catch, a retry or a longer timeout. A flagged change is reclassified as a mi
 
 **Author of Record** — The person who asked an agent for a change. They read it and answer for it, and they cannot
 approve it; a different person approves. See
-[Pattern 4.7](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register).
+[Pattern 4.7](../L4-standards-measurement.md#pattern-47--author-of-record).
 
 **Blast-Radius Class** — How far a change reaches, classified from its diff: B0 one journey, B1 one service, B2 a
 cross-service contract, B3 money, auth, PII or audit. An unknown change is B3. See
 [Pattern 1.8](../L1-patterns/1.8-reversibility-blast-radius.md).
 
-**Cap** — The curve cap only (not a spend or line limit; those are a budget and a line limit): the lowest curve
-position among the four dimensions that limit unattended work, platform, security and governance, production ownership
-and measuring value. The census of one repository computes it, and no grant may exceed it. See [The Curve and the Cap](../earned-autonomy.md#the-curve-and-the-cap).
+**Cap** — The lowest curve position among the four dimensions that limit unattended work: platform, security and
+governance, production ownership and measuring value. The census of one repository computes it, and no grant may
+exceed it. A spend limit is a budget and a size limit is a line limit, not a cap. See
+[The Curve and the Cap](../earned-autonomy.md#the-curve-and-the-cap).
 
 **Ceiling** — In the repair-loop policy, the highest reversibility and blast-radius class a grant lets the gate pass as
 `auto` (`autoCeiling`) or merge with no person (`unattendedCeiling`). See
-[Pattern 1.10](../L1-patterns/1.10-production-gate-progressive-confirmation.md).
+[Pattern 1.11](../L1-patterns/1.11-repair-budget-circuit-breaker-stop.md#grants-and-repair-capability).
 
 **Census** — The command that reads a repository's files and writes a profile with one curve position per
 dimension and the cap. A dimension with no evidence is C1. Only skill, which no file shows, is recorded as
@@ -96,8 +97,8 @@ the anti-masking result, the attempt budget and the grant. See
 [Pattern 1.9](../L1-patterns/1.9-repair-loop-frozen-oracle.md).
 
 **Evidence Label** — The closing `**Evidence:**` line of a pattern: Strong (measured or corroborated by an independent
-source; guidance from one vendor is never Strong), Partial (support exists but is incomplete or contested) or Thin (reasoning, this project's own experience or
-unmeasured vendor claims), followed by the basis and source IDs. See [Sources](../references/sources.md).
+source), Partial (support exists but is incomplete, contested or unmeasured guidance from one vendor) or Thin
+(reasoning, this project's own experience, a single anecdote or no source), followed by the basis and source IDs. See [Sources](../references/sources.md).
 
 **Evidence Ledger** — The append-only record of workflow runs, written only by CI and after-the-fact jobs, from
 which promotion and demotion are computed. See [Pattern A.2](../earned-autonomy.md#pattern-a2--evidence-ledger).
@@ -150,8 +151,10 @@ Guardrails, L3 Optimization (optional), L4 Standards and Measurement. The layers
 outside, in one session. The Rule of Two allows at most two of the three unless a deterministic or human gate sits
 between them. See [Pattern 2.10](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition).
 
-**Locked File** — A governance file that `autonomy check` always blocks from agent commits: `.autonomy*` (state and
-demotion override included), CODEOWNERS, `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`. See
+**Locked File** — A permission or hook file that `autonomy check` always blocks from agent commits: `.autonomy*`
+(state and demotion override included), CODEOWNERS, `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`.
+Behavior files (`CLAUDE.md`, `AGENTS.md`, `.claude/**/*.md`, `.claude/agents|commands|skills/**`, `.mcp.json`) are
+not locked; they are medium-tier paths that a person merges. See
 [Pattern A.6](../earned-autonomy.md#pattern-a6--enforcement-through-hooks).
 
 **Mechanical Verification** — A check whose pass or fail a machine decides, with no judgment by the agent or a
@@ -195,8 +198,11 @@ deploy-reversible, R3 data-forward, R4 external or irreversible. An unknown chan
 class it sets the review tier, which decides the review; the grant decides who acts unattended. See the
 [risk model](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model).
 
-**Risk Model** — The table that maps a change's reversibility and blast-radius classes to a review tier (low,
-medium or high) and to the lowest grant that may merge it with no person. "Tier" means only the review tier. See
+**Review Tier** — Low, medium or high, set by a change's reversibility and blast-radius classes. It decides the
+approvals a change needs. "Tier" means only the review tier.
+
+**Risk Model** — The table that maps a change's reversibility and blast-radius classes to a review tier and to the
+lowest grant that may merge it with no person. See
 [Pattern 1.8](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model).
 
 **Skill** — A prompt-level instruction file the agent loads when relevant. A skill shapes behavior and guarantees

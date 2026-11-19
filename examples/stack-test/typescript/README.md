@@ -1,6 +1,6 @@
 # Stack Test Example — TypeScript
 
-A minimal, working example of stack tests in TypeScript using Jest and Playwright. Each test models one **atomic user journey** — a complete interaction from the user's perspective.
+A minimal, working example of stack tests in TypeScript using Jest and Playwright. Each test models one **atomic user journey** — a complete interaction from the user's perspective. For a team writing its first stack test; run it before adapting [Pattern 1.1](../../../docs/L1-patterns/1.1-stack-tests.md).
 
 ## What This Demonstrates
 
@@ -86,7 +86,7 @@ npm test
 npm run test:stack
 ```
 
-Expected result: `Test Suites: 2 passed, 2 total` and `Tests: 9 passed, 9 total`.
+Expected result: every suite and test passes, with no failures or warnings.
 
 Browser-level tests share one running stack, so they use fixed host ports; pick free ones. Start it, run Playwright, then remove it:
 
@@ -97,7 +97,7 @@ BASE_URL=http://localhost:13000 npm run test:browser
 docker compose -p ts-browser-stack -f docker-compose.test.yml down -v --remove-orphans
 ```
 
-Expected result: `8 passed`. Without the `APP_PORT`/`POSTGRES_PORT`/`REDIS_PORT` overrides the stack binds ports 3000, 5432 and 6379, and `BASE_URL` defaults to `http://localhost:3000`.
+Expected result: every browser test passes. Without the `APP_PORT`/`POSTGRES_PORT`/`REDIS_PORT` overrides the stack binds ports 3000, 5432 and 6379, and `BASE_URL` defaults to `http://localhost:3000`.
 
 ```bash
 # Run a specific browser test file (stack must be running)
@@ -107,7 +107,7 @@ npx playwright test --config=playwright.config.ts tests/stack/browser/01-app-sta
 npx playwright test --config=playwright.config.ts --ui
 ```
 
-`StackTestUtils.cleanup()` deletes the generated compose file and rethrows a failed `docker compose down`, so a leaked stack fails the run. `npm run test:all` runs `test`, `test:stack` and then `test:browser`; the browser step needs the stack from the commands above (default ports) to be running.
+`StackTestUtils.cleanup()` runs `docker compose down`, deletes the generated compose file and throws one error that names every failure (`down` and the file removal), so a leaked stack fails the run. After a failed `down` it keeps the project name, so a second call retries `docker compose -p <name> down` without the file. The unit tests in `tests/unit` check this with `child_process` replaced. `npm run test:all` runs `test`, `test:stack` and then `test:browser`; the browser step needs the stack from the commands above (default ports) to be running.
 
 ## Requirements
 

@@ -3,15 +3,13 @@ last-validated-model: claude-opus-5-5
 reviewed: 2026-11-19
 ---
 
-# L4: Standards & Measurement
+# L4: Standards and Measurement
 
 L4 checks that the other layers hold and measures what they change: claims backed by CI output, outcome metrics,
 required CI checks, a task bank that gates context and model changes, a named person for agent-written code, and the
 team's skill to supervise. Read it when "the agent says it passed" is the only evidence, or before a model or context
-change. Drift detection, the new-starter audit and pruning of context artifacts are in L0 ([Pattern
-0.7](L0-foundation.md#pattern-07--documentation-as-system-map), [Pattern
-0.9](L0-foundation.md#pattern-09--ai-as-new-starter-standard) and [Pattern
-0.10](L0-foundation.md#pattern-010--prune-and-re-baseline-context)).
+change. Drift checks, the new-starter audit and context pruning are in [L0](L0-foundation.md) (Patterns 0.7, 0.9
+and 0.10).
 
 ---
 
@@ -111,9 +109,8 @@ request that edits a skill or the instruction file attaches the task-bank run.
   is the evidence
 - [Pattern 4.4 — Agentic Development Metrics](#pattern-44--agentic-development-metrics): artifact-based metrics
 
-**Evidence:** Partial — in one 2025 trial (16 developers), developers believed AI sped them up 20% while their
-measured time rose 19%, a speed result METR marks out of date. Eval-gated configuration releases rest on vendor
-guidance (IS-6, MV-8, PO-25)
+**Evidence:** Partial — one 2025 trial measured the belief gap (IS-6); eval-gated configuration releases rest on
+vendor guidance (MV-8, PO-25)
 
 ---
 
@@ -135,7 +132,7 @@ Cap](earned-autonomy.md#the-curve-and-the-cap)).
 
 **Metric categories:**
 
-1. **Velocity:** agent-driven cycle time per feature, from task assignment to verified completion.
+1. **Velocity:** cycle time of agent pull requests, as defined under Create a baseline below.
 2. **Quality**
    - Defect rate in agent-delivered code: bugs found after merge, per feature
    - Stack test pass rate on first run ([Pattern 1.1](L1-patterns/1.1-stack-tests.md))
@@ -144,7 +141,7 @@ Cap](earned-autonomy.md#the-curve-and-the-cap)).
    - Human intervention rate: how often a person redirects or corrects an agent mid-task. It is an input to the grant
      decision, never a target
    - Task completion without handoff: share of tasks completed in one agent session
-   - Review rejection rate: share of agent pull requests that need significant revision
+   - Review rejection rate: share of agent pull requests with at least one change requested before merge
 4. **Governance**
    - Rule violations caught by an enforcement point (hook, CI) against those caught in review
    - Drift found by the checks in [Pattern 0.7](L0-foundation.md#pattern-07--documentation-as-system-map) (broken
@@ -185,9 +182,17 @@ more.
 }
 ```
 
-Cycle time runs from a pull request's first commit to its merge; a revert is a merged commit whose message starts
-with `Revert`; an escaped defect is a bug filed against a merged change. The census checks only that `flow` and
-`stability` are non-empty objects and that `captured` is at most 90 days old, so recompute the file every 90 days.
+Cycle time runs from a pull request's creation to its merge; a revert is a merged commit whose message starts with
+`Revert`; an escaped defect is a bug filed against a merged change. The census checks only that `flow` and
+`stability` are non-empty objects and that `captured` is at most 90 days old, so recompute the file every 90 days:
+
+```bash
+since=2026-08-21   # 90 days before the capture date
+gh pr list --state merged --limit 1000 --search "merged:>=$since" --json createdAt,mergedAt \
+  | jq '[.[] | ((.mergedAt|fromdate) - (.createdAt|fromdate)) / 3600] | sort
+        | {merged_prs: length, median_cycle_time_hours: .[length / 2 | floor]}'
+git log --since="$since" --oneline --grep='^Revert' | wc -l    # reverts
+```
 
 **Cadence.** Record cycle time and intervention rate per task; review defect rate, review rejection rate and drift
 counts weekly; review trends and each workflow's autonomy grant quarterly.
@@ -202,14 +207,9 @@ counts weekly; review trends and each workflow's autonomy grant quarterly.
 - **Gaming the metrics:** lowering the intervention rate by making tasks so small the agent never needs help, or by
   skipping review. A low rate can mean good work or no oversight.
 
-### Cross-References
-
-- [L2: Behavioral Guardrails](L2-behavioral-guardrails.md): rule violations caught per enforcement point are a
-  governance signal
-
 **Evidence:** Partial — independent sources warn against throughput and activity counts used alone (MV-1, MV-5);
 vendor frameworks still track adoption and spend beside outcomes (MV-2, AN-48); the metric set and thresholds are
-this library's
+this library's design
 
 ---
 
@@ -218,7 +218,8 @@ this library's
 ### Problem
 
 A hook is an enforcement point inside the agent's session: it acts only while the harness runs it. CI runs on every
-push and pull request whatever happened in the session, and the agent cannot switch it off from inside one.
+push and pull request whatever happened in the session, and the agent cannot switch it off from inside one. Its
+output is the evidence [Pattern 4.1](#pattern-41--evidence-based-claims) asks for.
 
 ### Solution
 
@@ -245,12 +246,6 @@ guide](cross-cutting/adoption-guide.md#make-the-test-job-a-required-check) advis
 
 - Thresholds in workflow files rather than project config, where nobody editing the code sees them.
 - Checks that run but are not required, so a failure does not block the merge.
-
-### Cross-References
-
-- [Pattern 0.7 — Documentation as System Map](L0-foundation.md#pattern-07--documentation-as-system-map): CI runs the
-  drift checks
-- [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims): CI output is the evidence
 
 **Evidence:** Partial — automated checks on every change are an independent practice; the scripts and thresholds are
 this project's own experience, n=1 (PL-3)
@@ -342,7 +337,7 @@ no independent outcome evidence that a task bank improves results (MV-10, PO-25)
 
 ---
 
-## Pattern 4.7 — Author of Record and Agent Register
+## Pattern 4.7 — Author of Record
 
 ### Problem
 
@@ -361,8 +356,9 @@ and the Linux kernel state that the human who submits AI-assisted work is respon
 Foundation makes the contributor represent the work as original and disclose generated material
 ([PO-16, PO-17, PO-19](references/sources.md)). GitHub does not count
 the requester's approval of its cloud agent's pull request; another reviewer must approve
-([PO-20](references/sources.md)). Record the tool in a commit trailer, such as a co-author line, so reviewers and
-later readers can see which changes an agent wrote.
+([PO-20](references/sources.md)). A `Co-Authored-By:` trailer names the agent, so reviewers and later readers see
+which changes an agent wrote; `autonomy check` identifies agent commits by it
+([examples/autonomy](../examples/autonomy/README.md#governance-files)).
 
 **Workflow owners.** Every agent workflow, unattended or interactive, has an entry in the register, `.autonomy.yaml`
 ([Pattern A.1](earned-autonomy.md#pattern-a1--autonomy-register)). Its schema requires `owner`, `sponsor` and
@@ -380,8 +376,8 @@ retired workflow is deleted from `.autonomy.yaml`; the repository history keeps 
 
 ### In Practice
 
-- The pull request template carries a line "Requested by: <person>. Agent: <tool>.", and a CI check fails a pull
-  request whose agent-written commits lack the trailer.
+- The commit author is the requester. State the `Co-Authored-By:` trailer rule in the instruction file, and fail
+  CI on an agent-written commit without it.
 - At each quarterly review, confirm that each register entry, skill and hook still has a person who answers for it.
   Remove entries nobody claims.
 
@@ -452,7 +448,7 @@ Record the result per module. A module nobody can explain gets a hands-on task a
 
 ### Cross-References
 
-- [Pattern 4.7 — Author of Record and Agent Register](#pattern-47--author-of-record-and-agent-register): the
+- [Pattern 4.7 — Author of Record](#pattern-47--author-of-record): the
   person who must be able to explain the change
 - [Pattern 2.13 — Risk-Tiered Review](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review): human
   attention goes where mistakes cost most
@@ -462,5 +458,5 @@ engineers); evidence for experienced engineers is Thin and no study is longitudi
 
 ---
 
-**Previous:** [L3: Optimization (Optional)](L3-optimization.md) | **Next:** [Earned Autonomy](earned-autonomy.md) |
+**Previous:** [L3: Optimization (optional)](L3-optimization.md) | **Next:** [Earned Autonomy](earned-autonomy.md) |
 [Back to Overview](../README.md)

@@ -5,7 +5,7 @@ reviewed: 2026-11-19
 # Further Reading
 
 The sources cited by the evidence labels on each pattern are listed in [sources.md](sources.md). This page lists
-the material the patterns draw on beyond those citations.
+the material the patterns draw on beyond those citations, for readers who want the background behind a pattern.
 
 ## Start Here
 

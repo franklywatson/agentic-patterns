@@ -28,12 +28,8 @@
     // MD041/first-line-heading - disabled for files with front matter
     "MD041": false,
 
-    // MD040/fenced-code-language - code blocks should specify language
-    // AGENTS.md requires this but 42 existing blocks lack language tags
-    // (mostly directory structure diagrams). Disabled for now - enable
-    // after adding language tags to existing blocks (use `text` for
-    // directory trees and plain output).
-    "MD040": false,
+    // MD040/fenced-code-language - code blocks must specify a language (use `text` for trees and plain output)
+    "MD040": true,
 
     // MD036/no-emphasis-as-heading - emphasis used as heading
     // Pattern docs use **bold** for inline emphasis that isn't a heading

@@ -68,7 +68,9 @@ async function main(argv: string[]): Promise<number> {
     case "census": {
       const result = runCensus(dir, now);
       const path = writeCensus(dir, result);
-      console.log(json ? JSON.stringify(result.profile, null, 2) : `wrote ${path}\ncap: ${result.profile.cap}\n${Object.entries(result.profile.dimensions).map(([d, v]: [string, any]) => `${d}: ${v.level}`).join("\n")}\nworksheet: ${join(dir, ".autonomy", "worksheet.json")}`);
+      const line = ([d, v]: [string, any]) => `${d}: ${v.level}${v.missing_for_next.length > 0 ? ` (next: ${v.missing_for_next.join(", ")})` : ""}`;
+      const dims = Object.entries(result.profile.dimensions).map(line).join("\n");
+      console.log(json ? JSON.stringify(result.profile, null, 2) : `wrote ${path}\ncap: ${result.profile.cap}\n${dims}\nworksheet: ${join(dir, ".autonomy", "worksheet.json")}`);
       return 0;
     }
     case "ledger": {

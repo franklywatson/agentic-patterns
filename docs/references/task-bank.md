@@ -175,8 +175,8 @@ the library. They discriminate little between models and are included because a 
 
 ## Run Log
 
-One row per run. No run has been recorded, so there is no baseline yet; the first row will be the baseline with nothing removed. A run covers all 15 tasks with one set of artifacts removed. The first row of each re-baselining is
-the baseline. The runner also appends one JSON line per run to `scripts/task-bank/run-log.jsonl`
+One row per run. A run covers all 15 tasks with one set of artifacts removed; the first row of each
+re-baselining removes nothing and is its baseline. The table has no recorded run, so no baseline exists. The runner also appends one JSON line per run to `scripts/task-bank/run-log.jsonl`
 with the date, the `--model` value, the commit, the artifacts removed and the task ids passed, failed and skipped.
 It does not record the effort level or the harness; write those in this table by hand.
 

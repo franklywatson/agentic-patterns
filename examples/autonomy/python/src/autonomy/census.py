@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,11 +13,12 @@ from autonomy.util import (
     DAY_MS,
     age_days,
     deletions_since,
+    git,
     iso_seconds,
     last_changed,
     list_files,
-    parse_time,
     read_json_if_exists,
+    try_parse_time,
 )
 
 FRESH_DAYS = 90
@@ -31,15 +33,21 @@ class Ctx:
         self.now = now
         self.files = list_files(directory)
         self.settings = self._json(".claude/settings.json")
-        self.claude_md = self.text("CLAUDE.md")
-        # Rules live in CLAUDE.md, plus AGENTS.md when CLAUDE.md imports it or CLAUDE.md is absent.
-        if not self.exists("CLAUDE.md") or AGENTS_IMPORT.search(self.claude_md):
-            self.rules_text = self.claude_md + "\n" + self.text("AGENTS.md")
-        else:
-            self.rules_text = self.claude_md
+        # CLAUDE.md, plus AGENTS.md when CLAUDE.md imports it with `@AGENTS.md` or CLAUDE.md is absent: the files
+        # Claude Code loads. Existing files only.
+        files = ["CLAUDE.md"]
+        if not self.exists("CLAUDE.md") or AGENTS_IMPORT.search(self.text("CLAUDE.md")):
+            files.append("AGENTS.md")
+        self.instruction_files = [f for f in files if self.exists(f)]
+        self.instructions = "\n".join(self.text(f) for f in self.instruction_files)
         workflow_files = [f for f in self.files if re.fullmatch(r"\.github/workflows/.+\.ya?ml", f)]
         self.workflows = "\n".join(self.text(f) for f in workflow_files)
-        self.codeowners = "\n".join(self.text(p) for p in ("CODEOWNERS", ".github/CODEOWNERS", "docs/CODEOWNERS"))
+        # GitHub reads only the first CODEOWNERS it finds, in this order.
+        codeowners_path = next((p for p in (".github/CODEOWNERS", "CODEOWNERS", "docs/CODEOWNERS") if self.exists(p)), None)
+        self.codeowners = "" if codeowners_path is None else self.text(codeowners_path)
+        # The branch origin/HEAD names, or main and master when the clone has no origin/HEAD.
+        head = (git(directory, ["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"]) or "").strip()
+        self.default_branches = [head[head.index("/") + 1 :]] if head else ["main", "master"]
         self.register: dict | None = None
         if self.exists(".autonomy.yaml"):
             try:
@@ -98,39 +106,67 @@ def _non_empty_list(v: Any) -> bool:
     return isinstance(v, list) and len(v) > 0
 
 
-def _codeowners_sets(c: Ctx) -> set[str]:
-    sets: set[str] = set()
+OWNER = re.compile(r"@[\w.-]+(/[\w.-]+)?|[^@\s]+@[^@\s]+\.[^@\s]+", re.A)
+
+
+def _codeowners_rules(c: Ctx) -> list[tuple[str, list[str]]]:
+    """CODEOWNERS rules with their valid owners (`@user`, `@org/team` or an email); comments are removed."""
+    rules = []
     for line in c.codeowners.split("\n"):
-        parts = line.strip().split()
-        if parts and not parts[0].startswith("#") and len(parts) > 1:
-            sets.add(" ".join(sorted(parts[1:])))
-    return sets
+        parts = re.sub(r"(^|\s)#.*$", "", line).strip().split()
+        owners = [o for o in parts[1:] if OWNER.fullmatch(o)]
+        if parts and owners:
+            rules.append((parts[0], owners))
+    return rules
+
+
+def _codeowners_sets(c: Ctx) -> set[str]:
+    return {" ".join(sorted(owners)) for _, owners in _codeowners_rules(c)}
+
+
+def _names_default(c: Ctx, patterns: Any) -> bool:
+    """A ref_name pattern list names the default branch: `~DEFAULT_BRANCH`, `refs/heads/<name>` or `<name>`."""
+    return isinstance(patterns, list) and any(
+        p == "~DEFAULT_BRANCH" or any(p in (b, f"refs/heads/{b}") for b in c.default_branches) for p in patterns
+    )
 
 
 def _rule_approves(c: Ctx, rule: Any) -> bool:
-    if not isinstance(rule, dict) or rule.get("type") != "pull_request":
+    if not isinstance(rule, dict) or rule.get("type") != "pull_request" or not isinstance(rule.get("parameters"), dict):
         return False
-    parameters = rule.get("parameters") or {}
+    parameters = rule["parameters"]
     count = parameters.get("required_approving_review_count")
+    if isinstance(count, float) and count.is_integer():
+        count = int(count)  # JSON 1.0 is the integer 1, as in TypeScript
     if isinstance(count, int) and not isinstance(count, bool) and count >= 1:
         return True
     return parameters.get("require_code_owner_review") is True and len(_codeowners_sets(c)) > 0
 
 
 def _ruleset_approves(c: Ctx) -> bool:
-    """A committed ruleset requires a non-author approval: on every pull request (an integer
-    `required_approving_review_count` of at least 1), or on pull requests that change a file with a
-    code owner (`require_code_owner_review`, which needs a CODEOWNERS file with at least one rule)."""
+    """A committed ruleset that is enforced (`enforcement: "active"`) on the default branch requires a non-author
+    approval: on every pull request (an integer `required_approving_review_count` of at least 1), or on pull
+    requests that change a file with a code owner (`require_code_owner_review: true` and a CODEOWNERS rule that
+    names an owner)."""
     for f in c.files:
         if not re.fullmatch(r"\.github/rulesets/.+\.json", f):
             continue
         try:
-            rules = json.loads(c.text(f)).get("rules") or []
-        except (json.JSONDecodeError, AttributeError):
+            rs = json.loads(c.text(f), parse_constant=_reject_constant)
+        except ValueError:
             continue
-        if any(_rule_approves(c, r) for r in rules):
+        if not isinstance(rs, dict) or rs.get("enforcement") != "active" or rs.get("target", "branch") != "branch":
+            continue
+        ref = rs["conditions"].get("ref_name") if isinstance(rs.get("conditions"), dict) else None
+        if not isinstance(ref, dict) or not _names_default(c, ref.get("include")) or _names_default(c, ref.get("exclude")):
+            continue
+        if isinstance(rs.get("rules"), list) and any(_rule_approves(c, r) for r in rs["rules"]):
             return True
     return False
+
+
+def _reject_constant(name: str) -> Any:
+    raise ValueError(f"{name} is not JSON")  # TypeScript's JSON.parse rejects NaN and Infinity too
 
 
 def _pins_valid(c: Ctx) -> bool:
@@ -141,16 +177,24 @@ def _pins_valid(c: Ctx) -> bool:
     return len(pins) > 0 and all(re.fullmatch(r"[0-9a-f]{64}", p.get("sha256") or "") for p in pins)
 
 
-def _non_empty_dict(value: Any) -> bool:
-    return isinstance(value, dict) and len(value) > 0
+def _has_finite_number(value: Any) -> bool:
+    return isinstance(value, dict) and any(
+        isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) for v in value.values()
+    )
+
+
+def _recent(c: Ctx, value: Any, days: int) -> bool:
+    """A date the census accepts as evidence: an ISO date or time, not later than now, within `days`."""
+    t = try_parse_time(value)
+    return t is not None and t <= c.now and age_days(c.now, t) <= days
 
 
 def _baseline_fresh(c: Ctx) -> bool:
     try:
-        b = json.loads(c.text(".autonomy/baseline.json"))
-        return _non_empty_dict(b.get("flow")) and _non_empty_dict(b.get("stability")) and age_days(c.now, parse_time(b["captured"])) <= FRESH_DAYS
-    except (json.JSONDecodeError, KeyError, ValueError, TypeError, AttributeError):
+        b = json.loads(c.text(".autonomy/baseline.json"), parse_constant=_reject_constant)
+    except ValueError:
         return False
+    return isinstance(b, dict) and _has_finite_number(b.get("flow")) and _has_finite_number(b.get("stability")) and _recent(c, b.get("captured"), FRESH_DAYS)
 
 
 def _last_review_fresh(c: Ctx) -> bool:
@@ -158,13 +202,22 @@ def _last_review_fresh(c: Ctx) -> bool:
     if not lines:
         return False
     try:
-        return age_days(c.now, parse_time(json.loads(lines[-1])["ts"])) <= FRESH_DAYS
-    except (json.JSONDecodeError, KeyError, ValueError, TypeError):
+        last = json.loads(lines[-1])
+    except ValueError:
         return False
+    return isinstance(last, dict) and _recent(c, last.get("ts"), FRESH_DAYS)
 
 
-def _claude_md_lines(c: Ctx) -> int:
-    return len(c.claude_md.split("\n")) - (1 if c.claude_md.endswith("\n") else 0)
+INSTRUCTION_LINE_LIMIT = 200
+
+
+def _line_count(text: str) -> int:
+    return len(text.split("\n")) - (1 if text.endswith("\n") else 0)
+
+
+def _instructions_fresh(c: Ctx) -> bool:
+    """Latest commit time across the instruction files, so a maintained AGENTS.md keeps a one-line CLAUDE.md fresh."""
+    return any(c.changed_within(f, FRESH_DAYS) for f in c.instruction_files)
 
 
 def _trifecta_classified(c: Ctx) -> bool:
@@ -193,7 +246,7 @@ def _has(*parts: str) -> Callable[[dict], bool]:
 PROBES: list[Probe] = [
     # platform
     Probe("platform", 2, "agent-config", lambda c: c.exists(".claude") or c.exists(".harness.yaml") or c.exists("AGENTS.md")),
-    Probe("platform", 3, "check-command", lambda c: bool(CHECK_CMD.search(c.claude_md)) and bool(CHECK_CMD.search(c.workflows))),
+    Probe("platform", 3, "check-command", lambda c: bool(CHECK_CMD.search(c.instructions)) and bool(CHECK_CMD.search(c.workflows))),
     Probe("platform", 3, "ci-identity", lambda c: not re.search(r"secrets\.[A-Z_]*API_KEY", c.workflows) or bool(re.search(r"id-token:\s*write", c.workflows))),
     Probe("platform", 3, "sandbox-locked", lambda c: _sandbox(c).get("enabled") is True and _sandbox(c).get("allowUnsandboxedCommands") is False),
     Probe("platform", 4, "egress-allowlist", lambda c: _non_empty_list((_sandbox(c).get("network") or {}).get("allowedDomains"))),
@@ -202,32 +255,32 @@ PROBES: list[Probe] = [
     Probe("platform", 5, "agents-md", lambda c: c.exists("AGENTS.md")),
     # shared context
     Probe("shared_context", 2, "claude-md", lambda c: c.exists("CLAUDE.md")),
-    Probe("shared_context", 3, "claude-md-short", lambda c: _claude_md_lines(c) <= 150),
-    Probe("shared_context", 3, "claude-md-fresh", lambda c: c.changed_within("CLAUDE.md", FRESH_DAYS)),
-    Probe("shared_context", 3, "claude-md-owner", lambda c: re.search(r"^/?(CLAUDE\.md|\*)\s+\S+", c.codeowners, re.M) is not None),
+    Probe("shared_context", 3, "claude-md-short", lambda c: sum(_line_count(c.text(f)) for f in c.instruction_files) <= INSTRUCTION_LINE_LIMIT),
+    Probe("shared_context", 3, "claude-md-fresh", _instructions_fresh),
+    Probe("shared_context", 3, "claude-md-owner", lambda c: any(p in ("CLAUDE.md", "/CLAUDE.md", "*") for p, _ in _codeowners_rules(c))),
     Probe(
         "shared_context", 3, "decision-log",
         lambda c: any(re.match(r"^docs/(solutions|adr|adrs|decisions)/", f) and c.changed_within(f, FRESH_DAYS) for f in c.files),
     ),
     Probe(
         "shared_context", 3, "blocking-hook-tested",
-        lambda c: _non_empty_list((c.settings.get("hooks") or {}).get("PreToolUse")) and any(re.search(r"hook.*test|test.*hook", f, re.I) for f in c.files),
+        lambda c: _non_empty_list((c.settings.get("hooks") or {}).get("PreToolUse")) and any(re.search(r"hook.*test|test.*hook", f, re.I | re.A) for f in c.files),
     ),
     Probe("shared_context", 5, "docs-pruned", lambda c: deletions_since(c.dir, "docs", c.now - FRESH_DAYS * DAY_MS) > 0),
     # operating model
-    Probe("operating_model", 2, "ci-tests-lint", lambda c: bool(re.search(r"\btest\b", c.workflows, re.I)) and bool(re.search(r"\blint\b", c.workflows, re.I))),
+    Probe("operating_model", 2, "ci-tests-lint", lambda c: bool(re.search(r"\btest\b", c.workflows, re.I | re.A)) and bool(re.search(r"\blint\b", c.workflows, re.I | re.A))),
     Probe("operating_model", 3, "ci-on-pr", lambda c: "pull_request" in c.workflows),
-    Probe("operating_model", 3, "automated-review", lambda c: re.search(r"anthropics/claude-code-action|claude-code-review|code-review", c.workflows, re.I) is not None),
+    Probe("operating_model", 3, "automated-review", lambda c: re.search(r"anthropics/claude-code-action|claude-code-review|code-review", c.workflows, re.I | re.A) is not None),
     Probe("operating_model", 3, "skill-chain", lambda c: c.exists(".harness.yaml") or any(f.startswith(".claude/skills/") for f in c.files)),
     Probe("operating_model", 4, "review-tiers", lambda c: c.exists("REVIEW.md") or len(_codeowners_sets(c)) >= 2),
     Probe("operating_model", 5, "retired-rules-recorded", lambda c: c.exists("docs/retired.md")),
     # governance
-    Probe("governance", 2, "constitutional-rules", lambda c: re.search(r"constitutional", c.rules_text, re.I) is not None),
+    Probe("governance", 2, "constitutional-rules", lambda c: re.search(r"constitutional", c.instructions, re.I | re.A) is not None),
     Probe("governance", 3, "sandbox-locked", lambda c: _sandbox(c).get("enabled") is True and _sandbox(c).get("allowUnsandboxedCommands") is False),
     Probe("governance", 3, "deny-rules", lambda c: _non_empty_list((c.settings.get("permissions") or {}).get("deny"))),
     Probe("governance", 3, "extensions-pinned", _pins_valid),
     Probe("governance", 3, "non-author-approval", _ruleset_approves),
-    Probe("governance", 3, "secret-scanning", lambda c: re.search(r"gitleaks|trufflehog|secret-scanning", c.workflows, re.I) is not None or c.exists(".github/secret_scanning.yml")),
+    Probe("governance", 3, "secret-scanning", lambda c: re.search(r"gitleaks|trufflehog|secret-scanning", c.workflows, re.I | re.A) is not None or c.exists(".github/secret_scanning.yml")),
     Probe("governance", 4, "trifecta-classified", _trifecta_classified),
     Probe("governance", 4, "audit-names-agent", lambda c: any(bool(line.get("agent")) and bool(line.get("human")) for line in c.audit_lines)),
     Probe("governance", 5, "review-record", _last_review_fresh),
@@ -239,7 +292,7 @@ PROBES: list[Probe] = [
     Probe("ownership", 2, "register-owners", lambda c: len(_wfs(c)) > 0 and all(isinstance(w.get("owner"), str) and w["owner"] != "" for w in _wfs(c))),
     Probe("ownership", 3, "owners-in-codeowners", lambda c: len(_wfs(c)) > 0 and all(w["owner"] in c.codeowners for w in _wfs(c))),
     Probe("ownership", 3, "sponsors-and-expiry", lambda c: len(_wfs(c)) > 0 and all(w.get("sponsor") and (w["granted_level"] < 4 or w.get("access_expires")) for w in _wfs(c))),
-    Probe("ownership", 3, "author-trailer", lambda c: re.search(r"author-of-record|co-authored-by", c.claude_md, re.I) is not None or c.exists(".gitmessage")),
+    Probe("ownership", 3, "author-trailer", lambda c: re.search(r"author-of-record|co-authored-by", c.instructions, re.I | re.A) is not None or c.exists(".gitmessage")),
     Probe("ownership", 4, "harness-eval-in-ci", lambda c: re.search(r"\.claude/\*\*", c.workflows) is not None),
     Probe(
         "ownership", 4, "stop-authority",
@@ -268,10 +321,14 @@ def run_census(directory: str | Path, now: int) -> dict[str, Any]:
     dimensions: dict[str, Any] = {}
     for dimension in ALL_DIMENSIONS:
         if dimension == "skill":
-            sheet = read_json_if_exists(root / ".autonomy" / "worksheets" / "skill.json")
-            fresh = sheet is not None and age_days(now, parse_time(sheet["date"])) <= WORKSHEET_MAX_AGE_DAYS
-            if fresh and isinstance(sheet["level"], int) and 1 <= sheet["level"] <= 5:
-                dimensions["skill"] = {"level": sheet["level"], "evidence": ["worksheet:skill"], "missing_for_next": []}
+            try:
+                sheet = read_json_if_exists(root / ".autonomy" / "worksheets" / "skill.json")
+            except ValueError:
+                sheet = None
+            fresh = isinstance(sheet, dict) and _recent(ctx, sheet.get("date"), WORKSHEET_MAX_AGE_DAYS)
+            level = sheet.get("level") if isinstance(sheet, dict) else None
+            if fresh and isinstance(level, int) and not isinstance(level, bool) and 1 <= level <= 5:
+                dimensions["skill"] = {"level": level, "evidence": ["worksheet:skill"], "missing_for_next": []}
             else:
                 dimensions["skill"] = {"level": "unknown", "counted_as": 2, "evidence": [], "missing_for_next": ["worksheet:skill"]}
             continue
@@ -292,7 +349,7 @@ def run_census(directory: str | Path, now: int) -> dict[str, Any]:
             missing = [f"human-only:c{level + 1}"] if not next_group else [p.id for p in next_group if not p.test(ctx)]
         dimensions[dimension] = {"level": level, "evidence": evidence, "missing_for_next": missing}
     profile: dict[str, Any] = {"generated": iso_seconds(now), "dimensions": dimensions, "cap": 0, "workflows_over_cap": []}
-    profile["cap"] = cap_of(profile)
+    profile["cap"] = cap_of(profile, now)
     if ctx.register is not None and not validate_register(ctx.register):
         profile["workflows_over_cap"] = [w["id"] for w in ctx.register["workflows"] if w["granted_level"] > profile["cap"]]
     worksheet = {

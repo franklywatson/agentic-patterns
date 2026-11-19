@@ -74,7 +74,7 @@ runs and warn about stale tests; without hooks, the agent follows the same rules
    - [ ] Implementation makes the test pass
    - [ ] Scoped test run passes (not full suite)
    - [ ] Constitutional Rules in AGENTS.md followed
-   - [ ] Commit made with descriptive message
+   - [ ] Commit made; the message names the task id and the behavior changed
 
 2. Proceed to next task or exit tdd+ phase when all plan tasks complete.
 
@@ -102,6 +102,6 @@ After completing all plan tasks with tdd+:
 Report one of these states when the skill finishes:
 
 - **DONE** — All plan tasks implemented with passing scoped tests. No constitutional violations.
-- **DONE_WITH_CONCERNS** — All tasks implemented but some tests need attention or minor deviations exist.
+- **DONE_WITH_CONCERNS** — All tasks implemented but some tests need attention or the code deviates from the plan in a way that does not change behavior (each deviation listed).
 - **BLOCKED** — Tests failing, cannot proceed without fixing. Return to RED phase.
 - **NEEDS_CONTEXT** — Need user input to resolve an implementation ambiguity or design question.

@@ -1,6 +1,6 @@
 # Stack Test Example — Python
 
-A minimal, working example of stack tests in Python using pytest. Each test models one **atomic user journey** — a complete interaction from the user's perspective.
+A minimal, working example of stack tests in Python using pytest. Each test models one **atomic user journey** — a complete interaction from the user's perspective. For a team writing its first stack test; run it before adapting [Pattern 1.1](../../../docs/L1-patterns/1.1-stack-tests.md).
 
 ## What This Demonstrates
 
@@ -51,7 +51,7 @@ uv run pytest tests/stack/test_01_app_startup.py
 
 Without uv (unlocked versions): `python3 -m venv .venv && .venv/bin/pip install pytest pytest-timeout httpx && .venv/bin/pytest tests/stack/`.
 
-Expected result: `18 passed`.
+Expected result: every test passes.
 
 ## Requirements
 

@@ -1,4 +1,4 @@
-import { gate } from '../../src/gate';
+import { gate, mergeFor } from '../../src/gate';
 import type { EvidenceBundle } from '../../src/types';
 import { bundleFromDiff, cleanBundle, makeDiff, patchText, policy } from '../support/builders';
 
@@ -120,6 +120,40 @@ describe('gate', () => {
     };
     const schema = bundleFromDiff(makeDiff('app/src/routes/users.ts', ['await pool.query("ALTER TABLE users ADD COLUMN x INT");']), { grant: 'A5' });
     expect(gate(schema, loose)).toMatchObject({ decision: 'auto', merge: 'person' });
+  });
+
+  test('instruction and tool-configuration files are medium tier: a person merges them at every grant', () => {
+    const paths = ['CLAUDE.md', 'AGENTS.md', 'app/CLAUDE.md', 'docs/AGENTS.md', '.claude/CLAUDE.md', '.claude/rules/style.md',
+      '.claude/agents/fixer.md', '.claude/commands/ship.md', '.claude/skills/review/SKILL.md', '.claude/skills/review/run.sh', '.mcp.json',
+      'claude.md', 'Agents.md', '.Claude/Skills/x/SKILL.md'];
+    for (const path of paths) {
+      for (const grant of ['A4', 'A5'] as const) {
+        const result = gate(bundleFromDiff(makeDiff(path, ['text']), { grant }), policy);
+        expect([path, grant, result.decision, result.merge]).toEqual([path, grant, 'auto', 'person']);
+        expect([path, bundleFromDiff(makeDiff(path, ['text'])).classification.blast]).toEqual([path, 'B1']);
+      }
+    }
+  });
+
+  test('a protected path in another case still blocks', () => {
+    for (const path of ['Tests/unit/x.test.ts', 'TESTS/x.py', 'Shared/Config/repair-policy.json', '.Autonomy.yaml', '.GitHub/workflows/ci.yml']) {
+      const result = gate(bundleFromDiff(makeDiff(path, ['x'])), policy);
+      expect([path, result.decision]).toEqual([path, 'block']);
+      expect(result.reasons.join('\n')).toContain('protected path');
+    }
+  });
+
+  test('a person merges below A4 even when the policy names an unattended ceiling for the grant', () => {
+    const loose = { ...policy, unattendedCeiling: { ...policy.unattendedCeiling, A3: { reversibility: 'R1', blast: 'B0' } as const } };
+    expect(gate(bundleFromDiff(makeDiff('docs/notes.md', ['text']), { grant: 'A3' }), loose).merge).toBe('person');
+    expect(gate(bundleFromDiff(makeDiff('docs/notes.md', ['text']), { grant: 'A4' }), loose).merge).toBe('unattended');
+  });
+
+  test('mergeFor keeps a person on an R2 change with an empty diff or an unsafe path, even at A5', () => {
+    const named = bundleFromDiff(makeDiff('app/src/routes/users.ts', ['const ok = true;']), { grant: 'A5' });
+    expect(mergeFor(named, policy)).toBe('unattended');
+    expect(mergeFor({ ...named, diff: [] }, policy)).toBe('person');
+    expect(mergeFor({ ...named, diff: [{ ...named.diff[0], path: 'app/src/routes/../routes/users.ts' }] }, policy)).toBe('person');
   });
 
   test('the gate does not mutate its inputs', () => {

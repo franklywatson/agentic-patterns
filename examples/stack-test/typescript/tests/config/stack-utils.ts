@@ -77,26 +77,34 @@ export class StackTestUtils {
   /**
    * Remove the stack's containers, volumes, networks and orphans, then delete the
    * generated compose file. The file is deleted even when `docker compose down`
-   * fails, and the failure is rethrown so a leaked stack fails the run.
+   * fails; every failure is reported in one error so a leaked stack fails the run.
+   * After a failed `down` the project name is kept, so a second call retries
+   * `docker compose -p <name> down` without the file.
    */
   async cleanup(): Promise<void> {
-    if (!this.composeFile || !existsSync(this.composeFile)) {
-      return;
+    const name = this.projectName;
+    const failures: string[] = [];
+    if (name) {
+      const file = this.composeFile !== null && existsSync(this.composeFile) ? this.composeFile : null;
+      console.log(`Cleaning up stack: ${name}`);
+      try {
+        const fileOption = file === null ? '' : ` -f "${file}"`;
+        execSync(`docker compose -p "${name}"${fileOption} down -v --remove-orphans`, { stdio: 'inherit' });
+        this.projectName = '';
+      } catch (error) {
+        failures.push(`docker compose down: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }
-    console.log(`Cleaning up stack: ${this.composeFile}`);
-    let failure: unknown = null;
-    try {
-      execSync(`docker compose -p "${this.projectName}" -f "${this.composeFile}" down -v --remove-orphans`, {
-        stdio: 'inherit',
-      });
-    } catch (error) {
-      failure = error;
+    if (this.composeFile !== null) {
+      try {
+        if (existsSync(this.composeFile)) unlinkSync(this.composeFile);
+        this.composeFile = null;
+      } catch (error) {
+        failures.push(`remove ${this.composeFile}: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }
-    unlinkSync(this.composeFile);
-    this.composeFile = null;
-    if (failure !== null) {
-      const detail = failure instanceof Error ? failure.message : String(failure);
-      throw new Error(`Cleanup of stack ${this.projectName} failed; containers or volumes may remain: ${detail}`);
+    if (failures.length > 0) {
+      throw new Error(`Cleanup of stack ${name} failed; containers or volumes may remain: ${failures.join('; ')}`);
     }
   }
 

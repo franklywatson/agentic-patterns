@@ -16,11 +16,10 @@ repository's cap decide that ([How Far to Let Go](#how-far-to-let-go)).
 ## Assessment: Where Are You Now?
 
 Run the example CLI `autonomy census` ([examples/autonomy](../../examples/autonomy/README.md)) with `--dir` set to
-your repository. It needs no register. It computes the platform, governance, ownership and measuring positions from
-the repository's own files, treats a dimension with no evidence as C1 (only `skill` can be `unknown`, counted as C2)
-and lists what is missing for the next position ([Pattern A.4](../earned-autonomy.md#pattern-a4--census)). It measures
-adoption of this library's files and wording, so a repository that has adopted none of them reads C1 whatever its
-controls. The checklist covers what a census cannot read.
+your repository; add `--json` to see `missing_for_next`. It needs no register and lists what is missing for the next
+position ([Pattern A.4](../earned-autonomy.md#pattern-a4--census)). It measures adoption of this library's files, so
+a repository that has adopted none of them reads C1 whatever its controls. The checklist covers what a census cannot
+read.
 
 ### Entry Points
 
@@ -64,9 +63,9 @@ Check this block before any team moves from attended work (a person watches each
 - [ ] Installed skills, plugins and MCP servers are on an allowlist, pinned and read ([Pattern
   2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain))
 - [ ] A written high-tier list names the actions that need more than one approver, and the requester cannot approve
-  (approvals are stated once in [Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review))
+  (approvals are in the [How the Scales Fit Together](../../README.md#how-the-scales-fit-together) table and [Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review))
 - [ ] Every agent-written change has an author of record, and every workflow has an owner in the register ([Pattern
-  4.7](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register))
+  4.7](../L4-standards-measurement.md#pattern-47--author-of-record))
 - [ ] Completion evidence comes from CI, not from the agent's message ([Pattern
   4.1](../L4-standards-measurement.md#pattern-41--evidence-based-claims))
 - [ ] The team can supervise without the agent: the work sample passes ([Pattern
@@ -79,56 +78,42 @@ The [threat model](threat-model.md) lists what each control protects.
 Give a person or an agent only AGENTS.md, the README and the file tree, and ask the six questions in [Pattern
 0.9](../L0-foundation.md#pattern-09--ai-as-new-starter-standard). Each assumption they make is a gap.
 
-### Gap Identification by Layer
-
-| Layer | Focus | Common Gaps | Quick Win |
-|-------|-------|-------------|-----------|
-| **L0 Foundation** | Structure, AGENTS.md, doc freshness, cleanup | No AGENTS.md, technical-layer organization, stale docs | Write AGENTS.md, restructure by domain |
-| **L1 Closed Loop Design** | Design-led verification with stack tests and focused integration tests | No stack tests, shallow assertions, no edge-case coverage for complex external deps | Add app-startup stack test |
-| **L2 Guardrails** | Skills, hooks, behavioral rules | Rules only in prose, agents make common errors | Move the most violated rule into a hook or CI check |
-| **L3 Optimization (optional)** | Native structured tools, context isolation | Raw grep/cat commands, token waste | Route grep and cat to native tools |
-| **L4 Standards & Measurement** | Evidence, metrics, CI guardrails, context eval | Claims without evidence, no outcome metrics | Establish evidence standard |
-
 ---
 
 ## Adoption Paths
 
-Five suggested paths. Choose based on your situation.
+Four suggested paths (B and C are one). Pick the path whose first step closes your largest gap.
 
 ### Path A: Foundation-First (Default When Unsure)
 
 Start with L0: structure and AGENTS.md cost little and later layers depend on them (this project's own experience;
 no study compares layers). Then build upward.
 
-1. **Contain** — Put the session in a locked sandbox and keep credentials out before anything else, because a default Claude Code session starts in auto mode with the sandbox off ([Pattern 2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
+1. **Contain** — Put the session in a locked sandbox and keep credentials out before anything else, because interactive sessions on the version the [Pattern 2.9 minimum-version row](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) names start in auto mode with the sandbox off, while `claude -p` and the Agent SDK start in `default` ([permission modes](https://code.claude.com/docs/en/permission-modes)).
 2. **L0 Foundation** — Restructure by domain, write AGENTS.md, establish doc freshness and cleanup practices. See [L0-foundation.md](../L0-foundation.md).
-3. **L1 Closed Loop Design** — Add stack tests for your most critical user journeys. See [L1-feedback-loops.md](../L1-feedback-loops.md) and the working examples in [examples/stack-test/](../../examples/stack-test/).
-4. **L2 Guardrails** — Add skills and hooks for your project's most common errors. See [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md).
+3. **L1 Closed Loop Design and Verification** — Add stack tests for your most critical user journeys. See [L1-feedback-loops.md](../L1-feedback-loops.md) and the working examples in [examples/stack-test/](../../examples/stack-test/).
+4. **L2 Behavioral Guardrails** — Add skills and hooks for your project's most common errors. See [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md).
 5. **L3 Optimization (optional)** — Reduce token spend with structured tools and context isolation, when token cost is a measured problem. See [L3-optimization.md](../L3-optimization.md) and the working example in [examples/guardrails/](../../examples/guardrails/).
-6. **L4 Standards & Measurement** — Add metrics, CI guardrails, and context eval once the earlier layers are in place. Drift detection and the new-starter audit are in [Pattern 0.7](../L0-foundation.md#pattern-07--documentation-as-system-map) and [Pattern 0.9](../L0-foundation.md#pattern-09--ai-as-new-starter-standard). See [L4-standards-measurement.md](../L4-standards-measurement.md).
+6. **L4 Standards and Measurement** — Add metrics, CI guardrails, and context eval once the earlier layers are in place. Drift detection and the new-starter audit are in [Pattern 0.7](../L0-foundation.md#pattern-07--documentation-as-system-map) and [Pattern 0.9](../L0-foundation.md#pattern-09--ai-as-new-starter-standard). See [L4-standards-measurement.md](../L4-standards-measurement.md).
 
-### Path B: Testing-First (Teams with Testing Gaps)
+### Paths B and C: Start at the Layer of Your Largest Gap
 
-If your testing is the biggest pain point — no stack tests, shallow assertions, or missing edge-case coverage for external dependencies — start at L1.
+Testing is the biggest pain (no stack tests, shallow assertions, missing edge-case coverage for external
+dependencies): start at L1. Agents make consistent errors (missing tests, ignored rules, skipped verification):
+start at L2.
 
 1. **L1** — Add a stack test for each critical user journey, and reconcile journeys that overlap ([Pattern
-   1.1](../L1-patterns/1.1-stack-tests.md#stack-test-brittleness-and-reconciliation)). For complex external dependencies (payment processors, blockchain RPCs), add focused integration tests against a real testnet or sandbox. See [Pattern 1.5 — Real Dependencies](../L1-patterns/1.5-real-dependencies.md) and [examples/stack-test/](../../examples/stack-test/).
-2. **L0** — Once stack tests are working, structure the project to make them maintainable. Deep modules, AGENTS.md, progressive disclosure.
-3. **L2, L4** — Continue upward as in Path A; add L3 only when token cost is a measured problem.
-
-### Path C: Guardrails-First (Teams with Agent Errors)
-
-If agents are making consistent errors (missing tests, ignoring rules, skipping verification), start at L2.
-
-1. **L2** — Add skills for your most violated rules, hooks to block destructive patterns. See [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md).
-2. **L0** — Structure the project so agents have clear context to work with.
-3. **L1, then L4** — Add L1 next, then L4; add L3 only when token cost is a measured problem.
+   1.1](../L1-patterns/1.1-stack-tests.md#stack-test-brittleness-and-reconciliation)). For complex external dependencies (payment processors, blockchain RPCs), add focused integration tests against a real testnet or sandbox ([Pattern 1.5](../L1-patterns/1.5-real-dependencies.md), [examples/stack-test/](../../examples/stack-test/)).
+2. **L2** — Add skills for your most violated rules and hooks to block destructive patterns ([L2](../L2-behavioral-guardrails.md)).
+3. **L0** — Structure the project so tests stay maintainable and agents have clear context: deep modules, AGENTS.md, progressive disclosure.
+4. **L4** — Then continue as in Path A; add L3 only when token cost is a measured problem.
 
 ### Path D: Containment-First (Teams Moving to Unattended Work)
 
 If agents will run without a person watching each step, or already hold shell access, keys and network on
 developer machines, start with containment. Do not loosen approvals first.
 
+0. **Many machines** — Deliver the Pattern 2.9 keys and `requiredMinimumVersion` through managed settings (MDM or `managed-settings.json`) to every machine, and set `strictKnownMarketplaces`, `allowManagedMcpServersOnly` and `allowManagedHooksOnly` ([Pattern 2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)). Then, per repository, commit a register, a baseline and the census and check jobs.
 1. **Contain** — Put the agent in a locked, fail-closed boundary and move credentials outside it. See [Pattern
    2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) and the [containment
    example](../../examples/containment/).
@@ -139,18 +124,18 @@ developer machines, start with containment. Do not loosen approvals first.
    list. See [Pattern 2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain) and
    [Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review).
 4. **Name owners** — Name an author of record and start the register, `.autonomy.yaml`. See [Pattern
-   4.7](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register).
+   4.7](../L4-standards-measurement.md#pattern-47--author-of-record).
 5. **Then** continue with L1 and L2 as in Path A. Check the [Containment and governance
    block](#containment-and-governance) before each step toward unattended work.
 
 ### Path E: One Person, Attended Sessions
 
-If one person watches each step, follow the first row of the [README reading path](../../README.md#start-here)
-(sandbox, credentials, one command that must fail). Then add a short AGENTS.md ([Pattern
+If one person watches each step, put the sandbox in place first ([FAQ: I work
+alone](faq.md#i-work-alone-where-does-the-sandbox-settings-file-go)), then add a short AGENTS.md ([Pattern
 0.4](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution)) and the test-integrity lint
 in CI ([Pattern 1.6](../L1-patterns/1.6-test-integrity.md)).
 
-One person cannot meet the review rules in [Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review): the requester never approves, and the high tier needs a code owner plus a second non-author. When you merge your own agent's change, the required checks are the only control that is not you. Make the test job and the test-integrity lint required checks, keep high-tier actions (migrations, CI workflows, publishing) human-made and reviewed by CI evidence only, and do not enable auto-merge. The register and grants are optional for one person; adopt them when a second person depends on the repository ([How the Scales Fit Together](../../README.md#how-the-scales-fit-together)).
+Below A4, every tier in [Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review) needs an approval from someone other than the requester, so one person meets none of them. When you merge your own agent's change, the required checks are the only control that is not you. Make the test job and the test-integrity lint required checks, keep high-tier actions (migrations, CI workflows, publishing) human-made and reviewed by CI evidence only, and do not enable auto-merge. The register and grants are optional for one person; adopt them when a second person depends on the repository ([How the Scales Fit Together](../../README.md#how-the-scales-fit-together)).
 
 ---
 
@@ -176,19 +161,34 @@ the changed files with each package's directory, and later steps run only for pa
 finishes with success when no package changed, so the required check is satisfied. For the instruction files of a
 monorepo see the [FAQ](faq.md#monorepo-or-multi-repo-for-agents).
 
+```yaml
+name: tests
+on: pull_request            # no paths filter: the required job always runs
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Test each package that changed
+        env: { BASE: "${{ github.event.pull_request.base.sha }}" }
+        run: |
+          changed=$(git diff --name-only "$BASE...HEAD")
+          for dir in packages/*/; do
+            if grep -q "^$dir" <<<"$changed"; then npm test --workspace "$dir"; fi
+          done
+```
+
+The same `fetch-depth: 0` checkout is needed when a job runs `autonomy check --git-range <base sha>..<head sha>`
+([CI job](../../examples/autonomy/README.md#run-against-your-own-repository)).
+
 ---
 
 ## How Far to Let Go
 
-Layers say what to build. Grants and the cap say how far a workflow may run without a person; the definitions are in
-[Earned Autonomy](../earned-autonomy.md#the-curve-and-the-cap). The census runs per repository, so each repository
-has its own cap and a workflow that acts in several repositories answers to each one. The risk tier of a change
-decides its review, and the grant decides who acts unattended ([risk
-model](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model)).
+The scales, grants, cap and review tiers are defined once in [How the Scales Fit Together](../../README.md#how-the-scales-fit-together). The census runs per repository, so each repository has its own cap and a workflow that acts in several repositories answers to each one. A repository that has adopted nothing reads C1; see [Reaching C2](../earned-autonomy.md#reaching-c2). A team that wants A3 or A4 closes the capping dimension that `autonomy census` reports as lowest, then promotes workflows one grant at a time on evidence ([Pattern A.3](../earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate)). The prerequisites for each grant are in [Prerequisites by Grant](../earned-autonomy.md#prerequisites-by-grant).
 
-A repository that has adopted nothing reads C1 and allows only A1; see [How the Scales Fit Together](../../README.md#how-the-scales-fit-together) and [Reaching C2](../earned-autonomy.md#reaching-c2). A team that wants A3 or A4 closes the capping dimension that `autonomy census` reports as lowest, then promotes workflows one grant at a time on evidence ([Pattern A.3](../earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate)). The prerequisites for each grant are in [Prerequisites by Grant](../earned-autonomy.md#prerequisites-by-grant).
-
-For many repositories: deliver the sandbox keys once through managed settings to every machine ([Pattern 2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)); then, per repository, commit a register, a baseline and the census and check jobs. Each repository gets its own cap.
+For many repositories, start with step 0 of [Path D](#path-d-containment-first-teams-moving-to-unattended-work).
 
 Repair of owned code in production is the one unattended-work seam this library defines in detail: [Patterns 1.7
 to 1.12](../L1-feedback-loops.md#closing-the-loop-in-production) with the runnable gate in

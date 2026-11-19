@@ -55,8 +55,7 @@ dimension at C3 and `"cap": 3`. Then run the autonomy tooling there:
 `workflow repair-loop: granted 3, effective 3` and `autonomy check: ok`.
 
 Out of scope: unattended repair of R3 (data-forward) or R4 (irreversible or external) changes. The gate sends
-every such change to a person. The example never grants A4, so the loop never merges unattended; the gate eval
-scores the unattended rule at A4 and A5.
+every such change to a person. The gate eval scores the unattended rule at A4 and A5.
 
 ## The Loop
 
@@ -89,7 +88,7 @@ scores the unattended rule at A4 and A5.
 
 | Result | Condition |
 |--------|-----------|
-| `block` | Stop switch engaged. Reproduction hash differs from the frozen hash. The diff touches a protected path: anything under `tests/` (added, changed or deleted), `.autonomy.yaml`, `.github` or `shared/config`. The diff names an unsafe path (absolute, `..`, backslash). The reproduction is not green on the candidate. The regression suite is not green. |
+| `block` | Stop switch engaged. Reproduction hash differs from the frozen hash. The diff touches a protected path, matched without regard to case: anything under `tests/` (added, changed or deleted), `.autonomy.yaml`, `.github` or `shared/config`. The diff names an unsafe path (absolute, `..`, backslash). The reproduction is not green on the candidate. The regression suite is not green. |
 | `human` | Reproduction was not red on base. The anti-masking scan has a hit. The class is above R2/B1. The grant is below A3. The attempt budget is spent or a cooldown is active. |
 | `auto` | None of the above. |
 
@@ -102,16 +101,18 @@ The merge for an `auto` result follows the gate rule table in [Pattern
 | A4 | R0 and R1 at B0 | `unattendedCeiling.A4` |
 | A5 | R0 and R1 at B0; R2 at B0 when every changed file is on a named path (`app/src/routes/**`) | `unattendedCeiling.A5`, `unattendedR2Paths` |
 
-The gate code refuses unattended merge above R2 or B0, whatever the policy says.
+The gate code refuses unattended merge below A4 and above R2 or B0, whatever the policy says.
 
 Classification is deterministic and fails closed: a file with no path rule, and an empty diff, take the
-highest class (R4/B3). The rules are data in `shared/config/reversibility.json`. The policy, budgets and
-confirmation rule are in `shared/config/repair-policy.json`.
+highest class (R4/B3). Instruction and tool-configuration files (`CLAUDE.md`, `AGENTS.md`, `.claude/**/*.md`,
+`.claude/agents|commands|skills/**`, `.mcp.json`) classify as medium tier (R0 at B1), so the gate never merges them
+unattended. A file also takes the class of its first case-insensitive rule match when that is higher, because
+`claude.md` and `CLAUDE.md` are the same file on a case-insensitive file system. The rules are data in `shared/config/reversibility.json`; the policy,
+budgets and confirmation rule are in `shared/config/repair-policy.json`.
 
 The anti-masking scan applies the Pattern 1.6 forbidden patterns to production diffs: swallowed
-exceptions, new retries, widened timeouts and lowered thresholds. It is a text scan, so it flags
-conservatively and misses masks it has no pattern for. It is a heuristic and one input to the gate, not the
-only one. Known bypasses, all of which can reach `auto` on the evidence the gate sees:
+exceptions, new retries, widened timeouts and lowered thresholds. It is a text scan, one input to the gate: it
+flags conservatively and misses masks it has no pattern for. Known bypasses, all of which can reach `auto` on the evidence the gate sees:
 
 - An error-handler change in `main.py` or `index.ts` that answers 404 for every error (no `catch` token).
 - An `except` block with an unrelated `raise` inside the six-line window, or one that rethrows on a different path.
@@ -143,7 +144,7 @@ app/                  The minimal app (PostgreSQL and Redis) with the seeded def
 patches/              INC-001.fix, .mask, .test-edit and .partial
 src/                  Main modules: incident, reproduce, classify, antimask, gate, breaker, loop, runtime
 tests/unit/           Module tests (mocks allowed)
-tests/eval/           Gate eval: 43 scenarios, exact scoring of the decision and the merge, pass^5
+tests/eval/           Gate eval: exact scoring of the decision and the merge, pass^5
 tests/stack/          01 startup, 02 repair, 03 masking rejected, 04 test edit blocked, 05 breaker trips, 06 confirmation rollback
 tests/regression/     Regression suite that the loop runs, from the base workspace, against every candidate
 docker-compose.yml    Stack template; ports bind to 127.0.0.1
@@ -179,7 +180,7 @@ npm ci
 npm test                  # unit, eval and stack tests
 npm run test:unit         # no Docker
 npm run test:eval         # no Docker
-npm run test:stack        # Docker; about 5 minutes
+npm run test:stack        # Docker; 5 to 10 minutes
 ```
 
 Python, from `examples/repair-loop/python/`:
@@ -188,7 +189,7 @@ Python, from `examples/repair-loop/python/`:
 uv sync --frozen
 uv run pytest             # unit, eval and stack tests
 uv run pytest tests/unit tests/eval   # no Docker
-uv run pytest tests/stack             # Docker; about 5 minutes
+uv run pytest tests/stack             # Docker; 5 to 10 minutes
 ```
 
 Every stack run uses a unique compose project name (`repair-<pid>-<random>`), free ports on

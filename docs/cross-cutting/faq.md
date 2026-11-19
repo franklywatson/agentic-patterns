@@ -53,9 +53,21 @@ work for one person.
   `sandbox.filesystem.denyWrite` for the same path for shell subprocesses
   ([permissions](https://code.claude.com/docs/en/permissions)). Check the result in `/status`.
 
-The example keys are in [examples/containment/claude-code/settings.json](../../examples/containment/claude-code/settings.json).
-The example does not run Claude Code, so test the boundary yourself: ask the agent to write outside the tree and
-check that it fails.
+The example keys are in the [containment binding](../../examples/containment/README.md#claude-code-binding) and
+[examples/containment/claude-code/settings.json](../../examples/containment/claude-code/settings.json). That file does
+not protect itself. For user settings, merge these keys as well:
+
+```json
+{
+  "permissions": { "deny": ["Edit(~/.claude/settings.json)"] },
+  "sandbox": { "filesystem": { "denyWrite": ["~/.claude/settings.json"] } }
+}
+```
+
+With these keys, `git push` and `gh` fail inside the session because `~/.ssh` and `GITHUB_TOKEN` are denied: you
+push. Add every package registry, container registry and API host your project uses to `allowedDomains`, or
+installs fail. The example does not run Claude Code, so test the boundary yourself: ask the agent to run `touch
+~/outside-tree` and `curl -sI https://example.com`; both must fail.
 
 ## My stack tests need Docker. How do I run them inside the sandbox?
 
@@ -68,8 +80,8 @@ The sandbox does not wrap `docker`; the documentation names it as incompatible
    sandbox. Use this for attended sessions on a project whose compose file you review before each run.
 2. **Run the whole session in a container or virtual machine with its own Docker daemon.** This puts file tools,
    hooks and MCP servers inside the boundary too ([sandbox
-   environments](https://code.claude.com/docs/en/sandbox-environments)). Docker Sandboxes is a microVM with its
-   own Docker daemon. Do not mount the host Docker socket into the session; that gives the agent root on the host.
+   environments](https://code.claude.com/docs/en/sandbox-environments)). A microVM with its own Docker daemon
+   qualifies. Do not mount the host Docker socket into the session; that gives the agent root on the host.
 3. **Run the stack tests in CI.** The agent pushes to a branch and CI runs the stack tests with no secrets
    beyond a scoped token ([Pattern 2.9, no harness](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
 
@@ -79,10 +91,10 @@ read-only, no-network container stops the bypass commands.
 ## Monorepo or multi-repo for agents?
 
 If you keep a monorepo, put the rules for the whole tree in one AGENTS.md at the root, imported by the root CLAUDE.md
-([Claude Code memory](https://code.claude.com/docs/en/memory)). Claude Code loads a CLAUDE.md in a subdirectory when
-Claude reads, writes or edits a file there. It loads a subdirectory's AGENTS.md on a read only when that subdirectory
-has no CLAUDE.md, `.claude/CLAUDE.md` or `CLAUDE.local.md` of its own. `.claude/rules/` files with `paths:` load when
-matching files are used, so per-package rules can sit beside each package.
+([Claude Code memory](https://code.claude.com/docs/en/memory)). With a root CLAUDE.md, Claude Code reads
+no AGENTS.md by default, a subdirectory's included, unless the "Project instructions" setting is
+`claude-md-and-agents-md`. Put per-package rules in a subdirectory CLAUDE.md, which loads when Claude reads, writes
+or edits a file there, or in `.claude/rules/` files with `paths:`, which load when matching files are used.
 
 Make the test job a required check without a path filter ([how to](adoption-guide.md#make-the-test-job-a-required-check)).
 The example census reads `.github/workflows/`, CODEOWNERS and `.claude/settings.json` under the directory you pass, so
@@ -103,14 +115,14 @@ entry-point file in each new repository.
 
 Deployment is out of scope; the right approach depends on your infrastructure, team structure and scale. The reference
 project deploys from a separate DevOps repository using Terraform. The application owns health endpoints and
-structured logs; the DevOps side owns infrastructure, monitoring, alerts and scaling. What matters is that someone
-owns the boundary explicitly, as the contract below.
+structured logs; the DevOps side owns infrastructure, monitoring, alerts and scaling. Someone owns the boundary
+explicitly; the contract below states it.
 
 ---
 
 ## What passes between the application and operations?
 
-Production repair sits on the line between the application repo and the DevOps repo. Either side can own the loop if the contract is written down.
+Production repair sits on the line between the application repository and the DevOps repository. Either side can own the loop if the contract is written down.
 
 **In: the incident record.** The operations side sends one record per incident, in a fixed schema:
 

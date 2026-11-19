@@ -122,3 +122,21 @@ test("reading untrusted input in one call taints the session for the next", () =
   assert.match(JSON.parse(after.stdout).hookSpecificOutput.permissionDecisionReason, /^trifecta-external-action:/);
   assert.equal(call(dir, "intake", post, "other-session").stdout, "");
 });
+
+test("a demoted session cannot remove its demotion state with a shell command, at A1 or at its granted level", () => {
+  const dir = copyFixture("registers", "valid");
+  const statePath = join(dir, ".autonomy", "state.json");
+  const bash = (command: string) => {
+    const out = call(dir, "interactive", { tool_name: "Bash", tool_input: { command } });
+    return out.stdout === "" ? "allow" : JSON.parse(out.stdout).hookSpecificOutput.permissionDecisionReason.split(":")[0];
+  };
+  writeFileSync(statePath, JSON.stringify({ workflows: { interactive: { demotion_override: 1 } } }));
+  assert.equal(bash("find .autonomy -name state.json -del$'e'te"), "a1-plain-commands-only");
+  assert.equal(bash("find .autonomy -name state.json -delete"), "governance-write");
+  assert.equal(bash("ls .autonomy"), "allow");
+  writeFileSync(statePath, JSON.stringify({ workflows: {} }));
+  assert.equal(bash("find .autonomy -name state.json -delete"), "governance-write");
+  assert.equal(bash("ln -sf /tmp/empty.json .autonomy/state.json"), "governance-write");
+  assert.equal(bash("rm \".auton\"omy/state.json"), "governance-write");
+  assert.equal(bash("find build -name x.o -delete"), "allow");
+});

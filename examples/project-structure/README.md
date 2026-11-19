@@ -1,6 +1,6 @@
 # Project Structure Examples — Before/After
 
-This directory demonstrates the difference between technical layering and grouping by domain. Focus on the structural difference, not the code content.
+This directory demonstrates the difference between technical layering and grouping by domain. Focus on the structural difference, not the code content. For a team reorganizing by domain ([Pattern 0.2](../../docs/L0-foundation.md#pattern-02--progressive-disclosure)); documentation only, nothing to run.
 
 ---
 
@@ -126,5 +126,5 @@ A Python project takes the same shape: replace a flat root of 17 modules (`order
 ## See Also
 
 - [L0 Foundation](../../docs/L0-foundation.md) — Deep modules, progressive disclosure, grouping by domain
-- [L1 Closed Loop Design](../../docs/L1-feedback-loops.md) — Stack tests at module boundaries
+- [L1 Closed Loop Design and Verification](../../docs/L1-feedback-loops.md) — Stack tests at domain boundaries
 - [L2 Behavioral Guardrails](../../docs/L2-behavioral-guardrails.md) — Skills that carry structural conventions

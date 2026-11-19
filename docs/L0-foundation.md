@@ -9,9 +9,11 @@ L0 makes a project navigable by an agent that has never seen it: small interface
 file, tests that state each module's contract, and a habit of deleting what no longer helps. Read it when an agent
 gets lost, edits the wrong module or follows stale instructions.
 
-**Structure includes the boundary.** Where the agent runs, what it can write and which credentials it can reach are
-set-up decisions, cheapest on day one. Make them on day one: Claude Code starts in auto mode with the sandbox off ([Pattern 2.9 — Contain Before You
-Relax](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
+**Structure includes the boundary.** Decide on day one where the agent runs, what it can write and which credentials
+it can reach. Interactive Claude Code sessions on the version the Pattern 2.9 minimum-version row names start in auto
+mode with the sandbox off; `claude -p` and the Agent SDK start in default ([permission
+modes](https://code.claude.com/docs/en/permission-modes), [Pattern
+2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
 
 ## Pattern 0.1 — Deep Modules
 
@@ -68,20 +70,8 @@ to go deeper. Group code by what it does, not by which language construct it is.
 - Group files by domain (`ecommerce/fulfillment/`, not `services/fulfillment/`), and keep a domain's types inside it.
 - Give each cross-cutting concern one directory at the root. Keep depth to 3-4 levels.
 
-```text
-Before — technical layering          After — grouped by domain
-src/                                 project/
-├── services/                        ├── README.md        # entry point
-│   ├── checkout.ts                  ├── AGENTS.md        # agent contract
-│   └── fulfillment.ts               ├── ecommerce/
-├── handlers/                        │   ├── index.ts     # public interface
-│   └── orderHandler.ts              │   ├── checkout.ts
-├── utils/                           │   └── types.ts
-│   └── shipping.ts                  ├── fulfillment/
-└── types/                           │   ├── index.ts
-    └── checkout.ts                  │   └── shipping.ts
-                                     └── monitoring/      # cross-cutting
-```
+[examples/project-structure](../examples/project-structure/README.md) shows a technical-layer tree regrouped by
+domain, before and after.
 
 **Anti-Pattern**: "Treasure hunt" structures where understanding one file requires reading 10 others scattered across
 the tree. A `shared/` or `common/` directory that collects unrelated code: if two domains share code, check whether
@@ -129,13 +119,17 @@ One sentence on what this project does, then a tree of the major directories.
 2. Zero-defect tolerance (enforced by: lint and test jobs fail on any warning)
 
 ## High-Tier Paths
-- `migrations/`, `.github/workflows/` (enforced by: CODEOWNERS and two required approvals)
+- `migrations/`, `.github/workflows/` (enforced by: a CODEOWNERS entry with code-owner review, plus a second approval)
 
 ## Index
-- [docs/L0-foundation.md](docs/L0-foundation.md) — Project structure
+- [docs/architecture.md](docs/architecture.md) — Module map
+
+---
+**Owner**: @your-handle
+**Last reviewed**: 2026-11-19
 ```
 
-Every doc is reachable from AGENTS.md by following relative links, so it is the master index. Each rule names its
+Beside it, CLAUDE.md holds one line, `@AGENTS.md`. Every doc is reachable from AGENTS.md by following relative links, so it is the master index. Each rule names its
 enforcement point; a rule held only by prose is guidance ([Pattern
 2.4](L2-behavioral-guardrails.md#pattern-24--constitutional-rules)). The high-tier list names your own paths and
 commands that the [risk model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) puts in the high tier, each
@@ -218,9 +212,9 @@ describes behavior that changed months ago. Agents follow stale docs with full c
 - **Deleted, not archived**: version control is the archive. Delete docs for deleted features.
 
 **In Practice**: run drift checks as commands in CI. This repository's jobs (links, source IDs, reachability,
-instruction-file length, writing conventions, freshness) are listed in [Pattern 4.5 — CI
-Guardrails](L4-standards-measurement.md#pattern-45--ci-guardrails); run `python3 scripts/check-doc-links.py .`
-before committing. Three checks have no script and belong in review: code examples match the current code, named file
+instruction-file length, writing conventions, freshness) are named with the rule each holds in
+[AGENTS.md](../AGENTS.md#constitutional-rules-never-violate); run `python3 scripts/check-doc-links.py .` before
+committing. Three checks have no script and belong in review: code examples match the current code, named file
 paths exist, and behavior descriptions match what the tests assert ([Pattern 0.5](#pattern-05--unit-tests-as-contract)).
 When a check finds drift, decide which side is wrong, fix it in the same commit, and re-run the check.
 
@@ -249,8 +243,9 @@ resource) and invites edits to code nothing calls.
 
 **In Practice**: remove dead code you notice near the task in the same commit, run the tests, and name the cleanup in
 the commit message ("Fix auth bug and remove unused `old_auth_method`"). Before deleting a function, search the
-codebase to confirm only its definition remains. Linters find candidates: `ruff check --select F401` (unused Python
-imports), `vulture` (dead Python code).
+codebase to confirm only its definition remains. Linters find candidates: [`ruff check --select
+F401`](https://docs.astral.sh/ruff/rules/unused-import/) (unused Python imports),
+[`vulture`](https://github.com/jendrikseipp/vulture) (dead Python code).
 
 **Anti-Pattern**: Keeping code in case someone needs it. Commented-out code. Refusing to delete because "someone might
 be using this" without searching. Removing a few imports and leaving large dead paths.
@@ -351,8 +346,8 @@ skills](https://code.claude.com/docs/en/skills)).
 
 This repository checks pattern docs with [scripts/check-doc-freshness.py](../scripts/check-doc-freshness.py): each
 carries `reviewed:` and `last-validated-model:` (the model the doc was last read against), and the script warns at
-90 days and fails at 180 days, on a missing key, or once an `expires:` date has passed. The rule is in
-[AGENTS.md](../AGENTS.md#writing-rules-for-this-repository).
+90 days and fails at 180 days, on a missing key, on a future date, or once an `expires:` date has passed. Quoted dates
+and a trailing `# comment` are accepted; `python3 -m unittest discover -s scripts/tests` tests the script.
 
 The steps of a run and this repository's run log are in [the task
 bank](references/task-bank.md#procedure-for-a-run). Claude Code's `/doctor prompt-audit` reports instructions written
@@ -362,27 +357,18 @@ memory](https://code.claude.com/docs/en/memory)); use it to choose candidates, a
 If removing a prose rule regresses nothing because a hook already blocks the violation, delete the prose. If it
 regresses nothing because no task exercises the rule, add the task before deleting.
 
-**Anti-Pattern**: "We added it, so it must help": skills, hooks and rules only ever added, and no one can say which
-task each fixed. Each addition answered a real failure, so removal feels like reintroducing it; give each artifact a
-justifying task and keep it only if that task regresses. A line limit used as a proxy for signal: the instruction file
-passes the length check and still holds stale rules, or a useful rule is cut to fit; test the content with step 3
-instead of trimming to a number. A bank written from the artifacts it tests, so it passes with or without them; draw
-tasks from real work and incidents. Re-running only the tasks the artifact was written for; a removal can regress an
-unrelated task. Deleting an invariant because the model behaves without it; the hook or CI check holds the rule for the
-day it does not.
+**Anti-Pattern**:
+
+- Rules only ever added, none with a justifying task.
+- A line limit as a proxy for signal: test the content with step 3, not the count.
+- A bank written from the artifacts it tests; draw tasks from real work and incidents.
+- Re-running only the artifact's own tasks; a removal can regress an unrelated one.
+- Deleting an invariant because the model behaves without it.
 
 **Cross-References**: [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) sets the instruction
 file's owner and review date. [Pattern 0.8](#pattern-08--aggressive-cleanup) is the same discipline for code.
 
 **Evidence:** Partial — most committed AI config is never changed; a vendor cut over 80% of a prompt (MC-11, AN-7); task banks as the test (MV-9)
-
----
-
-## Further Reading
-
-- John Ousterhout, [*A Philosophy of Software Design*](https://web.stanford.edu/~ouster/cgi-bin/book.php) — deep modules
-- Matt Pocock, ["Your codebase is NOT ready for AI"](https://youtu.be/uC44zFz7JSM) — graybox modules, progressive disclosure
-- [Further Reading](references/further-reading.md)
 
 ---
 

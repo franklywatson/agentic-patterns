@@ -11,6 +11,41 @@
       "blast": "B0"
     },
     {
+      "glob": "**/CLAUDE.md",
+      "reversibility": "R0",
+      "blast": "B1"
+    },
+    {
+      "glob": "**/AGENTS.md",
+      "reversibility": "R0",
+      "blast": "B1"
+    },
+    {
+      "glob": ".claude/**/*.md",
+      "reversibility": "R0",
+      "blast": "B1"
+    },
+    {
+      "glob": ".claude/agents/**",
+      "reversibility": "R0",
+      "blast": "B1"
+    },
+    {
+      "glob": ".claude/commands/**",
+      "reversibility": "R0",
+      "blast": "B1"
+    },
+    {
+      "glob": ".claude/skills/**",
+      "reversibility": "R0",
+      "blast": "B1"
+    },
+    {
+      "glob": ".mcp.json",
+      "reversibility": "R0",
+      "blast": "B1"
+    },
+    {
       "glob": "**/*.md",
       "reversibility": "R0",
       "blast": "B0"

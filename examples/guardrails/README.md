@@ -6,7 +6,7 @@ Pattern 3.1 in TypeScript: a hook that routes `grep`, `cat` and `find` to struct
 
 This example shows the core routing logic:
 
-1. **Intent Classification** — Parse bash commands to detect what the agent is trying to do
+1. **Intent Classification** — Parse Bash commands to detect what the agent is trying to do
 2. **Environment Detection** — Check available tools (RTK, jcodemunch) at session start
 3. **Native Structured Tool Routing** — Route commands to the native or structured tool for the job, based on intent + environment
 4. **Resolution** — Return `allow`, `advise` (use different tool), or `block`
@@ -119,7 +119,8 @@ the `Bash` tool. Claude Code passes the tool call as JSON on stdin; the command 
 
 1. Reads the JSON and extracts `tool_input.command`.
 2. Runs `findMatchingRule(command)` and `resolve(rule, environment)`. Detect the environment once per session
-   and cache it, because the hook process starts fresh for each call.
+   and write the result to a file, because the hook process starts fresh for each call and the in-memory cache
+   in `environment.ts` does not survive between calls.
 3. For `block`, and for `advise` when the advised tool should replace the command, exits 2 with the reason on
    stderr, or exits 0 with JSON `{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision":
    "deny", "permissionDecisionReason": "<reason>"}}`. Claude Code cancels the call and returns the reason to

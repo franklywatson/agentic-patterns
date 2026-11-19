@@ -3,7 +3,7 @@ last-validated-model: claude-opus-5-5
 reviewed: 2026-11-19
 ---
 
-# L3: Optimization (Optional)
+# L3: Optimization (optional)
 
 L3 is optional. It reduces the tokens an agent spends on exploration and tool output. It is not on the path to
 verified or unattended work: L0, L1, L2 and L4 carry that. Adopt L3 when token cost or context noise is a measured
@@ -51,8 +51,8 @@ definitions and finding references; it is a candidate target when the session ha
 Classify each segment of a compound command (split on `&&`, `||`, `;`, `|`). Check destructive patterns first,
 so `sed -i` is never classified as a text search.
 
-Detect the available tools once per session, cache the result, and fall back to allow when a specialized tool is
-missing.
+Detect the available tools once per session, write the result to a file (a hook process starts fresh for each
+call), and fall back to allow when a specialized tool is missing.
 
 ### In Practice
 
@@ -82,7 +82,7 @@ String matching is a nudge, not a control. The classifier matches strings and mi
 a sandbox or credential scope ([Pattern 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
 
 The [guardrails example](../examples/guardrails/) implements the classifier, the tool detection
-(`src/core/environment.ts`, 30-minute cache) and a data-driven routing table in TypeScript, with tests. A fuller
+(`src/core/environment.ts`, an in-process cache) and a data-driven routing table in TypeScript, with tests. A fuller
 implementation is in the [rig](https://github.com/franklywatson/claude-rig) repository, which is by this
 repository's author: [`src/router`](https://github.com/franklywatson/claude-rig/tree/master/src/router) for
 environment-aware resolution and [`src/session`](https://github.com/franklywatson/claude-rig/tree/master/src/session)

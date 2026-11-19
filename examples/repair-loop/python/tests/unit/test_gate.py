@@ -3,7 +3,7 @@ from dataclasses import replace
 
 import pytest
 
-from repair_loop.gate import gate
+from repair_loop.gate import gate, merge_for
 from repair_loop.models import Budget, Reproduction
 from support.builders import bundle_from_diff, clean_bundle, make_diff, patch_text, policy
 
@@ -132,6 +132,42 @@ def test_block_outranks_human_and_only_its_reasons_are_listed():
     result = decide(grant="A1", regression="fail")
     assert result.decision == "block"
     assert result.reasons == ["regression suite is not green on the candidate"]
+
+
+INSTRUCTION_PATHS = [
+    "CLAUDE.md", "AGENTS.md", "app/CLAUDE.md", "docs/AGENTS.md", ".claude/CLAUDE.md", ".claude/rules/style.md",
+    ".claude/agents/fixer.md", ".claude/commands/ship.md", ".claude/skills/review/SKILL.md", ".claude/skills/review/run.sh", ".mcp.json",
+    "claude.md", "Agents.md", ".Claude/Skills/x/SKILL.md",
+]
+
+
+@pytest.mark.parametrize("path", INSTRUCTION_PATHS)
+@pytest.mark.parametrize("grant", ["A4", "A5"])
+def test_instruction_and_tool_configuration_files_are_medium_tier_and_merged_by_a_person(path, grant):
+    bundle = bundle_from_diff(make_diff(path, ["text"]), grant=grant)
+    result = gate(bundle, policy)
+    assert (result.decision, result.merge) == ("auto", "person")
+    assert bundle.classification.blast == "B1"
+
+
+@pytest.mark.parametrize("path", ["Tests/unit/x_test.py", "TESTS/x.py", "Shared/Config/repair-policy.json", ".Autonomy.yaml", ".GitHub/workflows/ci.yml"])
+def test_a_protected_path_in_another_case_still_blocks(path):
+    result = gate(bundle_from_diff(make_diff(path, ["x"])), policy)
+    assert result.decision == "block"
+    assert "protected path" in "\n".join(result.reasons)
+
+
+def test_a_person_merges_below_a4_even_when_the_policy_names_an_unattended_ceiling_for_the_grant():
+    loose = replace(policy, unattended_ceiling={**policy.unattended_ceiling, "A3": {"reversibility": "R1", "blast": "B0"}})
+    assert gate(bundle_from_diff(make_diff("docs/notes.md", ["text"]), grant="A3"), loose).merge == "person"
+    assert gate(bundle_from_diff(make_diff("docs/notes.md", ["text"]), grant="A4"), loose).merge == "unattended"
+
+
+def test_merge_for_keeps_a_person_on_an_r2_change_with_an_empty_diff_or_an_unsafe_path_even_at_a5():
+    named = bundle_from_diff(make_diff("app/src/routes/users.py", ["ok = True"]), grant="A5")
+    assert merge_for(named, policy) == "unattended"
+    assert merge_for(replace(named, diff=[]), policy) == "person"
+    assert merge_for(replace(named, diff=[replace(named.diff[0], path="app/src/routes/../routes/users.py")]), policy) == "person"
 
 
 def test_the_gate_does_not_mutate_its_inputs():

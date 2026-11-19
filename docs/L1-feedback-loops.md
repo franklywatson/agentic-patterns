@@ -25,9 +25,9 @@ system before changing it.
 
 ## Context Harvesting — From Understanding to Design
 
-Every feature, bugfix or investigation starts with context, not code. The agent harvests targeted information from
+Every feature, bug fix or investigation starts with context, not code. The agent harvests targeted information from
 documentation (intent), code (contract), tests (expected behavior) and logs (what happened), then proposes a change.
-Reading a 500-line file to find one assertion wastes context; the test for that assertion answers in 20 lines.
+Reading a whole file to find one assertion wastes context; the test that holds the assertion states it directly.
 
 ### The Design-First Workflow
 
@@ -125,7 +125,7 @@ stoppable. Pattern 1.7 needs no autonomy. The others set limits before any repai
 
 - [Pattern 1.7 — Incident-to-Stack-Test](L1-patterns/1.7-incident-to-stack-test.md): every incident ends with a reproduction that fails on the production commit and passes on the fix.
 - [Pattern 1.8 — Reversibility and Blast-Radius Classes](L1-patterns/1.8-reversibility-blast-radius.md): classify each change from its diff, in code, failing closed (R0 to R4, B0 to B3).
-- [Pattern 1.9 — Repair Loop with a Frozen Oracle](L1-patterns/1.9-repair-loop-frozen-oracle.md): the reproduction is frozen before the fix, the fix touches no existing test, and a scan turns masking changes into mitigations for a human.
+- [Pattern 1.9 — Repair Loop with a Frozen Oracle](L1-patterns/1.9-repair-loop-frozen-oracle.md): the reproduction is frozen before the fix, the fix touches no test file, and a scan turns masking changes into mitigations for a human.
 - [Pattern 1.10 — Production Gate and Progressive Confirmation](L1-patterns/1.10-production-gate-progressive-confirmation.md): a deterministic gate outside the agent, a staged rollout, a pre-declared confirmation rule and automatic rollback.
 - [Pattern 1.11 — Repair Budget, Circuit Breaker and Stop Authority](L1-patterns/1.11-repair-budget-circuit-breaker-stop.md): attempt budgets, a breaker that lowers the grant and a named stop. Unattended repair of R3 and R4 changes is not supported at any grant.
 - [Pattern 1.12 — Self-Healing Tests vs Self-Healing Systems](L1-patterns/1.12-self-healing-tests-vs-systems.md): tests never heal themselves, and recovery without a repair ticket is a masked defect.

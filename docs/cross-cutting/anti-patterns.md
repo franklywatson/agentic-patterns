@@ -76,11 +76,11 @@ Changes in one repository that break a contract in another are an architecture q
 | Metrics count tokens or commands, or have no threshold, action or owner | [4.4 Agentic Development Metrics](../L4-standards-measurement.md#pattern-44--agentic-development-metrics) |
 | Quality thresholds live in workflow files, or checks run only in a session hook | [4.5 CI Guardrails](../L4-standards-measurement.md#pattern-45--ci-guardrails) |
 | A prompt, skill or model change is accepted because it feels better | [4.6 Context Eval](../L4-standards-measurement.md#pattern-46--context-eval) |
-| Nobody is named as answering for agent-written code | [4.7 Author of Record](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) |
+| Nobody is named as answering for agent-written code | [4.7 Author of Record](../L4-standards-measurement.md#pattern-47--author-of-record) |
 | The team ships code nobody can explain or debug without the agent | [4.9 Deliberate Practice](../L4-standards-measurement.md#pattern-49--deliberate-practice) |
-| An agent workflow keeps running after its owner left, an agent lists itself, or its workflow edits the list that sets its permissions | [A.1 Autonomy Register](../earned-autonomy.md#pattern-a1--autonomy-register) |
+| An agent workflow keeps running after its owner left, an agent workflow is missing from the register, or the workflow can edit the register | [A.1 Autonomy Register](../earned-autonomy.md#pattern-a1--autonomy-register) |
 | Success counts come from the workflow's own report | [A.2 Evidence Ledger](../earned-autonomy.md#pattern-a2--evidence-ledger) |
 | An agent or its workflow raises its own permissions after a run of successes, or grants are never reviewed against results | [A.3 Promotion, Demotion and the Cap Gate](../earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate) |
-| Nobody can say which practices exist in the repository and which are only written down | [A.4 Census](../earned-autonomy.md#pattern-a4--census) |
+| Nobody can say which of the library's artifacts the repository has, or what blocks the next curve position | [A.4 Census](../earned-autonomy.md#pattern-a4--census) |
 | An unattended workflow has no stop, or the stop was never used | [A.5 Tested Stop](../earned-autonomy.md#pattern-a5--tested-stop) |
 | The agent's own hooks or harness settings can be edited by the agent | [A.6 Enforcement Through Hooks](../earned-autonomy.md#pattern-a6--enforcement-through-hooks) |

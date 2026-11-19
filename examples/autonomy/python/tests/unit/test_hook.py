@@ -128,3 +128,22 @@ def test_reading_untrusted_input_in_one_call_taints_the_session_for_the_next(tmp
     assert (directory / ".autonomy" / "sessions" / "t1.json").exists()
     assert reason(call(directory, "intake", post, "t1")).startswith("trifecta-external-action:")
     assert call(directory, "intake", post, "other-session")[0] == ""
+
+
+def test_a_demoted_session_cannot_remove_its_demotion_state_with_a_shell_command(copy_fixture):
+    directory = copy_fixture("registers", "valid")
+    state_path = directory / ".autonomy" / "state.json"
+
+    def bash(command):
+        out = call(directory, "interactive", {"tool_name": "Bash", "tool_input": {"command": command}})
+        return "allow" if out[0] == "" else reason(out).split(":")[0]
+
+    state_path.write_text(json.dumps({"workflows": {"interactive": {"demotion_override": 1}}}))
+    assert bash("find .autonomy -name state.json -del$'e'te") == "a1-plain-commands-only"
+    assert bash("find .autonomy -name state.json -delete") == "governance-write"
+    assert bash("ls .autonomy") == "allow"
+    state_path.write_text(json.dumps({"workflows": {}}))
+    assert bash("find .autonomy -name state.json -delete") == "governance-write"
+    assert bash("ln -sf /tmp/empty.json .autonomy/state.json") == "governance-write"
+    assert bash('rm ".auton"omy/state.json') == "governance-write"
+    assert bash("find build -name x.o -delete") == "allow"

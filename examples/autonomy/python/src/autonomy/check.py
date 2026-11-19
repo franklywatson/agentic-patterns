@@ -20,7 +20,7 @@ LOCKED_FILES = [
 # Workflow files: changed by an agent commit only when a later non-agent commit acknowledges it.
 WORKFLOW_FILES = [re.compile(r"^\.github/workflows/")]
 
-ACK_LINE = re.compile(r"governance-approved:[ \t]*([0-9a-f]{7,40})", re.I)
+ACK_LINE = re.compile(r"governance-approved:[ \t]*([0-9a-f]{7,40})", re.I | re.A)
 
 
 def is_locked_file(path: str) -> bool:
@@ -56,7 +56,7 @@ def agent_tokens(register: dict) -> list[str]:
     return tokens
 
 
-CO_AUTHOR_AGENT = re.compile(r"co-authored-by:[\s\S]*(claude|anthropic)", re.I)
+CO_AUTHOR_AGENT = re.compile(r"co-authored-by:[\s\S]*(claude|anthropic)", re.I | re.A)
 
 
 def is_agent_commit(commit: dict, tokens: list[str]) -> bool:
@@ -141,13 +141,13 @@ def run_check(directory: str | Path, now: int, register_path: str | Path | None 
     profile = read_json_if_exists(profile_path)
     state = read_json_if_exists(root / ".autonomy" / "state.json")
     status = profile_status(profile, now)
-    result["cap"] = cap_of(profile)
+    result["cap"] = cap_of(profile, now)
     if status == "missing":
         result["failures"].append({"code": "profile-missing"})
+    else:
+        result["profile_age_days"] = age_days(now, parse_time(profile["generated"]))
     if status == "stale":
         result["failures"].append({"code": "profile-stale"})
-    if profile is not None and isinstance(profile.get("generated"), str):
-        result["profile_age_days"] = age_days(now, parse_time(profile["generated"]))
     for wf in all_workflows(register):
         eff = effective_level(wf, profile, state, register.get("defaults"), now)
         result["workflows"].append({"id": wf["id"], "granted": eff.granted, "effective": eff.effective, "reasons": eff.reasons})

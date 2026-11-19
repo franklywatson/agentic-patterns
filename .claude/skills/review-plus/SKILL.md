@@ -52,7 +52,7 @@ Wraps `superpowers:requesting-code-review`. Requires superpowers to be installed
    - [ ] No empty test bodies
    - [ ] No `.skip` without documented reason
 
-4. Name the change's review tier from the [risk model](../../../docs/L1-patterns/1.8-reversibility-blast-radius.md#risk-model) and list the approvals it needs ([Pattern 2.13](../../../docs/L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)). This review is an agent's finding and never counts as one of them.
+4. Name the change's review tier from the [risk model](../../../docs/L1-patterns/1.8-reversibility-blast-radius.md#risk-model) and list the approvals it needs ([Pattern 2.13](../../../docs/L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)): below A4 every tier needs approval from someone other than the requester. This review is an agent's finding and never counts as one of them.
 
 ### Phase C: Code Quality Review (delegate to superpowers:requesting-code-review)
 
@@ -101,6 +101,6 @@ After review+ passes:
 Report one of these states when the skill finishes:
 
 - **DONE** — Review passed (PASS verdict). All spec compliance and code quality checks confirmed.
-- **DONE_WITH_CONCERNS** — Review passed with minor items noted for follow-up.
+- **DONE_WITH_CONCERNS** — Review passed; the only open items are style or naming comments, each listed with its file and line.
 - **BLOCKED** — Review failed (FAIL verdict). Items must be fixed before proceeding.
 - **NEEDS_CONTEXT** — Need user input to resolve a review question or accept a deviation.

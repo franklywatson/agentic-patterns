@@ -141,25 +141,37 @@ const INLINE_CODE = [
 
 const isInlineCode = (seg: string) => INLINE_CODE.some((re) => re.test(seg));
 
-/** Git reads allowed at A1: only `-C dir`, `--no-pager` and `-P` before the subcommand; no `-c`, no env prefix. */
-const A1_GIT = /^git\s+(?:(?:-C\s+\S+|--no-pager|-P)\s+)*(status|diff|log|show)\b/;
-const FIND_WRITES = /(^|\s)-(delete|exec|execdir|ok|okdir|fprint|fprint0|fprintf|fls)(\s|$)/;
+/** A word at A1: letters, digits and `_ . / : = @ % + , -` only, so the shell cannot expand or redirect it. */
+const PLAIN_WORD = /^[A-Za-z0-9_.\/:=@%+,-]+$/;
+const A1_GIT_SUBCOMMANDS = new Set(["status", "diff", "log", "show"]);
+const A1_GIT_DENIED = /^--(ou|ext|textc)/;
+const FIND_WRITES = /^-(delete|exec|execdir|ok|okdir|fprint|fprint0|fprintf|fls)$/;
+
+function readOnlyWords(words: string[]): boolean {
+  const [cmd, ...args] = words;
+  if (cmd === "git") {
+    let i = 0;
+    while (args[i] === "--no-pager" || args[i] === "-P") i++;
+    return A1_GIT_SUBCOMMANDS.has(args[i]) && !args.slice(i + 1).some((w) => A1_GIT_DENIED.test(w));
+  }
+  if (!READ_ONLY_COMMANDS.has(cmd)) return false;
+  if (cmd === "find") return !args.some((w) => FIND_WRITES.test(w));
+  if (cmd === "sort") return !args.some((w) => /^-[^-]*o/.test(w) || /^--(o|co)/.test(w));
+  if (cmd === "rg") return !args.some((w) => /^--(pre|hostname-bin)/.test(w));
+  return true;
+}
 
 /**
- * True when a raw segment is provably read-only. The segment is not stripped of wrappers or variable
- * assignments (GIT_EXTERNAL_DIFF=x, env PAGER=x), and quotes are removed so "-delete" still matches.
+ * The A1 rule: one or more commands from the read-only list joined by `|`, every word plain. Quotes, `$`,
+ * braces, globs, redirects, `;`, `&`, newlines and backticks are refused before any flag is checked, because
+ * the shell can rebuild a write flag from them after the check (`-del$'e'te`, `{-delete,-print}`).
  */
-export function readOnlySegment(raw: string): boolean {
-  const seg = raw.trim().replace(/["'\\]/g, "");
-  if (/[>`]|\$\(|<\(/.test(seg)) return false;
-  const words = seg.split(/\s+/);
-  const cmd = words[0];
-  if (cmd === "git") return A1_GIT.test(seg) && !/\s--ou/.test(seg);
-  if (!READ_ONLY_COMMANDS.has(cmd)) return false;
-  if (cmd === "find") return !FIND_WRITES.test(seg);
-  if (cmd === "sort") return !words.slice(1).some((w) => /^-[^-]*o/.test(w) || /^--(o|co)/.test(w));
-  if (cmd === "rg") return !words.some((w) => /^--(pre|hostname-bin)\b/.test(w));
-  return true;
+export function plainReadOnly(command: string): boolean {
+  const segments = command.split("|").map((s) => s.trim());
+  return segments.every((segment) => {
+    const words = segment.split(/[ \t]+/);
+    return segment !== "" && words.every((w) => PLAIN_WORD.test(w)) && readOnlyWords(words);
+  });
 }
 
 function toolFile(input: Json): string | null {
@@ -167,7 +179,25 @@ function toolFile(input: Json): string | null {
 }
 
 const GOV_WORDS = /\.autonomy|codeowners|\.github\/workflows|\.claude\/(settings|hooks)|\.harness/i;
-const WRITE_HINT = />|\btee\b|\bsed\s+-i|\bmv\b|\bcp\b|\brm\b|\btouch\b|\btruncate\b|\bdd\b|\binstall\b|\bchmod\b|git\s+(checkout|restore|apply)\b/;
+const WRITE_HINT = new RegExp(
+  [
+    ">", "\\btee\\b", "\\bsed\\s+-i", "--in-place", "\\bmv\\b", "\\bcp\\b", "\\brm\\b", "\\bln\\b", "\\brsync\\b", "\\btouch\\b",
+    "\\btruncate\\b", "\\bdd\\b", "\\binstall\\b", "\\bchmod\\b", "\\bunzip\\b", "--output",
+    "\\btar\\s+(?:\\S+\\s+)*?(?:-?[A-Za-z]*x[A-Za-z]*|--extract|--get)(?:\\s|$)",
+    "\\bfind\\b.*\\s-(?:delete|exec|execdir|ok|okdir|fprint0?|fprintf|fls)\\b",
+    "\\bsort\\b.*\\s-[^-\\s]*o", "git\\s+(checkout|restore|apply|mv|rm)\\b",
+  ].join("|"),
+);
+
+/** True when a command names a locked or workflow path and a write verb, before or after removing quotes. */
+function governanceShellWrite(command: string): boolean {
+  const unquoted = command.replace(/["'\\]/g, "");
+  return [command, unquoted].some((c) => GOV_WORDS.test(c)) && [command, unquoted].some((c) => WRITE_HINT.test(c));
+}
+
+const PR_WRITE = /^gh\s+pr\s+(create|edit|close|reopen|ready|review|comment|lock|unlock|update-branch|revert)\b/;
+const API_WRITE = /(-X\s*(POST|PUT|DELETE|PATCH)|--method\s+(POST|PUT|DELETE|PATCH)|\s-f\b|\s-F\b)/;
+const isPrWrite = (seg: string) => PR_WRITE.test(seg) || (/^gh\s+api\b/.test(seg) && /\bpulls\b/.test(seg) && API_WRITE.test(seg));
 
 function decideBash(ctx: HookContext, command: string): Decision {
   const wf = ctx.workflow as Json;
@@ -175,7 +205,7 @@ function decideBash(ctx: HookContext, command: string): Decision {
   const segments = splitSegments(command);
   const perm = wf.permitted_actions ?? {};
   const forbidden: string[] = wf.forbidden_actions ?? [];
-  if (GOV_WORDS.test(command) && WRITE_HINT.test(command)) {
+  if (governanceShellWrite(command)) {
     return deny("governance-write", "shell command writes to a governance file");
   }
   if (Array.isArray(perm.tools)) {
@@ -186,6 +216,9 @@ function decideBash(ctx: HookContext, command: string): Decision {
       return deny("outside-permitted-tools", `Bash command not in permitted_actions.tools: ${command}`);
     }
   }
+  if (level <= 1 && !plainReadOnly(command)) {
+    return deny("a1-plain-commands-only", `level 1 allows only plain read-only commands joined by |: ${[...READ_ONLY_COMMANDS].join(", ")}, git status|diff|log|show`);
+  }
   const network: string[] | undefined = perm.network;
   const restrictEgress = level <= 2 || network !== undefined || level >= 4;
   let mark = false;
@@ -194,9 +227,6 @@ function decideBash(ctx: HookContext, command: string): Decision {
     const explicit = Array.isArray(perm.tools) && perm.tools.some((e: string) => e.startsWith("Bash(") && permittedTool([e], "Bash", null, [raw]));
     if (isInlineCode(seg) && !explicit) {
       return deny("inline-interpreter", "inline shell or interpreter code cannot be inspected; permit it with an explicit Bash(...) pattern");
-    }
-    if (level <= 1 && !readOnlySegment(raw)) {
-      return deny("read-only-level", "level 1 allows read-only commands only");
     }
     if (isPush(seg)) {
       if (isForce(seg)) return deny("force-push", "force push is never permitted");
@@ -213,6 +243,7 @@ function decideBash(ctx: HookContext, command: string): Decision {
       const mergeDeny = limitsDecision(ctx, wf);
       if (mergeDeny) return mergeDeny;
     }
+    if (isPrWrite(seg) && level <= 2) return deny("pr-write-blocked", "opening or changing a pull request is blocked below level 3");
     if (isEgress(seg) && restrictEgress) {
       const hosts = hostsIn(seg);
       const allow = network ?? [];

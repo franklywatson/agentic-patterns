@@ -6,6 +6,8 @@ const GRANT_ORDER: Grant[] = ['A1', 'A2', 'A3', 'A4', 'A5'];
 const SEVERITY: Record<Decision, number> = { auto: 0, human: 1, block: 2 };
 /** Pattern 1.11: nothing above R2, and nothing beyond B0, merges unattended at any grant. The policy cannot raise this. */
 const UNATTENDED_LIMIT = { reversibility: 'R2', blast: 'B0' } as const;
+/** Pattern 1.11: below A4 a person merges, whatever the policy's unattendedCeiling lists. */
+const UNATTENDED_MIN_GRANT: Grant = 'A4';
 
 /**
  * Who merges an `auto` change (Pattern 1.11). A person, unless the grant is A4 or higher and
@@ -13,6 +15,7 @@ const UNATTENDED_LIMIT = { reversibility: 'R2', blast: 'B0' } as const;
  * file on a named path.
  */
 export function mergeFor(bundle: EvidenceBundle, policy: GatePolicy): Merge {
+  if (GRANT_ORDER.indexOf(bundle.grant) < GRANT_ORDER.indexOf(UNATTENDED_MIN_GRANT)) return 'person';
   const ceiling = policy.unattendedCeiling[bundle.grant];
   const { classification } = bundle;
   if (!ceiling || exceeds(classification, ceiling) || exceeds(classification, UNATTENDED_LIMIT)) return 'person';
@@ -44,7 +47,7 @@ export function gate(bundle: EvidenceBundle, policy: GatePolicy): GateResult {
   for (const file of bundle.diff) {
     if (isUnsafePath(file.path)) {
       add('block', `diff contains unsafe path ${file.path}`);
-    } else if (policy.protectedPaths.some((glob) => globMatch(glob, normalizePath(file.path)))) {
+    } else if (policy.protectedPaths.some((glob) => globMatch(glob, normalizePath(file.path), true))) {
       add('block', `diff touches protected path ${file.path}`);
     }
   }

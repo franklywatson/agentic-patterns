@@ -159,12 +159,10 @@ export function runCheck(opts: CheckOptions): CheckResult {
   const profile: Json | null = existsSync(profilePath) ? readJsonIfExists(profilePath) : null;
   const state = readJsonIfExists(join(dir, ".autonomy", "state.json"));
   const status = profileStatus(profile, opts.now);
-  result.cap = capOf(profile);
+  result.cap = capOf(profile, opts.now);
   if (status === "missing") result.failures.push({ code: "profile-missing" });
+  else result.profile_age_days = ageDays(opts.now, parseTime(profile.generated));
   if (status === "stale") result.failures.push({ code: "profile-stale" });
-  if (profile !== null && typeof profile.generated === "string") {
-    result.profile_age_days = ageDays(opts.now, parseTime(profile.generated));
-  }
   for (const wf of allWorkflows(register)) {
     const eff: Effective = effectiveLevel(wf, profile, state, register.defaults, opts.now);
     result.workflows.push({ id: wf.id, granted: eff.granted, effective: eff.effective, reasons: eff.reasons });

@@ -1,0 +1,686 @@
+{
+  "description": "Cases for the non-author-approval census probe, shared by the TypeScript and Python stack tests. Each case replaces .github/rulesets/main.json in a copy of fixtures/repos/adopter with `ruleset` (an object, or raw JSON text written as is), writes each file in `files` (null deletes it), and expects the probe to be met or not.",
+  "cases": [
+    {
+      "name": "repo-wide-review",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": true
+    },
+    {
+      "name": "code-owner-scoped-review",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": true
+    },
+    {
+      "name": "branch-named-by-ref",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "refs/heads/main"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": true
+    },
+    {
+      "name": "count-written-as-a-float",
+      "ruleset": "{\"name\": \"main\", \"target\": \"branch\", \"enforcement\": \"active\", \"conditions\": {\"ref_name\": {\"include\": [\"~DEFAULT_BRANCH\"], \"exclude\": []}},\"rules\":[{\"type\":\"pull_request\",\"parameters\":{\"required_approving_review_count\":1.0}}]}",
+      "files": {},
+      "met": true
+    },
+    {
+      "name": "code-owner-review-as-a-string",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": "true"
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "count-as-a-string",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": "1"
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "no-review",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "code-owner-review-without-codeowners",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {
+        "CODEOWNERS": null
+      },
+      "met": false
+    },
+    {
+      "name": "enforcement-disabled",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "disabled",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "enforcement-evaluate",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "evaluate",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "enforcement-absent",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "targets-no-branch",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "conditions-absent",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "targets-another-branch",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "refs/heads/release"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "default-branch-excluded",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": [
+              "~DEFAULT_BRANCH"
+            ]
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "tag-ruleset",
+      "ruleset": {
+        "name": "main",
+        "target": "tag",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "codeowners-comment-only",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {
+        "CODEOWNERS": "# @alice @bob\n"
+      },
+      "met": false
+    },
+    {
+      "name": "codeowners-inline-comment-without-owner",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {
+        "CODEOWNERS": "* # no owner\n"
+      },
+      "met": false
+    },
+    {
+      "name": "codeowners-owner-not-a-handle-or-email",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {
+        "CODEOWNERS": "* nobody\n"
+      },
+      "met": false
+    },
+    {
+      "name": "codeowners-pattern-without-owner",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {
+        "CODEOWNERS": "*\n"
+      },
+      "met": false
+    },
+    {
+      "name": "codeowners-email-owner",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {
+        "CODEOWNERS": "* dev@example.com\n"
+      },
+      "met": true
+    },
+    {
+      "name": "codeowners-team-owner",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {
+        "CODEOWNERS": "/src/ @org/team-platform # high tier\n"
+      },
+      "met": true
+    },
+    {
+      "name": "empty-github-codeowners-shadows-the-root-file",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {
+        ".github/CODEOWNERS": ""
+      },
+      "met": false
+    },
+    {
+      "name": "parameters-not-an-object",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": [
+              1
+            ]
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "parameters-a-string",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": "x"
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "rules-not-a-list",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": "x"
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "ruleset-not-an-object",
+      "ruleset": "[1]",
+      "files": {},
+      "met": false
+    }
+  ]
+}

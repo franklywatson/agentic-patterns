@@ -6,8 +6,8 @@ reviewed: 2026-11-19
 # L2: Behavioral Guardrails
 
 L2 decides where each rule is held. Prose is guidance. Command hooks are deterministic policy inside the
-harness. Containment and credentials are the boundary. Read this layer before relaxing any approval prompt, and
-start with [Pattern 2.9](#pattern-29--contain-before-you-relax). Anthropic's guidance puts a rule the model keeps
+harness. Containment and credentials are the boundary. It is for whoever configures the agent's environment or
+reviews its rules; read it before relaxing any approval prompt, and start with [Pattern 2.9](#pattern-29--contain-before-you-relax). Anthropic's guidance puts a rule the model keeps
 missing into a hook rather than more prose ([OM-7](references/sources.md)); other sources draw the same line
 between instructions, policy checks and boundaries ([SG-7, SG-16, OM-18](references/sources.md)).
 
@@ -63,12 +63,10 @@ For large or risky changes, skills can be chained: design, plan, test-driven imp
 `review+`; [superpowers](https://github.com/obra/superpowers): `brainstorming`, `writing-plans`,
 `test-driven-development`, `verification-before-completion`, `requesting-code-review`).
 
-The chain is optional. Scale it to the tier in [Pattern 2.13](#pattern-213--risk-tiered-review): a low-tier edit
+The chain is optional. Scale it to the review tier in [Pattern 2.13](#pattern-213--risk-tiered-review): a low-tier edit
 runs its checks; a medium-tier change runs the test-driven and verify steps; a high-tier change runs the full
-chain and gets the high-tier approvals. Two outcome gates apply to every change, whichever
-phases ran: evidence before claiming done ([Pattern
-4.1](L4-standards-measurement.md#pattern-41--evidence-based-claims)) and review before merge. CI and the merge
-process hold them, not the chain. A phase tracker (rig has one) records that the agent visited a phase, not that
+chain. Evidence before claiming done ([Pattern 4.1](L4-standards-measurement.md#pattern-41--evidence-based-claims))
+and review before merge apply to every change; CI and the merge process hold them, not the chain. A phase tracker (rig has one) records that the agent visited a phase, not that
 the phase did its job.
 
 ### Anti-Pattern
@@ -108,6 +106,12 @@ edits, parsed test failures); they cannot prevent a call that already ran.
 - A permitted `bash`, `python`, `node` or `docker` is a general-purpose computer. Hooks gate the call, not what
   the tool does once running.
 - A regex over a free-text shell string is bypassable (quoting, variables, a script). Match structured arguments.
+  The [autonomy hook](../examples/autonomy/README.md#hook) at A1 allows only plain read-only commands: allow-listed
+  commands joined by `|`, with no quotes, `$`, braces, globs, redirects or `;`. Above A1 its Bash rules are a
+  nudge; a `permitted_actions.tools` allowlist, CODEOWNERS, `autonomy check` in CI and containment hold.
+- State a hook reads from the working tree is in the agent's reach. The autonomy hook denies writes to
+  `.autonomy/`, where its demotion state lives; only operating-system permissions or a read-only mount make that a
+  boundary.
 - A project hook file is editable by the agent. Put policy hooks in managed settings with `allowManagedHooksOnly`
   ([Pattern 2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)).
 - Hooks run outside the Claude Code sandbox with the user's full access
@@ -119,8 +123,8 @@ Several checks can fire on one tool call (stale tests, mock detection, scope con
 through one orchestrator so the agent gets one signal. Each check has one responsibility and returns a severity
 (block, advise or silent) and a message; a project config file sets each rule's severity. The orchestrator returns
 the most severe result (block > advise > silent) with the messages at that severity. A PreToolUse block stops the
-call; a PostToolUse block means "stop and repair", because the call already ran. rig's `handlePostToolUse` in
-`src/enforcement/` is one such orchestrator.
+call; a PostToolUse block means "stop and repair", because the call already ran. rig's PostToolUse handler is one
+such orchestrator.
 
 ### In Practice
 
@@ -146,23 +150,14 @@ exit 0
 
 Exit code 2 blocks. Exit code 0 proceeds unless JSON on stdout returns `"permissionDecision": "deny"`. Any other
 failure (another exit code, a crash, a timeout, a script that does not start) is a non-blocking error and the
-call proceeds, unless a `command` or `http` handler sets `"onFailure": "block"` ([hooks
+call proceeds, unless a `command`, `http` or `mcp_tool` handler sets `"onFailure": "block"` ([hooks
 reference](https://code.claude.com/docs/en/hooks#block-the-action-when-a-hook-fails)). Set it on every policy hook
 so the hook fails closed:
 
 ```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          { "type": "command", "command": ".claude/hooks/protect-paths.sh", "onFailure": "block" }
-        ]
-      }
-    ]
-  }
-}
+{ "hooks": { "PreToolUse": [ { "matcher": "Edit|Write", "hooks": [
+  { "type": "command", "command": ".claude/hooks/protect-paths.sh", "onFailure": "block" }
+] } ] } }
 ```
 
 **Audit records.** Use Claude Code's OpenTelemetry export, configured in managed settings and sent to a
@@ -327,19 +322,17 @@ above.
 
 ### Problem
 
-Agents run on the developer's machine with the developer's shell, keys, network and Docker socket. A default
-Claude Code session starts in auto mode, where a classifier approves most actions, and with the sandbox off
-([permission modes](https://code.claude.com/docs/en/permission-modes),
-[sandboxing](https://code.claude.com/docs/en/sandboxing)). Out of the box, prompts are relaxed and nothing is
-contained; the vendor states that auto mode "does not guarantee safety".
+Agents run on the developer's machine with the developer's shell, keys and network. Interactive Claude Code
+sessions on the version the minimum-version row below names start in auto mode, where a classifier approves most
+actions, with the sandbox off; `claude -p` and the Agent SDK start in default ([permission
+modes](https://code.claude.com/docs/en/permission-modes), [sandboxing](https://code.claude.com/docs/en/sandboxing)).
+The vendor states that auto mode "does not guarantee safety".
 
 Teams try to make that safe with approval prompts and hooks. Prompts wear out ([Pattern
-2.13](#pattern-213--risk-tiered-review)). Hooks run inside the agent's environment and match strings, so a
-permitted tool can do what the hook forbids by another route. The [containment
-example](../examples/containment/) shows the gap. A policy function with a deny rule for `sed -i` allows
-`/usr/bin/sed -i`, `sed --in-place`, `perl -pi`, `bash -c "echo new > file"` and `$(echo sed)`, and two fetches to
-a host outside the allowlist: eight of nine write commands and both network commands pass. A container with a
-read-only mount and no network stops all of them without parsing a command.
+2.13](#pattern-213--risk-tiered-review)). Hooks match strings, so a permitted tool can do what the hook forbids by
+another route: in the [containment example](../examples/containment/), eight of nine write commands and both
+network commands pass a string-matching policy, and a container with a read-only mount and no network stops all of
+them.
 
 ### Solution
 
@@ -367,8 +360,8 @@ the agent from the host.
 1. Turn auto mode off until the boundary is in place (see Bindings).
 2. Pick the boundary (harness sandbox, container or virtual machine) and set the five properties. Keep
    credentials out of the mounted tree; the boundary does not hide files inside what it mounts.
-3. Run a command that must fail (a write outside the tree, a fetch to an unlisted host) and check that it fails.
-   The containment example runs each command in a permissive container and in the boundary.
+3. Ask the agent to run `touch ~/outside-tree` and `curl -sI https://example.com`; both must fail. The
+   containment example runs each command in a permissive container and in the boundary.
 4. Allow auto-approval inside the boundary. Keep approval for actions that leave it ([Pattern
    2.13](#pattern-213--risk-tiered-review)).
 
@@ -387,17 +380,17 @@ property with keys from the [settings reference](https://code.claude.com/docs/en
 | Secrets outside | `sandbox.credentials.files` and `sandbox.credentials.envVars` with mode `deny`; mode `mask` lets a command use a credential on an allowed host without the session seeing the value (needs `network.tlsTerminate`; honored only from user or managed settings or `--settings`) |
 | Failure closes | `sandbox.failIfUnavailable: true`, `sandbox.allowUnsandboxedCommands: false` |
 | Agent cannot edit it | Managed settings, which take precedence over user, project and command-line settings ([SG-12](references/sources.md)) |
-| Minimum version | v2.1.257 for the reads key, v2.1.295 for hook `onFailure` ([Pattern 2.3](#pattern-23--hook-automation)), v2.1.314 for the writes key, v2.1.319 for `denyInsteadOfPrompting`; set `requiredMinimumVersion` (managed only) to the highest of these you use, so an older client refuses to start |
+| Minimum version | v2.1.257 for the reads key, v2.1.283 from which interactive sessions start in auto mode, v2.1.295 for hook `onFailure` (v2.1.328 on `mcp_tool` hooks; [Pattern 2.3](#pattern-23--hook-automation)), v2.1.314 for the writes key, v2.1.319 for `denyInsteadOfPrompting`; set `requiredMinimumVersion` (managed only) to the highest of these you use, so an older client refuses to start |
 
-Without managed settings, put the keys in user settings (`~/.claude/settings.json`), which is outside the working
-tree the agent can write. Until the boundary holds, set
+Without managed settings, use user settings ([FAQ](cross-cutting/faq.md#i-work-alone-where-does-the-sandbox-settings-file-go)).
+Until the boundary holds, set
 [`permissions.disableAutoMode`](https://code.claude.com/docs/en/settings-reference#disableautomode) to `"disable"`
-or `permissions.defaultMode` to `"default"` there; a project file cannot make `auto` or `bypassPermissions` the
-default mode. The census ([Pattern A.4](earned-autonomy.md#pattern-a4--census)) reads only the project
+there. The census ([Pattern A.4](earned-autonomy.md#pattern-a4--census)) reads only the project
 `.claude/settings.json`, so commit the same keys there too if you run it.
 
 The sandbox wraps shell commands only. The file tools, WebFetch, local MCP servers and hooks run outside it, under
-permission rules and managed settings. On native Windows, commands run unsandboxed; use WSL2. `docker` does not
+permission rules and managed settings. Linux and WSL2 need `bubblewrap` and `socat` installed, or a session with
+`failIfUnavailable` refuses to start; native Windows runs commands unsandboxed, so use WSL2. `docker` does not
 run inside the sandbox, and an `excludedCommands` entry runs it with full access. For Docker stack tests, run the
 whole session inside a container or virtual machine with its own daemon; the
 [FAQ](cross-cutting/faq.md#my-stack-tests-need-docker-how-do-i-run-them-inside-the-sandbox) compares the options.
@@ -414,14 +407,13 @@ the outcome, not what the agent does on the machine before then.
 ### Anti-Pattern
 
 - Running in auto mode before the boundary exists.
-- Mounting the host Docker socket so stack tests work.
 - Leaving `allowUnsandboxedCommands` open, so the agent retries blocked commands outside the sandbox.
 - Skipping the negative test. A boundary nobody has tried to cross is an assumption.
 
 The [threat model](cross-cutting/threat-model.md) lists what the boundary protects.
 
 **Evidence:** Partial — Anthropic describes its own practice consistently across its docs and posts, and one company
-reports the same; no independent comparison (PL-14, PL-15, PL-17, SG-10, SG-12, AN-9, AN-11)
+reports the same; no independent comparison (PL-14, PL-15, PL-17, SG-12, AN-9, AN-11)
 
 ---
 
@@ -432,11 +424,10 @@ reports the same; no independent comparison (PL-14, PL-15, PL-17, SG-10, SG-12, 
 An agent session is dangerous when it combines three things: untrusted input (a web page, an issue, a source read
 during [design rinsing](L1-feedback-loops.md), tool output), access to private data or credentials, and a way to
 act outside. With all three, text an attacker plants in the input can steer the agent to leak the data or take the
-action. Simon Willison named the combination the lethal trifecta ([SG-1](references/sources.md)). Meta's Agents
-Rule of Two says a session should hold at most two of the three unless a gate sits between them
-([SG-2](references/sources.md)). OWASP lists excessive agency among the top risks for LLM applications
-([SG-16](references/sources.md)). A research design from Google DeepMind and ETH Zurich separates untrusted data
-from control flow by construction ([SG-3](references/sources.md)).
+action: Simon Willison's lethal trifecta ([SG-1](references/sources.md)). Meta's Agents Rule of Two allows at most
+two of the three without a gate between them ([SG-2](references/sources.md)); OWASP's excessive agency risk and a
+Google DeepMind and ETH Zurich design that separates untrusted data from control flow make the same point ([SG-16,
+SG-3](references/sources.md)).
 
 ### Solution
 
@@ -523,17 +514,19 @@ A.1](earned-autonomy.md#pattern-a1--autonomy-register)).
 ### In Practice
 
 A coding agent that opens pull requests: the CI or launcher mints a one-hour token scoped to one repository, able
-to push branches and open pull requests, not to change settings. Commits carry a trailer naming the agent and the
-requester, who is the author of record ([Pattern
-4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)). The agent identity never
-approves; it merges only at A4 and above, and only low-tier changes ([Pattern 2.13](#pattern-213--risk-tiered-review)).
+to push branches and open pull requests, not to change settings. The requester is the commit author and author of
+record, and a `Co-Authored-By:` trailer names the agent ([Pattern
+4.7](L4-standards-measurement.md#pattern-47--author-of-record)). The agent identity never
+approves; it merges only at A4 and above, and only the classes the [risk
+model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) lists for its grant.
 
 ### Bindings
 
 **Claude Code** does not issue identities. A launcher script or CI job mints the short-lived token, passes it to
 the session at start, and keeps long-lived keys out (`sandbox.credentials` in [Pattern
-2.9](#pattern-29--contain-before-you-relax)). Put the "agent for person" trailer in the instruction file and check
-it in CI, because the model may omit it.
+2.9](#pattern-29--contain-before-you-relax)). Put the `Co-Authored-By:` trailer rule ([Pattern
+4.7](L4-standards-measurement.md#pattern-47--author-of-record)) in the instruction file and
+check it in CI, because the model may omit it.
 
 A Claude Code cloud scheduled task acts through its owner's connected GitHub identity and connectors: its commits
 and pull requests carry the owner's GitHub user, on `claude/`-prefixed branches
@@ -637,19 +630,18 @@ their own change adds nothing: GitHub does not count the requester's approval of
 ### Solution
 
 Tier changes and actions by reversibility and blast radius, and spend human attention where mistakes are costly.
-The [risk model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) gives each class its tier, with
-examples, the lowest grant that may merge with no person and the enforcement points. This pattern states the
-approvals each tier needs before merge:
+The [risk model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) gives each class its review tier, and
+the [approvals table](../README.md#how-the-scales-fit-together) states what each tier needs. Low tier is R0-R1 at
+B0 and R2 at B0; R2 at B0 merges with no person only at A5, on named paths.
 
-| Tier | Approvals |
-|------|-----------|
-| Low | Required checks only at A4 and A5; below A4, one approval from a person other than the requester |
-| Medium | One approval from a person other than the requester |
-| High | A code-owner approval plus a second approval, both from people other than the requester |
-
-Below A4, which includes every workflow in a repository capped below C4, a person merges at every tier. One
-person working alone cannot meet the medium and high rules: high-tier changes then stay human-made, reviewed by CI
-evidence only.
+Below A4, which includes every workflow in a repository capped below C4, a person merges at every tier, and every
+tier needs an approval from someone other than the requester. One person working alone meets none of them: the
+required checks are the only independent control, and high-tier changes stay human-made ([Path
+E](cross-cutting/adoption-guide.md#path-e-one-person-attended-sessions)). At A4 and above, low-tier changes merge
+on required checks alone through the CODEOWNERS-scoped ruleset in the [risk
+model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model). Its setting of 0 required approvals also removes
+the platform approval for medium-tier changes, for low-tier changes from workflows below A4 and for human pull
+requests; the person who merges them holds that approval.
 
 Rules at every tier:
 
@@ -671,7 +663,7 @@ Write the high-tier list in the instruction file ([Pattern
 decides the tier. Review the approve rate for each prompt monthly. At review, check:
 
 - The author of record is named and is not the approver ([Pattern
-  4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)).
+  4.7](L4-standards-measurement.md#pattern-47--author-of-record)).
 - A new or updated skill, plugin, hook or MCP server is pinned and on the allowlist ([Pattern
   2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)).
 
@@ -687,16 +679,12 @@ automation, not human approval. By default it blocks merging a pull request no h
 deploys and migrations, and after 3 blocks in a row or 20 in total it pauses and Claude Code resumes prompting
 ([permission modes](https://code.claude.com/docs/en/permission-modes)).
 
-**No harness: CI only.** A ruleset sees paths, not classes. Require pull requests and status checks, turn on
-"Require review from Code Owners", and give CODEOWNERS entries to the high-tier paths only. Set required approvals
-to 1, or to 0 once an A4 workflow runs: then a pull request that touches an owned path needs that owner's approval,
-and one that touches none merges on checks alone, which is how a low-tier A4 merge passes. Add a "Required
-reviewers" team rule with 2 approvals on the same paths (organization repositories only), and turn on "Require
-approval of the most recent reviewable push" and "Dismiss stale pull request approvals" ([GitHub
-rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets#require-a-pull-request-before-merging)).
-Keep the agent's identity out of CODEOWNERS and that team. A medium-tier change has no path to match; the reviewer
-holds its approval, and the gate and autonomy hook stop it from merging with no person ([risk
-model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model)).
+**No harness: CI only.** A ruleset sees paths, not classes; the GitHub ruleset is in the [risk
+model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model). The autonomy hook does not classify changes outside
+the repair loop: an A4 workflow's `permitted_actions.paths` must list low-tier paths only, because the hook's
+`merge-limits` rule blocks an unattended merge that touches another path, and with no `paths` it sets no path limit
+([hook](../examples/autonomy/README.md#hook)). The repair gate classifies repair changes. Keep the agent's identity
+out of CODEOWNERS and every reviewer team.
 
 ### Anti-Pattern
 
@@ -713,6 +701,6 @@ of the required reviewers; this library does not (SG-9, SG-26, OM-18, PO-20, PL-
 
 ---
 
-**Previous:** [L1: Closed Loop Design and Verification](L1-feedback-loops.md) | **Next:** [L4: Standards &
+**Previous:** [L1: Closed Loop Design and Verification](L1-feedback-loops.md) | **Next:** [L4: Standards and
 Measurement](L4-standards-measurement.md) ([L3: Optimization](L3-optimization.md) is optional) | [Back to
 Overview](../README.md)
