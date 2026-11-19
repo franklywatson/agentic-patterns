@@ -96,7 +96,7 @@ Use a containment boundary for limits that must hold.
 
 ### Docker is default-allow
 
-The router allows every `docker` and `docker-compose` command (`src/config/routing.config.ts`, intent `docker`). It does not inspect subcommands or flags, so `docker run -v /:/host` and `docker exec` pass. Access to the Docker socket is root-equivalent on the host. Treat this rule as a statement that no dedicated tool exists for Docker commands, not as a security control. Restrict Docker access with a containment boundary (sandbox, credential scope); see [the containment prerequisite track](../../docs/refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people).
+The router allows every `docker` and `docker-compose` command (`src/config/routing.config.ts`, intent `docker`). It does not inspect subcommands or flags, so `docker run -v /:/host` and `docker exec` pass. Access to the Docker socket is root-equivalent on the host. Treat this rule as a statement that no dedicated tool exists for Docker commands, not as a security control. Restrict Docker access with a containment boundary (sandbox, credential scope); see [Pattern 2.9 — Contain Before You Relax](../../docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax).
 
 ## Routing Rules
 
@@ -170,3 +170,5 @@ Savings depend on the repository, the query, and the tools installed. Measure th
 - [L3 Optimization Documentation](../../docs/L3-optimization.md)
 - [RTK](https://github.com/rtk-ai/rtk) — Token-optimized CLI proxy
 - [jcodemunch](https://github.com/jgravelle/jcodemunch-mcp) — Codebase indexing
+
+RTK proxies your shell commands and jcodemunch is an MCP server that indexes your repository. Treat both as dependencies: read the source before installing and pin a version ([Pattern 2.12](../../docs/L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)). jcodemunch is free for non-commercial use; commercial use needs a paid licence.

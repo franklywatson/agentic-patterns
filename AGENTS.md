@@ -21,6 +21,7 @@ agentic-patterns/
 │   ├── cross-cutting/
 │   │   ├── anti-patterns.md
 │   │   ├── adoption-guide.md
+│   │   ├── threat-model.md
 │   │   └── glossary.md
 │   ├── references/
 │   │   ├── reference-telegram-trading-bot-case-study.md
@@ -100,6 +101,7 @@ See [README.md](README.md) for detailed project overview.
 - [docs/cross-cutting/anti-patterns.md](docs/cross-cutting/anti-patterns.md) — Pattern diagnostic catalog
 - [docs/cross-cutting/adoption-guide.md](docs/cross-cutting/adoption-guide.md) — Suggested adoption paths for agentic practices
 - [docs/cross-cutting/faq.md](docs/cross-cutting/faq.md) — Deployment, operations, and SDLC concerns beyond the patterns
+- [docs/cross-cutting/threat-model.md](docs/cross-cutting/threat-model.md) — Assets, untrusted entry points, agent capabilities and the pattern that mitigates each
 - [docs/cross-cutting/glossary.md](docs/cross-cutting/glossary.md) — Shared terminology
 
 ## References

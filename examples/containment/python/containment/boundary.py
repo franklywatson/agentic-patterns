@@ -75,6 +75,7 @@ def start_fixture_server() -> FixtureServer:
         started = _docker(
             [
                 "run", "-d", "--rm", "--name", host, "--network", network, "--user", NOBODY,
+                "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
                 IMAGE, "sh", "-c",
                 "mkdir -p /tmp/srv && echo containment-ok > /tmp/srv/index.html"
                 " && exec python3 -m http.server 8000 --directory /tmp/srv",

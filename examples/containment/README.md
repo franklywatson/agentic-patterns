@@ -89,7 +89,7 @@ Adding one regex to `rules.json` would make the policy catch `sed --in-place`. T
 
 | Layer | Setting |
 |-------|---------|
-| Policy | `permissions.deny` with `Read(./.env)`, `Read(./.env.*)` and `Bash(sed -i *)`; `permissions.blockWritesOutsideWorkingDirectories` |
+| Policy | `permissions.deny` with `Read(./.env)`, `Read(./.env.*)` and `Bash(sed -i *)`; `permissions.blockWritesOutsideWorkingDirectories` (needs Claude Code v2.1.314 or later) |
 | Boundary | `sandbox.enabled`, `sandbox.failIfUnavailable`, `sandbox.allowUnsandboxedCommands: false` |
 | Credentials | `sandbox.filesystem.denyRead`, `sandbox.credentials.files`, `sandbox.credentials.envVars` |
 | Egress | `sandbox.network.allowedDomains` |
