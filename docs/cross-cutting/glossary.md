@@ -203,6 +203,12 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **Definition**: Stack tests and E2E/integration tests use real dependencies (PostgreSQL, Redis, etc.) for owned services; only external services without testnet should be mocked. Mocks are appropriate and encouraged in unit tests for isolation.
 **See**: [Pattern 1.5 - Real Dependencies in E2E/Integration and Stack Tests](../L1-feedback-loops.md#pattern-15--real-dependencies-in-e2eintegration-and-stack-tests)
 
+### Pass^k
+
+**Layer**: L4 - Standards & Measurement
+**Definition**: The share of evaluation runs in which all k repeats of a scenario pass. It rewards consistency, unlike best-of-k. Used to score decisions on irreversible actions, such as the production gate.
+**See**: [Pattern 1.10 - Production Gate and Progressive Confirmation](../L1-patterns/1.10-production-gate-progressive-confirmation.md)
+
 ### Production Gate
 
 **Layer**: L1 - Closed Loop Design
