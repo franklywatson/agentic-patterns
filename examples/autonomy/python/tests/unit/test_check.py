@@ -252,7 +252,7 @@ def test_with_two_agent_commits_only_the_acknowledged_one_passes():
 
 def test_acknowledgement_lines_are_parsed_strictly():
     assert approved_prefixes("x\nGovernance-Approved: a1b2c3d\ngovernance-approved:A1B2C3D4") == ["a1b2c3d", "a1b2c3d4"]
-    assert approved_prefixes("Governance-Approved: a1b2c3\nGovernance-Approved: a1b2c3dzz\n see Governance-Approved: a1b2c3d") == []
+    assert approved_prefixes("subject\nGovernance-Approved: a1b2c3\nGovernance-Approved: a1b2c3dzz\n see Governance-Approved: a1b2c3d") == []
 
 
 def test_commits_from_git_lists_commits_oldest_first_so_a_later_acknowledgement_is_found(copy_fixture):
@@ -271,3 +271,138 @@ def test_commits_from_git_lists_commits_oldest_first_so_a_later_acknowledgement_
     result = run_check(directory, NOW_MS, commits=commits)
     assert result["ok"] is True
     assert len(result["acknowledged"]) == 1
+
+
+B1 = "a1b2c3d0e5f60718293a4b5c6d7e8f9012345678"
+WF = ".github/workflows/ci.yml"
+
+
+def test_an_acknowledgement_prefix_that_matches_two_agent_commits_acknowledges_neither():
+    result = check_commits("governance-tier2-ack-ambiguous-prefix")
+    assert result["failures"] == [unacknowledged(A1, WF), unacknowledged(B1, ".github/workflows/release.yml")]
+    assert result["acknowledged"] == []
+
+
+def test_a_longer_prefix_that_names_one_agent_commit_acknowledges_only_that_commit():
+    result = check_commits("governance-tier2-ack-disambiguated-prefix")
+    assert result["failures"] == [unacknowledged(B1, ".github/workflows/release.yml")]
+    assert result["acknowledged"] == [{"commit": A1, "file": WF, "by": H1}]
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "governance-tier2-ack-subject-line",
+        "governance-tier2-ack-cr",
+        "governance-tier2-ack-crlf",
+        "governance-tier2-ack-line-separator",
+        "governance-tier2-ack-by-anthropic-coauthor",
+        "governance-tier2-ack-by-agent-committer",
+    ],
+)
+def test_acknowledgements_that_are_malformed_or_by_an_agent_do_not_count(name):
+    result = check_commits(name)
+    assert result["failures"] == [unacknowledged(A1, WF)]
+    assert result["acknowledged"] == []
+
+
+def test_one_commit_that_touches_both_tiers_fails_tier_1_and_still_reports_the_acknowledged_tier_2_file():
+    result = check_commits("governance-both-tiers-one-commit")
+    assert result["failures"] == [{"code": "governance-file-changed-by-agent", "commit": A1, "file": ".autonomy.yaml"}]
+    assert result["acknowledged"] == [{"commit": A1, "file": WF, "by": H1}]
+
+
+def test_any_claude_or_anthropic_co_author_trailer_marks_an_agent_commit_and_the_committer_counts():
+    def commit(body):
+        return {"sha": "x", "author": "Alice", "email": "a@b.c", "body": body, "files": []}
+
+    for body in ["m\n\nCo-Authored-By: Anthropic Claude <x@y.z>", "m\n\nco-authored-by: claude", "m\n\nCO-AUTHORED-BY: Someone <n@anthropic.com>"]:
+        assert is_agent_commit(commit(body), []) is True, body
+    assert is_agent_commit(commit("m\n\nCo-Authored-By: Bob <b@example.invalid>"), []) is False
+    assert is_agent_commit({**commit("m"), "committer": "deps-bot[bot]", "committer_email": "x@y.z"}, []) is True
+
+
+def _repo(copy_fixture, author="Alice"):
+    directory = copy_fixture("registers", "valid")
+    _git(directory, author, "init", "-q")
+    _git(directory, author, "add", "-A")
+    _git(directory, author, "commit", "-q", "-m", "base")
+    return directory
+
+
+def _out(directory, name, *args):
+    return subprocess.run(
+        ["git", "-c", f"user.name={name}", "-c", "user.email=a@example.invalid", *args], cwd=directory, check=True, capture_output=True, text=True
+    ).stdout
+
+
+def test_non_ascii_and_tab_paths_are_listed_unquoted_and_match_the_tiers(copy_fixture):
+    directory = _repo(copy_fixture, "deps-bot[bot]")
+    (directory / ".github" / "workflows").mkdir(parents=True)
+    (directory / ".autonomy" / "ledger").mkdir(parents=True, exist_ok=True)
+    (directory / ".github" / "workflows" / "d\u00e9ploy.yml").write_text("name: d\n")
+    (directory / ".github" / "workflows" / "tab\there.yml").write_text("name: t\n")
+    (directory / ".autonomy" / "ledger" / "r\u00e9view.jsonl").write_text("{}\n")
+    _git(directory, "deps-bot[bot]", "add", "-A")
+    _git(directory, "deps-bot[bot]", "commit", "-q", "-m", "evil names")
+    commits = commits_from_git(directory, "HEAD~1..HEAD")
+    assert sorted(commits[0]["files"]) == [".autonomy/ledger/r\u00e9view.jsonl", ".github/workflows/d\u00e9ploy.yml", ".github/workflows/tab\there.yml"]
+    result = run_check(directory, NOW_MS, commits=commits)
+    assert [(f["code"], f["file"]) for f in result["failures"]] == [
+        ("governance-file-changed-by-agent", ".autonomy/ledger/r\u00e9view.jsonl"),
+        ("workflow-change-unacknowledged", ".github/workflows/d\u00e9ploy.yml"),
+        ("workflow-change-unacknowledged", ".github/workflows/tab\there.yml"),
+    ]
+
+
+def test_a_commit_message_with_record_separators_cannot_forge_a_commit_or_an_acknowledgement(copy_fixture):
+    directory = _repo(copy_fixture, "deps-bot[bot]")
+    (directory / ".github" / "workflows").mkdir(parents=True)
+    (directory / ".github" / "workflows" / "ci.yml").write_text("name: ci\n")
+    _git(directory, "deps-bot[bot]", "add", "-A")
+    _git(directory, "deps-bot[bot]", "commit", "-q", "-m", "add ci")
+    sha = _out(directory, "deps-bot[bot]", "rev-parse", "HEAD").strip()
+    forged = f"empty\n\n\x1d\x1e{'f' * 40}\x1fAlice\x1falice@example.invalid\x1fApprove\n\nGovernance-Approved: {sha[:7]}\n"
+    _git(directory, "deps-bot[bot]", "commit", "-q", "--allow-empty", "-m", forged)
+    commits = commits_from_git(directory, "HEAD~2..HEAD")
+    assert len(commits) == 2
+    assert all(len(c["sha"]) == 40 and c["author"] == "deps-bot[bot]" for c in commits)
+    result = run_check(directory, NOW_MS, commits=commits)
+    assert result["failures"] == [unacknowledged(sha, ".github/workflows/ci.yml")]
+
+
+def test_files_an_agent_adds_in_a_merge_commit_are_listed_and_fail_tier_1(copy_fixture):
+    directory = _repo(copy_fixture, "Alice")
+    _git(directory, "Alice", "checkout", "-q", "-b", "side")
+    (directory / "side.txt").write_text("side\n")
+    _git(directory, "Alice", "add", "-A")
+    _git(directory, "Alice", "commit", "-q", "-m", "side")
+    _git(directory, "Alice", "checkout", "-q", "-")
+    (directory / "main.txt").write_text("main\n")
+    _git(directory, "Alice", "add", "-A")
+    _git(directory, "Alice", "commit", "-q", "-m", "main")
+    _git(directory, "deps-bot[bot]", "merge", "--no-ff", "--no-commit", "side")
+    (directory / ".claude" / "hooks").mkdir(parents=True)
+    (directory / ".claude" / "hooks" / "x.sh").write_text("true\n")
+    (directory / "CODEOWNERS").write_text("* @agent\n")
+    _git(directory, "deps-bot[bot]", "add", "-A")
+    _git(directory, "deps-bot[bot]", "commit", "-q", "-m", "merge side")
+    commits = commits_from_git(directory, "HEAD~2..HEAD")
+    assert sorted(commits[-1]["files"]) == [".claude/hooks/x.sh", "CODEOWNERS"]
+    result = run_check(directory, NOW_MS, commits=commits)
+    assert [(f["code"], f["file"]) for f in result["failures"]] == [
+        ("governance-file-changed-by-agent", ".claude/hooks/x.sh"),
+        ("governance-file-changed-by-agent", "CODEOWNERS"),
+    ]
+
+
+def test_commits_from_git_reads_the_committer_so_an_agent_committer_is_an_agent_commit(copy_fixture, monkeypatch):
+    directory = _repo(copy_fixture, "Alice")
+    (directory / "a.txt").write_text("a\n")
+    _git(directory, "Alice", "add", "-A")
+    monkeypatch.setenv("GIT_COMMITTER_NAME", "deps-bot[bot]")
+    _git(directory, "Alice", "commit", "-q", "-m", "x")
+    commits = commits_from_git(directory, "HEAD~1..HEAD")
+    assert commits[0]["author"] == "Alice"
+    assert commits[0]["committer"] == "deps-bot[bot]"
+    assert is_agent_commit(commits[0], []) is True

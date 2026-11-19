@@ -19,7 +19,7 @@ TIER1 = [
 # Tier 2: changed by an agent commit only when a later non-agent commit acknowledges it.
 TIER2 = [re.compile(r"^\.github/workflows/")]
 
-ACK_LINE = re.compile(r"^governance-approved:[ \t]*([0-9a-f]{7,40})[ \t]*\r?$", re.I | re.M)
+ACK_LINE = re.compile(r"governance-approved:[ \t]*([0-9a-f]{7,40})", re.I)
 
 
 def is_tier1_file(path: str) -> bool:
@@ -37,8 +37,13 @@ def is_governance_file(path: str) -> bool:
 
 
 def approved_prefixes(body: str | None) -> list[str]:
-    """Hex prefixes named by `Governance-Approved: <sha>` lines in a commit message body."""
-    return [m.group(1).lower() for m in ACK_LINE.finditer(body or "")]
+    """Hex prefixes named by whole-line `Governance-Approved: <sha>` lines in the body (not the subject line)."""
+    prefixes = []
+    for line in (body or "").split("\n")[1:]:
+        m = ACK_LINE.fullmatch(line)
+        if m:
+            prefixes.append(m.group(1).lower())
+    return prefixes
 
 
 def agent_tokens(register: dict) -> list[str]:
@@ -50,30 +55,53 @@ def agent_tokens(register: dict) -> list[str]:
     return tokens
 
 
+CO_AUTHOR_AGENT = re.compile(r"co-authored-by:[\s\S]*(claude|anthropic)", re.I)
+
+
 def is_agent_commit(commit: dict, tokens: list[str]) -> bool:
-    who = f"{commit['author']} {commit['email']}".lower()
+    who = " ".join(
+        [commit["author"], commit["email"], commit.get("committer") or "", commit.get("committer_email") or ""]
+    ).lower()
     if "[bot]" in who:
         return True
     if any(t in who for t in tokens):
         return True
-    return re.search(r"^co-authored-by:\s*claude", commit.get("body") or "", re.I | re.M) is not None
+    return any(CO_AUTHOR_AGENT.match(line) for line in (commit.get("body") or "").split("\n"))
 
 
 RANGE = re.compile(r"^[\w./^~@{:+][\w./^~@{}:+-]*(\.\.\.?[\w./^~@{}:+-]+)?\Z")
+SHA = re.compile(r"([0-9a-f]{40}|[0-9a-f]{64})")
 
 
 def commits_from_git(directory: str | Path, range_: str) -> list[dict]:
+    """Commits in the range, oldest first. Each commit is read in its own git call and parsed by NUL, which git
+    refuses in a message, so a message cannot forge a record. Paths are read with -z and quotePath off, and a
+    merge lists what it changed beyond the automatic merge (remerge)."""
     if not RANGE.match(range_):
         raise ValueError(f"invalid git range: {range_}")
-    out = git(directory, ["log", "--no-renames", "--name-only", "--format=%x1e%H%x1f%an%x1f%ae%x1f%B%x1d", range_])
-    if out is None:
-        raise RuntimeError(f"git log failed for range {range_}")
+    listing = git(directory, ["rev-list", "--reverse", range_])
+    if listing is None:
+        raise RuntimeError(f"git rev-list failed for range {range_}")
     commits = []
-    for chunk in [c for c in out.split("\x1e") if c.strip()]:
-        head, files_text = chunk.split("\x1d")
-        sha, author, email, *body = head.split("\x1f")
-        commits.append({"sha": sha, "author": author, "email": email, "body": "\x1f".join(body), "files": [f for f in files_text.split("\n") if f]})
-    commits.reverse()
+    for sha in [line for line in listing.split("\n") if line]:
+        if not SHA.fullmatch(sha):
+            raise RuntimeError(f"git returned a malformed sha: {sha}")
+        meta = git(directory, ["-c", "core.quotePath=false", "show", "-s", "--format=%an%x00%ae%x00%cn%x00%ce%x00%B", sha])
+        names = git(directory, ["-c", "core.quotePath=false", "show", "-z", "--name-only", "--no-renames", "--diff-merges=remerge", "--format=", sha])
+        if meta is None or names is None:
+            raise RuntimeError(f"git show failed for {sha}")
+        author, email, committer, committer_email, *body = meta.split("\0")
+        commits.append(
+            {
+                "sha": sha,
+                "author": author,
+                "email": email,
+                "committer": committer,
+                "committer_email": committer_email,
+                "body": "\0".join(body),
+                "files": [f for f in names.split("\0") if f],
+            }
+        )
     return commits
 
 
@@ -109,6 +137,7 @@ def run_check(directory: str | Path, now: int, register_path: str | Path | None 
             result["failures"].append({"code": "grant-exceeds-cap", "workflow": wf["id"], "granted": eff.granted, "cap": eff.cap})
     tokens = agent_tokens(register)
     ordered = commits or []
+    agent_shas = [c["sha"].lower() for c in ordered if is_agent_commit(c, tokens)]
     for index, commit in enumerate(ordered):
         if not is_agent_commit(commit, tokens):
             continue
@@ -117,7 +146,8 @@ def run_check(directory: str | Path, now: int, register_path: str | Path | None 
             (
                 later
                 for later in ordered[index + 1 :]
-                if not is_agent_commit(later, tokens) and any(sha.startswith(p) for p in approved_prefixes(later.get("body")))
+                if not is_agent_commit(later, tokens)
+                and any(sha.startswith(p) and sum(a.startswith(p) for a in agent_shas) == 1 for p in approved_prefixes(later.get("body")))
             ),
             None,
         )

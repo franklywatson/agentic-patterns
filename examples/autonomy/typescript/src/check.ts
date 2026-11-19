@@ -36,6 +36,8 @@ export interface Commit {
   sha: string;
   author: string;
   email: string;
+  committer?: string;
+  committer_email?: string;
   body?: string;
   files: string[];
 }
@@ -59,11 +61,16 @@ export function isGovernanceFile(path: string): boolean {
   return isTier1File(path) || isTier2File(path);
 }
 
-const ACK_LINE = /^governance-approved:[ \t]*([0-9a-f]{7,40})[ \t]*\r?$/gim;
+const ACK_LINE = /^governance-approved:[ \t]*([0-9a-f]{7,40})$/i;
 
-/** Hex prefixes named by `Governance-Approved: <sha>` lines in a commit message body. */
+/** Hex prefixes named by whole-line `Governance-Approved: <sha>` lines in the body (not the subject line). */
 export function approvedPrefixes(body: string | undefined): string[] {
-  return [...(body ?? "").matchAll(ACK_LINE)].map((m) => m[1].toLowerCase());
+  const prefixes: string[] = [];
+  for (const line of (body ?? "").split("\n").slice(1)) {
+    const m = ACK_LINE.exec(line);
+    if (m) prefixes.push(m[1].toLowerCase());
+  }
+  return prefixes;
 }
 
 export function agentTokens(register: Json): string[] {
@@ -73,26 +80,37 @@ export function agentTokens(register: Json): string[] {
     .map((id: string) => id.slice(id.indexOf(":") + 1).toLowerCase());
 }
 
+const CO_AUTHOR_AGENT = /^co-authored-by:[\s\S]*(claude|anthropic)/i;
+
 export function isAgentCommit(commit: Commit, tokens: string[]): boolean {
-  const who = `${commit.author} ${commit.email}`.toLowerCase();
+  const who = `${commit.author} ${commit.email} ${commit.committer ?? ""} ${commit.committer_email ?? ""}`.toLowerCase();
   if (who.includes("[bot]")) return true;
   if (tokens.some((t) => who.includes(t))) return true;
-  return /^co-authored-by:\s*claude/im.test(commit.body ?? "");
+  return (commit.body ?? "").split("\n").some((line) => CO_AUTHOR_AGENT.test(line));
 }
 
 const RANGE = /^[\w./^~@{:+][\w./^~@{}:+-]*(\.\.\.?[\w./^~@{}:+-]+)?$/;
+const SHA = /^([0-9a-f]{40}|[0-9a-f]{64})$/;
 
+/**
+ * Commits in the range, oldest first. Each commit is read in its own git call and parsed by NUL, which git
+ * refuses in a message, so a message cannot forge a record. Paths are read with -z and quotePath off, and a
+ * merge lists what it changed beyond the automatic merge (remerge).
+ */
 export function commitsFromGit(dir: string, range: string): Commit[] {
   if (!RANGE.test(range)) throw new Error(`invalid git range: ${range}`);
-  const out = git(dir, ["log", "--no-renames", "--name-only", "--format=%x1e%H%x1f%an%x1f%ae%x1f%B%x1d", range]);
-  if (out === null) throw new Error(`git log failed for range ${range}`);
+  const list = git(dir, ["rev-list", "--reverse", range]);
+  if (list === null) throw new Error(`git rev-list failed for range ${range}`);
   const commits: Commit[] = [];
-  for (const chunk of out.split("\x1e").filter((c) => c.trim() !== "")) {
-    const [head, filesText] = chunk.split("\x1d");
-    const [sha, author, email, ...body] = head.split("\x1f");
-    commits.push({ sha, author, email, body: body.join("\x1f"), files: filesText.split("\n").filter(Boolean) });
+  for (const sha of list.split("\n").filter(Boolean)) {
+    if (!SHA.test(sha)) throw new Error(`git returned a malformed sha: ${sha}`);
+    const meta = git(dir, ["-c", "core.quotePath=false", "show", "-s", "--format=%an%x00%ae%x00%cn%x00%ce%x00%B", sha]);
+    const names = git(dir, ["-c", "core.quotePath=false", "show", "-z", "--name-only", "--no-renames", "--diff-merges=remerge", "--format=", sha]);
+    if (meta === null || names === null) throw new Error(`git show failed for ${sha}`);
+    const [author, email, committer, committer_email, ...body] = meta.split("\0");
+    commits.push({ sha, author, email, committer, committer_email, body: body.join("\0"), files: names.split("\0").filter(Boolean) });
   }
-  return commits.reverse();
+  return commits;
 }
 
 export interface CheckOptions {
@@ -134,12 +152,14 @@ export function runCheck(opts: CheckOptions): CheckResult {
   }
   const tokens = agentTokens(register);
   const commits = opts.commits ?? [];
+  const agentShas = commits.filter((c) => isAgentCommit(c, tokens)).map((c) => c.sha.toLowerCase());
   commits.forEach((commit, index) => {
     if (!isAgentCommit(commit, tokens)) return;
     const sha = commit.sha.toLowerCase();
+    const names = (prefix: string) => agentShas.filter((other) => other.startsWith(prefix)).length;
     const acknowledger = commits
       .slice(index + 1)
-      .find((later) => !isAgentCommit(later, tokens) && approvedPrefixes(later.body).some((p) => sha.startsWith(p)));
+      .find((later) => !isAgentCommit(later, tokens) && approvedPrefixes(later.body).some((p) => sha.startsWith(p) && names(p) === 1));
     for (const file of commit.files) {
       if (isTier1File(file)) {
         result.failures.push({ code: "governance-file-changed-by-agent", commit: commit.sha, file });

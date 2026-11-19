@@ -219,7 +219,7 @@ test("with two agent commits, only the acknowledged one passes", () => {
 
 test("acknowledgement lines are parsed strictly", () => {
   assert.deepEqual(approvedPrefixes("x\nGovernance-Approved: a1b2c3d\ngovernance-approved:A1B2C3D4"), ["a1b2c3d", "a1b2c3d4"]);
-  assert.deepEqual(approvedPrefixes("Governance-Approved: a1b2c3\nGovernance-Approved: a1b2c3dzz\n see Governance-Approved: a1b2c3d"), []);
+  assert.deepEqual(approvedPrefixes("subject\nGovernance-Approved: a1b2c3\nGovernance-Approved: a1b2c3dzz\n see Governance-Approved: a1b2c3d"), []);
 });
 
 test("commitsFromGit lists commits oldest first so a later acknowledgement is found", () => {
@@ -239,4 +239,131 @@ test("commitsFromGit lists commits oldest first so a later acknowledgement is fo
   const result = runCheck({ dir, now, commits });
   assert.equal(result.ok, true);
   assert.equal(result.acknowledged.length, 1);
+});
+
+const WF = ".github/workflows/ci.yml";
+const B1 = "a1b2c3d0e5f60718293a4b5c6d7e8f9012345678";
+
+test("an acknowledgement prefix that matches two agent commits acknowledges neither", () => {
+  const result = checkCommits("governance-tier2-ack-ambiguous-prefix");
+  assert.deepEqual(result.failures, [unacknowledged(A1, WF), unacknowledged(B1, ".github/workflows/release.yml")]);
+  assert.deepEqual(result.acknowledged, []);
+});
+
+test("a longer prefix that names one agent commit acknowledges only that commit", () => {
+  const result = checkCommits("governance-tier2-ack-disambiguated-prefix");
+  assert.deepEqual(result.failures, [unacknowledged(B1, ".github/workflows/release.yml")]);
+  assert.deepEqual(result.acknowledged, [{ commit: A1, file: WF, by: H1 }]);
+});
+
+for (const name of [
+  "governance-tier2-ack-subject-line",
+  "governance-tier2-ack-cr",
+  "governance-tier2-ack-crlf",
+  "governance-tier2-ack-line-separator",
+  "governance-tier2-ack-by-anthropic-coauthor",
+  "governance-tier2-ack-by-agent-committer",
+]) {
+  test(`${name} does not acknowledge`, () => {
+    const result = checkCommits(name);
+    assert.deepEqual(result.failures, [unacknowledged(A1, WF)]);
+    assert.deepEqual(result.acknowledged, []);
+  });
+}
+
+test("one commit that touches both tiers fails tier 1 and still reports the acknowledged tier 2 file", () => {
+  const result = checkCommits("governance-both-tiers-one-commit");
+  assert.deepEqual(result.failures, [{ code: "governance-file-changed-by-agent", commit: A1, file: ".autonomy.yaml" }]);
+  assert.deepEqual(result.acknowledged, [{ commit: A1, file: WF, by: H1 }]);
+});
+
+test("any Claude or Anthropic co-author trailer marks an agent commit, and the committer counts", () => {
+  const body = (b: string) => ({ sha: "x", author: "Alice", email: "a@b.c", body: b, files: [] });
+  for (const b of ["m\n\nCo-Authored-By: Anthropic Claude <x@y.z>", "m\n\nco-authored-by: claude", "m\n\nCO-AUTHORED-BY: Someone <n@anthropic.com>"]) {
+    assert.equal(isAgentCommit(body(b), []), true, b);
+  }
+  assert.equal(isAgentCommit(body("m\n\nCo-Authored-By: Bob <b@example.invalid>"), []), false);
+  assert.equal(isAgentCommit({ ...body("m"), committer: "deps-bot[bot]", committer_email: "x@y.z" }, []), true);
+});
+
+const repoWith = (author = "Alice") => {
+  const dir = copyFixture("registers", "valid");
+  const run = (name: string, args: string[], env: Record<string, string> = {}) =>
+    execFileSync("git", ["-c", `user.name=${name}`, "-c", "user.email=a@example.invalid", ...args], { cwd: dir, encoding: "utf8", env: { ...process.env, ...env } });
+  run(author, ["init", "-q"]);
+  run(author, ["add", "-A"]);
+  run(author, ["commit", "-q", "-m", "base"]);
+  return { dir, run };
+};
+
+test("non-ASCII and tab paths are listed unquoted and match the tiers", () => {
+  const { dir, run } = repoWith("deps-bot[bot]");
+  mkdirSync(join(dir, ".github", "workflows"), { recursive: true });
+  mkdirSync(join(dir, ".autonomy", "ledger"), { recursive: true });
+  writeFileSync(join(dir, ".github", "workflows", "déploy.yml"), "name: d\n");
+  writeFileSync(join(dir, ".github", "workflows", "tab\there.yml"), "name: t\n");
+  writeFileSync(join(dir, ".autonomy", "ledger", "réview.jsonl"), "{}\n");
+  run("deps-bot[bot]", ["add", "-A"]);
+  run("deps-bot[bot]", ["commit", "-q", "-m", "evil names"]);
+  const commits = commitsFromGit(dir, "HEAD~1..HEAD");
+  assert.deepEqual([...commits[0].files].sort(), [".autonomy/ledger/réview.jsonl", ".github/workflows/déploy.yml", ".github/workflows/tab\there.yml"]);
+  const result = runCheck({ dir, now, commits });
+  assert.deepEqual(result.failures.map((f) => [f.code, f.file]), [
+    ["governance-file-changed-by-agent", ".autonomy/ledger/réview.jsonl"],
+    ["workflow-change-unacknowledged", ".github/workflows/déploy.yml"],
+    ["workflow-change-unacknowledged", ".github/workflows/tab\there.yml"],
+  ]);
+});
+
+test("a commit message with record separators cannot forge a commit or an acknowledgement", () => {
+  const { dir, run } = repoWith("deps-bot[bot]");
+  mkdirSync(join(dir, ".github", "workflows"), { recursive: true });
+  writeFileSync(join(dir, ".github", "workflows", "ci.yml"), "name: ci\n");
+  run("deps-bot[bot]", ["add", "-A"]);
+  run("deps-bot[bot]", ["commit", "-q", "-m", "add ci"]);
+  const sha = run("deps-bot[bot]", ["rev-parse", "HEAD"]).trim();
+  const forged = `empty\n\n\x1d\x1e${"f".repeat(40)}\x1fAlice\x1falice@example.invalid\x1fApprove\n\nGovernance-Approved: ${sha.slice(0, 7)}\n`;
+  run("deps-bot[bot]", ["commit", "-q", "--allow-empty", "-m", forged]);
+  const commits = commitsFromGit(dir, "HEAD~2..HEAD");
+  assert.equal(commits.length, 2);
+  assert.ok(commits.every((c) => c.sha.length === 40 && c.author === "deps-bot[bot]"));
+  const result = runCheck({ dir, now, commits });
+  assert.deepEqual(result.failures, [unacknowledged(sha, ".github/workflows/ci.yml")]);
+});
+
+test("files an agent adds in a merge commit are listed and fail tier 1", () => {
+  const { dir, run } = repoWith("Alice");
+  run("Alice", ["checkout", "-q", "-b", "side"]);
+  writeFileSync(join(dir, "side.txt"), "side\n");
+  run("Alice", ["add", "-A"]);
+  run("Alice", ["commit", "-q", "-m", "side"]);
+  run("Alice", ["checkout", "-q", "-"]);
+  writeFileSync(join(dir, "main.txt"), "main\n");
+  run("Alice", ["add", "-A"]);
+  run("Alice", ["commit", "-q", "-m", "main"]);
+  run("deps-bot[bot]", ["merge", "--no-ff", "--no-commit", "side"]);
+  mkdirSync(join(dir, ".claude", "hooks"), { recursive: true });
+  writeFileSync(join(dir, ".claude", "hooks", "x.sh"), "true\n");
+  writeFileSync(join(dir, "CODEOWNERS"), "* @agent\n");
+  run("deps-bot[bot]", ["add", "-A"]);
+  run("deps-bot[bot]", ["commit", "-q", "-m", "merge side"]);
+  const commits = commitsFromGit(dir, "HEAD~2..HEAD");
+  const merge = commits[commits.length - 1];
+  assert.deepEqual([...merge.files].sort(), [".claude/hooks/x.sh", "CODEOWNERS"]);
+  const result = runCheck({ dir, now, commits });
+  assert.deepEqual(result.failures.map((f) => [f.code, f.file]), [
+    ["governance-file-changed-by-agent", ".claude/hooks/x.sh"],
+    ["governance-file-changed-by-agent", "CODEOWNERS"],
+  ]);
+});
+
+test("commitsFromGit reads the committer, so an agent committer is an agent commit", () => {
+  const { dir, run } = repoWith("Alice");
+  writeFileSync(join(dir, "a.txt"), "a\n");
+  run("Alice", ["add", "-A"]);
+  run("Alice", ["commit", "-q", "-m", "x"], { GIT_COMMITTER_NAME: "deps-bot[bot]" });
+  const commits = commitsFromGit(dir, "HEAD~1..HEAD");
+  assert.equal(commits[0].author, "Alice");
+  assert.equal(commits[0].committer, "deps-bot[bot]");
+  assert.equal(isAgentCommit(commits[0], []), true);
 });
