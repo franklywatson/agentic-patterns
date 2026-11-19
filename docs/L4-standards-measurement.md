@@ -591,11 +591,13 @@ The category and configuration breakdowns direct attention: a low `edge` score s
 The [rig](https://github.com/franklywatson/claude-rig) repo implements context eval across multiple decision layers in [`tests/eval/`](https://github.com/franklywatson/claude-rig/tree/main/tests/eval):
 
 **Shared infrastructure:**
+
 - [`scenarios.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/scenarios.ts) — Scenario definitions: 21 base routing scenarios (5 env presets), 6 Python scenarios (4 Python env presets), mock rtk rewrite
 - [`score.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/score.ts) — Graduated scoring, report generation with per-category and per-environment breakdowns
 - [`score.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/score.test.ts) — Unit tests for scoring functions
 
 **Evaluation suites (each runs independently with its own threshold):**
+
 - [`eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/eval.test.ts) — Tool routing: 21 scenarios × 5 environment presets
 - [`python-eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/python-eval.test.ts) — Python environment routing: 6 scenarios × 4 Python env presets (venv, uv, both, none)
 - [`enforcement-eval.test.ts`](https://github.com/franklywatson/claude-rig/blob/main/tests/eval/enforcement-eval.test.ts) — Enforcement pipeline: stale test detection, constitutional compliance, zero-defect parsing
