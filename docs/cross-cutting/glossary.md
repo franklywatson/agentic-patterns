@@ -20,6 +20,16 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 ---
 
+## B
+
+### Blast Radius
+
+**Layer**: L1 - Closed Loop Design
+**Definition**: How far a change reaches, classified from its diff: B0 one journey, B1 one service, B2 a cross-service contract, B3 money, auth, PII or audit. An unknown change is treated as B3.
+**See**: [Pattern 1.8 - Reversibility and Blast-Radius Classes](../L1-patterns/1.8-reversibility-blast-radius.md)
+
+---
+
 ## C
 
 ### CI Guardrails
@@ -33,6 +43,12 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **Layer**: L4 - Standards & Measurement
 **Definition**: Structured evaluation pattern that scores an agent's decisions against expected outcomes across multiple scenarios and configurations. Applies to any decision layer (tool routing, enforcement pipelines, skill selection, constitutional compliance). Uses graduated scoring (1.0 exact, 0.5 partial, 0.0 miss) and fails the build if overall score falls below a threshold.
 **See**: [Pattern 4.6 - Context Eval](../L4-standards-measurement.md#pattern-46--context-eval)
+
+### Circuit Breaker
+
+**Layer**: L1 - Closed Loop Design
+**Definition**: Code that lowers a repair workflow's grant when its revert rate or recurrence rate crosses a threshold. A person restores the grant. The trip and reset thresholds differ so the grant does not flap.
+**See**: [Pattern 1.11 - Repair Budget, Circuit Breaker and Stop Authority](../L1-patterns/1.11-repair-budget-circuit-breaker-stop.md)
 
 ### Conditional Assertion (Anti-Pattern)
 
@@ -105,6 +121,16 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 ---
 
+## F
+
+### Frozen Oracle
+
+**Layer**: L1 - Closed Loop Design
+**Definition**: The reproduction test for an incident, hashed before the fix is written. The repair agent cannot edit it, and a changed hash blocks the repair.
+**See**: [Pattern 1.9 - Repair Loop with a Frozen Oracle](../L1-patterns/1.9-repair-loop-frozen-oracle.md)
+
+---
+
 ## G
 
 ### Graybox Module
@@ -139,6 +165,12 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **Definition**: Parsing bash commands into intent categories (file_read, text_search, file_modify, docker, etc.) to enable correct routing and blocking of dangerous operations.
 **See**: [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)
 
+### Incident Fingerprint
+
+**Layer**: L1 - Closed Loop Design
+**Definition**: A stable key for a production failure, built from the journey and error class rather than line numbers, so a recurrence after a repair can be detected.
+**See**: [Pattern 1.7 - Incident-to-Stack-Test](../L1-patterns/1.7-incident-to-stack-test.md)
+
 ---
 
 ## M
@@ -171,6 +203,12 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **Definition**: Stack tests and E2E/integration tests use real dependencies (PostgreSQL, Redis, etc.) for owned services; only external services without testnet should be mocked. Mocks are appropriate and encouraged in unit tests for isolation.
 **See**: [Pattern 1.5 - Real Dependencies in E2E/Integration and Stack Tests](../L1-feedback-loops.md#pattern-15--real-dependencies-in-e2eintegration-and-stack-tests)
 
+### Production Gate
+
+**Layer**: L1 - Closed Loop Design
+**Definition**: Deterministic code outside the agent that takes an evidence bundle and change classes and returns `auto`, `human` or `block`. The agent can act up to the gate and cannot pass it.
+**See**: [Pattern 1.10 - Production Gate and Progressive Confirmation](../L1-patterns/1.10-production-gate-progressive-confirmation.md)
+
 ### Progressive Disclosure
 
 **Layer**: L0 - Foundation
@@ -192,6 +230,12 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **Layer**: L1 - Closed Loop Design
 **Definition**: Aggressive cleanup practices (docker compose down -v, volume removal, network pruning) required to prevent Docker resource exhaustion during concurrent testing.
 **See**: [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation)
+
+### Reversibility Class
+
+**Layer**: L1 - Closed Loop Design
+**Definition**: How a change can be undone, classified from its diff: R0 inert, R1 flag-reversible, R2 deploy-reversible, R3 data-forward, R4 external or irreversible. An unknown change is treated as R4.
+**See**: [Pattern 1.8 - Reversibility and Blast-Radius Classes](../L1-patterns/1.8-reversibility-blast-radius.md)
 
 ### Routing Table
 

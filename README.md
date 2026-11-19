@@ -84,6 +84,8 @@ Three dimensions that cap unattended work are not covered, or are covered only i
 - **Security and governance.** L2 covers enforcement and containment. It does not cover supply-chain controls, data handling, audit retention or approval policy.
 - **Measuring value against a baseline.** L4 describes metrics. It does not describe how to set a baseline before adopting a pattern or how to compare against it afterwards.
 
+What is covered: the development-time loop (L0 to L4), and the seam where production incidents enter it. [Patterns 1.7 to 1.12](docs/L1-feedback-loops.md#closing-the-loop-in-production) define the incident record, reproduction, classification, gate, limits and stop for repairing owned code. What is out of scope: deployment pipelines, feature-flag services and production telemetry. The [FAQ](docs/cross-cutting/faq.md#what-passes-between-the-application-and-operations) defines the contract between the application and operations. Unattended repair of data-forward or irreversible changes is not supported at any grant.
+
 The consequence: a team that adopts every pattern in this library is capped at C1 for unattended work, because the lowest capping dimension sets the cap. Phases 2 to 4 of the refresh add these dimensions. This section is updated as each phase lands. The plan is in [docs/refresh/synthesis.md](docs/refresh/synthesis.md).
 
 ## Getting Started
