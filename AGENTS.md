@@ -21,6 +21,7 @@ agentic-patterns/
 │   ├── cross-cutting/
 │   │   ├── anti-patterns.md
 │   │   ├── adoption-guide.md
+│   │   ├── threat-model.md
 │   │   ├── faq.md
 │   │   └── glossary.md
 │   ├── references/
@@ -46,8 +47,8 @@ See [README.md](README.md) for detailed project overview.
 
 - Working code only. No TODOs, no placeholders.
 - All examples must run as-is.
-- Examples that exist: stack tests (Pattern 1.1, TypeScript and Python), guardrail middleware (Pattern 3.1,
-  TypeScript only) and project structure (L0, documentation only).
+- Examples that exist: stack tests (Pattern 1.1, TypeScript and Python), containment (Pattern 2.9, TypeScript and
+  Python), guardrail middleware (Pattern 3.1, TypeScript only) and project structure (L0, documentation only).
 - A new example for a core pattern (L0-L2, L4) ships in TypeScript and Python; examples for the optional L3 may be
   single-language.
 
@@ -108,6 +109,8 @@ See [README.md](README.md) for detailed project overview.
 - [docs/cross-cutting/anti-patterns.md](docs/cross-cutting/anti-patterns.md) — Pattern diagnostic catalog
 - [docs/cross-cutting/adoption-guide.md](docs/cross-cutting/adoption-guide.md) — Suggested adoption paths for agentic practices
 - [docs/cross-cutting/faq.md](docs/cross-cutting/faq.md) — Deployment, operations, and SDLC concerns beyond the patterns
+- [docs/cross-cutting/threat-model.md](docs/cross-cutting/threat-model.md) — Assets, untrusted entry points,
+  agent capabilities and the pattern that mitigates each
 - [docs/cross-cutting/glossary.md](docs/cross-cutting/glossary.md) — Shared terminology
 
 ## References

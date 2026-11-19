@@ -39,6 +39,29 @@ Before choosing a path, assess your current state. Run through this checklist to
 - [ ] Pre-commit hooks enforce basic rules
 - [ ] CI runs tests in isolated environments
 
+### Containment and governance
+
+Check this block before any team moves from attended work (a person watches each step) to unattended work.
+
+- [ ] The agent runs inside a sandbox or container that confines writes and network, and the setting is locked
+  ([Pattern 2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax))
+- [ ] Credentials are outside the agent's environment, short-lived and scoped ([Pattern
+  2.11](../L2-behavioral-guardrails.md#pattern-211--agent-identity-and-delegation))
+- [ ] No session holds untrusted input, sensitive access and external action together without a gate ([Pattern
+  2.10](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition))
+- [ ] Installed skills, plugins and MCP servers are on an allowlist, pinned and read ([Pattern
+  2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain))
+- [ ] A written high-tier list names the actions that need a second human, and the requester cannot approve
+  ([Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review))
+- [ ] Every agent-written change has an author of record, and every agent has an owner in a register ([Pattern
+  4.7](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register))
+- [ ] Completion evidence comes from CI, not from the agent's message ([Pattern
+  4.8](../L4-standards-measurement.md#pattern-48--evidence-over-self-report))
+- [ ] The team can supervise without the agent: the work sample passes ([Pattern
+  4.9](../L4-standards-measurement.md#pattern-49--deliberate-practice))
+
+The [threat model](threat-model.md) lists what each control protects.
+
 ### The New Starter Test
 
 The ultimate assessment: give someone (or an agent) with zero context your AGENTS.md + README + file structure. Can they answer these questions without asking for help?
@@ -66,7 +89,7 @@ Document every assumption they had to make. Each assumption is a gap.
 
 ## Adoption Paths
 
-Three paths teams have used. Choose based on your situation.
+Four paths teams have used. Choose based on your situation.
 
 ### Path A: Foundation-First (Most Teams)
 
@@ -94,6 +117,25 @@ If agents are making consistent errors (missing tests, ignoring rules, skipping 
 2. **L0** — Structure the project so agents have clear context to work with.
 3. **L1, L3-L4** — Fill in remaining layers as capacity allows.
 
+### Path D: Containment-First (Teams Moving to Unattended Work)
+
+If agents will run without a person watching each step, or already hold shell access, keys and network on
+developer machines, start with containment. Do not loosen approvals first.
+
+1. **Contain** — Put the agent in a locked, fail-closed boundary and move credentials outside it. See [Pattern
+   2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) and the [containment
+   example](../../examples/containment/).
+2. **Compose sessions** — Decide which sessions hold untrusted input, sensitive access and external action, and
+   split any that hold all three. See [Pattern
+   2.10](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition).
+3. **Vet dependencies and tier review** — Allowlist and pin skills, plugins and servers. Write the high-tier
+   list. See [Pattern 2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain) and
+   [Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review).
+4. **Name owners** — Name an author of record and start the agent register. See [Pattern
+   4.7](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register).
+5. **Then** continue with L1 and L2 as in Path A. Check the [Containment and governance
+   block](#containment-and-governance) before each step toward unattended work.
+
 ---
 
 ## What to Read for Each Layer
@@ -118,6 +160,9 @@ A workflow is ready for A3 (gated) when its journey has a stack test, required c
 |--------|-------------------|----------|
 | [rig](https://github.com/franklywatson/claude-rig) | L2 enforcement pipeline, L3 tool routing + token-optimized scout agent, L4 context eval, skill chain with phase transitions, CI guardrails | TypeScript |
 | [superpowers](https://github.com/obra/superpowers) | L2 base skills (brainstorming, TDD, verification, review), worktree management | Markdown/JS |
+
+Each of these installs code or instructions that run with the agent's privileges. Read and pin before
+installing ([Pattern 2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)).
 
 ---
 

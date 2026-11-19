@@ -36,6 +36,9 @@ The lineage: patterns were extracted from the reference project, organized into 
 | [rig](https://github.com/franklywatson/claude-rig) | Guardrails framework: L2 enforcement pipeline, L3 tool routing + token-optimized scout agent, L4 context eval, skill chain with phase transitions, CI guardrails. Configurable via `.harness.yaml`. | TypeScript |
 | [superpowers](https://github.com/obra/superpowers) | L2 base skills (brainstorming, TDD, verification, review), automated worktree management | Markdown/JS |
 
+These install hooks, skills and commands that run with your agent's privileges. Read and pin before installing
+([Pattern 2.12](docs/L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)).
+
 ## The Pattern Layers
 
 The library has five layers, L0 to L4. A layer is a group of patterns that depend on the layers below it: L1 verification needs the navigable structure of L0, and L2 enforcement needs the checks of L1. The layers are not a maturity scale. Finishing L4 does not make a team ready for unattended agent work. Adoption starts where your gaps are, not at L0 by default.
@@ -71,22 +74,33 @@ The layers say whether letting go is safe. Two further scales say how far a team
 | Platform | C2-C3 | Yes |
 | Measuring value | C2-C3 | Yes |
 | Individual and team skill | C2 | No |
-| Security and governance | C2 | Yes |
+| Security and governance | C3 | Yes |
 | Production ownership | C1 | Yes |
 
 The cap line is the lowest position among the four capping dimensions. No workflow grant may sit above it: A2 needs a cap of at least C2, A3 at least C3, A4 at least C4, A5 C5. At full adoption the lowest capping dimension is production ownership at C1, so the cap for unattended work is C1.
 
 ## What This Library Does Not Cover Yet
 
-Three dimensions that cap unattended work are not covered, or are covered only in part:
+Two dimensions that cap unattended work are covered only in part or not at all:
 
-- **Production ownership.** Running and repairing agent-built software in production, including on-call and rollback. The [FAQ](docs/cross-cutting/faq.md) names it as out of scope.
-- **Security and governance.** L2 covers enforcement and containment. It does not cover supply-chain controls, data handling, audit retention or approval policy.
+- **Production ownership.** Partly covered. [Pattern
+  4.7](docs/L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) names an author of
+  record and starts an agent register. The register's tested stop (a rehearsed way to halt an unattended
+  workflow) and the patterns for running and repairing agent-built software in production, including on-call and
+  rollback, are not covered. The [FAQ](docs/cross-cutting/faq.md) names deployment as out of scope.
 - **Measuring value against a baseline.** L4 describes metrics. It does not describe how to set a baseline before adopting a pattern or how to compare against it afterwards.
+
+Security and governance is covered by [Patterns 2.9 to
+2.13](docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax), the [threat
+model](docs/cross-cutting/threat-model.md) and [Patterns 4.7 to
+4.9](docs/L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register). Data handling, audit
+retention and incident response are not covered.
 
 Earned autonomy, the way a grant is earned and withdrawn on evidence, has its own pattern doc: [Earned Autonomy](docs/earned-autonomy.md). Its upper grants (A4, A5) still depend on the capping dimensions above.
 
-The consequence: production ownership sets the cap for unattended work. A team that adopts every pattern in this library has it at C1, so it is capped at C1. Closing the security and governance gap or the measurement gap alone does not raise the cap, because production ownership stays at C1. Closing production ownership alone raises it only to C2 (security and governance).
+The consequence: production ownership sets the cap for unattended work. A team that adopts every pattern in
+this library has it at C1, so it is capped at C1. Closing production ownership alone raises it only to C2, set
+by platform and measuring value, which sit at C2-C3.
 
 ## Getting Started
 

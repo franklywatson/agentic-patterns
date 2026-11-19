@@ -1,0 +1,26 @@
+{
+  "credentials": {
+    "basenames": [".env"],
+    "basenamePrefixes": [".env."],
+    "basenameAllow": [".env.example"],
+    "pathPrefixes": [
+      "~/.ssh",
+      "~/.aws/credentials",
+      "~/.config/gcloud",
+      "~/.azure",
+      "~/.kube/config"
+    ]
+  },
+  "shellWritePatterns": [
+    { "id": "sed-in-place", "regex": "(^|[;&|])\\s*sed\\s+-i\\b" }
+  ],
+  "askPatterns": [
+    { "id": "git-push", "regex": "(^|[;&|])\\s*git\\s+push\\b" },
+    { "id": "npm-publish", "regex": "(^|[;&|])\\s*npm\\s+publish\\b" }
+  ],
+  "egress": {
+    "allowedHosts": ["github.com", "registry.npmjs.org"],
+    "networkCommandRegex": "(^|[;&|])\\s*(curl|wget)\\b",
+    "urlHostRegex": "https?://([^/\\s:\"']+)"
+  }
+}
