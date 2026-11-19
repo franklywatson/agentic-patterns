@@ -4,7 +4,7 @@ import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync } f
 import { createServer } from 'node:net';
 import { basename, join } from 'node:path';
 import axios from 'axios';
-import { isUnsafePath, parseDiff } from './diff';
+import { assertPlainUnifiedPatch } from './diff';
 import { fingerprintsFromLog } from './incident';
 import type { Deployment, Handle, OutboxEntry, RepairEnvironment } from './loop';
 import { freezeReproduction, readFrozenHash, sha256File, reproPath } from './reproduce';
@@ -50,36 +50,44 @@ export const removeWorkspaces = (base: Handle): void => {
 };
 
 /**
- * Reject a patch that names an absolute path, a `..` segment, a backslash or a NUL, or that
- * contains no file at all. Both GNU patch and BSD (macOS) patch follow `..` out of the
- * target directory, so the check runs before any patch tool sees the text.
+ * Reject anything that is not a plain unified diff with safe file names (see
+ * assertPlainUnifiedPatch). This is the second line of defence; `git apply` is the first.
  */
 export function validatePatch(patchText: string): void {
-  const files = parseDiff(patchText);
-  if (files.length === 0) throw new Error('patch contains no files');
-  for (const file of files) {
-    if (isUnsafePath(file.path)) throw new Error(`patch names an unsafe path: ${file.path}`);
-  }
-  const headers = patchText.split('\n').filter((l) => /^(\+\+\+|---) /.test(l));
-  for (const header of headers) {
-    const path = header.slice(4).split('\t')[0].replace(/^[^/]+\//, '');
-    if (path.split('/').includes('..') || path.startsWith('/')) throw new Error(`patch names an unsafe path: ${path}`);
-  }
+  assertPlainUnifiedPatch(patchText);
 }
 
-/** Apply a validated patch inside the workspace only. */
+/**
+ * Apply a validated patch inside the workspace only. `git apply` accepts only unified or git
+ * diffs and refuses paths outside the work tree, so it needs no list of bad header forms.
+ * It runs in a throwaway repository inside the workspace, with symlink creation disabled.
+ */
 export function applyPatch(handle: Handle, patchFile: string): void {
   validatePatch(readFileSync(patchFile, 'utf-8'));
-  const result = run('patch', ['-p1', '--no-backup-if-mismatch', '-s', '-i', patchFile], { cwd: handle.dir });
-  if (result.status !== 0) throw new Error(`patch ${patchFile} failed:\n${result.output}`);
+  const env: NodeJS.ProcessEnv = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
+  delete env.GIT_DIR;
+  delete env.GIT_WORK_TREE;
+  const git = (...args: string[]) => run('git', args, { cwd: handle.dir, env });
+  const init = git('init', '-q');
+  if (init.status !== 0) throw new Error(`git init failed:\n${init.output}`);
+  try {
+    const result = git('-c', 'core.symlinks=false', 'apply', '--whitespace=nowarn', '-p1', patchFile);
+    if (result.status !== 0) throw new Error(`git apply ${patchFile} failed:\n${result.output}`);
+  } finally {
+    rmSync(join(handle.dir, '.git'), { recursive: true, force: true });
+  }
 }
 
-/** The diff that the gate sees: observed between the base and candidate directories, not read from the patch. */
+/**
+ * The diff that the gate sees: observed between the base and candidate directories, not read
+ * from the patch. Nothing is excluded: a file that would ship in the image cannot hide from the
+ * gate. The candidate is a copy of the base taken just before the patch, so `.repair` matches.
+ */
 export function observedDiff(base: Handle, candidate: Handle): string {
   const parent = join(base.dir, '..');
   const result = run(
     'diff',
-    ['-ruN', '-x', '.repair', '-x', 'node_modules', '-x', 'dist', basename(base.dir), basename(candidate.dir)],
+    ['-ruN', basename(base.dir), basename(candidate.dir)],
     { cwd: parent },
   );
   if (result.status !== 0 && result.status !== 1) throw new Error(`diff failed:\n${result.output}`);
@@ -131,7 +139,7 @@ export const readJsonLines = <T>(handle: Handle, file: string): T[] => {
   return readFileSync(path, 'utf-8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l) as T);
 };
 
-/** Real adapters: Docker stacks, Jest subprocesses, GNU patch, JSON-lines outbox and register. */
+/** Real adapters: Docker stacks, Jest subprocesses, git apply, JSON-lines outbox and register. */
 export interface TestRun { kind: 'reproduction' | 'regression'; workspace: string; passed: boolean; output: string }
 
 export function createEnvironment(): RepairEnvironment & { runs: TestRun[] } {

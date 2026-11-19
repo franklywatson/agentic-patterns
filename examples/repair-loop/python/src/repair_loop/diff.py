@@ -67,6 +67,64 @@ def parse_diff(text: str) -> list[DiffFile]:
     return [DiffFile(**f) for f in files]
 
 
+def assert_plain_unified_patch(text: str) -> list[str]:
+    """Strict check that a patch is a plain unified diff and nothing else.
+
+    Outside hunk bodies the only accepted lines are blank lines, `--- `/`+++ ` file headers and
+    `@@` hunk headers, so context-diff headers (`***`), `Index:`, `diff --git`, `rename`, `copy`,
+    mode lines (including symlink mode 120000) and binary patches are all refused. Hunk bodies are
+    read by line count, so content such as `+++ ../x` inside a hunk is not mistaken for a header.
+    Returns the file paths.
+    """
+    lines = text.split("\n")
+    paths: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if line == "":
+            i += 1
+            continue
+        if not line.startswith("--- "):
+            raise ValueError(f'patch is not a plain unified diff: unexpected line "{line[:60]}"')
+        old_name = line[4:].split("\t")[0]
+        if i + 1 >= len(lines) or not lines[i + 1].startswith("+++ "):
+            raise ValueError('patch is not a plain unified diff: "---" is not followed by "+++"')
+        new_name = lines[i + 1][4:].split("\t")[0]
+        for name in (old_name, new_name):
+            if name == "/dev/null":
+                continue
+            if name.startswith("/") or is_unsafe_path(re.sub(r"^[^/]+/", "", name)):
+                raise ValueError(f"patch names an unsafe path: {name}")
+        paths.append(old_name if new_name == "/dev/null" else new_name)
+        i += 2
+        if i >= len(lines) or not HUNK.match(lines[i]):
+            raise ValueError("patch is not a plain unified diff: file header without a hunk")
+        while i < len(lines) and HUNK.match(lines[i]):
+            hunk = HUNK.match(lines[i])
+            old_left = int(hunk.group(2) if hunk.group(2) is not None else 1)
+            new_left = int(hunk.group(4) if hunk.group(4) is not None else 1)
+            i += 1
+            while old_left > 0 or new_left > 0:
+                if i >= len(lines):
+                    raise ValueError("patch is not a plain unified diff: truncated hunk")
+                body = lines[i]
+                if body[:1] == "+":
+                    new_left -= 1
+                elif body[:1] == "-":
+                    old_left -= 1
+                elif body[:1] == " " or body == "":
+                    old_left -= 1
+                    new_left -= 1
+                else:
+                    raise ValueError(f'patch is not a plain unified diff: bad hunk line "{body[:60]}"')
+                i += 1
+            while i < len(lines) and lines[i].startswith("\\"):
+                i += 1
+    if not paths:
+        raise ValueError("patch contains no files")
+    return paths
+
+
 def is_unsafe_path(path: str) -> bool:
     """A path the gate refuses: absolute, empty, with a `..` segment, a backslash or a NUL."""
     return path == "" or path.startswith("/") or "\\" in path or "\0" in path or ".." in path.split("/")

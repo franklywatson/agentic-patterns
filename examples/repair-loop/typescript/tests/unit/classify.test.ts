@@ -1,5 +1,5 @@
 import { classify } from '../../src/classify';
-import { globMatch, parseDiff } from '../../src/diff';
+import { globMatch, normalizePath, parseDiff } from '../../src/diff';
 import { makeDiff, patchText, rules } from '../support/builders';
 
 describe('parseDiff and globMatch', () => {
@@ -43,6 +43,18 @@ describe('parseDiff and globMatch', () => {
     expect(globMatch('app/src/*.ts', 'app/src/routes/users.ts')).toBe(false);
     expect(globMatch('**/*.md', 'docs/a/b.md')).toBe(true);
     expect(globMatch('app/src/auth.*', 'app/src/auth.ts')).toBe(true);
+  });
+});
+
+describe('normalizePath', () => {
+  test('collapses redundant segments of a safe path', () => {
+    expect(normalizePath('app/src/./auth.ts')).toBe('app/src/auth.ts');
+    expect(normalizePath('tests//x.ts')).toBe('tests/x.ts');
+  });
+
+  test('returns an unsafe path unchanged so that it stays visible', () => {
+    expect(normalizePath('tests/../app/x.ts')).toBe('tests/../app/x.ts');
+    expect(normalizePath('/etc/x')).toBe('/etc/x');
   });
 });
 

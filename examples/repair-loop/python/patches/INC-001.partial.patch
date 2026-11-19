@@ -1,4 +1,3 @@
-diff -ruN a/app/src/routes/users.py b/app/src/routes/users.py
 --- a/app/src/routes/users.py
 +++ b/app/src/routes/users.py
 @@ -40,6 +40,8 @@

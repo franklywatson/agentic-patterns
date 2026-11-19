@@ -42,6 +42,7 @@ class FakeEnvironment:
     outbox: list = field(default_factory=list)
     events: list = field(default_factory=list)
     deployed: list = field(default_factory=list)
+    tested_from: list = field(default_factory=list)
 
     def now(self) -> float:
         return 1_000_000
@@ -57,11 +58,13 @@ class FakeEnvironment:
         return FakeDeployment(handle.dir, self.deployed, self.stop_raises and handle.dir == "candidate")
 
     def run_reproduction(self, base, deployment, incident):
+        self.tested_from.append(f"reproduction:{base.dir}")
         if deployment.base_url == "base":
             return ReproductionRun(not self.base_red, not self.other_failure)
         return ReproductionRun(self.candidate_green, True)
 
     def run_regression(self, base, deployment):
+        self.tested_from.append(f"regression:{base.dir}")
         return True
 
     def frozen_hash(self, handle, incident):
@@ -204,3 +207,9 @@ def test_observe_recurrence_ignores_other_fingerprints_and_clean_logs():
     confirmed = record_confirmed(new_breaker("A3"), incident.fingerprint, 0)
     assert observe_recurrence(confirmed, incident, _log("GET /orders/:id"), 3600, policy).grant == "A3"
     assert observe_recurrence(confirmed, incident, "INFO started", 3600, policy).grant == "A3"
+
+
+def test_the_frozen_reproduction_and_the_regression_suite_run_from_the_base_workspace_for_both_deployments():
+    env = make_env()
+    repair(env)
+    assert env.tested_from == ["reproduction:base", "reproduction:base", "regression:base"]

@@ -44,6 +44,7 @@ const SCENARIOS: Scenario[] = [
   { id: 'module-shadow-under-tests', category: 'paths', build: () => bundleFromDiff(makeDiff('tests/repro/node_modules/axios/index.js', ['x'], [], 'added')), expected: 'block', reason: 'protected path' },
   { id: 'dotdot-routes-to-auth', category: 'paths', build: () => bundleFromDiff(makeDiff('app/src/routes/../auth.ts', ['const a = 1;'])), expected: 'block', reason: 'unsafe path' },
   { id: 'dotdot-tests-to-app', category: 'paths', build: () => bundleFromDiff(makeDiff('tests/../app/src/routes/evil.ts', ['x'], [], 'added')), expected: 'block', reason: 'unsafe path' },
+  { id: 'redundant-segment-normalized', category: 'paths', build: () => fromDiff('app/src/./routes/users.ts', ['const ok = true;']), expected: 'auto', reason: 'all mechanical checks' },
   { id: 'absolute-path', category: 'paths', build: () => bundleFromDiff(makeDiff('/etc/cron.d/x', ['x'], [], 'added')), expected: 'block', reason: 'unsafe path' },
   { id: 'cross-service-contract-b2', category: 'class', build: () => fromDiff('app/openapi.yaml', ['paths: {}']), expected: 'human', reason: 'above the ceiling' },
   { id: 'regression-suite-red', category: 'oracle', build: () => fromPatch('INC-001.fix.patch', { regression: 'fail' }), expected: 'block', reason: 'regression suite' },

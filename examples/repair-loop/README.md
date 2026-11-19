@@ -20,9 +20,11 @@ Real:
 
 - The app runs in Docker with PostgreSQL and Redis. Reproduction and regression tests call it over HTTP.
 - The reproduction is red on the base commit and green on the fix, observed in test output.
-- Patches are validated (no absolute path, no `..`, no backslash), applied with `patch` inside a temporary
-  workspace, and the diff that the gate sees is observed with `diff -ruN` between the base and candidate
-  directories, not read from the patch text. Hashes are computed from files on disk.
+- Patches must be plain unified diffs. A strict validator refuses context diffs (`***`), `Index:`, `diff --git`,
+  renames, copies, mode lines (including symlinks), binary patches and any absolute, `..` or backslash path.
+  `git apply`, which refuses paths outside the work tree, then applies the patch in a throwaway repository
+  inside a temporary workspace. The diff that the gate sees is observed with `diff -ruN` between the base and
+  candidate directories (nothing excluded), not read from the patch text. Hashes are computed from files on disk.
 - The oracle never comes from the candidate. The loop runs the frozen reproduction and the regression suite
   from the base workspace against the candidate's deployment, with `--noconftest` and importlib mode (pytest)
   or explicit test paths and restricted roots (Jest). The compose file is always the pristine template.
@@ -121,7 +123,7 @@ app/                  The minimal app (PostgreSQL and Redis) with the seeded def
 patches/              INC-001.fix, .mask, .test-edit and .partial
 src/                  incident, reproduce, classify, antimask, gate, breaker, loop, runtime
 tests/unit/           Module tests (mocks allowed)
-tests/eval/           Gate eval: 34 scenarios, exact scoring, pass^5
+tests/eval/           Gate eval: 35 scenarios, exact scoring, pass^5
 tests/stack/          01 startup, 02 repair, 03 masking rejected, 04 test edit blocked, 05 breaker trips, 06 confirmation rollback
 tests/regression/     Regression suite that the loop runs, from the base workspace, against every candidate
 docker-compose.yml    Stack template; ports bind to 127.0.0.1
@@ -139,7 +141,7 @@ structured line per unhandled error, which gives the incident its fingerprint:
 ## How to Run
 
 Requirements: Docker with Compose, Node 21 or later, Python 3.12 or later with
-[uv](https://docs.astral.sh/uv/), and GNU or BSD `patch` on the path.
+[uv](https://docs.astral.sh/uv/), and Git (for `git apply`) on the path.
 
 TypeScript, from `examples/repair-loop/typescript/`:
 

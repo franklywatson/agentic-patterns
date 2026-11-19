@@ -56,6 +56,7 @@ SCENARIOS = [
     Scenario("module-shadow-under-tests", "paths", lambda: bundle_from_diff(make_diff("tests/repro/httpx.py", ["x"], [], "added")), "block", "protected path"),
     Scenario("dotdot-routes-to-auth", "paths", lambda: bundle_from_diff(make_diff("app/src/routes/../auth.py", ["a = 1"])), "block", "unsafe path"),
     Scenario("dotdot-tests-to-app", "paths", lambda: bundle_from_diff(make_diff("tests/../app/src/routes/evil.py", ["x"], [], "added")), "block", "unsafe path"),
+    Scenario("redundant-segment-normalized", "paths", from_diff("app/src/./routes/users.py", ["ok = True"]), "auto", "all mechanical checks"),
     Scenario("absolute-path", "paths", lambda: bundle_from_diff(make_diff("/etc/cron.d/x", ["x"], [], "added")), "block", "unsafe path"),
     Scenario("cross-service-contract-b2", "class", from_diff("app/openapi.yaml", ["paths: {}"]), "human", "above the ceiling"),
     Scenario("regression-suite-red", "oracle", from_patch("INC-001.fix.patch", regression="fail"), "block", "regression suite"),

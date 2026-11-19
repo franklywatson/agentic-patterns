@@ -83,4 +83,40 @@ describe('incident', () => {
     expect(source).toContain('url: "/users/undefined"');
     expect(source).toContain('describe("INC-001 reproduction: user-lookup"');
   });
+
+  const PAYLOADS = ["a'b", 'a`b', 'a"b', '../x', 'a\nb', '${x}', 'a\\b', '$(id)', "');process.exit(1);('", 'a b', 'INC-1\n', '/ok\n'];
+  const FIELDS: [string, (r: any, v: string) => void][] = [
+    ['id', (r, v) => { r.id = v; }],
+    ['journey', (r, v) => { r.journey = v; }],
+    ['entrypoint', (r, v) => { r.entrypoint = v; }],
+    ['errorClass', (r, v) => { r.errorClass = v; }],
+    ['method', (r, v) => { r.request.method = v; }],
+    ['path', (r, v) => { r.request.path = `/${v}`; }],
+    ['replay path', (r, v) => { r.replayPaths = [`/${v}`]; }],
+    ['header name', (r, v) => { r.request.headers = { [v]: 'x' }; }],
+  ];
+
+  test('fuzz: no payload in any untrusted field is accepted', () => {
+    const accepted: string[] = [];
+    for (const [name, set] of FIELDS) {
+      for (const payload of PAYLOADS) {
+        const bad = record();
+        set(bad, payload);
+        try {
+          parseIncident(bad);
+          accepted.push(`${name}=${JSON.stringify(payload)}`);
+        } catch {
+          // rejected, as required
+        }
+      }
+    }
+    expect(accepted).toEqual([]);
+  });
+
+  test('a header value with quotes is allowed because it enters the source as an escaped literal', () => {
+    const r = record();
+    r.request.headers = { accept: `a'b"c\`d` };
+    const source = renderReproduction(parseIncident(r));
+    expect(source).toContain(`headers: ${JSON.stringify({ accept: `a'b"c\`d` })}`);
+  });
 });

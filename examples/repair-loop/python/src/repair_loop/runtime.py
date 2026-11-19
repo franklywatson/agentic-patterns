@@ -1,4 +1,4 @@
-"""Real adapters for the repair loop: Docker stacks, pytest subprocesses, GNU patch,
+"""Real adapters for the repair loop: Docker stacks, pytest subprocesses, git apply,
 and a JSON-lines outbox and register."""
 
 from __future__ import annotations
@@ -6,7 +6,6 @@ from __future__ import annotations
 import dataclasses
 import json
 import os
-import re
 import secrets
 import shutil
 import socket
@@ -18,7 +17,7 @@ from pathlib import Path
 
 import httpx
 
-from .diff import is_unsafe_path, parse_diff
+from .diff import assert_plain_unified_patch
 from .incident import fingerprints_from_log
 from .loop import Deployment, Handle, OutboxEntry, ReproductionRun
 from .models import Incident
@@ -66,38 +65,39 @@ def remove_workspaces(base: Handle) -> None:
 
 
 def validate_patch(patch_text: str) -> None:
-    """Reject a patch that names an absolute path, a `..` segment, a backslash or a NUL, or that
-    contains no file at all. Both GNU patch and BSD (macOS) patch follow `..` out of the target
-    directory, so the check runs before any patch tool sees the text."""
-    files = parse_diff(patch_text)
-    if not files:
-        raise ValueError("patch contains no files")
-    for file in files:
-        if is_unsafe_path(file.path):
-            raise ValueError(f"patch names an unsafe path: {file.path}")
-    for line in patch_text.split("\n"):
-        if line.startswith(("+++ ", "--- ")):
-            path = re.sub(r"^[^/]+/", "", line[4:].split("\t")[0])
-            if ".." in path.split("/") or path.startswith("/"):
-                raise ValueError(f"patch names an unsafe path: {path}")
+    """Reject anything that is not a plain unified diff with safe file names (see
+    assert_plain_unified_patch). This is the second line of defence; `git apply` is the first."""
+    assert_plain_unified_patch(patch_text)
 
 
 def apply_patch(handle: Handle, patch_file: str) -> None:
-    """Apply a validated patch inside the workspace only."""
+    """Apply a validated patch inside the workspace only. `git apply` accepts only unified or git
+    diffs and refuses paths outside the work tree, so it needs no list of bad header forms. It runs
+    in a throwaway repository inside the workspace, with symlink creation disabled."""
     validate_patch(Path(patch_file).read_text())
-    code, output = _run(["patch", "-p1", "--no-backup-if-mismatch", "-s", "-i", patch_file], cwd=Path(handle.dir))
+    env = {k: v for k, v in os.environ.items() if k not in ("GIT_DIR", "GIT_WORK_TREE")}
+    env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": "/dev/null"})
+    cwd = Path(handle.dir)
+    code, output = _run(["git", "init", "-q"], cwd=cwd, env=env)
     if code != 0:
-        raise RuntimeError(f"patch {patch_file} failed:\n{output}")
+        raise RuntimeError(f"git init failed:\n{output}")
+    try:
+        code, output = _run(
+            ["git", "-c", "core.symlinks=false", "apply", "--whitespace=nowarn", "-p1", patch_file], cwd=cwd, env=env
+        )
+        if code != 0:
+            raise RuntimeError(f"git apply {patch_file} failed:\n{output}")
+    finally:
+        shutil.rmtree(cwd / ".git", ignore_errors=True)
 
 
 def observed_diff(base: Handle, candidate: Handle) -> str:
-    """The diff that the gate sees: observed between the base and candidate directories."""
+    """The diff that the gate sees: observed between the base and candidate directories.
+
+    Nothing is excluded: a file that would ship in the image cannot hide from the gate. The
+    candidate is a copy of the base taken just before the patch, so `.repair` matches."""
     parent = Path(base.dir).parent
-    code, output = _run(
-        ["diff", "-ruN", "-x", ".repair", "-x", "node_modules", "-x", "__pycache__",
-         Path(base.dir).name, Path(candidate.dir).name],
-        cwd=parent,
-    )
+    code, output = _run(["diff", "-ruN", Path(base.dir).name, Path(candidate.dir).name], cwd=parent)
     if code not in (0, 1):
         raise RuntimeError(f"diff failed:\n{output}")
     return output

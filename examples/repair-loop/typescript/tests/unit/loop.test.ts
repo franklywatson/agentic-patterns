@@ -11,24 +11,30 @@ function fakeEnvironment(opts: { otherFailure?: boolean; stopThrows?: boolean; b
   const outbox: OutboxEntry[] = [];
   const events: string[] = [];
   const deployed: string[] = [];
+  const testedFrom: string[] = [];
   const deployment = (name: string): Deployment => ({ baseUrl: name, logs: () => '', stop: () => { deployed.push(`stop:${name}`); if (opts.stopThrows && name === 'candidate') throw new Error('stop failed'); } });
   const env: RepairEnvironment = {
     now: () => 1_000_000,
     freeze: async () => ({ dir: 'base' }),
     candidate: async () => ({ handle: { dir: 'candidate' }, patchText: opts.patch ?? patchText('INC-001.fix.patch') }),
     deploy: async (h) => { deployed.push(`start:${h.dir}`); return deployment(h.dir); },
-    runReproduction: async (_b, d) =>
-      d.baseUrl === 'base'
+    runReproduction: async (b, d) => {
+      testedFrom.push(`reproduction:${b.dir}`);
+      return d.baseUrl === 'base'
         ? { passed: !(opts.baseRed ?? true), matchesIncident: !opts.otherFailure }
-        : { passed: opts.candidateGreen ?? true, matchesIncident: true },
-    runRegression: async () => true,
+        : { passed: opts.candidateGreen ?? true, matchesIncident: true };
+    },
+    runRegression: async (b) => {
+      testedFrom.push(`regression:${b.dir}`);
+      return true;
+    },
     frozenHash: () => 'frozen',
     currentHash: () => opts.currentHash ?? 'frozen',
     traffic: async (_d, _i, samples) => ({ samples, fingerprintCount: opts.fingerprintCount ?? 0 }),
     emit: (_h, entry) => { outbox.push(entry); },
     record: (_h, entry) => { events.push(entry.event); },
   };
-  return { env, outbox, events, deployed };
+  return { env, outbox, events, deployed, testedFrom };
 }
 
 const input = (breaker = newBreaker('A3'), patchFile = 'fix.patch') => ({ incident, patchFile, breaker, policy, rules });
@@ -137,6 +143,14 @@ describe('runRepair failure handling', () => {
     await expect(runRepair(env, input())).rejects.toThrow('regression runner crashed');
     expect(logged).toHaveBeenCalledWith('failed to stop a deployment after an error:', expect.any(Error));
     logged.mockRestore();
+  });
+});
+
+describe('the oracle never comes from the candidate', () => {
+  test('the frozen reproduction and the regression suite run from the base workspace, for both deployments', async () => {
+    const { env, testedFrom } = fakeEnvironment({});
+    await runRepair(env, input());
+    expect(testedFrom).toEqual(['reproduction:base', 'reproduction:base', 'regression:base']);
   });
 });
 

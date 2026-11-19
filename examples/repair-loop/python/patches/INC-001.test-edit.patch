@@ -1,4 +1,3 @@
-diff -ruN a/tests/repro/test_inc_001_repro.py b/tests/repro/test_inc_001_repro.py
 --- a/tests/repro/test_inc_001_repro.py
 +++ b/tests/repro/test_inc_001_repro.py
 @@ -15,5 +15,5 @@

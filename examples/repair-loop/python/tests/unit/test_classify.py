@@ -1,7 +1,7 @@
 import pytest
 
 from repair_loop.classify import classify
-from repair_loop.diff import glob_match, parse_diff
+from repair_loop.diff import glob_match, normalize_path, parse_diff
 from support.builders import make_diff, patch_text, rules
 
 
@@ -104,3 +104,13 @@ def test_the_class_of_a_diff_is_the_maximum_over_its_files():
     text = make_diff("tests/unit/a_test.py", ["x"], [], "added") + make_diff("app/src/infra.py", ["y"])
     result = cls(text)
     assert (result.reversibility, result.blast) == ("R2", "B1")
+
+
+def test_normalize_path_collapses_redundant_segments_of_a_safe_path():
+    assert normalize_path("app/src/./auth.py") == "app/src/auth.py"
+    assert normalize_path("tests//x.py") == "tests/x.py"
+
+
+def test_normalize_path_returns_an_unsafe_path_unchanged_so_it_stays_visible():
+    assert normalize_path("tests/../app/x.py") == "tests/../app/x.py"
+    assert normalize_path("/etc/x") == "/etc/x"

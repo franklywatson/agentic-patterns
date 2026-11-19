@@ -108,3 +108,46 @@ def test_the_rendered_reproduction_carries_every_record_value_as_a_literal_and_c
     source = render_reproduction(parse_incident(record()))
     assert "base_url + '/users/undefined'" in source
     compile(source, "repro", "exec")
+
+
+PAYLOADS = ["a'b", "a`b", 'a"b', "../x", "a\nb", "${x}", "a\\b", "$(id)", "');os._exit(1);('", "a b", "INC-1\n", "/ok\n"]
+FIELDS = {
+    "id": lambda r, v: r.__setitem__("id", v),
+    "journey": lambda r, v: r.__setitem__("journey", v),
+    "entrypoint": lambda r, v: r.__setitem__("entrypoint", v),
+    "errorClass": lambda r, v: r.__setitem__("errorClass", v),
+    "method": lambda r, v: r["request"].__setitem__("method", v),
+    "path": lambda r, v: r["request"].__setitem__("path", "/" + v),
+    "replay path": lambda r, v: r.__setitem__("replayPaths", ["/" + v]),
+    "header name": lambda r, v: r["request"].__setitem__("headers", {v: "x"}),
+}
+
+
+def test_fuzz_no_payload_in_any_untrusted_field_is_accepted():
+    accepted = []
+    for name, setter in FIELDS.items():
+        for payload in PAYLOADS:
+            bad = record()
+            setter(bad, payload)
+            try:
+                parse_incident(bad)
+            except ValueError:
+                continue  # rejected, as required
+            accepted.append(f"{name}={payload!r}")
+    assert accepted == []
+
+
+def test_a_header_value_with_quotes_is_allowed_because_it_enters_the_source_as_an_escaped_literal():
+    r = record()
+    r["request"]["headers"] = {"accept": "a'b\"c`d"}
+    source = render_reproduction(parse_incident(r))
+    assert "headers=" + repr({"accept": "a'b\"c`d"}) in source
+    compile(source, "repro", "exec")
+
+
+@pytest.mark.parametrize("status", [True, "500", 500.0])
+def test_a_status_that_is_not_a_plain_integer_is_rejected(status):
+    bad = record()
+    bad["expected"]["status"] = status
+    with pytest.raises(ValueError, match="statuses must be integers"):
+        parse_incident(bad)

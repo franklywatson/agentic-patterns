@@ -57,7 +57,7 @@ def _assert_shape(raw: dict[str, Any]) -> None:
     for name, value in (request.get("headers") or {}).items():
         _check(HEADER_NAME.fullmatch(name) is not None and isinstance(value, str) and HEADER_VALUE.fullmatch(value) is not None,
                f"header {name} has unexpected characters")
-    _check(isinstance(raw["observed"].get("status"), int) and isinstance(raw["expected"].get("status"), int), "statuses must be integers")
+    _check(type(raw["observed"].get("status")) is int and type(raw["expected"].get("status")) is int, "statuses must be integers")
     _check(isinstance(raw["expected"].get("body"), dict), "expected.body must be an object")
 
 
