@@ -54,7 +54,7 @@ The worktree at `.worktrees/tg-dash/` demonstrates feature isolation:
 
 ### Documentation as System Map
 
-The project treats documentation as the system map — the navigational layer that keeps structure, intent, and conventions current. When code changes, docs update in the same task. DOCS commits at 13.5% of the total (172 of 1,276 non-merge commits) confirm this is not aspirational — it is practiced daily.
+The project treats documentation as the system map — the navigational layer that keeps structure, intent, and conventions current. When code changes, docs update in the same task. DOCS commits are 13.5% of the total (172 of 1,276 non-merge commits). A commit count does not show whether the docs were accurate.
 
 ### Documentation Health Tracking
 
@@ -76,7 +76,7 @@ The docs structure evolves with the codebase. When `06-chat-system/` was added f
 
 ### Aggressive Cleanup
 
-Dead code, stale comments, and superseded documentation are removed as they are encountered — not deferred to cleanup sprints. REFACTOR commits at 8.5% (108 of 1,276) show continuous quality maintenance distributed across the project's lifetime rather than concentrated in dedicated sprints.
+Dead code, stale comments, and superseded documentation are removed as they are encountered — not deferred to cleanup sprints. REFACTOR commits are 8.5% (108 of 1,276) and appear throughout the project's lifetime rather than in dedicated sprints.
 
 ---
 
@@ -456,7 +456,7 @@ In this project, L3 added structured search, smart routing and compact MCP seria
 
 ## Commit History Analysis
 
-The reference project's git history provides empirical evidence for how agentic development operates at scale. The analysis covers 1,497 commits from 2025-10-31 to 2026-03-10 (~5 months), classified by type.
+These are descriptive statistics for one project; they are not evidence that any pattern caused an outcome. The analysis covers 1,497 commits from 2025-10-31 to 2026-03-10 (~5 months), classified by type.
 
 ![Commit Analysis Dashboard](../diagrams/commit-analysis-dashboard.png)
 
@@ -488,16 +488,16 @@ The November-December spike reflects the upfront investment in testing infrastru
 
 February 2026 was the busiest period: 629 non-merge commits across 17 active days (37.0 commits/day average).
 
-### What the Data Shows
+### What the Statistics Show
 
-1. **Testing is a first-class output, not an afterthought** — 12.5% of commits are TEST, comparable to DOCS (13.5%). Test infrastructure received dedicated investment in November-December before the feature acceleration in January-February.
+1. **Testing is a large share of commits** — 12.5% of commits are TEST, comparable to DOCS (13.5%). Test infrastructure received dedicated investment in November-December before the feature acceleration in January-February.
 
-2. **Documentation keeps pace with code** — DOCS commits at 13.5% indicate continuous documentation updates, consistent with the L0 documentation-as-system-map pattern. Docs are not deferred to a separate phase.
+2. **Documentation commits are frequent** — DOCS commits at 13.5% are consistent with the L0 documentation-as-system-map pattern. The count says nothing about doc accuracy.
 
-3. **Refactoring is continuous** — 8.5% REFACTOR commits show ongoing code quality maintenance rather than periodic cleanup sprints. This aligns with L0 aggressive cleanup as a continuous practice.
+3. **Refactoring is spread across the project** — 8.5% REFACTOR commits, consistent with the L0 aggressive cleanup pattern.
 
-4. **Bugfix rate is high but expected** — 15.8% BUGFIX commits reflect iterative development where bugs are found and fixed rapidly through the stack test feedback loop. The high diagnosticity of stack tests means bugs are caught early and fixed immediately (L2 zero-defect tolerance), rather than accumulating.
+4. **BUGFIX is 15.8% of commits** — the project's own account attributes early detection to stack tests; the commit count cannot separate that from other causes.
 
-5. **Security is a significant concern** — 8.6% SECURITY commits reflect continuous attention to security in a financial application handling real funds and blockchain transactions. This is a domain-specific requirement that compounds with the zero-defect tolerance pattern.
+5. **SECURITY is 8.6% of commits** — the application handles real funds and blockchain transactions, so the share reflects the domain.
 
-6. **CHORE commits reveal infrastructure investment** — 17.2% CHORE commits cover Docker configuration, dependency management, CI pipeline setup, and environment configuration. This overhead is the cost of running a full Docker stack for every test — the investment that makes stack tests possible.
+6. **CHORE is 17.2% of commits** — these cover Docker configuration, dependency management, CI pipeline setup, and environment configuration, which includes the cost of running a full Docker stack for tests.
