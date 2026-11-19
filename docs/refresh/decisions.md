@@ -1,10 +1,10 @@
 # Refresh Decisions
 
-These decisions gate the refresh plans. Each one is **Open** until the maintainer confirms it. A
-session taking over must ask the maintainer about any Open decision before starting a plan it
-gates, and must not treat a recommendation as approval.
+These decisions gate the refresh plans. All of D1-D7 are decided (2026-11-19). A session taking
+over follows the chosen options, and asks the maintainer before proceeding if a plan task conflicts
+with a decision. A recommendation is not approval.
 
-When a decision is made, change its status to **Decided (date)**, record the choice and who made
+When a decision changes, update its status to **Decided (date)**, record the choice and who made
 it, and update the affected plans.
 
 ## D1. Scope: development library or full lifecycle?

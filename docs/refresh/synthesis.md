@@ -333,8 +333,8 @@ Already done: gstack references removed and two pre-existing lint errors fixed (
 | 4 Repair | 1.7-1.12; fault-injection carve-out; app/ops contract; `examples/repair-loop/` in TS and Python | Stack tests show the fix accepted, the masking patch routed to a human, and the test edit blocked |
 | Ongoing | Prune and re-baseline at each model generation; `last-validated-model` per pattern | Recorded as the library's own case study |
 
-Scoped plans for each phase are in [plans/](plans/). Open decisions are in
-[decisions.md](decisions.md).
+Scoped plans for each phase are in [plans/](plans/). Decisions are in
+[decisions.md](decisions.md) (all decided 2026-11-19).
 
 ## 10. Reviewer disagreements resolved here
 

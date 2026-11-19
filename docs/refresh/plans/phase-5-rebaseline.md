@@ -2,7 +2,7 @@
 
 - **Status:** Not started
 - **Depends on:** Phase 1 (evidence labels and pruning in place)
-- **Gated by decisions:** D4 (rule 6 replaced by "short, owned, tested, re-baselined")
+- **Gated by decisions:** D4 (rule 6 replaced by "short, owned, tested, re-baselined"); decided 2026-11-19
 - **Cadence:** each model generation, and at least quarterly
 
 ## Goal

@@ -45,7 +45,7 @@ The synthesis is committed twice: as a page snapshot,
 | [reviews/review-adopter.md](reviews/review-adopter.md) | Adopter red team and model-generation realist |
 | [tools/linkcheck.py](tools/linkcheck.py) | Link and anchor checker used by the adopter review (`python3 docs/refresh/tools/linkcheck.py .`) |
 | [tools/anchors.py](tools/anchors.py) | Anchor-only checker used by the evidence review |
-| [tools/sourcecheck.py](tools/sourcecheck.py) | Checks that every reference ID cited in this directory resolves in sources.md |
+| [tools/sourcecheck.py](tools/sourcecheck.py) | Checks that every reference ID cited anywhere under `docs/` resolves in [sources.md](../references/sources.md) |
 
 The reviews are kept as written, apart from the edits noted at the top of each. Their line numbers refer to commit `a07ad93`, and some have moved
 since then. Two later commits are not on main yet: gstack removal and an L4 lint fix, both in
@@ -57,10 +57,10 @@ PR #4.
 |-------|------|-----------|--------------------|
 | 0 | [Correct defects](plans/phase-0-correct.md) | none | none |
 | 1 | [Reframe and prune](plans/phase-1-reframe.md) | Phase 0 | D2, D3, D4, D5, D6 (all decided 2026-11-19) |
-| 2 | [Containment, ownership and people](plans/phase-2-contain.md) | Phase 1 | D5 |
+| 2 | [Containment, ownership and people](plans/phase-2-contain.md) | Phase 1 | D5 (decided 2026-11-19) |
 | 3 | [Earned autonomy](plans/phase-3-earned-autonomy.md) | Phase 2 | D2, D7 (decided 2026-11-19) |
-| 4 | [Self-repair](plans/phase-4-self-repair.md) | Phase 3 (A.1-A.3) | D1 (decided) |
-| Ongoing | [Prune and re-baseline](plans/phase-5-rebaseline.md) | Phase 1 | D4 (decided) |
+| 4 | [Self-repair](plans/phase-4-self-repair.md) | Phase 3 (A.1-A.3) | D1 (decided 2026-11-19) |
+| Ongoing | [Prune and re-baseline](plans/phase-5-rebaseline.md) | Phase 1 | D4 (decided 2026-11-19) |
 
 ## How to take over
 

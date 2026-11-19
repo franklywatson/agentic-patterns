@@ -4,7 +4,7 @@
 > guidance companion (cited as AC). Findings are otherwise unchanged.
 > Edited again on 2026-11-19: Anthropic source IDs renamed from the A27 form to the AN-27 form, and citations of the
 > companion's own positions, stances and recommendations replaced with the Anthropic or baseline sources
-> beneath them. Every ID resolves in [../sources.md](../../references/sources.md).
+> beneath them. Every ID resolves in [../../references/sources.md](../../references/sources.md).
 
 Reviewer lens: self-repairing software futurist. Sources: the repository at
 `/home/user/agentic-patterns` (README, CLAUDE.md, L0-L4, L1-patterns, cross-cutting incl. faq.md,
