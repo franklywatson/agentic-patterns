@@ -96,7 +96,10 @@ model](docs/cross-cutting/threat-model.md) and [Patterns 4.7 to
 4.9](docs/L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register). Data handling, audit
 retention and incident response are not covered.
 
-Earned autonomy, the way a grant is earned and withdrawn on evidence, has its own pattern doc: [Earned Autonomy](docs/earned-autonomy.md). Its upper grants (A4, A5) still depend on the capping dimensions above.
+Earned autonomy, the way a grant is earned and withdrawn on evidence, has its own pattern doc: [Earned Autonomy](docs/earned-autonomy.md).
+It has a runnable [register check, census, ledger and stop drill](examples/autonomy/README.md) in
+[TypeScript](examples/autonomy/typescript/) and [Python](examples/autonomy/python/). Its upper grants (A4, A5) still
+depend on the capping dimensions above.
 
 The consequence: production ownership sets the cap for unattended work. A team that adopts every pattern in
 this library has it at C1, so it is capped at C1. Closing production ownership alone raises it only to C2, set

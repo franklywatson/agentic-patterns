@@ -4,3 +4,9 @@ node_modules/
 .harness.yaml.local
 *.session-cache.json
 # --- end rig-managed ---
+
+# autonomy tooling: generated or runtime files
+.autonomy/profile.json
+.autonomy/worksheet.json
+.autonomy/audit/
+.autonomy/sessions/

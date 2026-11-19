@@ -133,7 +133,7 @@ The common per-agent trust-tier design (promotion on consecutive successes) is t
 |----|---------|---------|----------|
 | A.1 | Autonomy register | Committed, schema-validated `.autonomy.yaml` listing every agent workflow, including interactive sessions. Each entry has owner, sponsor, grant, identity, permitted and forbidden actions, risk class, limits, stop mechanism with its last-tested date, review date and stop rule. Protected by CODEOWNERS and never writable by an agent. | Partial |
 | A.2 | Evidence ledger | Append-only, per-run records written only by CI and by jobs that observe source control afterwards. Records check results, reverts, rework within 14 days and escaped defects. A `harness_hash` covers model, CLAUDE.md, skills and hooks; changing it counts as a release. | Partial |
-| A.3 | Promotion, demotion, cap gate | Promotion is one level at a time, by a human-approved PR with ledger evidence using lower confidence bounds. Demotion is automatic and immediate, with hysteresis and a cooldown. `autonomy check` is a required CI check with no exception field. | Thin |
+| A.3 | Promotion, demotion, cap gate | Promotion is one level at a time, by a human-approved PR with ledger evidence using lower confidence bounds. Demotion is automatic and immediate, with hysteresis and a cooldown. `autonomy check` is a required CI check with no exception field; it requires `--commits`, `--git-range` or `--no-commits`. | Thin |
 | A.4 | Self-placement census | `autonomy census` probes artefacts for both presence and practice (last changed, run by CI, exercised in the ledger). It writes a profile with one level per dimension. Unknown cells count as C2, so missing evidence lowers the cap. | Partial |
 | A.5 | Tested stop | A monthly drill triggers the stop against a canary run, asserts the halt and token revocation, then restores. A failed drill demotes the workflow. | Thin |
 | A.6 | Enforcement through hooks | SessionStart computes the effective level. PreToolUse blocks actions outside the grant, including agent writes to `.autonomy*`, CODEOWNERS or CI config. PostToolUse writes an audit record. Context eval gains an `autonomy` suite that tests the gate. | Strong (mechanism), Thin (outcomes) |
@@ -153,8 +153,8 @@ workflows:
     risk: { reversible: true, verification: mechanical, blast_radius: repo,
             trifecta: { untrusted_input: true, sensitive_data: false, external_action: false } }
     limits: { max_runs_per_day: 5, max_cost_usd_per_run: 2.00, max_diff_lines: 400 }
-    stop: { mechanism: "disable workflow; revoke app token", authority: [team-platform, "@oncall"],
-            last_tested: 2026-11-02 }   # written by the drill job
+    stop: { mechanism: "disable workflow; revoke app token", command: 'touch "$AUTONOMY_STOP_FILE"',  # must halt the canary
+            authority: [team-platform, "@oncall"], last_tested: 2026-11-02 }   # written by the drill job
     review_date: 2027-02-01
     stop_rule: "retire if < 2 merged PRs/month over 90 days"
 ```
@@ -164,7 +164,7 @@ Promotion criteria (illustrative defaults):
 | To | Criteria over the evidence window |
 |----|----------------------------------|
 | A3 | At least 20 runs at A2. First-run pass rate on required checks has a lower bound of 0.80 or more. A traced sample shows substantive human review. An owner is named. |
-| A4 | At least 30 runs at A3. First-run pass lower bound of 0.90 or more. Revert upper bound of 3% or less. Zero escaped defects. Task bank scores 0.90 or more on the current harness. The work is reversible and mechanically verified. A stop drill passed within 30 days. Cap of C4 or higher. |
+| A4 | At least 30 runs at A3 (the minimum sample, not enough alone: zero reverts clears the 3% revert upper bound at about 125 merged runs). First-run pass lower bound of 0.90 or more. Revert upper bound of 3% or less. Zero escaped defects. Task bank scores 0.90 or more on the current harness. The work is reversible and mechanically verified. A stop drill passed within 30 days. Cap of C4 or higher. |
 | A5 | At least 90 days at A4. Baseline, target and stop rule are set. Cost per merged outcome is reported. One review cycle has a recorded decision. Cap of C5. |
 | Demote | Any one of: an S2+ escaped defect or a linked incident; revert rate above 6% (hysteresis against the 3% promotion threshold); task bank below its floor; harness changed without an eval; stop drill overdue; owner, sponsor or access expired; a limit breached or a forbidden action attempted. |
 

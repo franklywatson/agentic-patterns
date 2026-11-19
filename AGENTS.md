@@ -48,9 +48,10 @@ See [README.md](README.md) for detailed project overview.
 - Working code only. No TODOs, no placeholders.
 - All examples must run as-is.
 - Examples that exist: stack tests (Pattern 1.1, TypeScript and Python), containment (Pattern 2.9, TypeScript and
-  Python), guardrail middleware (Pattern 3.1, TypeScript only) and project structure (L0, documentation only).
-- A new example for a core pattern (L0-L2, L4) ships in TypeScript and Python; examples for the optional L3 may be
-  single-language.
+  Python), earned autonomy (Patterns A.1-A.6, TypeScript and Python), guardrail middleware (Pattern 3.1,
+  TypeScript only) and project structure (L0, documentation only).
+- A new example for a core pattern (L0-L2, L4 and the A-series) ships in TypeScript and Python; examples for the
+  optional L3 may be single-language.
 
 **Doc freshness:**
 
@@ -103,6 +104,7 @@ See [README.md](README.md) for detailed project overview.
 ## Earned Autonomy
 
 - [docs/earned-autonomy.md](docs/earned-autonomy.md) — Autonomy grants A1-A5, register, evidence ledger, promotion and demotion, census, tested stop
+- [examples/autonomy/README.md](examples/autonomy/README.md) — Runnable register check, census, ledger, stop drill and hook (TypeScript and Python)
 
 ## Cross-Cutting Guides
 

@@ -49,7 +49,7 @@ It must state outright:
 - Add `examples/autonomy/schema/autonomy.schema.json`, a JSON Schema for `.autonomy.yaml`, using the
   example and the schema rules in the autonomy review A.1.
 - Schema rules enforced by the check:
-  - `granted_level >= 4` requires `stop.last_tested`, `review_date` and `limits`, a non-person
+  - `granted_level >= 4` requires `stop.command` (it must halt the canary), `stop.last_tested`, `review_date` and `limits`, a non-person
     `identity`, `risk.reversible: true` and `risk.verification: mechanical`.
   - Level 5 additionally requires `stop_rule`, a baseline and a target.
   - A full trifecta at level 3 or above is rejected unless a deterministic gate is named.
@@ -62,7 +62,8 @@ Build `examples/autonomy/typescript/` and `examples/autonomy/python/`, each impl
   workflow:
   `min(granted, cap(profile), freshness_gate, harness_gate, demotion_override)`
   It fails when any grant exceeds the cap, when the profile is older than 30 days, or when an agent
-  identity changed a governance file. There is no exception field.
+  identity changed a governance file. There is no exception field. The command requires `--commits`,
+  `--git-range` or `--no-commits`.
 - **`census`**: probes a repository for each dimension's artefacts, checking presence and practice
   (last changed, run by CI). It writes `.autonomy/profile.json`. Unknown counts as C2. The probe
   table is in autonomy review A.4. Dimensions that cannot be read from files emit a worksheet, with

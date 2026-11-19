@@ -379,7 +379,8 @@ Composition](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-sessio
 **Layer**: L4 - Standards & Measurement
 **Definition**: A way to halt an unattended workflow that someone has used in a drill: a named person who can
 invoke it, a mechanism such as credential revocation or a queue pause, and a named role that approves restart.
-The agent register records whether one exists.
+The agent register records whether one exists. Under [Earned Autonomy](../earned-autonomy.md) a scheduled drill
+runs the stop against a canary and writes the date it last passed; a failed or overdue drill demotes the workflow.
 **See**: [Pattern 4.7 - Author of Record and Agent
 Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)
 
@@ -394,12 +395,6 @@ Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-
 **Layer**: L1 - Closed Loop Design
 **Definition**: Docker named volume that disappears with `docker compose down -v`, preventing state leakage between test runs.
 **See**: [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation)
-
-### Tested Stop
-
-**Layer**: Cross-cutting - Earned Autonomy
-**Definition**: A stop mechanism exercised by a scheduled drill against a canary run, which writes the date it last passed. A failed or overdue drill demotes the workflow.
-**See**: [Earned Autonomy](../earned-autonomy.md)
 
 ---
 

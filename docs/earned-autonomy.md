@@ -38,14 +38,14 @@ A grant needs its row and every row above it.
 
 | Grant | Existing patterns | Containment and ownership patterns | Patterns in this guide |
 |-------|-------------------|------------------------------------|------------------------|
-| A2 | 0.2 progressive disclosure, 0.3 conceptual organization, 0.4 agent instruction file, 0.6 worktrees, 0.7 docs as system map, 2.4 constitutional rules | Register with owners (4.7 author of record and agent register) | A.1 |
-| A3 | 0.5 unit tests as contract, 1.1 to 1.6 and testing infrastructure, 2.2 skill chain, 2.3 hooks, 2.5 zero-defect, 2.6 enforcement pipeline, 4.1 evidence-based claims, 4.5 CI guardrails as required checks | 2.9 contain before you relax, 2.12 supply chain, 2.13 risk-tiered review, a non-author approval rule, a human author-of-record trailer | A.2 |
-| A4 | 4.6 context eval as a task bank, 3.8 session lifecycle, 4.4 metrics with thresholds and owners | 2.10 least agency (trifecta gate), 2.11 agent identity, 4.7 register with sponsor, expiry and stop authority | A.3, A.4, A.5, A.6 |
+| A2 | 0.2 progressive disclosure, 0.3 conceptual organization, 0.4 agent instruction file, 0.6 worktrees, 0.7 docs as system map, 2.4 constitutional rules | Register with owners ([4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) author of record and agent register) | A.1 |
+| A3 | 0.5 unit tests as contract, 1.1 to 1.6 and testing infrastructure, 2.2 skill chain, 2.3 hooks, 2.5 zero-defect, 2.6 enforcement pipeline, 4.1 evidence-based claims, 4.5 CI guardrails as required checks | [2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) contain before you relax, [2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain) supply chain, [2.13](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review) risk-tiered review, a non-author approval rule, a human author-of-record trailer | A.2 |
+| A4 | 4.6 context eval as a task bank, 3.8 session lifecycle, 4.4 metrics with thresholds and owners | [2.10](L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition) least agency (trifecta gate), [2.11](L2-behavioral-guardrails.md#pattern-211--agent-identity-and-delegation) agent identity, [4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) register with sponsor, expiry and stop authority | A.3, A.4, A.5, A.6 |
 | A5 | 2.8 compound engineering with pruning, 0.8 aggressive cleanup applied to skills and rules, 0.9 new-starter standard | A retirement record per workflow | A.7 |
 
 Layer L3 is on no row. It reduces cost per outcome, which A5 reports, but it is not a safety prerequisite at any grant.
 
-Containment patterns 2.9 to 2.13 and the register pattern 4.7 are named here by number. Read them in the L2 and L4 documents when those sections are present in your copy of the library.
+Containment patterns [2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) to [2.13](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review) and the register pattern [4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) are named here by number.
 
 ## Pattern A.1 — Autonomy Register
 
@@ -101,17 +101,18 @@ workflows:
       task_bank: tests/eval/dep-bump.bank.json
     stop:
       mechanism: "gh workflow disable deps-bot.yml; revoke app installation token"
+      command: 'touch "$AUTONOMY_STOP_FILE"'   # halts the canary; the drill runs it and checks the canary stopped
       authority: ["team-platform", "@oncall"]
       last_tested: 2026-11-02       # written by the stop drill, not by hand
     review_date: 2027-02-01
     stop_rule: "retire if < 2 merged PRs/month over 90 days, or cost per merged PR > $5"
 ```
 
-The schema rules, enforced by `autonomy check` (Pattern A.3):
+The schema rules, enforced by `autonomy check --git-range <range>` (Pattern A.3; the command requires `--commits`, `--git-range` or `--no-commits`):
 
-- A grant of A4 or above requires `stop.last_tested`, `review_date`, `limits`, an `identity` that is not a person, `risk.reversible: true` and `risk.verification: mechanical`.
+- A grant of A4 or above requires `stop.command` (it must halt the canary), `stop.last_tested`, `review_date`, `limits`, an `identity` that is not a person, `risk.reversible: true` and `risk.verification: mechanical`.
 - A5 additionally requires `stop_rule`, a baseline file and a target.
-- A workflow with all three trifecta flags true (Pattern 2.10) is rejected at A3 or above unless a deterministic gate is named.
+- A workflow with all three trifecta flags true ([Pattern 2.10](L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition)) is rejected at A3 or above unless a deterministic gate is named.
 - `owner` must resolve in CODEOWNERS. `sponsor` must be a current member.
 
 Keep the register separate from the harness configuration. The harness file is tuned by developers per rule. The register has different owners, and mixing the two lets a routine harness edit change a grant.
@@ -125,8 +126,8 @@ Keep the register separate from the harness configuration. The harness file is t
 ### Cross-References
 
 - [Pattern 2.4 — Constitutional Rules](L2-behavioral-guardrails.md#pattern-24--constitutional-rules): "no exception field" follows the rule that a rule with exceptions is a guideline.
-- Pattern 4.7 (author of record and agent register) is the table form of this register.
-- `examples/autonomy/README.md` is the runnable reference for the schema and the `check` command.
+- [Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) (author of record and agent register) is the table form of this register.
+- [examples/autonomy/README.md](../examples/autonomy/README.md) is the runnable reference for the schema and the `check` command.
 
 **Evidence:** Partial — tiered, per-workflow grants appear in analyst and preprint models, and ownership with expiring access appears in vendor identity governance; the register schema is this library's design (SG-6, SG-26, PO-10, PO-11, MC-21)
 
@@ -168,7 +169,7 @@ The `autonomy ledger` command reads a ledger and prints the evidence report that
 
 - [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims): completion evidence comes from systems the agent cannot edit.
 - [Pattern 4.6 — Context Eval](L4-standards-measurement.md#pattern-46--context-eval): the task bank is both a ledger field and a promotion criterion.
-- `examples/autonomy/README.md` documents the `ledger` command and the record format.
+- [examples/autonomy/README.md](../examples/autonomy/README.md) documents the `ledger` command and the record format.
 
 **Evidence:** Partial — the need for evaluation against task banks and for evidence over self-report is supported; the record fields and the 14-day rework window are this library's design (IS-6, MV-9, MC-21)
 
@@ -209,7 +210,7 @@ The criteria below are illustrative defaults. Each team sets its own per workflo
 | To | Criteria over the evidence window |
 |----|----------------------------------|
 | A3 | At least 20 runs at A2. First-run pass rate on required checks has a lower bound of 0.80 or more. A traced sample of 10 runs shows substantive human review. An owner is named. |
-| A4 | At least 30 runs at A3. First-run pass lower bound of 0.90 or more. Revert rate upper bound of 3% or less. Zero escaped defects. Task bank scores 0.90 or more on the current harness. The work is reversible and mechanically verified. A stop drill passed within 30 days. Cap of C4 or higher. |
+| A4 | At least 30 runs at A3 (the minimum sample, not enough alone: zero reverts clears the 3% revert upper bound at about 125 merged runs). First-run pass lower bound of 0.90 or more. Revert rate upper bound of 3% or less. Zero escaped defects. Task bank scores 0.90 or more on the current harness. The work is reversible and mechanically verified. A stop drill passed within 30 days. Cap of C4 or higher. |
 | A5 | At least 90 days at A4. Baseline, target and stop rule are set. Cost per merged outcome is reported. One review cycle has a recorded decision. Cap of C5. |
 
 **Demotion** is automatic and immediate. Any one trigger is enough:
@@ -224,7 +225,7 @@ A bot writes the demotion to `.autonomy/state.json` so it applies without waitin
 
 This inverts the ratchet in [Pattern 1.1](L1-patterns/1.1-stack-tests.md): autonomy loosens only on evidence and human sign-off, and tightens automatically.
 
-**The cap gate.** `autonomy check` is a required status check. It fails when:
+**The cap gate.** `autonomy check` is a required status check. It needs `--commits`, `--git-range` or `--no-commits`, so a run cannot skip the commit scan by omission. It fails when:
 
 - Any `granted_level` exceeds the computed cap. There is no exception field.
 - Any schema rule in Pattern A.1 fails.
@@ -241,7 +242,7 @@ This inverts the ratchet in [Pattern 1.1](L1-patterns/1.1-stack-tests.md): auton
 
 - [Pattern 4.5 — CI Guardrails](L4-standards-measurement.md#pattern-45--ci-guardrails): `autonomy check` is a required check.
 - [Pattern 2.4 — Constitutional Rules](L2-behavioral-guardrails.md#pattern-24--constitutional-rules): no escape hatches.
-- `examples/autonomy/README.md` documents `check` and the effective-level calculation.
+- [examples/autonomy/README.md](../examples/autonomy/README.md) documents `check` and the effective-level calculation.
 
 **Evidence:** Thin — confidence-bound promotion and automatic demotion are this library's own design; the thresholds are illustrative, and no published study validates them (SG-6, MC-21, AN-27)
 
@@ -295,7 +296,7 @@ The cap is 2 here because governance is C2 and measuring is unknown. The `missin
 ### Cross-References
 
 - [Pattern 0.9 — AI-as-New-Starter Standard](L0-foundation.md#pattern-09--ai-as-new-starter-standard): a human audit complements the census.
-- `examples/autonomy/README.md` documents the `census` command and its probes.
+- [examples/autonomy/README.md](../examples/autonomy/README.md) documents the `census` command and its probes.
 
 **Evidence:** Partial — placing an organization by artefacts and records instead of self-report is supported, and the cap rule is the baseline's own inference; the probe set is this library's design (MC-22, MC-11)
 
@@ -323,9 +324,9 @@ The stop needs an authority: the register names who may invoke it. The authority
 
 ### Cross-References
 
-- Pattern 4.7 (author of record and agent register) records stop authority.
+- [Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) (author of record and agent register) records stop authority.
 - [Pattern A.3](#pattern-a3--promotion-demotion-and-the-cap-gate): an overdue drill lowers the freshness gate.
-- `examples/autonomy/README.md` documents `drill`.
+- [examples/autonomy/README.md](../examples/autonomy/README.md) documents `drill`.
 
 **Evidence:** Thin — vendor guidance asks for rehearsed rollback but not a tested stop for the agent itself, and published research found nothing on whether kill switches work; the drill is this library's design (AN-27)
 
@@ -348,7 +349,7 @@ Bind the register to the harness. Three hooks and one eval suite make the effect
 
 The hooks block agent writes to `.autonomy*`, CODEOWNERS, `.github/workflows/*` and hook or harness configuration. An agent cannot promote itself or weaken its own gate.
 
-A hook is deterministic policy inside the harness. It is not a security boundary: a workflow that can run arbitrary code can in principle route around it. Hooks hold the grant only together with the sandbox and credential scope of Pattern 2.9 and the agent identity of Pattern 2.11.
+A hook is deterministic policy inside the harness. It is not a security boundary: a workflow that can run arbitrary code can in principle route around it. Hooks hold the grant only together with the sandbox and credential scope of [Pattern 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) and the agent identity of [Pattern 2.11](L2-behavioral-guardrails.md#pattern-211--agent-identity-and-delegation).
 
 ### Anti-Pattern
 
@@ -360,7 +361,7 @@ A hook is deterministic policy inside the harness. It is not a security boundary
 
 - [Pattern 2.3 — Hook Automation](L2-behavioral-guardrails.md#pattern-23--hook-automation) and [Pattern 2.6 — Enforcement Pipeline Composition](L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition): the new check joins the existing pipeline.
 - [Pattern 4.6 — Context Eval](L4-standards-measurement.md#pattern-46--context-eval): the `autonomy` suite.
-- `examples/autonomy/README.md` documents the hook binding.
+- [examples/autonomy/README.md](../examples/autonomy/README.md) documents the hook binding.
 
 **Evidence:** Strong for the mechanism, Thin for outcomes — deterministic hooks, scoped permissions and least agency are documented by vendors and standards bodies; whether an autonomy-grant hook reduces incidents is untested (SG-11, SG-16, OM-18, SC-8)
 
@@ -388,9 +389,17 @@ Retirement deletes the workflow's register entry and revokes its identity. Versi
 
 - [Pattern 2.8 — Compound Engineering](L2-behavioral-guardrails.md#pattern-28--compound-engineering): capture and pruning belong together.
 - [Pattern 4.4 — Agentic Development Metrics](L4-standards-measurement.md#pattern-44--agentic-development-metrics): thresholds, actions and owners.
-- `examples/autonomy/README.md` documents the register fields this review reads.
+- [examples/autonomy/README.md](../examples/autonomy/README.md) documents the register fields this review reads.
 
 **Evidence:** Thin — no canonical framework for portfolio review of agent workflows exists in the research; this pattern is the library's own proposal (PO-15)
+
+## Applied to This Repository
+
+This repository's register is [.autonomy.yaml](../.autonomy.yaml). It lists one explicit workflow, the Claude Code sub-agents that edit docs and examples in git worktrees, plus the default interactive workflow. Both are granted A1. The owner and sponsor are the maintainer, and the identity is the maintainer's own login because no bot identity exists.
+
+The `autonomy-check` job in [.github/workflows/docs.yml](../.github/workflows/docs.yml) builds the TypeScript CLI, runs `autonomy census` and then `autonomy check`. A pull request is checked with `--git-range` over its commits and a push to main with `--no-commits`.
+
+The census profile computes a cap of C1. Platform and shared context are at C2 and ownership is at C2. Operating model, governance and measuring value are at C1. The probes report the missing evidence as `ci-tests-lint` (the CI jobs do not run a test target), `constitutional-rules` (CLAUDE.md only imports AGENTS.md) and `outcome-tracking` (no ledger or baseline). Skill is unknown and counts as C2. Every grant sits at the cap, so none can rise until those three gaps close.
 
 ## Where the Evidence Stands
 
@@ -406,7 +415,7 @@ Retirement deletes the workflow's register entry and revokes its identity. Versi
 - [L4: Standards and Measurement](L4-standards-measurement.md): evidence, context eval, metrics.
 - [Adoption Guide](cross-cutting/adoption-guide.md): when a team is ready for A3 and A4.
 - [Glossary](cross-cutting/glossary.md): grant, register, ledger, census, cap rule, tested stop.
-- Runnable reference: `examples/autonomy/README.md` (commands `check`, `census`, `ledger`, `drill`).
+- Runnable reference: [examples/autonomy/README.md](../examples/autonomy/README.md) (commands `check`, `census`, `ledger`, `drill`, `hook`). The CLIs are [TypeScript](../examples/autonomy/typescript/) and [Python](../examples/autonomy/python/); both read the [register schema](../examples/autonomy/schema/autonomy.schema.json).
 
 ---
 
