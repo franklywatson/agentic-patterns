@@ -179,7 +179,8 @@ Nothing measures an artefact's contribution, so it keeps its place by default. M
 changed after it is added, so this is the usual state rather than an exception. Rules written for an older model can
 also push a newer one away from what it does well.
 
-**Pattern**: Apply [Pattern 0.10 - Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context):
+**Pattern**: Apply [Pattern 0.10 - Prune and Re-baseline
+Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context):
 
 - Give each artefact an owner, a `reviewed:` date and an expiry
 - Run a fixed task bank without the artefact at each model upgrade
@@ -197,7 +198,8 @@ a useful rule is cut because the file is at its cap.
 **Why This Happens**: A line count is the one property of the file that CI can measure cheaply. Length does cost context
 on every session, but the count says nothing about which lines change what the agent does.
 
-**Pattern**: Keep the length warning as a prompt to look, and test the content with [Pattern 0.10 - Prune and Re-baseline
+**Pattern**: Keep the length warning as a prompt to look, and test the content with [Pattern 0.10 - Prune and
+Re-baseline
 Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context):
 
 - Remove a rule, run the task bank, and keep the rule only if a task regresses

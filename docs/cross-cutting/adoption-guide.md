@@ -178,14 +178,17 @@ installing ([Pattern 2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plu
 3. **Update docs in the same task as code** — Deferred documentation is stale documentation. See [Pattern 0.7 — Documentation as System Map](../L0-foundation.md#pattern-07--documentation-as-system-map).
 4. **Remove dead code as you find it** — Cleanup is continuous, not periodic. See [Pattern 0.8 — Aggressive Cleanup](../L0-foundation.md#pattern-08--aggressive-cleanup).
 5. **Use the New Starter Test regularly** — It catches gaps that code review misses. See [Pattern 0.9 — AI-as-New-Starter Standard](../L0-foundation.md#pattern-09--ai-as-new-starter-standard).
-6. **Re-baseline at each model upgrade** — Run a fixed task bank without each skill, hook and rule, and delete what no task needs. See [Pattern 0.10 — Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context).
+6. **Re-baseline at each model upgrade** — Run a fixed task bank without each skill, hook and rule, and delete what no
+   task needs. See [Pattern 0.10 — Prune and Re-baseline
+   Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context).
 
 ### Common Pitfalls
 
 - **Skipping assessment** — Without understanding your gaps, you may optimize the wrong things.
 - **Deferring documentation** — "I'll update the docs later" means the docs stay stale.
 - **Allowing constitutional rule exceptions** — Rules that bend become suggestions, and suggestions erode.
-- **Only adding configuration** — Rules, skills and hooks added for an older model stay in place and are never tested for need. Name an owner and a review date for each and delete first at each model upgrade.
+- **Only adding configuration** — Rules, skills and hooks added for an older model stay in place and are never tested
+  for need. Name an owner and a review date for each and delete first at each model upgrade.
 - **Treating cleanup as a quarterly sprint** — Dead code is noise. Remove it as you encounter it.
 
 ---

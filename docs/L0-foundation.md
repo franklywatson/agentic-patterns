@@ -188,7 +188,8 @@ Keep the file short, owned, tested and re-baselined:
 - **Short**: link to docs for anything long. CI warns at about 200 lines. Length costs context on every session, and instruction-following accuracy falls as the number of instructions grows ([SC-6](references/sources.md)).
 - **Owned**: a named person owns the file and records a reviewed date in it.
 - **Tested**: CI checks the file (line count, links, reachability of every doc).
-- **Re-baselined**: at each model upgrade, test whether each rule still changes behaviour, and delete the rules that no longer do ([Pattern 0.10](#pattern-010--prune-and-re-baseline-context)).
+- **Re-baselined**: at each model upgrade, test whether each rule still changes behaviour, and delete the rules that
+  no longer do ([Pattern 0.10](#pattern-010--prune-and-re-baseline-context)).
 
 **In Practice**:
 
@@ -223,7 +224,10 @@ Claude Code expands `@path` imports into context when CLAUDE.md loads, so an ind
 
 **Anti-Pattern**: Writing tutorials or extensive guides in the instruction file. Every line displaces context the agent needs for the actual task. A file with no owner and no review date, whose rules nobody has re-tested since the last model upgrade, accumulates rules that no longer help.
 
-**Cross-References**: [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether the instruction file succeeds. [Pattern 0.10](#pattern-010--prune-and-re-baseline-context) removes rules the current model no longer needs. [Pattern 0.7 — Documentation as System Map](#pattern-07--documentation-as-system-map) covers keeping the system map in sync with code.
+**Cross-References**: [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether the instruction file
+succeeds. [Pattern 0.10](#pattern-010--prune-and-re-baseline-context) removes rules the current model no longer needs.
+[Pattern 0.7 — Documentation as System Map](#pattern-07--documentation-as-system-map) covers keeping the system map in
+sync with code.
 
 **Evidence:** Partial — instruction-file studies disagree on value; the 200-line warning is a house rule (SC-4, SC-5, SC-8, SC-11)
 
@@ -503,25 +507,28 @@ against the current model by removing it.
 A **context artefact** is any file or setting that adds instructions to an agent session: the instruction file, a
 skill, a hook, a deny rule, a routing note, a memory file. The steps:
 
-1. **Owner, `reviewed:` date and expiry per artefact.** Record them where the artefact lives, in front matter for a
-   file or in the [agent register](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) for a
-   hook or setting. An artefact past its expiry is retired or re-reviewed; there is no third state.
+1. **Owner, `reviewed:` date and expiry per artefact.** Record them in the artefact's own front matter when it is a
+   file (instruction file, skill, doc). A hook or setting has no front matter, so record them in the
+   [agent register](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register). An artefact past its
+   expiry is retired or re-reviewed; there is no third state.
 2. **A fixed task bank, run against a pinned model.** 10 to 30 tasks that represent the work agents do in the
    project. Each task has a prompt, an expected artefact and a check that does not depend on the agent's own report.
    The bank changes only by recorded additions. The model id is pinned for each run so that a difference between two
    runs comes from the artefact or the model, not from both. This repository's bank is
-   [the task bank](references/task-bank.md).
+   [the task bank](references/task-bank.md). Its expected answers and seeds are held outside the agent's workspace by
+   `scripts/task-bank/run.py`, so a run cannot pass by reading them.
 3. **Delete first at each model upgrade, and at least quarterly.** Run the bank without the artefact. If every task
    passes, delete it. If a task regresses, add the artefact back and record the task that justified it next to the
    artefact. An artefact with no justifying task is guidance nobody can show is needed.
 4. **Classify each rule as guidance or invariant.** Guidance is prose that shapes how the agent works and is prunable
    by step 3. An invariant is a rule that must hold regardless of the model: it lives in a hook, a deny rule, a
    sandbox setting or a required CI check, and is never prose only ([Pattern
-   2.4](L2-behavioral-guardrails.md#pattern-24--constitutional-rules) names the enforcement point per rule). Re-baselining
-   removes prose duplicates of invariants and tests the rest; it does not remove the hook, deny rule or CI check.
+   2.4](L2-behavioral-guardrails.md#pattern-24--constitutional-rules) names the enforcement point per rule).
+   Re-baselining removes prose duplicates of invariants and tests the rest; it does not remove the hook, deny rule or
+   CI check.
 5. **Measure maintained configuration.** Three numbers per artefact set: when each file last changed, how often each
-   skill was invoked in the period, and how many rules have a justifying task. Fail CI on any artefact past its
-   expiry.
+   skill was invoked in the period, and how many rules have a justifying task. Fail CI on any artefact
+   whose `reviewed:` date is past its limit or whose `expires:` date has passed.
 
 **In Practice**:
 
@@ -545,9 +552,11 @@ justified-by: T-07
 ---
 ```
 
-This repository checks the `reviewed:` date of every pattern doc with
-[scripts/check-doc-freshness.py](../scripts/check-doc-freshness.py). It warns at 90 days and fails at 180 days or when
-the key is missing. `last-validated-model:` records the model against which the doc was last read for correctness; the
+This repository checks every pattern doc with [scripts/check-doc-freshness.py](../scripts/check-doc-freshness.py), as
+the CI job `doc-freshness`. It warns when `reviewed:` is 90 days old, and fails at 180 days, on a future or malformed
+date, or when a key is missing. If `expires:` is present, it fails once that date has passed. `owner:` is not checked
+by script. The pattern docs here carry `reviewed:` and `last-validated-model:` only; the library's owner is named in
+AGENTS.md. `last-validated-model:` records the model against which the doc was last read for correctness; the
 script requires the key to be present and does not compare its value with the current model.
 
 A re-baseline run, in order:
@@ -586,7 +595,7 @@ file's owner and review date. [Pattern 0.8](#pattern-08--aggressive-cleanup) is 
 4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) holds owner and expiry for hooks and
 settings.
 
-**Evidence:** Partial — committed AI configuration is mostly unmaintained and one vendor removed over 80% of a system prompt with no evaluation loss; no controlled study of delete-first re-baselining (MC-11, AN-7, MV-9)
+**Evidence:** Partial — most committed AI config is never changed; a vendor cut 80% of a prompt (MC-11, AN-7, MV-9)
 
 ---
 
@@ -595,7 +604,8 @@ settings.
 - **L1: Closed Loop Design** — Testing at module boundaries validates deep module design
 - **L2: Behavioral Guardrails** — Skills enforce structural conventions during implementation
 - **L3: Optimization** — Good structure reduces token overhead for navigation
-- **L4: Standards & Measurement** — Evidence-based claims, metrics, CI guardrails, context eval; the task bank scoring in Pattern 0.10 uses [Pattern 4.6](L4-standards-measurement.md#pattern-46--context-eval)
+- **L4: Standards & Measurement** — Evidence-based claims, metrics, CI guardrails, context eval; the task bank scoring
+  in Pattern 0.10 uses [Pattern 4.6](L4-standards-measurement.md#pattern-46--context-eval)
 
 ## Further Reading
 

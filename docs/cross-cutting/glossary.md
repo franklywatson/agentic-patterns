@@ -87,7 +87,8 @@ Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-
 ### Context Artefact
 
 **Layer**: L0 - Foundation
-**Definition**: Any file or setting that adds instructions to an agent session: instruction file, skill, hook, deny rule, routing note or memory file. Each carries an owner, a `reviewed:` date and an expiry.
+**Definition**: Any file or setting that adds instructions to an agent session: instruction file, skill, hook, deny
+rule, routing note or memory file. Each carries an owner, a `reviewed:` date and an expiry.
 **See**: [Pattern 0.10 - Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context)
 
 ### Context Eval
@@ -171,7 +172,8 @@ Approvals are relaxed only inside it.
 ### Delete-First Re-baselining
 
 **Layer**: L0 - Foundation
-**Definition**: At each model upgrade, run the task bank with an artefact removed and keep the artefact only if a task regresses. The justifying task is recorded next to it.
+**Definition**: At each model upgrade, run the task bank with an artefact removed and keep the artefact only if a task
+regresses. The justifying task is recorded next to it.
 **See**: [Pattern 0.10 - Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context)
 
 ### Docker Resource Limits
@@ -253,7 +255,8 @@ Approvals are relaxed only inside it.
 ### Guidance
 
 **Layer**: L0 - Foundation
-**Definition**: A rule held only as prose in an instruction file or skill. It shapes how the agent works and is prunable by re-baselining. A rule that must always hold is an invariant instead.
+**Definition**: A rule held only as prose in an instruction file or skill. It shapes how the agent works and is
+prunable by re-baselining. A rule that must always hold is an invariant instead.
 **See**: [Pattern 0.10 - Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context)
 
 ---
@@ -285,7 +288,8 @@ Approvals are relaxed only inside it.
 ### Invariant
 
 **Layer**: L0 - Foundation
-**Definition**: A rule that holds regardless of the model, enforced by a hook, deny rule, sandbox setting or required CI check and never by prose alone. Re-baselining does not remove it.
+**Definition**: A rule that holds regardless of the model, enforced by a hook, deny rule, sandbox setting or required
+CI check and never by prose alone. Re-baselining does not remove it.
 **See**: [Pattern 2.4 - Constitutional Rules](../L2-behavioral-guardrails.md#pattern-24--constitutional-rules)
 
 ---
@@ -321,7 +325,8 @@ Composition](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-sessio
 ### Maintained Configuration
 
 **Layer**: L0 - Foundation
-**Definition**: Context artefacts that are kept current, measured by last change date, invocation counts and the share of rules with a justifying task. The opposite of configuration that is present but never changed.
+**Definition**: Context artefacts that are kept current, measured by last change date, invocation counts and the share
+of rules with a justifying task. The opposite of configuration that is present but never changed.
 **See**: [Pattern 0.10 - Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context)
 
 ### Master Index
@@ -451,7 +456,8 @@ Composition](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-sessio
 ### Task Bank
 
 **Layer**: L0 - Foundation
-**Definition**: A fixed set of 10 to 30 representative tasks, each with a prompt, an expected artefact and a mechanical check, run against a pinned model to test whether a context artefact is needed.
+**Definition**: A fixed set of 10 to 30 representative tasks, each with a prompt, an expected artefact and a
+mechanical check, run against a pinned model to test whether a context artefact is needed.
 **See**: [Task Bank](../references/task-bank.md)
 
 ### Test Integrity
