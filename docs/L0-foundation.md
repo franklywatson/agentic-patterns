@@ -183,11 +183,13 @@ Tree diagram showing major directories and their purposes.
 3. Zero-defect tolerance
 
 ## Level Documentation
-- @docs/L0-foundation.md
-- @docs/L1-feedback-loops.md
+- [docs/L0-foundation.md](docs/L0-foundation.md)
+- [docs/L1-feedback-loops.md](docs/L1-feedback-loops.md)
 ```
 
-Every referenced doc must be reachable from CLAUDE.md — it serves as the master index. An agent discovers any project document by starting here and following `@filename.md` links.
+Every referenced doc must be reachable from CLAUDE.md — it serves as the master index. An agent discovers any project document by starting here and following the relative markdown links.
+
+Claude Code expands `@path` imports into context when CLAUDE.md loads, so an index of `@` imports loads every listed doc into every session. Use plain markdown links for an index, and `@` only for content that must always load.
 
 **Anti-Pattern**: Writing tutorials or extensive guides in CLAUDE.md. Every line beyond 150 displaces context the agent needs for the actual task. Link to docs instead.
 
@@ -438,7 +440,7 @@ Cleanup:
 
 - John Ousterhout, *A Philosophy of Software Design* — Deep modules concept
 - Matt Pocock, "Your codebase is NOT ready for AI" — Graybox modules, progressive disclosure
-- @docs/references/further-reading.md
+- [Further Reading](references/further-reading.md)
 
 ---
 

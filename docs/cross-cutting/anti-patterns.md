@@ -114,7 +114,7 @@ Plus: docs/patterns/*.md (moved from inline)
 **Pattern**: Apply [Pattern 0.4 - CLAUDE.md as Project Constitution](../L0-foundation.md#pattern-04--claudemd-as-project-constitution):
 
 - CLAUDE.md is the master index - every doc must be reachable from it
-- Use `@filename.md` syntax to link docs
+- Use plain relative markdown links (`[title](path.md)`), not `@` imports, which load the linked doc into every session
 - Run link validation to find orphans
 - Consolidate overlapping docs into single sources
 

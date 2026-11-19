@@ -18,6 +18,8 @@ The core insight: **not all tool calls are created equal**. A raw `grep` can ret
 
 ![Smart Routing Flow](diagrams/3.1-smart-routing-flow.png)
 
+*This diagram predates the November 2026 correction. Figures shown in the image are superseded by the text; the follow-up diagrams PR replaces it.*
+
 ### Problem
 
 Agents often use inefficient tools for common operations. A raw bash `grep` across a codebase returns megabytes of unstructured text. The agent then wastes tokens parsing line numbers, extracting context, and filtering noise.
@@ -129,7 +131,7 @@ function classifyCommand(command: string): Intent[] {
 
 Precedence is critical: `sed -i` must match before generic text patterns, else it gets classified as `text_search` and allowed through.
 
-String matching is an ergonomic nudge, not a security control. the anchored classifier pattern (`^\s*sed\s+(-i|--in-place)`) misses `/usr/bin/sed -i` and `sed -E -i`, and every pattern misses `perl -pi`, `python -c` file writes and `$(...)` substitution, and the `docker` intent allows every Docker command (Docker socket access is root-equivalent). Use a containment boundary (sandbox, credential scope) for limits that must hold; see [the containment prerequisite track](refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people).
+String matching is an ergonomic nudge, not a security control. The anchored classifier pattern (`^\s*sed\s+(-i|--in-place)\b`) misses `/usr/bin/sed -i` and `sed -E -i`. Every pattern misses `perl -pi`, `python -c` file writes and `$(...)` substitution. The `docker` intent allows every Docker command (Docker socket access is root-equivalent). Use a containment boundary (sandbox, credential scope) for limits that must hold; see [the containment prerequisite track](refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people).
 
 ### Anti-Pattern
 
@@ -236,6 +238,8 @@ function routeGrep(env: Environment) {
 ## Pattern 3.4 — Context Engineering — The Scout Pattern
 
 ![Scout/Implementer Pattern](diagrams/3.4-scout-implementer-pattern.png)
+
+*This diagram predates the November 2026 correction. Figures shown in the image are superseded by the text; the follow-up diagrams PR replaces it.*
 
 ### Problem
 

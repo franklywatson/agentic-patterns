@@ -355,7 +355,7 @@ When `tdd+` is invoked, it knows to reject mocked loggers and mocked ethers beca
 
 ### Intent-Based Command Routing
 
-The project implements L3's smart routing pattern ([Pattern 3.1](../L3-optimization.md#pattern-31--smart-routing--tool-selection)) through a combination of skills and hooks. Raw shell commands — `grep`, `cat`, `find` — are intercepted by PreToolUse hooks (which fire before the command runs; PostToolUse fires after it has already run and cannot redirect) that classify intent ([Pattern 3.2](../L3-optimization.md#pattern-32--intent-classification)) and redirect to structured tools. `grep -r "export.*function" .` becomes a symbol search; `cat file.ts` becomes a targeted read; `find . -name "*.ts"` becomes a glob query. Environment-aware routing ([Pattern 3.3](../L3-optimization.md#pattern-33--environment-aware-routing)) detects whether jcodemunch indexes are available and degrades gracefully to raw tools when they aren't.
+The project implements L3's smart routing pattern ([Pattern 3.1](../L3-optimization.md#pattern-31--smart-routing--tool-selection)) through a combination of skills and hooks. Raw shell commands — `grep`, `cat`, `find` — are handled by hooks that classify intent ([Pattern 3.2](../L3-optimization.md#pattern-32--intent-classification)) and redirect to structured tools. Redirection requires a hook that runs before the command (PreToolUse); a hook that runs after the command cannot redirect it. `grep -r "export.*function" .` becomes a symbol search; `cat file.ts` becomes a targeted read; `find . -name "*.ts"` becomes a glob query. Environment-aware routing ([Pattern 3.3](../L3-optimization.md#pattern-33--environment-aware-routing)) detects whether jcodemunch indexes are available and degrades gracefully to raw tools when they aren't.
 
 ### RTK Integration
 
@@ -367,7 +367,7 @@ When the repository is indexed by [jcodemunch](https://github.com/jgravelle/jcod
 
 ### TOON Serialization for MCP Responses
 
-In this project, the MCP server used [TOON (Token-Oriented Object Notation)](https://github.com/toon-format/toon) to serialize tabular responses. This is a description of what the project did, not a library recommendation. Order lists, portfolio holdings, and market data — uniform object arrays returned to agents from internal tools — are encoded more compactly than JSON by declaring field names once in a header row. The agent receives the same data; it just costs fewer tokens to consume.
+In this project, the MCP server used [TOON (Token-Oriented Object Notation)](https://github.com/toon-format/toon) to serialize tabular responses. This is a description of what the project did, not a library recommendation. Order lists, portfolio holdings, and market data — uniform object arrays returned to agents from internal tools — are encoded more compactly than JSON by declaring field names once in a header row. The agent receives the same data in a more compact encoding.
 
 ### Structured Output Over Raw Text
 
@@ -432,7 +432,7 @@ Skills establish patterns that optimization (L3) can automate. Intent classifica
 
 ### How L3 Amplifies L0-L2
 
-Token optimization isn't just cheaper — it makes agents more effective. Structured search means faster discovery. Smart routing means fewer dead-end explorations. TOON serialization means more context available for actual reasoning. L3 amplifies the value of every pattern below it by making agent sessions tighter and more focused.
+In this project, L3 added structured search, smart routing and compact MCP serialization on top of the L0-L2 patterns. The project did not measure the effect of these changes, so this case study makes no claim about their benefit.
 
 ---
 
