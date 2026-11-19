@@ -22,11 +22,13 @@ agentic-patterns/
 │   │   ├── anti-patterns.md
 │   │   ├── adoption-guide.md
 │   │   └── glossary.md
-│   └── references/
-│       ├── reference-telegram-trading-bot-case-study.md
-│       └── further-reading.md
+│   ├── references/
+│   │   ├── reference-telegram-trading-bot-case-study.md
+│   │   ├── further-reading.md
+│   │   └── sources.md
+│   └── refresh/                 # Working material for the current revision
 ├── examples/                    # Working code (TS + Python)
-└── docs/diagrams/               # Excalidraw diagrams for L1-L4
+└── docs/diagrams/               # Diagrams for L1-L4
 ```
 
 See [README.md](README.md) for detailed project overview.
@@ -124,4 +126,3 @@ See [README.md](README.md) for detailed project overview.
 
 **Owner**: franklywatson
 **Last reviewed**: 2026-11-19
-**Status**: v0.2.0 — added design rinsing

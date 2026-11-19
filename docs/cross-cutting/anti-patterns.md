@@ -125,11 +125,11 @@ Example audit:
 # Find all markdown files
 find docs -name "*.md"
 
-# Verify each is reachable from CLAUDE.md
-grep -r "filename.md" docs/CLAUDE.md
+# Verify each is reachable from AGENTS.md
+grep -F "filename.md" AGENTS.md
 
 # If not found, either:
-# - Add link to CLAUDE.md
+# - Add link to AGENTS.md
 # - Delete the orphan file
 # - Merge into existing doc
 ```

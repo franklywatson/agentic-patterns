@@ -169,7 +169,7 @@ src/
 
 Keep the file short, owned, tested and re-baselined:
 
-- **Short**: link to docs for anything long. CI warns at about 200 lines. Length costs context on every session, and long files see lower adherence.
+- **Short**: link to docs for anything long. CI warns at about 200 lines. Length costs context on every session, and instruction-following accuracy falls as the number of instructions grows ([SC-6](references/sources.md)).
 - **Owned**: a named person owns the file and records a reviewed date in it.
 - **Tested**: CI checks the file (line count, links, reachability of every doc).
 - **Re-baselined**: at each model upgrade, test whether each rule still changes behaviour, and delete the rules that no longer do.

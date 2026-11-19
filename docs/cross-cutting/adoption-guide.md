@@ -29,7 +29,7 @@ Before choosing a path, assess your current state. Run through this checklist to
 
 - [ ] Every pattern is documented with examples
 - [ ] Code examples in docs match current codebase
-- [ ] Documentation is linked from CLAUDE.md
+- [ ] Documentation is linked from the agent instruction file (AGENTS.md)
 - [ ] No orphaned docs (all reachable from the master index)
 
 ### Tooling
