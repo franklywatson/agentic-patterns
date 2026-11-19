@@ -1,0 +1,5 @@
+{
+  "captured": "2026-10-20",
+  "flow": { "median_cycle_hours": 31 },
+  "stability": { "change_failure_rate": 0.08 }
+}

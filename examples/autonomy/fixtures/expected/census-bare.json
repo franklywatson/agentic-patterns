@@ -1,0 +1,61 @@
+{
+  "generated": "2026-11-18T00:00:00Z",
+  "dimensions": {
+    "platform": {
+      "level": 1,
+      "evidence": [],
+      "missing_for_next": [
+        "agent-config"
+      ]
+    },
+    "shared_context": {
+      "level": 2,
+      "evidence": [
+        "claude-md"
+      ],
+      "missing_for_next": [
+        "claude-md-owner",
+        "decision-log",
+        "blocking-hook-tested"
+      ]
+    },
+    "operating_model": {
+      "level": 1,
+      "evidence": [],
+      "missing_for_next": [
+        "ci-tests-lint"
+      ]
+    },
+    "governance": {
+      "level": 1,
+      "evidence": [],
+      "missing_for_next": [
+        "constitutional-rules"
+      ]
+    },
+    "ownership": {
+      "level": 1,
+      "evidence": [],
+      "missing_for_next": [
+        "register-owners"
+      ]
+    },
+    "skill": {
+      "level": "unknown",
+      "counted_as": 2,
+      "evidence": [],
+      "missing_for_next": [
+        "worksheet:skill"
+      ]
+    },
+    "measuring": {
+      "level": 1,
+      "evidence": [],
+      "missing_for_next": [
+        "outcome-tracking"
+      ]
+    }
+  },
+  "cap": 1,
+  "workflows_over_cap": []
+}

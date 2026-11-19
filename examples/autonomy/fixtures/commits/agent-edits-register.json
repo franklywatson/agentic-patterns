@@ -1,0 +1,3 @@
+[
+  { "sha": "a1b2c3", "author": "deps-bot[bot]", "email": "deps-bot@users.noreply.example.invalid", "files": ["package.json", ".autonomy.yaml"] }
+]

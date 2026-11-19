@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "cap": 4,
+  "profile_age_days": 7,
+  "workflows": [
+    {
+      "id": "dep-bump",
+      "granted": 4,
+      "effective": 4,
+      "reasons": []
+    },
+    {
+      "id": "flaky-test-triage",
+      "granted": 3,
+      "effective": 3,
+      "reasons": []
+    },
+    {
+      "id": "interactive",
+      "granted": 3,
+      "effective": 3,
+      "reasons": []
+    }
+  ],
+  "failures": []
+}

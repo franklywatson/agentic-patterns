@@ -231,6 +231,7 @@ workflows:
     stop:
       mechanism: "gh workflow disable deps-bot.yml; revoke app installation token"
       authority: ["team-platform", "@oncall"]
+      command: 'touch "$AUTONOMY_STOP_FILE"'   # must halt the canary
       last_tested: 2026-11-02       # written by the stop drill job, not by hand
     review_date: 2027-02-01
     stop_rule: "retire if < 2 merged PRs/month over 90 days, or cost per merged PR > $5"
@@ -247,7 +248,7 @@ workflows:
 
 Schema rules enforced by `autonomy check` (A.3):
 
-- `granted_level >= 4` requires `stop.last_tested`, `review_date`, `limits`, `identity` not a person,
+- `granted_level >= 4` requires `stop.command` (it must halt the canary), `stop.last_tested`, `review_date`, `limits`, `identity` not a person,
   `risk.reversible: true` **and** `risk.verification: mechanical`. This encodes the baseline's defensible
   top: unattended only where verification is mechanical and the action reversible.
 - `granted_level == 5` additionally requires `stop_rule`, a baseline file and a target.
@@ -305,7 +306,7 @@ effective = min(
 | To | Criteria over the window |
 |---|---|
 | A3 | >= 20 runs at A2; required-check first-run pass lower bound >= 0.80; human review comments show substance in a 10-run traced sample; owner named |
-| A4 | >= 30 runs at A3; first-run pass lower bound >= 0.90; revert rate upper bound <= 0.03; zero escaped defects; task-bank score >= 0.90 on current harness; `reversible` and `mechanical` true; stop drill passed within 30 days; cap >= 4 |
+| A4 | >= 30 runs at A3 (the minimum sample, not enough alone: zero reverts clears the 3% revert upper bound at about 125 merged runs); first-run pass lower bound >= 0.90; revert rate upper bound <= 0.03; zero escaped defects; task-bank score >= 0.90 on current harness; `reversible` and `mechanical` true; stop drill passed within 30 days; cap >= 4 |
 | A5 | >= 90 days at A4; baseline, target and stop rule set; cost per merged outcome reported; one review cycle completed with a recorded decision; cap >= 5 |
 
 **Demotion (down, automatic, immediate).** Triggers, any one sufficient:
@@ -323,7 +324,7 @@ review, and a PR is opened to reconcile `.autonomy.yaml`. Demotion drops to A3, 
 This inverts the repo's existing Ratchet pattern (1.1: coverage "only tightens"): autonomy *loosens* only
 with evidence and human sign-off, and *tightens* automatically. Same idea, applied to trust.
 
-**The cap gate in CI.** `autonomy check` is a required status check. It fails when:
+**The cap gate in CI.** `autonomy check` is a required status check. It requires `--commits`, `--git-range` or `--no-commits`. It fails when:
 
 - Any `granted_level` exceeds the computed cap. No exception field exists (constitutional, per 2.4:
   "if a rule needs exceptions, it is not constitutional").

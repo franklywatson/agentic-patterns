@@ -47,6 +47,18 @@ approve it; a different person approves.
 **See**: [Pattern 4.7 - Author of Record and Agent
 Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)
 
+### Autonomy Grant
+
+**Layer**: Cross-cutting - Earned Autonomy
+**Definition**: What one named workflow may do without a human, from A1 (assisted) to A5 (portfolio-managed). Held per workflow, never above the cap.
+**See**: [Earned Autonomy](../earned-autonomy.md)
+
+### Autonomy Register
+
+**Layer**: Cross-cutting - Earned Autonomy
+**Definition**: Committed, schema-validated `.autonomy.yaml` listing every agent workflow with owner, grant, identity, limits, stop mechanism and review date. No agent may write it.
+**See**: [Earned Autonomy](../earned-autonomy.md)
+
 ---
 
 ## B
@@ -123,6 +135,18 @@ Approvals are relaxed only inside it.
 **Definition**: Delegating exploration to a sub-agent that returns a short map, so search noise stays out of the main session.
 **See**: [Pattern 3.2 - Context Isolation](../L3-optimization.md#pattern-32--context-isolation-scout)
 
+### Cap Rule
+
+**Layer**: Cross-cutting - Earned Autonomy
+**Definition**: No grant may exceed the lowest position among the four capping dimensions: platform, security and governance, production ownership, measuring value.
+**See**: [Earned Autonomy](../earned-autonomy.md)
+
+### Census
+
+**Layer**: Cross-cutting - Earned Autonomy
+**Definition**: Command that probes a repository for artefacts, checking presence and practice, and writes a profile with one level per dimension. Unknown counts as C2.
+**See**: [Earned Autonomy](../earned-autonomy.md)
+
 ---
 
 ## D
@@ -181,6 +205,12 @@ Approvals are relaxed only inside it.
 **Layer**: L4 - Standards & Measurement
 **Definition**: Completion claim backed by actual command output showing verification results; "tests should pass" is not evidence.
 **See**: [Pattern 4.1 - Evidence-Based Claims](../L4-standards-measurement.md#pattern-41--evidence-based-claims)
+
+### Evidence Ledger
+
+**Layer**: Cross-cutting - Earned Autonomy
+**Definition**: Append-only per-run record written only by CI and after-the-fact jobs, used to compute promotion and demotion evidence.
+**See**: [Earned Autonomy](../earned-autonomy.md)
 
 ---
 
@@ -399,7 +429,8 @@ Composition](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-sessio
 **Layer**: L4 - Standards & Measurement
 **Definition**: A way to halt an unattended workflow that someone has used in a drill: a named person who can
 invoke it, a mechanism such as credential revocation or a queue pause, and a named role that approves restart.
-The agent register records whether one exists.
+The agent register records whether one exists. Under [Earned Autonomy](../earned-autonomy.md) a scheduled drill
+runs the stop against a canary and writes the date it last passed; a failed or overdue drill demotes the workflow.
 **See**: [Pattern 4.7 - Author of Record and Agent
 Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)
 

@@ -125,7 +125,7 @@ Teams adopt agentic practices based on intuition and anecdote. Without measureme
 
 This is not about tracking agent activity for its own sake. Tokens consumed, commands executed, and sessions started are activity metrics — they measure effort, not outcomes. The metrics that matter measure whether the codebase is getting better and whether agents are becoming more effective over time.
 
-**Autonomy is a separate axis.** These metrics measure outcomes. They do not say how much autonomy an agent should hold for a given workflow. That is a per-workflow grant, capped by the weakest control around it. See [How Far a Team Can Let Go](../README.md#how-far-a-team-can-let-go).
+**Autonomy is a separate axis.** These metrics measure outcomes. They do not say how much autonomy an agent should hold for a given workflow. That is a per-workflow grant, capped by the weakest control around it. See [Earned Autonomy](earned-autonomy.md) and [How Far a Team Can Let Go](../README.md#how-far-a-team-can-let-go).
 
 **Key metric categories:**
 

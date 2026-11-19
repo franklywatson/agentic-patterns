@@ -1,0 +1,27 @@
+# Register of agent workflows in this repository. Written by a human; no agent edits it.
+version: 1
+defaults:
+  interactive_level: 1
+  review_cadence_days: 90
+profile: .autonomy/profile.json   # written by `autonomy census` in CI
+
+workflows:
+  - id: refresh-phase-agents
+    description: Claude Code sub-agents in git worktrees that edit docs and examples and push branches for pull requests
+    owner: franklywatson
+    sponsor: franklywatson
+    granted_level: 1
+    trigger: manual
+    identity: person:franklywatson   # the maintainer's own login; no bot identity exists for this repository
+    permitted_actions:
+      paths: ["docs/**", "examples/**", "scripts/**", "README.md", "AGENTS.md"]
+      git: [branch, commit, open_pr]
+    forbidden_actions: [force_push, read_secrets, edit_autonomy]
+    risk:
+      reversible: true
+      verification: partial   # lint and link checks are mechanical; prose accuracy is read by a human
+      blast_radius: repo
+      trifecta: { untrusted_input: true, sensitive_data: false, external_action: false }
+    verification:
+      required_checks: [markdown-lint, link-integrity, doc-reachability, source-ids, autonomy-check]
+    review_date: 2027-02-17

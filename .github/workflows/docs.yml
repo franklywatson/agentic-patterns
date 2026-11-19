@@ -10,6 +10,8 @@ on:
       - '.markdownlint-cli2.jsonc'
       - 'package.json'
       - '.github/workflows/docs.yml'
+      - '.autonomy.yaml'
+      - 'examples/autonomy/**'
   pull_request:
     branches: [main]
     paths:
@@ -19,6 +21,8 @@ on:
       - '.markdownlint-cli2.jsonc'
       - 'package.json'
       - '.github/workflows/docs.yml'
+      - '.autonomy.yaml'
+      - 'examples/autonomy/**'
 
 permissions:
   contents: read
@@ -86,6 +90,36 @@ jobs:
 
       - name: Check every cited source ID has a row in docs/references/sources.md
         run: python3 scripts/sourcecheck.py .
+
+  autonomy-check:
+    name: Autonomy Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build the autonomy CLI
+        working-directory: examples/autonomy/typescript
+        run: |
+          npm ci
+          npm run build
+
+      - name: Compute the census profile
+        run: node examples/autonomy/typescript/dist/src/cli.js census --dir .
+
+      - name: Check the register against the cap and the pull request commits
+        run: |
+          autonomy() { node examples/autonomy/typescript/dist/src/cli.js "$@"; }
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            autonomy check --dir . --git-range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            autonomy check --dir . --no-commits
+          fi
 
   writing-conventions:
     name: Writing Conventions

@@ -63,7 +63,7 @@ The layers say whether letting go is safe. Two further scales say how far a team
 
 **The curve (C1-C5).** A five-step curve applied separately to each of seven dimensions: C1 Individual, C2 Grounded, C3 Verified delegation, C4 Governed autonomy, C5 Self-correcting. A team has a position per dimension, not one overall score. The steps carry a C prefix so they are not confused with L0-L4.
 
-**Autonomy grants (A1-A5).** A grant is what one named workflow may do. A1 suggests and a human applies the change. A2 opens pull requests that a human reads. A3 passes required checks before a human merges. A4 acts on an event or schedule within permitted actions, with an owner, limits, an audit record and a tested stop, only where verification is mechanical and the action reversible. A5 is A4 managed as an investment: baseline, target, review date and stop rule. Each grant needs a minimum cap, set out below.
+**Autonomy grants (A1-A5).** A grant is what one named workflow may do. A1 suggests and a human applies the change. A2 opens pull requests that a human reads. A3 passes required checks before a human merges. A4 acts on an event or schedule within permitted actions, with an owner, limits, an audit record and a tested stop, only where verification is mechanical and the action reversible. A5 is A4 managed as an investment: baseline, target, review date and stop rule. Each grant needs a minimum cap, set out below. [Earned Autonomy](docs/earned-autonomy.md) explains how grants are earned, recorded and withdrawn.
 
 **The seven dimensions.** Four of them cap unattended work. The table shows the position a team reaches by adopting every pattern as written. It is a ceiling set by the content, not an assessment of any team.
 
@@ -97,6 +97,11 @@ Security and governance is covered by [Patterns 2.9 to
 model](docs/cross-cutting/threat-model.md) and [Patterns 4.7 to
 4.9](docs/L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register). Data handling, audit
 retention and incident response are not covered.
+
+Earned autonomy, the way a grant is earned and withdrawn on evidence, has its own pattern doc: [Earned Autonomy](docs/earned-autonomy.md).
+It has a runnable [register check, census, ledger and stop drill](examples/autonomy/README.md) in
+[TypeScript](examples/autonomy/typescript/) and [Python](examples/autonomy/python/). Its upper grants (A4, A5) still
+depend on the capping dimensions above.
 
 The consequence: production ownership sets the cap for unattended work. A team that adopts every pattern in
 this library has it at C1, so it is capped at C1. Closing production ownership alone raises it only to C2, set
