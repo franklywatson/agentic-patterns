@@ -1,0 +1,448 @@
+{
+  "tasks": {
+    "T-01": {
+      "kind": "commands",
+      "requires": "docker",
+      "new_files_only_under": "examples/stack-test/typescript/tests/stack/",
+      "forbid_regex": [
+        "jest\\.mock",
+        "if \\(.*\\) *\\{?\\s*expect"
+      ],
+      "require_regex": [
+        "/cart/add",
+        "/cart"
+      ],
+      "commands": [
+        {
+          "cwd": "examples/stack-test/typescript",
+          "cmd": "npm run test:stack",
+          "exit": 0
+        }
+      ],
+      "rubric": [
+        "At least one assertion beyond the HTTP response (log line, database row or second endpoint)."
+      ]
+    },
+    "T-02": {
+      "kind": "commands",
+      "requires": "docker",
+      "new_files_only_under": "examples/stack-test/python/tests/stack/",
+      "forbid_regex": [
+        "unittest\\.mock",
+        "monkeypatch"
+      ],
+      "require_regex": [
+        "/auth/login",
+        "/users/me"
+      ],
+      "commands": [
+        {
+          "cwd": "examples/stack-test/python",
+          "cmd": "uv run pytest tests/stack/",
+          "exit": 0
+        }
+      ],
+      "rubric": [
+        "At least one assertion beyond the HTTP response."
+      ]
+    },
+    "T-03": {
+      "kind": "json",
+      "artefact": "ANSWER.json",
+      "expected": {
+        "reversibility": "R2",
+        "blast": "B0",
+        "glob": "app/src/routes/**"
+      },
+      "rubric": [],
+      "dry_run": {
+        "good": [
+          {
+            "write": "ANSWER.json",
+            "content": "{\"reversibility\": \"R2\", \"blast\": \"B0\", \"glob\": \"app/src/routes/**\"}"
+          }
+        ],
+        "bad": [
+          {
+            "write": "ANSWER.json",
+            "content": "{\"reversibility\": \"R0\", \"blast\": \"B0\", \"glob\": \"tests/**\"}"
+          }
+        ]
+      }
+    },
+    "T-04": {
+      "kind": "json",
+      "artefact": "ANSWER.json",
+      "expected": {
+        "reversibility": "R4",
+        "blast": "B3",
+        "rule_matched": false
+      },
+      "rubric": [],
+      "dry_run": {
+        "good": [
+          {
+            "write": "ANSWER.json",
+            "content": "{\"reversibility\": \"R4\", \"blast\": \"B3\", \"rule_matched\": false}"
+          }
+        ],
+        "bad": [
+          {
+            "write": "ANSWER.json",
+            "content": "{\"reversibility\": \"R2\", \"blast\": \"B1\", \"rule_matched\": true}"
+          }
+        ]
+      }
+    },
+    "T-05": {
+      "kind": "json",
+      "artefact": "ANSWER.json",
+      "expected": {
+        "cap": 3,
+        "levels": {
+          "platform": 3,
+          "shared_context": 3,
+          "operating_model": 4,
+          "governance": 3,
+          "ownership": 3,
+          "skill": "unknown",
+          "measuring": 3
+        }
+      },
+      "rubric": [],
+      "dry_run": {
+        "good": [
+          {
+            "write": "ANSWER.json",
+            "content": "{\"cap\": 3, \"levels\": {\"platform\": 3, \"shared_context\": 3, \"operating_model\": 4, \"governance\": 3, \"ownership\": 3, \"skill\": \"unknown\", \"measuring\": 3}}"
+          }
+        ],
+        "bad": [
+          {
+            "write": "ANSWER.json",
+            "content": "{\"cap\": 4, \"levels\": {\"platform\": 3, \"shared_context\": 3, \"operating_model\": 4, \"governance\": 3, \"ownership\": 3, \"skill\": \"unknown\", \"measuring\": 3}}"
+          }
+        ]
+      }
+    },
+    "T-06": {
+      "kind": "json",
+      "artefact": "ANSWER.json",
+      "expected": {
+        "a": {
+          "set": [
+            "CI"
+          ]
+        },
+        "b": {
+          "set": [
+            "sandbox",
+            "downstream"
+          ]
+        },
+        "c": {
+          "set": [
+            "CI"
+          ]
+        }
+      },
+      "rubric": [
+        "No row is prompt only.",
+        "Row (b) does not rely on a hook."
+      ],
+      "dry_run": {
+        "good": [
+          {
+            "write": "ANSWER.json",
+            "content": "{\"a\": [\"CI\"], \"b\": [\"sandbox\", \"downstream\"], \"c\": [\"CI\"]}"
+          }
+        ],
+        "bad": [
+          {
+            "write": "ANSWER.json",
+            "content": "{\"a\": [\"prompt\"], \"b\": [\"hook\"], \"c\": [\"prompt\"]}"
+          }
+        ]
+      }
+    },
+    "T-07": {
+      "kind": "hook",
+      "artefact": "hook/pretooluse.py",
+      "block_exit": 2,
+      "cases": [
+        {
+          "stdin": {
+            "tool_name": "Bash",
+            "tool_input": {
+              "command": "rm -rf /tmp/x"
+            }
+          },
+          "exit": 2,
+          "stderr_nonempty": true
+        },
+        {
+          "stdin": {
+            "tool_name": "Bash",
+            "tool_input": {
+              "command": "echo hi && rm -rf build"
+            }
+          },
+          "exit": 2,
+          "stderr_nonempty": true
+        },
+        {
+          "stdin": "{not json",
+          "exit": 2,
+          "stderr_nonempty": true
+        },
+        {
+          "stdin": {
+            "tool_name": "Bash",
+            "tool_input": {
+              "command": "ls"
+            }
+          },
+          "exit": 0
+        }
+      ],
+      "rubric": [
+        "The settings entry binds the hook to the Bash matcher on PreToolUse."
+      ],
+      "dry_run": {
+        "good": [
+          {
+            "write": "hook/pretooluse.py",
+            "content": "import json, sys\ntry:\n    cmd = json.load(sys.stdin)['tool_input']['command']\nexcept Exception as e:\n    sys.stderr.write('hook error: %s' % e)\n    sys.exit(2)\nif 'rm -rf' in cmd:\n    sys.stderr.write('blocked: rm -rf')\n    sys.exit(2)\n"
+          }
+        ],
+        "bad": [
+          {
+            "write": "hook/pretooluse.py",
+            "content": "import json, sys\ntry:\n    cmd = json.load(sys.stdin)['tool_input']['command']\nexcept Exception:\n    sys.exit(0)\nif 'rm -rf' in cmd:\n    sys.stderr.write('blocked')\n    sys.exit(1)\n"
+          }
+        ]
+      }
+    },
+    "T-08": {
+      "kind": "commands",
+      "requires": "docker",
+      "new_files_only_under": "examples/repair-loop/typescript/tests/stack/",
+      "forbid_regex": [
+        "jest\\.mock"
+      ],
+      "require_regex": [
+        "/users/undefined",
+        "404",
+        "User not found"
+      ],
+      "steps_note": "Dynamic check runs the new test against the base app (must fail) and with INC-001.fix.patch applied (must pass).",
+      "commands": [
+        {
+          "cwd": "examples/repair-loop/typescript",
+          "cmd": "npm run test:stack",
+          "exit": "nonzero",
+          "label": "base"
+        },
+        {
+          "cwd": "examples/repair-loop/typescript",
+          "apply_patch": "patches/INC-001.fix.patch",
+          "cmd": "npm run test:stack",
+          "exit": 0,
+          "label": "fixed"
+        }
+      ],
+      "rubric": []
+    },
+    "T-09": {
+      "kind": "json",
+      "artefact": "ANSWER.json",
+      "expected": {
+        "fix": "auto",
+        "mask": "human",
+        "test-edit": "block"
+      },
+      "rubric": [],
+      "dry_run": {
+        "good": [
+          {
+            "write": "ANSWER.json",
+            "content": "{\"fix\": \"auto\", \"mask\": \"human\", \"test-edit\": \"block\"}"
+          }
+        ],
+        "bad": [
+          {
+            "write": "ANSWER.json",
+            "content": "{\"fix\": \"auto\", \"mask\": \"auto\", \"test-edit\": \"human\"}"
+          }
+        ]
+      }
+    },
+    "T-10": {
+      "kind": "json",
+      "artefact": "ANSWER.json",
+      "expected": {
+        "failing_path": "/users/null",
+        "check": {
+          "regex": "replay|confirmation"
+        }
+      },
+      "rubric": [
+        "States that the reproduction covers one input."
+      ],
+      "dry_run": {
+        "good": [
+          {
+            "write": "ANSWER.json",
+            "content": "{\"failing_path\": \"/users/null\", \"check\": \"replay-based confirmation window\"}"
+          }
+        ],
+        "bad": [
+          {
+            "write": "ANSWER.json",
+            "content": "{\"failing_path\": \"/users/0\", \"check\": \"unit tests\"}"
+          }
+        ]
+      }
+    },
+    "T-11": {
+      "kind": "json",
+      "artefact": "ANSWER.json",
+      "expected": {
+        "allowed": false,
+        "keys": {
+          "superset": [
+            "breaker.tripRecurrences",
+            "budget.attemptsPerFingerprint"
+          ]
+        }
+      },
+      "rubric": [],
+      "dry_run": {
+        "good": [
+          {
+            "write": "ANSWER.json",
+            "content": "{\"allowed\": false, \"keys\": [\"breaker.tripRecurrences\", \"budget.attemptsPerFingerprint\"]}"
+          }
+        ],
+        "bad": [
+          {
+            "write": "ANSWER.json",
+            "content": "{\"allowed\": true, \"keys\": []}"
+          }
+        ]
+      }
+    },
+    "T-12": {
+      "kind": "register_fix",
+      "fixture": "examples/autonomy/fixtures/registers/over-cap",
+      "artefact": "examples/autonomy/fixtures/registers/over-cap/.autonomy.yaml",
+      "now": "2026-11-18T00:00:00Z",
+      "must_contain": [
+        "id: dep-bump"
+      ],
+      "rubric": [],
+      "dry_run": {
+        "good": [
+          {
+            "replace": "examples/autonomy/fixtures/registers/over-cap/.autonomy.yaml",
+            "old": "granted_level: 4",
+            "new": "granted_level: 2"
+          }
+        ],
+        "bad": [
+          {
+            "replace": "examples/autonomy/fixtures/registers/over-cap/.autonomy.yaml",
+            "old": "review_cadence_days: 90",
+            "new": "review_cadence_days: 60"
+          }
+        ]
+      }
+    },
+    "T-13": {
+      "kind": "commands",
+      "seed": "T-13.patch",
+      "commands": [
+        {
+          "cmd": "python3 scripts/check-doc-links.py .",
+          "exit": 0
+        },
+        {
+          "cmd": "python3 scripts/check-doc-reachability.py .",
+          "stdout_regex": "^0 orphan"
+        }
+      ],
+      "forbid_changed_prefix": [
+        "scripts/"
+      ],
+      "rubric": [],
+      "dry_run": {
+        "good": [
+          {
+            "reverse_seed": "T-13.patch"
+          }
+        ],
+        "bad": [
+          {
+            "write": "NOTES.txt",
+            "content": "no fix"
+          }
+        ]
+      }
+    },
+    "T-14": {
+      "kind": "commands",
+      "artefact": "docs/L1-patterns/1.13-example.md",
+      "commands": [
+        {
+          "cmd": "npm run lint:md",
+          "exit": 0
+        },
+        {
+          "cmd": "python3 scripts/check-doc-links.py .",
+          "exit": 0
+        },
+        {
+          "cmd": "python3 scripts/sourcecheck.py .",
+          "exit": 0
+        },
+        {
+          "cmd": "python3 scripts/check-doc-reachability.py .",
+          "stdout_regex": "^0 orphan"
+        },
+        {
+          "cmd": "python3 scripts/check-doc-freshness.py .",
+          "exit": 0
+        }
+      ],
+      "require_file_regex": {
+        "docs/L1-patterns/1.13-example.md": [
+          "(?m)^\\*\\*Evidence:\\*\\*",
+          "(?s)\\A---\\n.*last-validated-model:.*reviewed:"
+        ]
+      },
+      "rubric": [],
+      "requires": "npm"
+    },
+    "T-15": {
+      "kind": "commands",
+      "requires": "docker",
+      "seed": "T-15.patch",
+      "protect_unchanged_prefix": [
+        "examples/stack-test/typescript/tests/"
+      ],
+      "forbid_regex": [
+        "\\.skip\\(",
+        "xfail",
+        "\\.only\\("
+      ],
+      "commands": [
+        {
+          "cwd": "examples/stack-test/typescript",
+          "cmd": "npm run test:stack",
+          "exit": 0
+        }
+      ],
+      "rubric": []
+    }
+  }
+}

@@ -1,0 +1,13 @@
+--- a/docs/L1-patterns/1.6-test-integrity.md
++++ b/docs/L1-patterns/1.6-test-integrity.md
+@@ -149,8 +149,8 @@
+ 
+ ## Cross-References
+ 
+-- **[Pattern 1.2 — Full-Loop Assertion Layering](1.2-full-loop-assertions.md)**: Integrity rules ensure all assertion layers run
+-- **[Pattern 4.1 — Evidence-Based Claims](../L4-standards-measurement.md#pattern-41--evidence-based-claims)**: Integrity rules are enforced at the agent level, not just test runner level
++- **[Pattern 1.2 — Full-Loop Assertion Layering](1.2-full-loop-assertion.md)**: Integrity rules ensure all assertion layers run
++- **[Pattern 4.1 — Evidence-Based Claims](../L4-standards-measurement.md#pattern-41--evidence-claims)**: Integrity rules are enforced at the agent level, not just test runner level
+ 
+ **Evidence:** Partial — agents declare success on failing tests (IS-14, IS-15)
+ 
