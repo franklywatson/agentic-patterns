@@ -99,6 +99,11 @@ See @README.md for detailed project overview.
 - @docs/references/reference-my-claw-case-study.md — Design rinsing reference implementation
 - @docs/references/further-reading.md — External resources
 
+## Active Work
+
+- [docs/refresh/README.md](docs/refresh/README.md) — Nov 2026 refresh: critical review, decisions and phased plans.
+  Plain link, not an `@` import, so the review corpus does not load into every session.
+
 ## Constitutional Rules (Never Violate)
 
 1. **Real dependencies in E2E/integration and stack tests** — Use real databases, services, and caches; mocks are appropriate in unit tests
@@ -110,5 +115,5 @@ See @README.md for detailed project overview.
 
 ---
 
-**Last updated**: 2026-04-18
+**Last updated**: 2026-11-19
 **Status**: v0.2.0 — added design rinsing, my-claw case study
