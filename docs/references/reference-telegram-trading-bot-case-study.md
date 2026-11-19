@@ -359,15 +359,15 @@ The project implements L3's smart routing pattern ([Pattern 3.1](../L3-optimizat
 
 ### RTK Integration
 
-The [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk) CLI proxy filters noisy git output — `git status`, `git diff`, `git log` — stripping line noise and returning structured results. This is the simplest L3 win: install RTK, configure it as a hook, and git commands become ~60% cheaper in token usage with no behavior change.
+The [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk) CLI proxy filters noisy git output — `git status`, `git diff`, `git log` — stripping line noise and returning structured results. This is the simplest L3 win: install RTK, configure it as a hook, and git commands return filtered output with no behavior change.
 
 ### jcodemunch for Structured Code Search
 
-When the repository is indexed by [jcodemunch](https://github.com/nicolo-ribaudo/jcodemunch), agent searches bypass raw grep entirely. `search_symbols` returns typed results with file locations and summaries — the same information as `grep -r` output but at ~15% of the token cost. The scout pattern ([Pattern 3.4](../L3-optimization.md#pattern-34--context-engineering-the-scout-pattern)) applies here: a sub-agent maps the codebase structure first, then the implementer works with a concise index instead of re-deriving file locations each session.
+When the repository is indexed by [jcodemunch](https://github.com/nicolo-ribaudo/jcodemunch), agent searches bypass raw grep entirely. `search_symbols` returns typed results with file locations and summaries — the same information as `grep -r` output in fewer tokens. The scout pattern ([Pattern 3.4](../L3-optimization.md#pattern-34--context-engineering-the-scout-pattern)) applies here: a sub-agent maps the codebase structure first, then the implementer works with a concise index instead of re-deriving file locations each session.
 
 ### TOON Serialization for MCP Responses
 
-The project's MCP server uses [TOON (Token-Oriented Object Notation)](https://github.com/toon-format/toon) to serialize tabular responses ([Pattern 3.7](../L3-optimization.md#pattern-37--toon-serialization-for-mcp-response-optimization)). Order lists, portfolio holdings, and market data — uniform object arrays returned to agents from internal tools — are compressed to ~35-40% of their JSON size by declaring field names once in a header row. The agent receives the same data; it just costs fewer tokens to consume.
+The project's MCP server uses [TOON (Token-Oriented Object Notation)](https://github.com/toon-format/toon) to serialize tabular responses ([Pattern 3.7](../L3-optimization.md#pattern-37--toon-serialization-for-mcp-response-optimization)). Order lists, portfolio holdings, and market data — uniform object arrays returned to agents from internal tools — are encoded more compactly than JSON by declaring field names once in a header row. The agent receives the same data; it just costs fewer tokens to consume.
 
 ### Structured Output Over Raw Text
 

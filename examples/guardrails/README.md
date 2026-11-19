@@ -136,15 +136,7 @@ async function beforeBash(command: string): Promise<boolean> {
 
 ## Token Savings
 
-Based on real-world usage:
-
-| Tool | Token Savings |
-|------|---------------|
-| jcodemunch `search_symbols` vs `grep -r` | ~85% |
-| Grep tool vs bash `grep` | ~80% |
-| Read tool vs `cat` | ~75% |
-| Glob vs `find` | ~77% |
-| RTK vs raw git/npm commands | ~40-60% |
+Savings depend on the repository, the query, and the tools installed. Measure them in tokens on your own sessions before relying on any figure.
 
 ## Further Reading
 

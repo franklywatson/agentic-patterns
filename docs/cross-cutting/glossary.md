@@ -264,7 +264,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Token Efficiency
 
 **Level**: L3 - Optimization
-**Definition**: 60-90% reduction in token consumption achieved through smart routing, structured output, and context engineering patterns.
+**Definition**: Lower token consumption per task, pursued through smart routing, structured output, and context engineering patterns. Measure it on your own sessions, in tokens.
 **See**: [L3 Optimization Overview](../L3-optimization.md)
 
 ### Transient Volume

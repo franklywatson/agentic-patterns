@@ -76,11 +76,11 @@
 - **Related to:** L0
 - **URL:** <https://youtu.be/uC44zFz7JSM>
 
-### The WISC Framework: 90.2% Better AI Coding Results
+### The WISC Framework: AI Coding Results Video
 
 - **Type:** Video / Framework
 - **Creator:** Cole Medin (original), DIY Smart Code (adaptation)
-- **Summary:** Context engineering framework — **W**rite, **I**solate, **S**elect, **C**ompress. Core thesis: ~80% of agent failures come from context management, not the model. Write externalizes memory (structured commits, progress files, separate planning/implementation sessions). Isolate splits work across sub-agents (scout pattern, research delegation). Select loads only what's needed via a 3-tier context system (global rules, on-demand rules, reference docs). Compress provides focused compaction and session handoffs. The Scout Pattern used in [Pattern 3.4](../L3-optimization.md#pattern-34--context-engineering-the-scout-pattern) maps to WISC's Isolate strategy.
+- **Summary:** Context engineering framework — **W**rite, **I**solate, **S**elect, **C**ompress. Core thesis (as claimed in the video by Cole Medin, from a single uncontrolled source; evidence level: Thin): ~80% of agent failures come from context management, not the model, and the video title claims 90.2% better AI coding results. Write externalizes memory (structured commits, progress files, separate planning/implementation sessions). Isolate splits work across sub-agents (scout pattern, research delegation). Select loads only what's needed via a 3-tier context system (global rules, on-demand rules, reference docs). Compress provides focused compaction and session handoffs. The Scout Pattern used in [Pattern 3.4](../L3-optimization.md#pattern-34--context-engineering-the-scout-pattern) maps to WISC's Isolate strategy.
 - **Related to:** L3
 - **URL:** <https://youtu.be/gyo0eRgsUWk>
 - **GitHub:** <https://github.com/coleam00/context-engineering-intro/tree/main/use-cases/ai-coding-wisc-framework>
@@ -107,7 +107,7 @@
 
 - **Type:** Tool
 - **Creator:** Community
-- **Summary:** CLI proxy that optimizes shell commands for token usage, providing 60-90% savings on development operations through intelligent command filtering.
+- **Summary:** CLI proxy that optimizes shell commands for token usage, filtering noisy command output before it reaches the agent.
 - **Related to:** L3
 - **URL:** <https://github.com/rtk-ai/rtk>
 
@@ -115,7 +115,7 @@
 
 - **Type:** Tool / Format
 - **Creator:** toon-format
-- **Summary:** Compact, human-readable encoding of the JSON data model designed for LLM prompts. Eliminates redundant structure in tabular data (the most common shape of MCP API responses) by declaring field names once in a header. Provides 60-65% token reduction on uniform object arrays with lossless round-trip serialization. Applied as middleware on MCP response paths to transparently optimize token usage without changing the agent's consumption model.
+- **Summary:** Compact, human-readable encoding of the JSON data model designed for LLM prompts. Eliminates redundant structure in tabular data (the most common shape of MCP API responses) by declaring field names once in a header. Targets uniform object arrays with lossless round-trip serialization; token savings depend on data shape and must be measured on your own payloads. Applied as middleware on MCP response paths to transparently optimize token usage without changing the agent's consumption model.
 - **Related to:** L3
 - **URL:** <https://github.com/toon-format/toon>
 

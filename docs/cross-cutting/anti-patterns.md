@@ -427,7 +427,7 @@ hook.on('PreToolUse', (tool, args) => {
 
 **Symptom**: Raw grep/rg is used for code search when the repository is indexed. Megabytes of unstructured text output where structured search would return 5 typed results.
 
-**Why This Happens**: grep is familiar and always available. Reaching for it is muscle memory. But when the repository is indexed by a tool like jcodemunch, raw grep costs 80% more tokens for the same information - and misses symbols that match text patterns inexactly.
+**Why This Happens**: grep is familiar and always available. Reaching for it is muscle memory. But when the repository is indexed by a tool like jcodemunch, raw grep returns more tokens for the same information - and misses symbols that match text patterns inexactly.
 
 **Pattern**: Apply [Pattern 3.1 - Smart Routing](../L3-optimization.md#pattern-31--smart-routing--tool-selection):
 

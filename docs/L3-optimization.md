@@ -8,9 +8,9 @@
 
 ## Overview
 
-L3 Optimization focuses on making agents more efficient by routing commands to the right tools, classifying intent before execution, and investing tokens upfront in structured exploration. These patterns reduce token consumption by 60-90% while improving outcome quality.
+L3 Optimization focuses on making agents more efficient by routing commands to the right tools, classifying intent before execution, and investing tokens upfront in structured exploration. These patterns aim to reduce token consumption and improve outcome quality; measure the effect on your own sessions, in tokens.
 
-The core insight: **not all tool calls are created equal**. A raw `grep` returns 200 lines of noisy text; a structured search returns 5 typed results with summaries. Blind file exploration wastes tokens bouncing between false leads; structured scoping produces a map before the journey.
+The core insight: **not all tool calls are created equal**. A raw `grep` can return hundreds of lines of noisy text; a structured search returns a handful of typed results with summaries. Blind file exploration wastes tokens bouncing between false leads; structured scoping produces a map before the journey.
 
 ---
 
@@ -26,15 +26,17 @@ Agents often use inefficient tools for common operations. A raw bash `grep` acro
 
 Route commands to the most efficient tool based on intent detection. Maintain a routing table that maps common commands to their optimal implementations.
 
-| Command | Preferred Tool | Why | Token Savings |
-|---------|---------------|-----|---------------|
-| `grep`/`rg` | Grep tool or jcodemunch | Structured, targeted results | ~80% |
-| `cat` | Read tool | Clean output, no artifacts | ~75% |
-| `find` | Glob or jcodemunch | Targeted discovery | ~77% |
-| `sed -i` / `awk` | Edit tool (always) | Destructive, should block | Prevents errors |
-| `git status` | RTK (if available) | Filtered output | ~60% |
-| `npm install` | RTK (if available) | Silent execution | ~40% |
-| code search | jcodemunch `search_symbols` | Typed results with summaries | ~85% |
+| Command | Preferred Tool | Why |
+|---------|---------------|-----|
+| `grep`/`rg` | Grep tool or jcodemunch | Structured, targeted results |
+| `cat` | Read tool | Clean output, no artifacts |
+| `find` | Glob or jcodemunch | Targeted discovery |
+| `sed -i` / `awk` | Edit tool (always) | Destructive, should block (prevents errors) |
+| `git status` | RTK (if available) | Filtered output |
+| `npm install` | RTK (if available) | Silent execution |
+| code search | jcodemunch `search_symbols` | Typed results with summaries |
+
+No token-savings figures are given for these routes: none has a measured basis in this repository. Measure savings in tokens on your own sessions.
 
 ### In Practice
 
@@ -239,7 +241,7 @@ Agents often "search blindly" — issuing `grep` and `find` commands without und
 
 ### Solution
 
-From the **WISC framework** (Cole Medin, adapted by DIY Smart Code): **invest tokens upfront in structured exploration**. WISC — **W**rite, **I**solate, **S**elect, **C**ompress — is a context engineering framework based on the observation that ~80% of agent failures come from how you manage context, not from the model itself. The Scout Pattern maps to the **Isolate** strategy: keep exploration noise out of the main session by delegating to sub-agents.
+From the **WISC framework** (Cole Medin, adapted by DIY Smart Code): **invest tokens upfront in structured exploration**. WISC — **W**rite, **I**solate, **S**elect, **C**ompress — is a context engineering framework based on the claim that ~80% of agent failures come from how you manage context, not from the model itself (source: the WISC video by Cole Medin; evidence level: Thin, a single uncontrolled source; the video title also claims "90.2% better AI coding results", with no method stated in this repository). The Scout Pattern maps to the **Isolate** strategy: keep exploration noise out of the main session by delegating to sub-agents.
 
 Send a lightweight "scout" agent to map the codebase first:
 
@@ -271,7 +273,7 @@ await editFile(targetFile, { replace: oldPattern, with: newPattern });
 
 Structured exploration produces:
 
-- **File tree**: 50 tokens vs 500 tokens of `find` output
+- **File tree**: a short directory summary instead of the full `find` listing
 - **Symbol index**: Typed results vs grep noise
 - **Decision quality**: Agent knows where things are
 
@@ -279,12 +281,12 @@ Structured exploration produces:
 
 ```bash
 # DON'T: Blind search
-grep -r "processPayment" .    # 5000 tokens of noise
-grep -r "payment" .           # Another 5000 tokens
+grep -r "processPayment" .    # many unranked matches
+grep -r "payment" .           # many more matches
 find . -name "*.ts" | xargs grep "export"
 
 # DO: Scout first
-scout.mapCodebase()           # 200 tokens, returns structured index
+scout.mapCodebase()           # returns a structured index
 target = map.exports.find("processPayment")  # O(1) lookup
 ```
 
@@ -306,26 +308,26 @@ Raw text commands (grep, find, cat) return unstructured output. Agents waste tok
 
 Prefer tools that return structured, summarized results. Compare:
 
-| Raw Command | Structured Tool | Output Format | Token Savings |
-|-------------|-----------------|---------------|---------------|
-| `grep -r "export"` | `search_symbols` | `{name, kind, file, summary}` | ~85% |
-| `find . -name "*.ts"` | `get_file_tree` | `{path, type, exports}` | ~80% |
-| `cat file.ts` | `get_symbol` | `{signature, docs, body}` | ~75% |
-| `git log` | `gh repo view` | `{issues, prs, commits}` | ~70% |
+| Raw Command | Structured Tool | Output Format |
+|-------------|-----------------|---------------|
+| `grep -r "export"` | `search_symbols` | `{name, kind, file, summary}` |
+| `find . -name "*.ts"` | `get_file_tree` | `{path, type, exports}` |
+| `cat file.ts` | `get_symbol` | `{signature, docs, body}` |
+| `git log` | `gh repo view` | `{issues, prs, commits}` |
 
 Structured output lets the agent reason about data, not parse strings.
 
 ### In Practice
 
 ```typescript
-// Raw grep (200 lines of noise)
+// Raw grep (illustrative: hundreds of matching lines)
 $ grep -r "function.*process" ./src
 src/auth.ts:45:export function processLogin() {
 src/auth.ts:89:function processLogout() {
 src/payment.ts:12:export async function processPayment() {
 // ... 197 more lines
 
-// Structured search (5 results)
+// Structured search (illustrative: a handful of typed results)
 $ search_symbols("process", kind="function")
 [
   { name: "processLogin", file: "src/auth.ts", line: 45, summary: "Authenticates user" },
@@ -334,7 +336,7 @@ $ search_symbols("process", kind="function")
 ]
 ```
 
-Same information. The structured version is 5% of the tokens and immediately usable by the agent.
+Same information. The structured version is far shorter and immediately usable by the agent. The sizes shown are illustrative, not measured.
 
 ### Anti-Pattern
 
@@ -415,7 +417,7 @@ This is a **subjective trade-off, not a hard rule**. The point is that agentic d
 
 ### Problem
 
-MCP (Model Context Protocol) servers return data to LLMs as JSON. For tabular responses — order lists, portfolio holdings, market data — JSON's repeating keys and structural overhead consume tokens without adding information. A list of 50 orders with 8 fields each produces a JSON payload where ~60% of the characters are structural syntax, not data. When agents consume MCP endpoints, this overhead scales linearly with every response.
+MCP (Model Context Protocol) servers return data to LLMs as JSON. For tabular responses — order lists, portfolio holdings, market data — JSON's repeating keys and structural overhead consume tokens without adding information. A list of 50 orders with 8 fields each repeats all 8 field names 50 times in JSON; the repeated keys and punctuation are structure, not data. When agents consume MCP endpoints, this overhead scales linearly with every response.
 
 ### Solution
 
@@ -423,26 +425,30 @@ MCP (Model Context Protocol) servers return data to LLMs as JSON. For tabular re
 
 **JSON vs TOON for the same data:**
 
+Compact JSON (no whitespace), 117 characters:
+
 ```json
-// JSON — 163 characters
 [{"id":1,"symbol":"ETH","balance":"2.5","usd":"8125.00"},{"id":2,"symbol":"USDC","balance":"1500.0","usd":"1500.00"}]
 ```
 
+TOON, 79 characters (32% fewer characters), counting newlines and the two-space row indent:
+
 ```toon
-// TOON — 61 characters (63% reduction)
 balances[2]{id,symbol,balance,usd}:
   1,ETH,2.5,8125.00
   2,USDC,1500.0,1500.00
 ```
 
-The header `[2]{id,symbol,balance,usd}:` declares record count and field names once. Each row contains only values, separated by commas. Records are separated by pipes (or newlines). The savings compound with record count — 100 rows means 100 fewer repetitions of field names.
+Both counts were produced with a script over the exact strings above. They measure characters, not tokens; token counts depend on the tokenizer.
+
+The header `balances[2]{id,symbol,balance,usd}:` declares the record count and field names once. Each row contains only values, separated by commas. Records are separated by newlines. Field names are not repeated per row, so the character saving grows with record count.
 
 **Key TOON format rules:**
 
 - Line-oriented, indentation-based syntax
 - Array length declared explicitly: `[N]`
 - Uniform object arrays use tabular format: `{field1,field2}:`
-- Values separated by commas, records by pipes or newlines
+- Values separated by commas, records by newlines
 - Nested objects encoded inline
 - Full lossless round-trip: `decode(encode(data)) === data`
 
@@ -491,7 +497,7 @@ class MCPResponseFormatter {
 **When TOON helps (apply it):**
 
 - Uniform object arrays returned from MCP tools (orders, balances, positions, market data)
-- Responses with 5+ records and 3+ fields — savings exceed 40%
+- Responses with many records and several fields, where repeated keys dominate the JSON payload
 - High-frequency endpoints called repeatedly during agent sessions
 
 **When TOON doesn't help (skip it):**
@@ -500,20 +506,11 @@ class MCPResponseFormatter {
 - Responses under 20 characters — TOON header overhead exceeds savings
 - Responses where field names vary between records
 
-**Typical savings by data shape:**
-
-| Shape | Records | Fields | JSON Size | TOON Size | Savings |
-|-------|---------|--------|-----------|-----------|---------|
-| Balances | 5 | 4 | ~320 chars | ~120 chars | ~63% |
-| Orders | 20 | 8 | ~2,400 chars | ~900 chars | ~63% |
-| Market data | 100 | 6 | ~8,500 chars | ~3,200 chars | ~62% |
-| Trade history | 200 | 10 | ~28,000 chars | ~11,000 chars | ~61% |
-
-Savings stay in the 60-65% range regardless of record count because the ratio of structural overhead to data remains constant.
+Savings depend on data shape (record count, field count, value length) and on the tokenizer. Measure them in tokens on your own payloads before adopting TOON.
 
 ### Anti-Pattern
 
-**Don't** apply TOON to all responses indiscriminately. A single-object response like `{"orderId": "abc", "status": "filled"}` is 46 characters in JSON — TOON's header would add overhead, not reduce it.
+**Don't** apply TOON to all responses indiscriminately. A single-object response like `{"orderId": "abc", "status": "filled"}` is 38 characters in JSON — TOON's header would add overhead, not reduce it.
 
 **Don't** forget the fallback path. TOON encoding can fail on circular references or unexpected data types. Always fall back to JSON — the agent receives the same data either way, just with or without token savings.
 
@@ -595,7 +592,7 @@ The complete optimization pipeline:
 9. **Compress** ([3.7](#pattern-37--toon-serialization-for-mcp-response-optimization)): For MCP tabular responses, serialize with TOON
 10. **Evaluate** ([L4: Context Eval](L4-standards-measurement.md#pattern-46--context-eval)): Score routing decisions against expected outcomes to catch regressions
 
-Result: 60-90% token savings, fewer errors, better outcomes.
+Intended result: fewer wasted tokens, fewer errors, better outcomes. Measure the effect on your own sessions.
 
 ---
 
