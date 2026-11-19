@@ -1,0 +1,82 @@
+version: 1
+defaults:
+  interactive_level: 2
+  evidence_window: { min_runs: 30, max_days: 60 }
+profile: .autonomy/profile.json
+
+workflows:
+  - id: dep-bump
+    owner: team-platform
+    sponsor: "@alice"
+    granted_level: 3
+    identity: github-app:dep-bump-bot
+    access_expires: 2027-02-01
+    risk:
+      reversible: true
+      verification: mechanical
+      blast_radius: repo
+      trifecta: { untrusted_input: false, sensitive_data: false, external_action: false }
+    limits: { max_runs_per_day: 5, max_cost_usd_per_run: 2.00, max_diff_lines: 400 }
+    stop:
+      mechanism: "disable the workflow"
+      command: 'touch "$AUTONOMY_STOP_FILE"'
+      authority: ["team-platform"]
+      last_tested: 2026-11-10
+    review_date: 2027-02-01
+
+  - id: dep-hold
+    owner: team-platform
+    sponsor: "@alice"
+    granted_level: 3
+    identity: github-app:dep-hold-bot
+    access_expires: 2027-02-01
+    risk:
+      reversible: true
+      verification: mechanical
+      blast_radius: repo
+      trifecta: { untrusted_input: false, sensitive_data: false, external_action: false }
+    limits: { max_runs_per_day: 5, max_cost_usd_per_run: 2.00, max_diff_lines: 400 }
+    stop:
+      mechanism: "disable the workflow"
+      command: 'touch "$AUTONOMY_STOP_FILE"'
+      authority: ["team-platform"]
+      last_tested: 2026-11-10
+    review_date: 2027-02-01
+
+  - id: dep-regress
+    owner: team-platform
+    sponsor: "@alice"
+    granted_level: 4
+    identity: github-app:dep-regress-bot
+    access_expires: 2027-02-01
+    risk:
+      reversible: true
+      verification: mechanical
+      blast_radius: repo
+      trifecta: { untrusted_input: false, sensitive_data: false, external_action: false }
+    limits: { max_runs_per_day: 5, max_cost_usd_per_run: 2.00, max_diff_lines: 400 }
+    stop:
+      mechanism: "disable the workflow"
+      command: 'touch "$AUTONOMY_STOP_FILE"'
+      authority: ["team-platform"]
+      last_tested: 2026-11-10
+    review_date: 2027-02-01
+
+  - id: dep-incident
+    owner: team-platform
+    sponsor: "@alice"
+    granted_level: 4
+    identity: github-app:dep-incident-bot
+    access_expires: 2027-02-01
+    risk:
+      reversible: true
+      verification: mechanical
+      blast_radius: repo
+      trifecta: { untrusted_input: false, sensitive_data: false, external_action: false }
+    limits: { max_runs_per_day: 5, max_cost_usd_per_run: 2.00, max_diff_lines: 400 }
+    stop:
+      mechanism: "disable the workflow"
+      command: 'touch "$AUTONOMY_STOP_FILE"'
+      authority: ["team-platform"]
+      last_tested: 2026-11-10
+    review_date: 2027-02-01

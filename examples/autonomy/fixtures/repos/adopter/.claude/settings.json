@@ -1,0 +1,12 @@
+{
+  "sandbox": { "enabled": true, "allowUnsandboxedCommands": false },
+  "permissions": { "deny": ["Bash(curl *)", "Read(./.env)"] },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{ "type": "command", "command": ".claude/hooks/block-edits.sh" }]
+      }
+    ]
+  }
+}

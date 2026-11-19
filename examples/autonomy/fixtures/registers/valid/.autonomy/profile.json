@@ -1,0 +1,14 @@
+{
+  "generated": "2026-11-10T02:00:00Z",
+  "dimensions": {
+    "platform": { "level": 4, "evidence": ["agent-config"], "missing_for_next": [] },
+    "shared_context": { "level": 3, "evidence": ["claude-md"], "missing_for_next": [] },
+    "operating_model": { "level": 4, "evidence": ["ci-tests-lint"], "missing_for_next": [] },
+    "governance": { "level": 4, "evidence": ["constitutional-rules"], "missing_for_next": [] },
+    "ownership": { "level": 4, "evidence": ["register-owners"], "missing_for_next": [] },
+    "skill": { "level": "unknown", "counted_as": 2, "evidence": [], "missing_for_next": ["worksheet:skill"] },
+    "measuring": { "level": 4, "evidence": ["outcome-tracking"], "missing_for_next": [] }
+  },
+  "cap": 4,
+  "workflows_over_cap": []
+}

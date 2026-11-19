@@ -1,0 +1,29 @@
+{
+  "ok": false,
+  "cap": 2,
+  "profile_age_days": 7,
+  "workflows": [
+    {
+      "id": "dep-bump",
+      "granted": 4,
+      "effective": 2,
+      "reasons": [
+        "cap:2"
+      ]
+    },
+    {
+      "id": "interactive",
+      "granted": 2,
+      "effective": 2,
+      "reasons": []
+    }
+  ],
+  "failures": [
+    {
+      "code": "grant-exceeds-cap",
+      "workflow": "dep-bump",
+      "granted": 4,
+      "cap": 2
+    }
+  ]
+}

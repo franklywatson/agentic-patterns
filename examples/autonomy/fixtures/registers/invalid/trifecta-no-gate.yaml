@@ -1,0 +1,8 @@
+version: 1
+workflows:
+  - id: w
+    owner: t
+    sponsor: "@a"
+    granted_level: 3
+    identity: github-app:bot
+    risk: { reversible: true, verification: partial, blast_radius: repo, trifecta: { untrusted_input: true, sensitive_data: true, external_action: true } }

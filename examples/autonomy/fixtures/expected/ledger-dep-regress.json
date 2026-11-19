@@ -1,0 +1,81 @@
+{
+  "workflow": "dep-regress",
+  "now": "2026-11-18T00:00:00Z",
+  "granted_level": 4,
+  "target_level": 5,
+  "window": {
+    "days": 90,
+    "runs": 100
+  },
+  "first_run_pass": {
+    "k": 100,
+    "n": 100,
+    "rate": 1,
+    "lower": 0.963
+  },
+  "revert": {
+    "k": 8,
+    "n": 100,
+    "rate": 0.08,
+    "upper": 0.15
+  },
+  "escaped_defects": 0,
+  "task_bank_score": 0.94,
+  "cost_per_merged_outcome": 0.95,
+  "band": "demote",
+  "criteria": [
+    {
+      "id": "days-at-level",
+      "required": ">= 90",
+      "actual": 57,
+      "pass": false
+    },
+    {
+      "id": "baseline",
+      "required": "present",
+      "actual": null,
+      "pass": false
+    },
+    {
+      "id": "target",
+      "required": "present",
+      "actual": null,
+      "pass": false
+    },
+    {
+      "id": "stop-rule",
+      "required": "present",
+      "actual": null,
+      "pass": false
+    },
+    {
+      "id": "cost-per-merged-outcome",
+      "required": "reported",
+      "actual": 0.95,
+      "pass": true
+    },
+    {
+      "id": "cap",
+      "required": ">= 5",
+      "actual": 4,
+      "pass": false
+    },
+    {
+      "id": "cooldown",
+      "required": ">= 30 days since demotion",
+      "actual": null,
+      "pass": true
+    }
+  ],
+  "promotion_ready": false,
+  "manual_items": [
+    "one review cycle completed with a recorded decision"
+  ],
+  "demotion": {
+    "triggered": true,
+    "to_level": 3,
+    "reasons": [
+      "revert-upper-above-hysteresis"
+    ]
+  }
+}

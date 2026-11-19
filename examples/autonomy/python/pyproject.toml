@@ -1,0 +1,28 @@
+[project]
+name = "autonomy-example"
+version = "0.1.0"
+description = "Earned-autonomy tooling: register check, census, ledger reader, stop drill, Claude Code hook"
+requires-python = ">=3.12"
+dependencies = [
+    "jsonschema>=4.23.0",
+    "pyyaml>=6.0.2",
+]
+
+[project.scripts]
+autonomy = "autonomy.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.3.0"]
+
+[build-system]
+requires = ["uv_build>=0.9,<0.14"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "-v --tb=short --strict-markers"
+filterwarnings = ["error"]
+
+[tool.uv.build-backend]
+module-name = "autonomy"
