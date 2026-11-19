@@ -121,8 +121,7 @@ Six forbidden patterns that let a test pass silently, and the lint, CI and mutat
 
 The same loop can extend into production for one narrow case: an incident in code you own, repaired by a change that is
 reversible and that a machine can verify. The repair loop must not hide defects, must not grade its own work and must be
-stoppable. Pattern 1.7 needs no autonomy. The others set limits before any repair runs unattended. Evidence is mixed:
-1.7 is well supported for human-run teams, while 1.10, 1.11 and 1.12 are Thin (see each pattern's evidence line).
+stoppable. Pattern 1.7 needs no autonomy. The others set limits before any repair runs unattended.
 
 - [Pattern 1.7 — Incident-to-Stack-Test](L1-patterns/1.7-incident-to-stack-test.md): every incident ends with a reproduction that fails on the production commit and passes on the fix.
 - [Pattern 1.8 — Reversibility and Blast-Radius Classes](L1-patterns/1.8-reversibility-blast-radius.md): classify each change from its diff, in code, failing closed (R0 to R4, B0 to B3).

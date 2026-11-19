@@ -8,8 +8,8 @@ from autonomy.check import (
     format_check,
     is_agent_commit,
     is_governance_file,
-    is_tier1_file,
-    is_tier2_file,
+    is_locked_file,
+    is_workflow_file,
     run_check,
 )
 from autonomy.util import parse_time
@@ -40,9 +40,9 @@ def test_check_fails_when_the_profile_is_missing(copy_fixture):
     result = run_check(directory, NOW_MS)
     assert result["failures"] == [
         {"code": "profile-missing"},
-        {"code": "grant-exceeds-cap", "workflow": "dep-bump", "granted": 4, "cap": 2},
-        {"code": "grant-exceeds-cap", "workflow": "flaky-test-triage", "granted": 3, "cap": 2},
-        {"code": "grant-exceeds-cap", "workflow": "interactive", "granted": 3, "cap": 2},
+        {"code": "grant-exceeds-cap", "workflow": "dep-bump", "granted": 4, "cap": 1},
+        {"code": "grant-exceeds-cap", "workflow": "flaky-test-triage", "granted": 3, "cap": 1},
+        {"code": "grant-exceeds-cap", "workflow": "interactive", "granted": 3, "cap": 1},
     ]
 
 
@@ -206,18 +206,18 @@ def unacknowledged(commit, file):
     return {"code": "workflow-change-unacknowledged", "commit": commit, "file": file}
 
 
-def test_a_tier_1_file_still_fails_when_a_later_human_commit_carries_an_acknowledgement_line():
-    result = check_commits("governance-tier1-with-ack")
+def test_a_locked_file_still_fails_when_a_later_human_commit_carries_an_acknowledgement_line():
+    result = check_commits("governance-locked-with-ack")
     assert result["failures"] == [{"code": "governance-file-changed-by-agent", "commit": A1, "file": ".autonomy.yaml"}]
     assert result["acknowledged"] == []
 
 
 def test_an_unacknowledged_agent_change_to_a_workflow_fails_with_workflow_change_unacknowledged():
-    assert check_commits("governance-tier2-unacknowledged")["failures"] == [unacknowledged(A1, ".github/workflows/ci.yml")]
+    assert check_commits("governance-workflow-unacknowledged")["failures"] == [unacknowledged(A1, ".github/workflows/ci.yml")]
 
 
 def test_a_workflow_change_acknowledged_by_a_later_human_commit_passes_and_is_reported():
-    result = check_commits("governance-tier2-acknowledged")
+    result = check_commits("governance-workflow-acknowledged")
     assert result["ok"] is True
     assert result["acknowledged"] == [{"commit": A1, "file": ".github/workflows/ci.yml", "by": H1}]
     assert "governance: a1b2c3d changed .github/workflows/ci.yml (acknowledged by c3d4e5f)" in format_check(result).split("\n")
@@ -226,10 +226,10 @@ def test_a_workflow_change_acknowledged_by_a_later_human_commit_passes_and_is_re
 @pytest.mark.parametrize(
     "name",
     [
-        "governance-tier2-ack-by-agent",
-        "governance-tier2-ack-before",
-        "governance-tier2-ack-short-prefix",
-        "governance-tier2-ack-wrong-sha",
+        "governance-workflow-ack-by-agent",
+        "governance-workflow-ack-before",
+        "governance-workflow-ack-short-prefix",
+        "governance-workflow-ack-wrong-sha",
     ],
 )
 def test_an_acknowledgement_that_does_not_qualify_does_not_count(name):
@@ -238,14 +238,14 @@ def test_an_acknowledgement_that_does_not_qualify_does_not_count(name):
     assert result["acknowledged"] == []
 
 
-def test_a_case_variant_workflow_path_is_tier_2():
-    assert is_tier2_file(".GitHub/Workflows/x.yml") is True
-    assert is_tier1_file(".GitHub/Workflows/x.yml") is False
-    assert check_commits("governance-tier2-case-variant")["failures"] == [unacknowledged(A1, ".GitHub/Workflows/x.yml")]
+def test_a_case_variant_workflow_path_is_a_workflow_file():
+    assert is_workflow_file(".GitHub/Workflows/x.yml") is True
+    assert is_locked_file(".GitHub/Workflows/x.yml") is False
+    assert check_commits("governance-workflow-case-variant")["failures"] == [unacknowledged(A1, ".GitHub/Workflows/x.yml")]
 
 
 def test_with_two_agent_commits_only_the_acknowledged_one_passes():
-    result = check_commits("governance-tier2-two-agents-one-acked")
+    result = check_commits("governance-workflow-two-agents-one-acked")
     assert result["failures"] == [unacknowledged(A2, ".github/workflows/release.yml")]
     assert result["acknowledged"] == [{"commit": A1, "file": ".github/workflows/ci.yml", "by": H1}]
 
@@ -278,13 +278,13 @@ WF = ".github/workflows/ci.yml"
 
 
 def test_an_acknowledgement_prefix_that_matches_two_agent_commits_acknowledges_neither():
-    result = check_commits("governance-tier2-ack-ambiguous-prefix")
+    result = check_commits("governance-workflow-ack-ambiguous-prefix")
     assert result["failures"] == [unacknowledged(A1, WF), unacknowledged(B1, ".github/workflows/release.yml")]
     assert result["acknowledged"] == []
 
 
 def test_a_longer_prefix_that_names_one_agent_commit_acknowledges_only_that_commit():
-    result = check_commits("governance-tier2-ack-disambiguated-prefix")
+    result = check_commits("governance-workflow-ack-disambiguated-prefix")
     assert result["failures"] == [unacknowledged(B1, ".github/workflows/release.yml")]
     assert result["acknowledged"] == [{"commit": A1, "file": WF, "by": H1}]
 
@@ -292,12 +292,12 @@ def test_a_longer_prefix_that_names_one_agent_commit_acknowledges_only_that_comm
 @pytest.mark.parametrize(
     "name",
     [
-        "governance-tier2-ack-subject-line",
-        "governance-tier2-ack-cr",
-        "governance-tier2-ack-crlf",
-        "governance-tier2-ack-line-separator",
-        "governance-tier2-ack-by-anthropic-coauthor",
-        "governance-tier2-ack-by-agent-committer",
+        "governance-workflow-ack-subject-line",
+        "governance-workflow-ack-cr",
+        "governance-workflow-ack-crlf",
+        "governance-workflow-ack-line-separator",
+        "governance-workflow-ack-by-anthropic-coauthor",
+        "governance-workflow-ack-by-agent-committer",
     ],
 )
 def test_acknowledgements_that_are_malformed_or_by_an_agent_do_not_count(name):
@@ -306,8 +306,8 @@ def test_acknowledgements_that_are_malformed_or_by_an_agent_do_not_count(name):
     assert result["acknowledged"] == []
 
 
-def test_one_commit_that_touches_both_tiers_fails_tier_1_and_still_reports_the_acknowledged_tier_2_file():
-    result = check_commits("governance-both-tiers-one-commit")
+def test_one_commit_that_touches_a_locked_and_a_workflow_file_fails_the_locked_file_and_still_reports_the_acknowledged_workflow_file():
+    result = check_commits("governance-locked-and-workflow-one-commit")
     assert result["failures"] == [{"code": "governance-file-changed-by-agent", "commit": A1, "file": ".autonomy.yaml"}]
     assert result["acknowledged"] == [{"commit": A1, "file": WF, "by": H1}]
 
@@ -336,7 +336,7 @@ def _out(directory, name, *args):
     ).stdout
 
 
-def test_non_ascii_and_tab_paths_are_listed_unquoted_and_match_the_tiers(copy_fixture):
+def test_non_ascii_and_tab_paths_are_listed_unquoted_and_match_the_governance_lists(copy_fixture):
     directory = _repo(copy_fixture, "deps-bot[bot]")
     (directory / ".github" / "workflows").mkdir(parents=True)
     (directory / ".autonomy" / "ledger").mkdir(parents=True, exist_ok=True)
@@ -371,7 +371,7 @@ def test_a_commit_message_with_record_separators_cannot_forge_a_commit_or_an_ack
     assert result["failures"] == [unacknowledged(sha, ".github/workflows/ci.yml")]
 
 
-def test_files_an_agent_adds_in_a_merge_commit_are_listed_and_fail_tier_1(copy_fixture):
+def test_files_an_agent_adds_in_a_merge_commit_are_listed_and_fail_as_locked_files(copy_fixture):
     directory = _repo(copy_fixture, "Alice")
     _git(directory, "Alice", "checkout", "-q", "-b", "side")
     (directory / "side.txt").write_text("side\n")

@@ -7,7 +7,7 @@ A minimal, working example of stack tests in TypeScript using Jest and Playwrigh
 - **User journey framing**: Each test is one complete user interaction, not a component check
 - **Dynamic port allocation**: Ports assigned from available range (10000-65535)
 - **Unique compose project**: `docker compose -p stack-test-{pid}-{hex}` isolates containers, network and volumes; the compose file sets no fixed `container_name`
-- **Transient volumes**: Data disappears when containers stop
+- **Transient volumes**: Data is removed with `docker compose down -v` at cleanup
 - **Per-test compose files**: generated as `docker-compose-stack-test-{pid}-{hex}-{timestamp}.yml` from the template and deleted on cleanup
 - **Full-loop assertions**: Primary response, second-order cross-API verification, third-order audit/observability
 - **Sequential ordering**: Tests numbered `01-`, `02-` to establish dependency ladder
@@ -19,7 +19,7 @@ This example demonstrates two complementary approaches to stack testing, both ru
 
 ### API-Level Tests (Jest)
 
-API-level tests drive the stack through HTTP calls — the same interface a mobile app or API consumer would use. They are fast, deterministic, and provide precise diagnostic signal through structured assertion layering.
+API-level tests drive the stack through HTTP calls — the same interface a mobile app or API consumer would use. They are faster than browser tests and give a precise diagnostic signal through layered assertions.
 
 **When to use:** Backend services, API contracts, internal system behavior, data integrity checks.
 
@@ -27,8 +27,7 @@ API-level tests drive the stack through HTTP calls — the same interface a mobi
 
 Browser-level tests drive the stack through a real browser — the same interface an end user would use. They catch problems API tests cannot: broken JavaScript, missing CSS assets, rendering failures, and client-side logic errors.
 
-See [Pattern 1.1, Beyond API Testing](../../../docs/L1-patterns/1.1-stack-tests.md#beyond-api-testing).
-**When to use:** Web applications with significant frontend logic, critical user flows that span page transitions.
+**When to use:** Web applications with significant frontend logic, critical user flows that span page transitions. See [Pattern 1.1, Beyond API Testing](../../../docs/L1-patterns/1.1-stack-tests.md#beyond-api-testing).
 
 ### How They Complement Each Other
 
@@ -47,7 +46,7 @@ A healthy test suite uses both: API tests for fast feedback on backend changes, 
 
 ## File Structure
 
-```
+```text
 .
 ├── package.json              # Dependencies (Jest + Playwright)
 ├── jest.config.cjs           # Stack-test Jest config: 300s timeout, runInBand
@@ -125,7 +124,7 @@ Tests are numbered `01-`, `02-` etc. to enforce ordering. Each test assumes all 
 
 ### 2. Full-Loop Assertions
 
-Each test verifies at multiple levels:
+Each test asserts in three layers:
 
 - **Primary**: API response status and body (API tests) or page content (browser tests)
 - **Second-order**: Derived effects verified through a different API endpoint or page than the one that performed the action

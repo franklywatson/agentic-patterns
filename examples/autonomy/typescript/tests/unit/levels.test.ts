@@ -26,8 +26,16 @@ test("unknown counts as level 2", () => {
   assert.equal(capOf(dims({ platform: 4, governance: 4, ownership: 4, measuring: "unknown" })), 2);
 });
 
-test("a missing profile caps at 2", () => {
-  assert.equal(capOf(null), 2);
+test("a missing profile caps at 1", () => {
+  assert.equal(capOf(null), 1);
+  assert.equal(capOf({ dimensions: full.dimensions }), 1);
+  assert.equal(capOf([] as unknown as null), 1);
+});
+
+test("a missing profile holds every grant at 1", () => {
+  const e = effectiveLevel({ id: "interactive", granted_level: 2 }, null, null, {}, NOW);
+  assert.equal(e.effective, 1);
+  assert.deepEqual(e.reasons, ["cap:1"]);
 });
 
 test("profile status distinguishes ok, stale and missing", () => {

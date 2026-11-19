@@ -42,6 +42,6 @@ workflows:
     stop:
       mechanism: "engage the stop switch in the breaker state; revoke the app installation token"
       authority: [team-platform, "@oncall"]
-      last_tested: 2026-11-18      # exercised by stack test 05
+      last_tested: 2026-11-18      # example value; stack test 05 exercises the stop switch in the breaker state
     review_date: 2027-02-18
     stop_rule: "retire if fewer than 2 confirmed repairs in 90 days, or any repair is reverted twice"

@@ -107,15 +107,28 @@ def _codeowners_sets(c: Ctx) -> set[str]:
     return sets
 
 
+def _rule_approves(c: Ctx, rule: Any) -> bool:
+    if not isinstance(rule, dict) or rule.get("type") != "pull_request":
+        return False
+    parameters = rule.get("parameters") or {}
+    count = parameters.get("required_approving_review_count")
+    if isinstance(count, int) and not isinstance(count, bool) and count >= 1:
+        return True
+    return parameters.get("require_code_owner_review") is True and len(_codeowners_sets(c)) > 0
+
+
 def _ruleset_approves(c: Ctx) -> bool:
+    """A committed ruleset requires a non-author approval: on every pull request (an integer
+    `required_approving_review_count` of at least 1), or on pull requests that change a file with a
+    code owner (`require_code_owner_review`, which needs a CODEOWNERS file with at least one rule)."""
     for f in c.files:
         if not re.fullmatch(r"\.github/rulesets/.+\.json", f):
             continue
         try:
             rules = json.loads(c.text(f)).get("rules") or []
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, AttributeError):
             continue
-        if any(r.get("type") == "pull_request" and (r.get("parameters") or {}).get("required_approving_review_count", 0) >= 1 for r in rules):
+        if any(_rule_approves(c, r) for r in rules):
             return True
     return False
 

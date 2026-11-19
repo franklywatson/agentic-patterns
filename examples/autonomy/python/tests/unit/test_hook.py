@@ -66,6 +66,18 @@ def test_a_directory_without_a_register_allows_reads_and_denies_writes(tmp_path)
     assert reason(out).startswith("unknown-workflow:")
 
 
+def test_a_register_without_a_profile_holds_the_session_at_a1(copy_fixture):
+    directory = copy_fixture("registers", "valid")
+    (directory / ".autonomy" / "profile.json").unlink()
+    edit = {"tool_name": "Edit", "tool_input": {"file_path": str(directory / "src" / "a.ts"), "old_string": "a", "new_string": "b"}}
+    assert reason(call(directory, "interactive", edit)).startswith("read-only-level:")
+    assert call(directory, "interactive", {"tool_name": "Read", "tool_input": {"file_path": str(directory / "src" / "a.ts")}})[0] == ""
+    stdin = json.dumps({"session_id": "s", "hook_event_name": "SessionStart", "source": "startup"})
+    out = run_hook("session-start", stdin, {"CLAUDE_PROJECT_DIR": str(directory), "AUTONOMY_WORKFLOW": "interactive"}, NOW_MS)
+    context = json.loads(out[0])["hookSpecificOutput"]["additionalContext"]
+    assert context == "Autonomy: workflow interactive: effective level 1 of granted 3 (reduced: cap:1, freshness:profile-missing)."
+
+
 def test_every_decision_is_appended_to_the_audit_log_with_the_workflow_name(copy_fixture):
     directory = copy_fixture("registers", "valid")
     call(directory, "dep-bump", {"tool_name": "Write", "tool_input": {"file_path": str(directory / "CODEOWNERS"), "content": "x"}}, "audit-session")

@@ -1,10 +1,9 @@
 # Repair Loop Example
 
-A runnable repair loop with a deterministic gate, in TypeScript and Python. The loop takes an
-incident record, reproduces the failure, applies a candidate patch, verifies it, and asks a
-pure-function gate for one of three answers: `auto`, `human` or `block`. For `auto` the gate also says who
-merges: a person, or nobody (unattended). A fixed patch stands in for the repair agent, so every run is
-reproducible. No LLM is involved.
+For a team that wants to see Patterns 1.7 to 1.11 run before building its own repair loop: a runnable loop with a
+deterministic gate, in TypeScript and Python. The loop takes an incident record, reproduces the failure, applies a
+candidate patch, verifies it, and asks a pure-function gate for `auto`, `human` or `block`; for `auto` it also says
+who merges, a person or nobody. A fixed patch stands in for the repair agent, so every run is reproducible.
 
 The example runs four candidate patches against one seeded defect (INC-001) at grant A3, so every `auto` is
 merged by a person:
@@ -39,7 +38,7 @@ Simulated:
   incident to the candidate stack and counts the incident fingerprint in the app logs. This
   simulates a canary window. It does not prove behavior in production.
 - **The merge.** At grant A3 a person merges. The example treats the pull request in the outbox as merged.
-- **The outbox and register.** Tickets, pages and audit entries are JSON-lines files, not a ticketing system.
+- **The outbox and audit log.** Tickets, pages and audit entries are JSON-lines files, not a ticketing system.
 - **The repair agent.** Fixed patches replace it.
 
 Not demonstrated: the Pattern 1.5 carve-out for network-level fault injection (a proxy in front of a real
@@ -49,8 +48,9 @@ dependency). The example has no INC-002 that reproduces a dependency timeout.
 people or accounts. Running `autonomy check` on this directory alone still fails with `profile-missing`
 and `grant-exceeds-cap`, because the cap check needs a census profile that the example does not ship.
 
-To validate the register, copy `.autonomy.yaml` into an empty directory, add a `.autonomy/profile.json`
-with every dimension at curve position 3 (C3) and `"cap": 3`, then run the autonomy tooling there:
+To validate the register, copy `.autonomy.yaml` into an empty directory and add a test-fixture
+`.autonomy/profile.json` (in a real repository the census writes it) with a current `generated` time, every
+dimension at C3 and `"cap": 3`. Then run the autonomy tooling there:
 `node dist/src/cli.js check --dir <that directory> --no-commits`. With that profile the check reports
 `workflow repair-loop: granted 3, effective 3` and `autonomy check: ok`.
 
@@ -81,9 +81,9 @@ scores the unattended rule at A4 and A5.
     - `human`: open a ticket. A masking change gets a root-cause ticket.
     - `block`: page the owner.
 9. **Watch for recurrence.** `observeRecurrence` (`observe_recurrence` in Python) takes application logs. If the
-   incident fingerprint reappears inside 14 days of a confirmed repair, it drops the grant one step (A3 to A2).
-   Restoring it needs a named person and five clean repairs. Stack test 05 drives it with the logs of a
-   regressed build.
+   incident fingerprint reappears inside 14 days of a confirmed repair, it drops the grant one step (A3 to A2)
+   in the breaker state; the example does not write the autonomy demotion override. Restoring it needs a named
+   person and five clean repairs. Stack test 05 drives it with the logs of a regressed build.
 
 ## Gate Rules
 
@@ -93,7 +93,7 @@ scores the unattended rule at A4 and A5.
 | `human` | Reproduction was not red on base. The anti-masking scan has a hit. The class is above R2/B1. The grant is below A3. The attempt budget is spent or a cooldown is active. |
 | `auto` | None of the above. |
 
-The merge for an `auto` result follows the grant table in [Pattern
+The merge for an `auto` result follows the gate rule table in [Pattern
 1.11](../../docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md#grants-and-repair-capability):
 
 | Grant | Merges unattended | Policy key |
@@ -141,7 +141,7 @@ Each language directory has the same structure:
 ```text
 app/                  The minimal app (PostgreSQL and Redis) with the seeded defect
 patches/              INC-001.fix, .mask, .test-edit and .partial
-src/                  incident, reproduce, classify, antimask, gate, breaker, loop, runtime
+src/                  Main modules: incident, reproduce, classify, antimask, gate, breaker, loop, runtime
 tests/unit/           Module tests (mocks allowed)
 tests/eval/           Gate eval: 43 scenarios, exact scoring of the decision and the merge, pass^5
 tests/stack/          01 startup, 02 repair, 03 masking rejected, 04 test edit blocked, 05 breaker trips, 06 confirmation rollback

@@ -10,7 +10,7 @@ file, tests that state each module's contract, and a habit of deleting what no l
 gets lost, edits the wrong module or follows stale instructions.
 
 **Structure includes the boundary.** Where the agent runs, what it can write and which credentials it can reach are
-set-up decisions, cheapest on day one. Make them before you loosen any approvals ([Pattern 2.9 — Contain Before You
+set-up decisions, cheapest on day one. Make them on day one: Claude Code starts in auto mode with the sandbox off ([Pattern 2.9 — Contain Before You
 Relax](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
 
 ## Pattern 0.1 — Deep Modules
@@ -19,9 +19,9 @@ Relax](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
 every interconnection at once. Each export is a coupling point, and the agent spends context on details that should
 be hidden.
 
-**Solution**: A deep module has a small interface with a large implementation behind it (John Ousterhout, *A
-Philosophy of Software Design*). The agent sees the seam, a small set of exports, and can treat the interior as
-delegatable. Matt Pocock's graybox module adds the test discipline: tests lock down behavior, the interface is
+**Solution**: A deep module has a small interface with a large implementation behind it (John Ousterhout, [*A
+Philosophy of Software Design*](https://web.stanford.edu/~ouster/cgi-bin/book.php)). The agent sees the seam, a small set of exports, and can treat the interior as
+delegatable. Matt Pocock's [graybox module](https://youtu.be/uC44zFz7JSM) adds the test discipline: tests lock down behavior, the interface is
 controlled, and the interior can be handed to an agent.
 
 **In Practice**:
@@ -102,9 +102,9 @@ patterns it must follow. Scattered across READMEs, CONTRIBUTING files and wikis,
 has broken them.
 
 **Solution**: One instruction file is the single source of truth: a contract, not a tutorial. Use AGENTS.md as the
-shared file, which several coding agents read. Claude Code reads AGENTS.md when the repository has no CLAUDE.md or
-CLAUDE.local.md; when one exists it reads the CLAUDE.md files only, so a CLAUDE.md beside AGENTS.md imports it with a
-one-line `@AGENTS.md` ([SC-8](references/sources.md), [Claude Code
+shared file, which several coding agents read. Claude Code reads AGENTS.md only when the repository has no CLAUDE.md,
+`.claude/CLAUDE.md` or `CLAUDE.local.md`; any of them suppresses AGENTS.md, so a CLAUDE.md beside AGENTS.md imports it
+with a one-line `@AGENTS.md` ([SC-8](references/sources.md), [Claude Code
 memory](https://code.claude.com/docs/en/memory#agents-md)). Keep the file short, owned, tested and re-baselined:
 
 - **Short**: link to docs for anything long. CI warns above 200 lines, the vendor's target for a CLAUDE.md file
@@ -163,10 +163,11 @@ handles and how it fails. A test passes or fails, so its assertions state curren
 against them ([Pattern 0.7](#pattern-07--documentation-as-system-map)). Direct the agent toward diagnostic tests
 (boundary conditions, error paths, module seams), not line coverage with trivial assertions.
 
-**In Practice**: in a refactoring session the agent reads the current tests to learn the contract, you review the
-test plan together in plan mode ([permission modes](https://code.claude.com/docs/en/permission-modes)) and close coverage gaps, the agent refactors against passing tests, and then adds
-tests for the behavior it changed. When debugging, have the agent reduce the failure to a small isolated test, fix
-the code, and keep the test if it guards behavior worth keeping. Mocks belong in unit tests; stack tests use real dependencies. The test tiers are
+**In Practice**: in a refactoring session, the agent reads the current tests to learn the contract; you review the
+test plan together in plan mode ([permission modes](https://code.claude.com/docs/en/permission-modes)) and close
+coverage gaps; the agent refactors against passing tests; then it adds tests for the behavior it changed. When
+debugging, have the agent reduce the failure to a small isolated test, fix the code, and keep the test if it guards
+behavior worth keeping. Mocks belong in unit tests; stack tests use real dependencies. The test levels are
 compared in [Pattern 1.1](L1-patterns/1.1-stack-tests.md#comparison-test-types), and what to mock is in [Pattern
 1.5](L1-patterns/1.5-real-dependencies.md).
 
@@ -229,7 +230,7 @@ review for drift that a script can find.
 **Cross-References**: [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether the map works for a reader
 with no context.
 
-**Evidence:** Thin — the same-commit and reachability rules are reasoned, and this repository's CI enforces them; no study measures their effect on agents (this project's own experience, n=1)
+**Evidence:** Thin — the same-commit and reachability rules are reasoned. This repository's `Doc Reachability from AGENTS.md` job fails on an unreachable doc (advisory until the check is required on `main`), and review holds the same-commit rule. No study measures their effect on agents (this project's own experience, n=1)
 
 ---
 
@@ -361,12 +362,14 @@ memory](https://code.claude.com/docs/en/memory)); use it to choose candidates, a
 If removing a prose rule regresses nothing because a hook already blocks the violation, delete the prose. If it
 regresses nothing because no task exercises the rule, add the task before deleting.
 
-**Anti-Pattern**: "We added it, so it must help"
-([catalog](cross-cutting/anti-patterns.md#we-added-it-so-it-must-help)). A line cap used as a proxy for signal
-([catalog](cross-cutting/anti-patterns.md#line-caps-as-a-proxy-for-signal)). A bank written from the artifacts it
-tests, so it passes with or without them; draw tasks from real work and incidents. Re-running only the tasks the
-artifact was written for; a removal can regress an unrelated task. Deleting an invariant because the model behaves
-without it; the hook or CI check holds the rule for the day it does not.
+**Anti-Pattern**: "We added it, so it must help": skills, hooks and rules only ever added, and no one can say which
+task each fixed. Each addition answered a real failure, so removal feels like reintroducing it; give each artifact a
+justifying task and keep it only if that task regresses. A line limit used as a proxy for signal: the instruction file
+passes the length check and still holds stale rules, or a useful rule is cut to fit; test the content with step 3
+instead of trimming to a number. A bank written from the artifacts it tests, so it passes with or without them; draw
+tasks from real work and incidents. Re-running only the tasks the artifact was written for; a removal can regress an
+unrelated task. Deleting an invariant because the model behaves without it; the hook or CI check holds the rule for the
+day it does not.
 
 **Cross-References**: [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) sets the instruction
 file's owner and review date. [Pattern 0.8](#pattern-08--aggressive-cleanup) is the same discipline for code.
@@ -377,8 +380,8 @@ file's owner and review date. [Pattern 0.8](#pattern-08--aggressive-cleanup) is 
 
 ## Further Reading
 
-- John Ousterhout, *A Philosophy of Software Design* — deep modules
-- Matt Pocock, "Your codebase is NOT ready for AI" — graybox modules, progressive disclosure
+- John Ousterhout, [*A Philosophy of Software Design*](https://web.stanford.edu/~ouster/cgi-bin/book.php) — deep modules
+- Matt Pocock, ["Your codebase is NOT ready for AI"](https://youtu.be/uC44zFz7JSM) — graybox modules, progressive disclosure
 - [Further Reading](references/further-reading.md)
 
 ---

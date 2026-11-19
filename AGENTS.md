@@ -10,7 +10,8 @@ start at [README.md](README.md); agents use the index below, from which every do
 
 Each rule names its enforcement point ([Pattern 0.4](docs/L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution)).
 This repository has no hooks and no application code. Rules enforced by review are guidance until a person
-checks them.
+checks them. `main` has no branch protection, so a CI job here fails the job and is advisory until the check is
+required on `main`.
 
 1. **Real dependencies in E2E/integration and stack tests** — Use real databases, services and caches; mocks are
    appropriate in unit tests. Enforced by: reviewer. No CI job checks this.
@@ -19,26 +20,31 @@ checks them.
    ([Pattern 4.1](docs/L4-standards-measurement.md#pattern-41--evidence-based-claims)). Enforced by: reviewer, who
    reads the CI run.
 3. **Zero-defect tolerance** — Every error and warning is addressed. Enforced by: the `Documentation Guardrails`
-   workflow jobs (`Markdown Lint`, `Link Integrity`, `Source IDs Resolve`, `Writing Conventions`) for docs; for
-   example code, the reviewer, because no CI job runs the example tests.
+   workflow jobs (`Markdown Lint`, `Link Integrity`, `Source IDs Resolve`) for docs, which fail the job but do not
+   block a merge; `Writing Conventions` only warns. For example code, the reviewer, because no CI job runs the
+   example tests.
 4. **Doc freshness mandatory** — Code changes require doc updates in the same session. Enforced by: reviewer. No CI
    job compares code changes with doc changes; the `Doc Freshness` job checks only review dates.
 5. **No conditional test assertions** — Tests that can silently pass are forbidden. Enforced by: reviewer, with
    [Pattern 1.6](docs/L1-patterns/1.6-test-integrity.md) as the check to adopt.
 6. **Short, owned, tested, re-baselined** — This file has a named owner and a reviewed date. Enforced by: the
    `Instruction File Length` job (warns above 200 lines), `Doc Reachability from AGENTS.md` and `Link Integrity`
-   in CI, and the task-bank re-baseline at each model upgrade, run by hand ([Pattern
+   in CI, and the task-bank re-baseline at each model upgrade, run by hand and with no run recorded yet ([Pattern
    0.10](docs/L0-foundation.md#pattern-010--prune-and-re-baseline-context)). Link to docs for anything longer.
 
 ## High-Tier Paths
 
-High tier in the [risk model](docs/L1-patterns/1.8-reversibility-blast-radius.md#risk-model): `.github/workflows/`,
-`.autonomy.yaml`, `CODEOWNERS`, `.claude/settings*.json`, `.claude/hooks/`, `examples/autonomy/hooks/`. The
-`Autonomy Check` job fails a pull request when an agent commit (a `Co-Authored-By:` trailer naming Claude or
-Anthropic, or a `[bot]` identity) changes one of the first five, except `.github/workflows/` with a later non-agent
-`Governance-Approved: <sha>` line ([rules](examples/autonomy/README.md#governance-files)). The job runs only when a
-pull request touches its path filter, and `main` has no branch protection, so a failed job does not block a merge.
-Enforced by: that job and the reviewer; the reviewer alone for `examples/autonomy/hooks/`.
+High tier in the [risk model](docs/L1-patterns/1.8-reversibility-blast-radius.md#risk-model). Locked files, which
+`autonomy check` always blocks for agent commits: `.autonomy*` (including the `.autonomy/` state and the demotion
+override), `CODEOWNERS`, `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`. Workflow files,
+`.github/workflows/*`, are allowed with a later non-agent `Governance-Approved: <sha>` line
+([rules](examples/autonomy/README.md#governance-files)); `examples/autonomy/hooks/` is also high tier. An agent commit
+is one with a `Co-Authored-By:` trailer naming Claude or Anthropic, or a `[bot]` identity.
+
+The `Autonomy Check` job fails a pull request that breaks these rules; it is advisory until the check is required on
+`main`. `docs.yml`'s path filter starts the workflow only for docs, scripts, `.autonomy.yaml` and `examples/autonomy/`
+changes, so a pull request that touches only a locked file such as `CODEOWNERS` or another workflow gets no
+Autonomy Check run. Enforced by: that job where it runs, and the reviewer, who alone covers `examples/autonomy/hooks/`.
 
 ## Index
 
@@ -64,7 +70,7 @@ Pattern numbers are stable identifiers and are not contiguous.
 - [docs/L1-patterns/1.2-full-loop-assertions.md](docs/L1-patterns/1.2-full-loop-assertions.md) — Full-loop assertion layering
 - [docs/L1-patterns/1.3-sequential-design.md](docs/L1-patterns/1.3-sequential-design.md) — Sequential / additive test design
 - [docs/L1-patterns/1.4-container-isolation.md](docs/L1-patterns/1.4-container-isolation.md) — Container isolation
-- [docs/L1-patterns/1.5-real-dependencies.md](docs/L1-patterns/1.5-real-dependencies.md) — Real dependencies in stack/E2E tests
+- [docs/L1-patterns/1.5-real-dependencies.md](docs/L1-patterns/1.5-real-dependencies.md) — Real dependencies in E2E/integration and stack tests
 - [docs/L1-patterns/1.6-test-integrity.md](docs/L1-patterns/1.6-test-integrity.md) — Test integrity rules
 - [docs/L1-patterns/1.7-incident-to-stack-test.md](docs/L1-patterns/1.7-incident-to-stack-test.md) — Incident-to-stack-test
 - [docs/L1-patterns/1.8-reversibility-blast-radius.md](docs/L1-patterns/1.8-reversibility-blast-radius.md) — Reversibility and blast-radius classes, risk model
@@ -149,7 +155,7 @@ agentic-patterns/
 
 - Working code only. No TODOs, no placeholders.
 - All examples must run as-is.
-- Examples require Node 22 or later.
+- TypeScript examples require Node 22 or later; each Python example's README lists its requirements.
 - Each example has a README and its own test suite; run the suite before you commit. A new example for a core
   pattern (L0-L2, L4 and the A-series) ships in TypeScript and Python; examples for the optional L3 may be
   single-language.
@@ -171,7 +177,7 @@ agentic-patterns/
 
 **Master index requirement:**
 
-- Every doc in this repo must be reachable from AGENTS.md (this file), which CLAUDE.md imports.
+- Every doc under `docs/` must be reachable from AGENTS.md (this file), which CLAUDE.md imports.
 - This is the entry point — agents discover all project docs from here.
 
 ## Markdown Conventions

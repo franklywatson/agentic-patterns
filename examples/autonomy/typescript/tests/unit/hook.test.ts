@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -60,6 +60,16 @@ test("a directory without a register allows reads and denies writes", () => {
   assert.equal(call(dir, "interactive", { tool_name: "Read", tool_input: { file_path: join(dir, "a") } }).stdout, "");
   const out = call(dir, "interactive", { tool_name: "Edit", tool_input: { file_path: join(dir, "a"), old_string: "a", new_string: "b" } });
   assert.match(JSON.parse(out.stdout).hookSpecificOutput.permissionDecisionReason, /^unknown-workflow:/);
+});
+
+test("a register without a profile holds the session at A1", () => {
+  const dir = copyFixture("registers", "valid");
+  rmSync(join(dir, ".autonomy", "profile.json"));
+  const edit = { tool_name: "Edit", tool_input: { file_path: join(dir, "src", "a.ts"), old_string: "a", new_string: "b" } };
+  assert.match(JSON.parse(call(dir, "interactive", edit).stdout).hookSpecificOutput.permissionDecisionReason, /^read-only-level:/);
+  assert.equal(call(dir, "interactive", { tool_name: "Read", tool_input: { file_path: join(dir, "src", "a.ts") } }).stdout, "");
+  const out = runHook("session-start", JSON.stringify({ session_id: "s", hook_event_name: "SessionStart", source: "startup" }), { CLAUDE_PROJECT_DIR: dir, AUTONOMY_WORKFLOW: "interactive" }, now);
+  assert.equal(JSON.parse(out.stdout).hookSpecificOutput.additionalContext, "Autonomy: workflow interactive: effective level 1 of granted 3 (reduced: cap:1, freshness:profile-missing).");
 });
 
 test("every decision is appended to the audit log with the workflow name", () => {

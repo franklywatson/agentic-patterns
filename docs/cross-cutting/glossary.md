@@ -18,9 +18,13 @@ approve it; a different person approves. See
 cross-service contract, B3 money, auth, PII or audit. An unknown change is B3. See
 [Pattern 1.8](../L1-patterns/1.8-reversibility-blast-radius.md).
 
-**Cap** — The lowest curve position among the four dimensions that limit unattended work: platform, security and
-governance, production ownership and measuring value. The census of one repository computes it, and no grant may exceed it.
-See [The Curve and the Cap](../earned-autonomy.md#the-curve-and-the-cap).
+**Cap** — The curve cap only (not a spend or line limit; those are a budget and a line limit): the lowest curve
+position among the four dimensions that limit unattended work, platform, security and governance, production ownership
+and measuring value. The census of one repository computes it, and no grant may exceed it. See [The Curve and the Cap](../earned-autonomy.md#the-curve-and-the-cap).
+
+**Ceiling** — In the repair-loop policy, the highest reversibility and blast-radius class a grant lets the gate pass as
+`auto` (`autoCeiling`) or merge with no person (`unattendedCeiling`). See
+[Pattern 1.10](../L1-patterns/1.10-production-gate-progressive-confirmation.md).
 
 **Census** — The command that reads a repository's files and writes a profile with one curve position per
 dimension and the cap. A dimension with no evidence is C1. Only skill, which no file shows, is recorded as
@@ -61,19 +65,15 @@ Deterministic checks score pass^k with no partial credit; judged tasks use a rub
 **Context Harvesting** — Gathering targeted evidence from docs, code, tests and logs before proposing a change. See
 [L1](../L1-feedback-loops.md#context-harvesting--from-understanding-to-design).
 
-**Context Isolation** — Delegating exploration to a sub-agent that returns a short map, so search output stays out
+**Context Isolation** — Delegating exploration to a subagent that returns a short map, so search output stays out
 of the main session. See [Pattern 3.2](../L3-optimization.md#pattern-32--context-isolation-scout).
 
-**Curve (C1-C5)** — A five-step scale applied to each of seven dimensions separately: C1 Individual, C2 Grounded,
-C3 Verified delegation, C4 Governed autonomy, C5 Self-correcting. A team's place on one dimension is its position.
+**Curve (C1-C5)** — A five-step scale applied to each of seven dimensions of one repository: C1 Individual, C2 Grounded,
+C3 Verified delegation, C4 Governed autonomy, C5 Self-correcting. A repository's place on one dimension is its position.
 See [The Curve and the Cap](../earned-autonomy.md#the-curve-and-the-cap).
 
 **Deep Module** — A module with a small interface that hides a complex implementation. See
 [Pattern 0.1](../L0-foundation.md#pattern-01--deep-modules).
-
-**Delete-First Re-baselining** — At each model upgrade, run the task bank with a context artifact removed and keep
-the artifact only if a task regresses. See
-[Pattern 0.10](../L0-foundation.md#pattern-010--prune-and-re-baseline-context).
 
 **Design Rinsing** — Extracting transferable design decisions from an external source in a read-only session, then
 translating them for the target project. See
@@ -91,12 +91,20 @@ credentials are the boundary. See [L2 Overview](../L2-behavioral-guardrails.md#o
 the reviewer reads. Output the agent pastes with no CI run behind it is a claim, not evidence. See
 [Pattern 4.1](../L4-standards-measurement.md#pattern-41--evidence-based-claims).
 
-**Evidence Label** — The closing `**Evidence:**` line of a pattern: Strong (measured or corroborated by independent
-sources), Partial (support exists but is incomplete or contested) or Thin (reasoning, this project's own experience or
+**Evidence Bundle** — The record a repair attempt hands the gate: test output before and after, the diff, its classes,
+the anti-masking result, the attempt budget and the grant. See
+[Pattern 1.9](../L1-patterns/1.9-repair-loop-frozen-oracle.md).
+
+**Evidence Label** — The closing `**Evidence:**` line of a pattern: Strong (measured or corroborated by an independent
+source; guidance from one vendor is never Strong), Partial (support exists but is incomplete or contested) or Thin (reasoning, this project's own experience or
 unmeasured vendor claims), followed by the basis and source IDs. See [Sources](../references/sources.md).
 
 **Evidence Ledger** — The append-only record of workflow runs, written only by CI and after-the-fact jobs, from
 which promotion and demotion are computed. See [Pattern A.2](../earned-autonomy.md#pattern-a2--evidence-ledger).
+
+**Focused Integration Test** — A test of one adapter against one external dependency's real sandbox or testnet,
+without the full stack. See
+[Pattern 1.5](../L1-patterns/1.5-real-dependencies.md#focused-integration-tests-for-external-dependencies).
 
 **Frozen Oracle** — The reproduction test for an incident, hashed before the fix is written. The repair agent
 cannot edit it, and a changed hash blocks the repair. See
@@ -132,7 +140,7 @@ required CI check. Re-baselining does not remove it. See
 [Pattern 2.4](../L2-behavioral-guardrails.md#pattern-24--constitutional-rules).
 
 **Layer (L0-L4)** — A group of patterns: L0 Foundation, L1 Closed Loop Design and Verification, L2 Behavioral
-Guardrails, L3 Optimization (optional), L4 Standards & Measurement. The layers are not a maturity scale. See the
+Guardrails, L3 Optimization (optional), L4 Standards and Measurement. The layers are not a maturity scale. See the
 [README](../../README.md).
 
 **Least Agency** — Giving a session only the tools, permissions and autonomy its task needs. See
@@ -142,8 +150,12 @@ Guardrails, L3 Optimization (optional), L4 Standards & Measurement. The layers a
 outside, in one session. The Rule of Two allows at most two of the three unless a deterministic or human gate sits
 between them. See [Pattern 2.10](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition).
 
-**Master Index** — AGENTS.md, from which every doc in a repository is reachable by links. See
-[Pattern 0.4](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution).
+**Locked File** — A governance file that `autonomy check` always blocks from agent commits: `.autonomy*` (state and
+demotion override included), CODEOWNERS, `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`. See
+[Pattern A.6](../earned-autonomy.md#pattern-a6--enforcement-through-hooks).
+
+**Mechanical Verification** — A check whose pass or fail a machine decides, with no judgment by the agent or a
+reviewer. Grant A4 requires it. See [Why Stack Tests Earn Autonomy](../earned-autonomy.md#why-stack-tests-earn-autonomy).
 
 **Mitigation** — A change that removes the symptom but not the cause, such as a rollback or turning a flag off.
 It needs a root-cause ticket. See [Pattern 1.12](../L1-patterns/1.12-self-healing-tests-vs-systems.md).
@@ -164,12 +176,12 @@ rewards consistency, unlike best-of-k. See
 returns `auto`, `human` or `block`. The agent can act up to the gate and cannot pass it. See
 [Pattern 1.10](../L1-patterns/1.10-production-gate-progressive-confirmation.md).
 
+**Profile** — The file `autonomy census` writes (`.autonomy/profile.json`): one curve position per dimension, the cap
+and the probes behind each. A repository with no profile is at C1. See [Pattern A.4](../earned-autonomy.md#pattern-a4--census).
+
 **Progressive Disclosure** — A layout that lets a reader go from README to AGENTS.md to module interfaces to
 implementation, with directories named for concepts. See
 [Pattern 0.2](../L0-foundation.md#pattern-02--progressive-disclosure).
-
-**Real Dependencies** — Stack, E2E and integration tests use real databases, caches and owned services; unit tests
-may mock. See [Pattern 1.5](../L1-patterns/1.5-real-dependencies.md).
 
 **Register** — The committed, schema-validated `.autonomy.yaml` that lists every agent workflow with its owner,
 sponsor, grant, identity, limits, stop and review date. No agent may write it. See
@@ -180,8 +192,12 @@ sponsor, grant, identity, limits, stop and review date. No agent may write it. S
 
 **Reversibility Class** — How a change can be undone, classified from its diff: R0 inert, R1 flag-reversible, R2
 deploy-reversible, R3 data-forward, R4 external or irreversible. An unknown change is R4. With the blast-radius
-class it sets the risk tier (low, medium or high), which decides the review; the grant decides who acts unattended.
-See the [risk model](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model).
+class it sets the review tier, which decides the review; the grant decides who acts unattended. See the
+[risk model](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model).
+
+**Risk Model** — The table that maps a change's reversibility and blast-radius classes to a review tier (low,
+medium or high) and to the lowest grant that may merge it with no person. "Tier" means only the review tier. See
+[Pattern 1.8](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model).
 
 **Skill** — A prompt-level instruction file the agent loads when relevant. A skill shapes behavior and guarantees
 nothing. A skill overlay adds project rules to a base skill. See
@@ -196,7 +212,10 @@ the change's risk. See [Pattern 2.1](../L2-behavioral-guardrails.md#pattern-21--
 **Stack Test** — A test that runs the whole system in Docker and checks a user journey through the API, with no
 mocks for owned services. See [Pattern 1.1](../L1-patterns/1.1-stack-tests.md).
 
-**Task Bank** — A fixed set of representative tasks, each with a prompt, an expected artifact and a mechanical check,
+**Stop Drill** — The scheduled run that triggers a workflow's stop against a canary and records `stop.last_tested`. See
+[Pattern A.5](../earned-autonomy.md#pattern-a5--tested-stop).
+
+**Task Bank** — A fixed set of representative tasks, each with a prompt, an expected artifact and a check,
 run against a pinned model. See [Pattern 4.6](../L4-standards-measurement.md#pattern-46--context-eval); this
 repository's bank is the [Task Bank](../references/task-bank.md).
 
@@ -206,13 +225,14 @@ a catch without a rethrow. See [Pattern 1.6](../L1-patterns/1.6-test-integrity.m
 **Tested Stop** — A way to halt a workflow at grant A4 or higher that a scheduled drill has used: a named person
 who can invoke it and a mechanism such as revoking credentials. A failed or overdue drill demotes the workflow. See [Pattern A.5](../earned-autonomy.md#pattern-a5--tested-stop).
 
-**Token Efficiency** — Fewer tokens per task, measured on your own sessions. See [L3](../L3-optimization.md).
-
 **Unattended** — An agent acts on an event, a schedule or a backlog with no person watching each step: grant A4 and
-above. See [The Grants](../earned-autonomy.md#the-grants).
+above. At A3 a person still merges. See [The Grants](../earned-autonomy.md#the-grants).
 
 **Workflow** — One named entry in the register: a trigger, the actions it may take, its owner and its grant. See
 [Pattern A.1](../earned-autonomy.md#pattern-a1--autonomy-register).
+
+**Workflow File** — A file under `.github/workflows/`. An agent commit may change it only with a later non-agent
+`Governance-Approved: <sha>` line. See [Pattern A.6](../earned-autonomy.md#pattern-a6--enforcement-through-hooks).
 
 **Zero-Defect Tolerance** — Every error and warning is addressed, because an agent cannot tell a relevant failure
 from an irrelevant one. See [Pattern 2.5](../L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance).

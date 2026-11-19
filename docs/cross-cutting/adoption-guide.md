@@ -18,8 +18,9 @@ repository's cap decide that ([How Far to Let Go](#how-far-to-let-go)).
 Run the example CLI `autonomy census` ([examples/autonomy](../../examples/autonomy/README.md)) with `--dir` set to
 your repository. It needs no register. It computes the platform, governance, ownership and measuring positions from
 the repository's own files, treats a dimension with no evidence as C1 (only `skill` can be `unknown`, counted as C2)
-and lists what is missing for the next position ([Pattern A.4](../earned-autonomy.md#pattern-a4--census)). The
-checklist covers what a census cannot read.
+and lists what is missing for the next position ([Pattern A.4](../earned-autonomy.md#pattern-a4--census)). It measures
+adoption of this library's files and wording, so a repository that has adopted none of them reads C1 whatever its
+controls. The checklist covers what a census cannot read.
 
 ### Entry Points
 
@@ -62,8 +63,8 @@ Check this block before any team moves from attended work (a person watches each
   2.10](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition))
 - [ ] Installed skills, plugins and MCP servers are on an allowlist, pinned and read ([Pattern
   2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain))
-- [ ] A written high-tier list names the actions that need a second human, and the requester cannot approve
-  ([Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review))
+- [ ] A written high-tier list names the actions that need more than one approver, and the requester cannot approve
+  (approvals are stated once in [Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review))
 - [ ] Every agent-written change has an author of record, and every workflow has an owner in the register ([Pattern
   4.7](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register))
 - [ ] Completion evidence comes from CI, not from the agent's message ([Pattern
@@ -99,11 +100,12 @@ Five suggested paths. Choose based on your situation.
 Start with L0: structure and AGENTS.md cost little and later layers depend on them (this project's own experience;
 no study compares layers). Then build upward.
 
-1. **L0 Foundation** — Restructure by domain, write AGENTS.md, establish doc freshness and cleanup practices. See [L0-foundation.md](../L0-foundation.md).
-2. **L1 Closed Loop Design** — Add stack tests for your most critical user journeys. See [L1-feedback-loops.md](../L1-feedback-loops.md) and the working examples in [examples/stack-test/](../../examples/stack-test/).
-3. **L2 Guardrails** — Add skills and hooks for your project's most common errors. See [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md).
-4. **L3 Optimization (optional)** — Reduce token spend with structured tools and context isolation, when token cost is a measured problem. See [L3-optimization.md](../L3-optimization.md) and the working example in [examples/guardrails/](../../examples/guardrails/).
-5. **L4 Standards & Measurement** — Add metrics, CI guardrails, and context eval once the earlier layers are in place. Drift detection and the new-starter audit are in [Pattern 0.7](../L0-foundation.md#pattern-07--documentation-as-system-map) and [Pattern 0.9](../L0-foundation.md#pattern-09--ai-as-new-starter-standard). See [L4-standards-measurement.md](../L4-standards-measurement.md).
+1. **Contain** — Put the session in a locked sandbox and keep credentials out before anything else, because a default Claude Code session starts in auto mode with the sandbox off ([Pattern 2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
+2. **L0 Foundation** — Restructure by domain, write AGENTS.md, establish doc freshness and cleanup practices. See [L0-foundation.md](../L0-foundation.md).
+3. **L1 Closed Loop Design** — Add stack tests for your most critical user journeys. See [L1-feedback-loops.md](../L1-feedback-loops.md) and the working examples in [examples/stack-test/](../../examples/stack-test/).
+4. **L2 Guardrails** — Add skills and hooks for your project's most common errors. See [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md).
+5. **L3 Optimization (optional)** — Reduce token spend with structured tools and context isolation, when token cost is a measured problem. See [L3-optimization.md](../L3-optimization.md) and the working example in [examples/guardrails/](../../examples/guardrails/).
+6. **L4 Standards & Measurement** — Add metrics, CI guardrails, and context eval once the earlier layers are in place. Drift detection and the new-starter audit are in [Pattern 0.7](../L0-foundation.md#pattern-07--documentation-as-system-map) and [Pattern 0.9](../L0-foundation.md#pattern-09--ai-as-new-starter-standard). See [L4-standards-measurement.md](../L4-standards-measurement.md).
 
 ### Path B: Testing-First (Teams with Testing Gaps)
 
@@ -148,10 +150,7 @@ If one person watches each step, follow the first row of the [README reading pat
 0.4](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution)) and the test-integrity lint
 in CI ([Pattern 1.6](../L1-patterns/1.6-test-integrity.md)).
 
-A new repository starts at cap C1, which allows only A1, read-only suggestions. A session that edits files needs A2,
-so the repository first reaches C2 ([Reaching C2](../earned-autonomy.md#reaching-c2)). Rules that need a second
-person (the high tier of Pattern 2.13, the approver in Pattern 4.7) cannot be met. Keep every workflow at A1 or A2
-and do not enable auto-merge.
+One person cannot meet the review rules in [Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review): the requester never approves, and the high tier needs a code owner plus a second non-author. When you merge your own agent's change, the required checks are the only control that is not you. Make the test job and the test-integrity lint required checks, keep high-tier actions (migrations, CI workflows, publishing) human-made and reviewed by CI evidence only, and do not enable auto-merge. The register and grants are optional for one person; adopt them when a second person depends on the repository ([How the Scales Fit Together](../../README.md#how-the-scales-fit-together)).
 
 ---
 
@@ -187,13 +186,9 @@ has its own cap and a workflow that acts in several repositories answers to each
 decides its review, and the grant decides who acts unattended ([risk
 model](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model)).
 
-A new repository starts at C1, which allows only A1, read-only suggestions. A session that edits files needs A2, so
-a new repository first reaches C2 ([Reaching C2](../earned-autonomy.md#reaching-c2)). C3 needs a committed baseline,
-which this library does not show how to compute, so a repository that uses only this library stops at C2 and A2. A
-team that wants A3 or A4 closes the capping dimension that `autonomy census` reports as lowest, then promotes
-workflows one grant at a time on evidence ([Pattern
-A.3](../earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate)). The prerequisites for each grant are in
-one list: [Prerequisites by Grant](../earned-autonomy.md#prerequisites-by-grant).
+A repository that has adopted nothing reads C1 and allows only A1; see [How the Scales Fit Together](../../README.md#how-the-scales-fit-together) and [Reaching C2](../earned-autonomy.md#reaching-c2). A team that wants A3 or A4 closes the capping dimension that `autonomy census` reports as lowest, then promotes workflows one grant at a time on evidence ([Pattern A.3](../earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate)). The prerequisites for each grant are in [Prerequisites by Grant](../earned-autonomy.md#prerequisites-by-grant).
+
+For many repositories: deliver the sandbox keys once through managed settings to every machine ([Pattern 2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)); then, per repository, commit a register, a baseline and the census and check jobs. Each repository gets its own cap.
 
 Repair of owned code in production is the one unattended-work seam this library defines in detail: [Patterns 1.7
 to 1.12](../L1-feedback-loops.md#closing-the-loop-in-production) with the runnable gate in
@@ -201,25 +196,3 @@ to 1.12](../L1-feedback-loops.md#closing-the-loop-in-production) with the runnab
 covers and after the containment block above passes. It does not lift the cap.
 
 ---
-
-## Key Success Factors
-
-1. **Build on the layer below** — A layer depends on the layers below it ([README](../../README.md#the-pattern-layers)), so check that the layer below holds before relying on one above. Start with L0 when unsure.
-2. **Measure before you loosen** — Run the example `autonomy census` and read the cap before raising any grant.
-3. **Update docs in the same task as code** — Deferred documentation is stale documentation ([Pattern 0.7](../L0-foundation.md#pattern-07--documentation-as-system-map)).
-4. **Re-baseline at each model upgrade** — Run a fixed task bank without each skill, hook and rule, and delete what no
-   task needs ([Pattern 0.10](../L0-foundation.md#pattern-010--prune-and-re-baseline-context)).
-
----
-
-## Further Reading
-
-- [L0 Foundation](../L0-foundation.md) — Project structure patterns
-- [L1 Closed Loop Design](../L1-feedback-loops.md) — Design-led verification
-- [L2 Behavioral Guardrails](../L2-behavioral-guardrails.md) — Skills and hooks
-- [L3 Optimization](../L3-optimization.md) — Optional token efficiency
-- [L4 Standards & Measurement](../L4-standards-measurement.md) — Evidence, metrics, CI guardrails, context eval
-- [Anti-Patterns](./anti-patterns.md) — Common mistakes to avoid
-- [Earned Autonomy](../earned-autonomy.md) — Curve, cap and grants
-- [Reference Implementation Case Study](../references/reference-telegram-trading-bot-case-study.md) — What the reference project shows at each layer and where it departs from the patterns (n=1, not evidence)
-- Reference implementations: [rig](https://github.com/franklywatson/claude-rig) (by this library's author) and [superpowers](https://github.com/obra/superpowers) install hooks, skills and commands that run with the agent's privileges. Read and pin before installing ([Pattern 2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)).

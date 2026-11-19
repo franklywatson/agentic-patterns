@@ -1306,6 +1306,329 @@
       ]
     },
     {
+      "id": "a1-write-flags",
+      "description": "A1 with no tool allowlist: read-only commands pass; their write-capable flags, wrappers and substitutions are denied",
+      "workflow": "reader",
+      "register": {
+        "version": 1,
+        "defaults": {
+          "interactive_level": 2
+        },
+        "workflows": [
+          {
+            "id": "reader",
+            "owner": "team-platform",
+            "sponsor": "@alice",
+            "granted_level": 1,
+            "identity": "github-app:bot",
+            "access_expires": "2027-02-01",
+            "risk": {
+              "reversible": true,
+              "verification": "mechanical",
+              "blast_radius": "repo",
+              "trifecta": {
+                "untrusted_input": false,
+                "sensitive_data": false,
+                "external_action": false
+              }
+            }
+          }
+        ]
+      },
+      "profile_cap": 4,
+      "state": {
+        "workflows": {}
+      },
+      "now": "2026-11-18T00:00:00Z",
+      "untrusted_seen": false,
+      "current_branch": "feature/x",
+      "diff": null,
+      "expect_effective": 1,
+      "calls": [
+        {
+          "name": "list",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "ls src"
+          },
+          "expect": "allow"
+        },
+        {
+          "name": "search",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "grep -rn TODO src"
+          },
+          "expect": "allow"
+        },
+        {
+          "name": "ripgrep",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "rg TODO src"
+          },
+          "expect": "allow"
+        },
+        {
+          "name": "find-by-name",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "find src -name '*.ts'"
+          },
+          "expect": "allow"
+        },
+        {
+          "name": "sort-to-stdout",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "sort -k1,1 src/a.txt"
+          },
+          "expect": "allow"
+        },
+        {
+          "name": "git-log",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git log --oneline -5"
+          },
+          "expect": "allow"
+        },
+        {
+          "name": "git-dir-status",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git -C src status"
+          },
+          "expect": "allow"
+        },
+        {
+          "name": "find-delete",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "find . -name '*.tmp' -delete"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "find-exec",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "find . -name x -exec rm {} +"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "find-execdir",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "find . -execdir rm {} +"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "find-ok",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "find . -ok rm {} \\;"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "find-fprint",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "find . -fprint out.txt"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "find-fls",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "find . -fls out.txt"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "find-quoted-delete",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "find . \"-delete\""
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "sort-output",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "sort -o out.txt src/a.txt"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "sort-clustered-output",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "sort -ro out.txt src/a.txt"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "sort-long-output",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "sort --output=out.txt src/a.txt"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "sort-compress-program",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "sort --compress-program=./x.sh src/a.txt"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "rg-preprocessor",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "rg --pre ./x.sh TODO"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "git-diff-output",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git diff --output=patch.txt"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "git-config-external-diff",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git -c diff.external=./x.sh diff"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "env-external-diff",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "GIT_EXTERNAL_DIFF=./x.sh git diff"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "env-wrapper-pager",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "env GIT_PAGER=./x.sh git log"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "command-substitution",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "echo $(touch a)"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "backtick-substitution",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "echo `touch a`"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "pipe-to-tee",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "cat src/a.ts | tee b.ts"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "sed-in-place",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "sed -i s/a/b/ src/a.ts"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "awk-redirect",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "awk '{print > \"out\"}' src/a.ts"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "xargs-rm",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "ls | xargs rm"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "git-checkout",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git checkout -- src/a.ts"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "git-stash",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git stash"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        },
+        {
+          "name": "echo-redirect",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "echo x > out.txt"
+          },
+          "expect": "deny",
+          "code": "read-only-level"
+        }
+      ]
+    },
+    {
       "id": "unknown-workflow",
       "description": "A workflow missing from the register gets read-only tools",
       "workflow": "ghost",

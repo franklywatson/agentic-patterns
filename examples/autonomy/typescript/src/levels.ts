@@ -34,12 +34,18 @@ export function dimensionLevel(profile: Json | null, dimension: string): number 
   return Number.isInteger(entry.level) && entry.level >= 1 && entry.level <= 5 ? entry.level : 2;
 }
 
+/** A profile is missing when there is none, it is not an object, or it has no `generated` time. */
+const isMissing = (profile: Json | null): boolean =>
+  profile === null || typeof profile !== "object" || Array.isArray(profile) || typeof profile.generated !== "string";
+
+/** Lowest capping dimension; a missing profile caps at 1, because nothing has been measured. */
 export function capOf(profile: Json | null): number {
+  if (isMissing(profile)) return 1;
   return Math.min(...CAPPING_DIMENSIONS.map((d) => dimensionLevel(profile, d)));
 }
 
 export function profileStatus(profile: Json | null, now: number): "ok" | "missing" | "stale" {
-  if (profile === null || typeof profile.generated !== "string") return "missing";
+  if (isMissing(profile)) return "missing";
   return ageDays(now, parseTime(profile.generated)) > PROFILE_MAX_AGE_DAYS ? "stale" : "ok";
 }
 

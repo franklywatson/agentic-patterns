@@ -2,10 +2,7 @@
 regressed build. The breaker drops the grant, the next attempt goes to a person, and the stop
 switch halts the loop before any stack starts."""
 
-import json
 from dataclasses import replace
-from datetime import date
-from pathlib import Path
 
 import httpx
 import pytest
@@ -67,7 +64,7 @@ def test_second_order_a_new_attempt_on_the_fingerprint_is_refused_before_any_sta
         cleanup(refused)
 
 
-def test_third_order_the_stop_switch_halts_the_loop_and_the_drill_is_recorded(first, after_recurrence):
+def test_third_order_the_stop_switch_halts_the_loop_before_any_stack_starts(first, after_recurrence):
     env = DockerEnvironment()
     stopped = engage_stop(after_recurrence, "oncall-alice", env.now())
     outcome = run_repair(env, incident(), patch_path("INC-001.fix.patch"), stopped, first.policy, load_rules())
@@ -76,9 +73,6 @@ def test_third_order_the_stop_switch_halts_the_loop_and_the_drill_is_recorded(fi
     assert env.runs == []
     assert gate(replace(first.outcome.bundle, stop_engaged=True), first.policy).decision == "block"
 
-    drill = Path(first.outcome.base.dir) / ".repair" / "stop-drill.json"
-    drill.write_text(json.dumps({"workflow": "repair-loop", "last_tested": date.today().isoformat(), "result": "halted"}))
-    assert json.loads(drill.read_text())["result"] == "halted"
 
 
 def test_third_order_restoring_the_grant_needs_a_named_human_and_a_run_of_clean_repairs(first, after_recurrence):

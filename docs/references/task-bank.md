@@ -175,8 +175,8 @@ the library. They discriminate little between models and are included because a 
 
 ## Run Log
 
-One row per run. A run covers all 15 tasks with one set of artifacts removed. The first row of each re-baselining is
-the baseline with nothing removed. The runner also appends one JSON line per run to `scripts/task-bank/run-log.jsonl`
+One row per run. No run has been recorded, so there is no baseline yet; the first row will be the baseline with nothing removed. A run covers all 15 tasks with one set of artifacts removed. The first row of each re-baselining is
+the baseline. The runner also appends one JSON line per run to `scripts/task-bank/run-log.jsonl`
 with the date, the `--model` value, the commit, the artifacts removed and the task ids passed, failed and skipped.
 It does not record the effort level or the harness; write those in this table by hand.
 
@@ -184,7 +184,7 @@ It does not record the effort level or the harness; write those in this table by
 |-------|----------------|
 | Date | Date of the run |
 | Model | Model id the harness command sets (for Claude Code, `--model <id>`) |
-| Effort | Effort level the harness command sets (for Claude Code, `--effort <level>`; available levels depend on the model) |
+| Effort | Effort level the harness command sets (for Claude Code, `--effort <level>`, see the [CLI reference](https://code.claude.com/docs/en/cli-reference); available levels depend on the model) |
 | Harness | Harness name and version (for Claude Code, the output of `claude --version`) |
 | Commit | Commit of this repository |
 | Artifacts removed | Paths passed with `--remove`, or none for the baseline |
@@ -229,4 +229,4 @@ says why.
 
 ---
 
-**Evidence:** Thin — no run is recorded in the run log; the method follows vendor guidance on task banks (MV-9)
+**Evidence:** Thin — no run, baseline included, is recorded in the run log; the method follows vendor guidance on task banks (MV-9)

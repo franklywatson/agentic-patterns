@@ -9,32 +9,32 @@ from autonomy.levels import all_workflows, cap_of, effective_level, profile_stat
 from autonomy.register import load_register_file, validate_register
 from autonomy.util import age_days, git, inside_dir, parse_time, read_json_if_exists
 
-# Tier 1: never changed by an agent commit, no relief.
-TIER1 = [
+# Locked files: never changed by an agent commit, no relief.
+LOCKED_FILES = [
     re.compile(r"^\.autonomy"),
     re.compile(r"(^|/)codeowners$"),
     re.compile(r"^\.claude/settings[^/]*\.json$"),
     re.compile(r"^\.claude/hooks/"),
     re.compile(r"^\.harness\.yaml$"),
 ]
-# Tier 2: changed by an agent commit only when a later non-agent commit acknowledges it.
-TIER2 = [re.compile(r"^\.github/workflows/")]
+# Workflow files: changed by an agent commit only when a later non-agent commit acknowledges it.
+WORKFLOW_FILES = [re.compile(r"^\.github/workflows/")]
 
 ACK_LINE = re.compile(r"governance-approved:[ \t]*([0-9a-f]{7,40})", re.I)
 
 
-def is_tier1_file(path: str) -> bool:
+def is_locked_file(path: str) -> bool:
     lower = path.lower()
-    return any(p.search(lower) for p in TIER1)
+    return any(p.search(lower) for p in LOCKED_FILES)
 
 
-def is_tier2_file(path: str) -> bool:
+def is_workflow_file(path: str) -> bool:
     lower = path.lower()
-    return not is_tier1_file(path) and any(p.search(lower) for p in TIER2)
+    return not is_locked_file(path) and any(p.search(lower) for p in WORKFLOW_FILES)
 
 
 def is_governance_file(path: str) -> bool:
-    return is_tier1_file(path) or is_tier2_file(path)
+    return is_locked_file(path) or is_workflow_file(path)
 
 
 def approved_prefixes(body: str | None) -> list[str]:
@@ -175,9 +175,9 @@ def run_check(directory: str | Path, now: int, register_path: str | Path | None 
         for file in commit["files"]:
             if "\ufffd" in file:
                 result["failures"].append({"code": "path-undecodable", "commit": commit["sha"], "file": file})
-            elif is_tier1_file(file):
+            elif is_locked_file(file):
                 result["failures"].append({"code": "governance-file-changed-by-agent", "commit": commit["sha"], "file": file})
-            elif is_tier2_file(file):
+            elif is_workflow_file(file):
                 if acknowledger:
                     result["acknowledged"].append({"commit": commit["sha"], "file": file, "by": acknowledger["sha"]})
                 else:

@@ -28,7 +28,7 @@ Invoke this skill BEFORE starting any design work. It adds three capabilities on
 
 1. Invoke the Explore agent to map the current codebase:
 
-   ```
+   ```text
    Agent(subagent_type="Explore", prompt="Map the codebase structure for [feature area]. Focus on: existing patterns, related modules, test infrastructure, and entry points relevant to [feature].")
    ```
 

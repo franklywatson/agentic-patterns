@@ -40,12 +40,20 @@ def dimension_level(profile: dict | None, dimension: str) -> int:
     return level if isinstance(level, int) and not isinstance(level, bool) and 1 <= level <= 5 else 2
 
 
+def _is_missing(profile: Any) -> bool:
+    """A profile is missing when there is none, it is not an object, or it has no `generated` time."""
+    return not isinstance(profile, dict) or not isinstance(profile.get("generated"), str)
+
+
 def cap_of(profile: dict | None) -> int:
+    """Lowest capping dimension; a missing profile caps at 1, because nothing has been measured."""
+    if _is_missing(profile):
+        return 1
     return min(dimension_level(profile, d) for d in CAPPING_DIMENSIONS)
 
 
 def profile_status(profile: dict | None, now: int) -> str:
-    if profile is None or not isinstance(profile.get("generated"), str):
+    if _is_missing(profile):
         return "missing"
     return "stale" if age_days(now, parse_time(profile["generated"])) > PROFILE_MAX_AGE_DAYS else "ok"
 

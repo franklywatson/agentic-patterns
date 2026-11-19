@@ -26,7 +26,7 @@ This skill runs after `brain+` has produced a validated design. It creates the i
 
 2. Load the Constitutional Rules in AGENTS.md. Add a **Constitutional Compliance** section to the plan:
 
-   ```
+   ```text
    ## Constitutional Rules for This Plan
    [List the Constitutional Rules from AGENTS.md that apply to this plan]
    - Use real [database/payment/logger] connections in stack/E2E tests — mocks are appropriate in unit tests
@@ -38,7 +38,7 @@ This skill runs after `brain+` has produced a validated design. It creates the i
 
 3. Identify the mock policy for this plan based on the Constitutional Rules:
 
-   ```
+   ```text
    ## Mock Policy
    Stack/E2E (real deps): [list from the Constitutional Rules]
    Unit tests (mocks ok): [all components] / External without sandbox: [third-party services]
@@ -55,7 +55,7 @@ This skill runs after `brain+` has produced a validated design. It creates the i
 
 3. Every task must follow the pattern:
 
-   ```
+   ```text
    ### Task N: [Name]
    **Files:** [exact paths]
    **Test strategy:** [which tests, scoped to this task]

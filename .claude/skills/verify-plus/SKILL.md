@@ -28,7 +28,7 @@ the same rules from this text. During this phase:
 
 1. Announce phase entry:
 
-   ```
+   ```text
    Now using verify+ skill. Rules for this phase:
    - Test scope: full suite runs allowed (this is verification phase)
    - Zero-defect: every failure is fixed
@@ -43,8 +43,8 @@ the same rules from this text. During this phase:
 
 1. Invoke `superpowers:verification-before-completion` with the plan context.
 
-2. Run the full test suite with the project's test command (listed in AGENTS.md; for this repository's
-   docs, the checks in `.github/workflows/docs.yml` and `npm run lint:md`). Show the output and link the CI run (the required checks on this commit) for the same commit; pasted output alone is a claim ([Pattern 4.1](../../../docs/L4-standards-measurement.md)), and the reviewer reads the CI run. Every test must pass. Zero failures. Zero errors.
+2. Run the full test suite with the project's test command (see the README of the example you changed; for this repository's
+   docs, the `Documentation Guardrails` jobs in `.github/workflows/docs.yml` and `npm run lint:md`). Show the output and link the CI run for the same commit; pasted output alone is a claim ([Pattern 4.1](../../../docs/L4-standards-measurement.md#pattern-41--evidence-based-claims)), and the reviewer reads the CI run. Every test must pass. Zero failures. Zero errors.
 
 3. For each acceptance criterion in the plan:
    - Show evidence that it is met (command output, file contents, test results)
@@ -60,14 +60,14 @@ the same rules from this text. During this phase:
 
 1. Produce a verification report:
 
-   ```
+   ```text
    ## Verification Report
 
    ### Test Suite
    [Full test output; all tests pass]
 
    ### CI Run
-   [Link to the required checks on this commit]
+   [Link to the CI run for this commit]
 
    ### Acceptance Criteria
    - [ ] Criterion 1: [evidence]

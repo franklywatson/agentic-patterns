@@ -141,6 +141,27 @@ const INLINE_CODE = [
 
 const isInlineCode = (seg: string) => INLINE_CODE.some((re) => re.test(seg));
 
+/** Git reads allowed at A1: only `-C dir`, `--no-pager` and `-P` before the subcommand; no `-c`, no env prefix. */
+const A1_GIT = /^git\s+(?:(?:-C\s+\S+|--no-pager|-P)\s+)*(status|diff|log|show)\b/;
+const FIND_WRITES = /(^|\s)-(delete|exec|execdir|ok|okdir|fprint|fprint0|fprintf|fls)(\s|$)/;
+
+/**
+ * True when a raw segment is provably read-only. The segment is not stripped of wrappers or variable
+ * assignments (GIT_EXTERNAL_DIFF=x, env PAGER=x), and quotes are removed so "-delete" still matches.
+ */
+export function readOnlySegment(raw: string): boolean {
+  const seg = raw.trim().replace(/["'\\]/g, "");
+  if (/[>`]|\$\(|<\(/.test(seg)) return false;
+  const words = seg.split(/\s+/);
+  const cmd = words[0];
+  if (cmd === "git") return A1_GIT.test(seg) && !/\s--ou/.test(seg);
+  if (!READ_ONLY_COMMANDS.has(cmd)) return false;
+  if (cmd === "find") return !FIND_WRITES.test(seg);
+  if (cmd === "sort") return !words.slice(1).some((w) => /^-[^-]*o/.test(w) || /^--(o|co)/.test(w));
+  if (cmd === "rg") return !words.some((w) => /^--(pre|hostname-bin)\b/.test(w));
+  return true;
+}
+
 function toolFile(input: Json): string | null {
   return input.file_path ?? input.notebook_path ?? null;
 }
@@ -174,7 +195,7 @@ function decideBash(ctx: HookContext, command: string): Decision {
     if (isInlineCode(seg) && !explicit) {
       return deny("inline-interpreter", "inline shell or interpreter code cannot be inspected; permit it with an explicit Bash(...) pattern");
     }
-    if (level <= 1 && !(READ_ONLY_COMMANDS.has(seg.split(/\s+/)[0]) && !/>/.test(seg)) && !/^git\s+(status|diff|log|show)\b/.test(seg)) {
+    if (level <= 1 && !readOnlySegment(raw)) {
       return deny("read-only-level", "level 1 allows read-only commands only");
     }
     if (isPush(seg)) {

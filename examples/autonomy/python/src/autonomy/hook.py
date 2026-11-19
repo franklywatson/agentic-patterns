@@ -172,6 +172,32 @@ def _is_inline_code(seg: str) -> bool:
     return any(p.search(seg) for p in INLINE_CODE)
 
 
+# Git reads allowed at A1: only `-C dir`, `--no-pager` and `-P` before the subcommand; no `-c`, no env prefix.
+A1_GIT = re.compile(r"^git\s+(?:(?:-C\s+\S+|--no-pager|-P)\s+)*(status|diff|log|show)\b")
+FIND_WRITES = re.compile(r"(^|\s)-(delete|exec|execdir|ok|okdir|fprint|fprint0|fprintf|fls)(\s|$)")
+
+
+def read_only_segment(raw: str) -> bool:
+    """True when a raw segment is provably read-only. The segment is not stripped of wrappers or variable
+    assignments (GIT_EXTERNAL_DIFF=x, env PAGER=x), and quotes are removed so "-delete" still matches."""
+    seg = re.sub(r"[\"'\\]", "", raw.strip())
+    if re.search(r"[>`]|\$\(|<\(", seg):
+        return False
+    words = seg.split()
+    cmd = words[0] if words else ""
+    if cmd == "git":
+        return bool(A1_GIT.match(seg)) and not re.search(r"\s--ou", seg)
+    if cmd not in READ_ONLY_COMMANDS:
+        return False
+    if cmd == "find":
+        return not FIND_WRITES.search(seg)
+    if cmd == "sort":
+        return not any(re.match(r"^-[^-]*o", w) or re.match(r"^--(o|co)", w) for w in words[1:])
+    if cmd == "rg":
+        return not any(re.match(r"^--(pre|hostname-bin)\b", w) for w in words)
+    return True
+
+
 def _tool_file(tool_input: dict) -> str | None:
     return tool_input.get("file_path") or tool_input.get("notebook_path")
 
@@ -220,8 +246,7 @@ def _decide_bash(ctx: HookContext, command: str) -> Decision:
         explicit = isinstance(perm.get("tools"), list) and any(e.startswith("Bash(") and _permitted_tool([e], "Bash", None, [raw]) for e in perm["tools"])
         if _is_inline_code(seg) and not explicit:
             return _deny("inline-interpreter", "inline shell or interpreter code cannot be inspected; permit it with an explicit Bash(...) pattern")
-        first = seg.split()[0] if seg.split() else ""
-        if level <= 1 and not (first in READ_ONLY_COMMANDS and ">" not in seg) and not re.match(r"^git\s+(status|diff|log|show)\b", seg):
+        if level <= 1 and not read_only_segment(raw):
             return _deny("read-only-level", "level 1 allows read-only commands only")
         if _is_push(seg):
             if _is_force(seg):

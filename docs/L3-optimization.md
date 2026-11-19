@@ -42,8 +42,8 @@ symbol-search server, or a file reader that takes a line range.
 | anything else | not applicable | allow |
 
 Do not advise a tool the session lacks. In Claude Code, the Grep and Glob tools are absent by default on macOS,
-Linux and WSL; Claude searches with `find` and `grep` through the Bash tool, where they run embedded versions of
-`bfs` and `ugrep`, and those searches reach hooks and permission rules as Bash calls
+Linux and WSL. Claude searches with `find` and `grep` through the Bash tool, where they run embedded versions of
+`bfs` and `ugrep`. Those searches reach hooks and permission rules as Bash calls
 ([tools reference](https://code.claude.com/docs/en/tools-reference#glob-tool-behavior)). An advice to "use the
 Grep tool" there points at a tool that is not present. The same page lists an `LSP` tool for jumping to
 definitions and finding references; it is a candidate target when the session has it.
@@ -115,11 +115,11 @@ steps then run with less usable context.
 
 ### Solution
 
-Delegate exploration to a sub-agent and have it return a short map: relevant files, entry points, key symbols and
+Delegate exploration to a subagent and have it return a short map: relevant files, entry points, key symbols and
 their dependencies. The main session reads the map and acts on it.
 
 Claude Code ships a read-only built-in `Explore` subagent for this, with Write and Edit denied
-([sub-agents](https://code.claude.com/docs/en/sub-agents)). The rules below apply to it and to a scout you define.
+([subagents](https://code.claude.com/docs/en/sub-agents)). The rules below apply to it and to a scout you define.
 
 This is the Isolate strategy of the WISC framework (Write, Isolate, Select, Compress; Cole Medin, adapted by DIY
 Smart Code). The framework's claim that most agent failures come from context management rests on a single video
@@ -140,7 +140,7 @@ Running broad `grep` and `find` commands in the main session, then carrying ever
 - [Further reading: WISC](references/further-reading.md)
 - [WISC video](https://youtu.be/gyo0eRgsUWk) and [WISC repository](https://github.com/coleam00/context-engineering-intro/tree/main/use-cases/ai-coding-wisc-framework)
 
-**Evidence:** Partial — vendor guidance on isolating exploration in sub-agents; no measured comparison (SC-1, OM-8)
+**Evidence:** Partial — vendor guidance on isolating exploration in subagents; no measured comparison (SC-1, OM-8)
 
 ---
 
@@ -152,4 +152,4 @@ environment detector, a router and a data-driven routing table. Run its tests wi
 
 ---
 
-**Previous:** [L2: Behavioral Guardrails](L2-behavioral-guardrails.md) | **Next:** [L4: Standards & Measurement](L4-standards-measurement.md) | [Back to Overview](../README.md)
+**Previous:** [L2: Behavioral Guardrails](L2-behavioral-guardrails.md) | **Next:** [L4: Standards and Measurement](L4-standards-measurement.md) | [Back to Overview](../README.md)

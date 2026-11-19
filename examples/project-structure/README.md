@@ -1,6 +1,6 @@
 # Project Structure Examples — Before/After
 
-This directory demonstrates the difference between shallow/bad organization and deep/good organization. Focus on the structural difference, not the code content.
+This directory demonstrates the difference between technical layering and grouping by domain. Focus on the structural difference, not the code content.
 
 ---
 
@@ -8,7 +8,7 @@ This directory demonstrates the difference between shallow/bad organization and 
 
 ### Before — Shallow, Technical Layering
 
-```
+```text
 ecommerce-app/
 ├── src/
 │   ├── services/
@@ -56,7 +56,7 @@ ecommerce-app/
 
 ### After — Deep, Grouped by Domain
 
-```
+```text
 ecommerce-app/
 ├── src/
 │   ├── orders/
@@ -105,98 +105,9 @@ ecommerce-app/
 
 ---
 
-## Python Example
+## Python Layout
 
-### Before — Shallow, Flat Structure
-
-```
-ecommerce_bot/
-├── bot.py
-├── orders.py
-├── inventory.py
-├── pricing.py
-├── monitoring.py
-├── tax_estimator.py
-├── discount.py
-├── price_fetcher.py
-├── alert_sender.py
-├── order_processor.py
-├── inventory_sync.py
-├── store_config.py
-├── utils.py
-├── constants.py
-├── models.py
-├── serializers.py
-├── validators.py
-├── tests/
-│   ├── test_orders.py
-│   ├── test_inventory.py
-│   ├── test_pricing.py
-│   └── test_utils.py
-├── requirements.txt
-└── setup.py
-```
-
-**Problems**:
-
-- 17 modules at the root, with no structure
-- No indication of which files belong together
-- `utils.py` and `constants.py` become dumping grounds
-- Can't navigate without reading everything
-
----
-
-### After — Deep, Domain-Based Structure
-
-```
-ecommerce_bot/
-├── src/
-│   ├── orders/
-│   │   ├── __init__.py             # Public facade
-│   │   ├── processor.py
-│   │   ├── fulfillment.py
-│   │   ├── models.py
-│   │   ├── validators.py           # Order validation stays in the orders domain
-│   │   └── utils/
-│   │       ├── tax.py
-│   │       └── discounts.py
-│   ├── inventory/
-│   │   ├── __init__.py
-│   │   ├── sync.py
-│   │   ├── warehouse.py
-│   │   └── models.py
-│   ├── pricing/
-│   │   ├── __init__.py
-│   │   └── fetcher.py
-│   ├── monitoring/
-│   │   ├── __init__.py
-│   │   └── alerts.py
-│   ├── config/
-│   │   ├── __init__.py
-│   │   ├── constants.py            # Constants live with the config they belong to
-│   │   └── stores.py
-│   └── bot.py
-├── tests/
-│   ├── unit/                       # Contract per module (Pattern 0.5)
-│   │   ├── test_orders.py
-│   │   ├── test_inventory.py
-│   │   └── test_pricing.py
-│   └── stack/                      # Full-stack tests (Pattern 1.1)
-│       ├── test_orders.py
-│       └── test_inventory.py
-├── AGENTS.md                        # Agent contract (CLAUDE.md imports it)
-├── README.md                        # Overview
-├── requirements.txt
-└── setup.py
-```
-
-**Improvements**:
-
-- Clear domain boundaries
-- `__init__.py` exports controlled public interface
-- Related code co-located
-- Start at the domain directory, then open the module you need
-- No `shared/` or `utils.py` at the top level: code used by one domain lives in that domain
+A Python project takes the same shape: replace a flat root of 17 modules (`orders.py`, `utils.py`, `constants.py`) with one package per domain (`orders/`, `inventory/`), each with an `__init__.py` that exports the public interface, tests split into `tests/unit/` and `tests/stack/`, and no top-level `utils.py`.
 
 ---
 

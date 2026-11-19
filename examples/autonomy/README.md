@@ -1,8 +1,8 @@
 # Autonomy: Earned-Autonomy Tooling
 
-Small, runnable tooling for [Earned Autonomy](../../docs/earned-autonomy.md). A workflow holds an explicit grant (A1 to A5) in a committed register. The grant never exceeds a cap computed from the repository's own artifacts. It rises only on ledger evidence with human sign-off. It falls automatically.
+Small, runnable tooling for [Earned Autonomy](../../docs/earned-autonomy.md). A workflow holds an explicit grant (A1 to A5) in a committed register. The grant never exceeds a cap computed from the repository's own artifacts. It rises only on ledger evidence with human sign-off. It falls automatically. Grants bind only where `autonomy check` runs in CI and the hook is bound.
 
-For a lead who wants a repository's cap, or a maintainer adding `autonomy check` to CI. Start with [Run Against Your Own Repository](#run-against-your-own-repository); a new repository's cap is C1, and [Reaching C2](../../docs/earned-autonomy.md#reaching-c2) lists the four changes that raise it to C2.
+For a lead who wants a repository's cap, or a maintainer adding `autonomy check` to CI. Start with [Run Against Your Own Repository](#run-against-your-own-repository). The census measures adoption of this library's artifacts, so a repository that has adopted none of them reads C1; [Reaching C2](../../docs/earned-autonomy.md#reaching-c2) lists the four changes that raise it to C2.
 
 The same behavior is implemented twice: [TypeScript](typescript/) and [Python](python/). Both read the same schema and fixtures and produce the same results.
 
@@ -21,15 +21,15 @@ examples/autonomy/
 
 ## The Five Commands
 
-Each language has one CLI with five commands. All commands accept `--dir D` (the repository root, default the current directory) and `--now T` (an ISO date or time, default the current time; the environment variable `AUTONOMY_NOW` does the same). `--now` and `AUTONOMY_NOW` exist for tests and replays: CI must not set them, because a back-dated clock hides stale profiles and stop tests.
+Each language has one CLI with five commands. All commands accept `--dir D` (the repository root, default the current directory) and `--now T` (an ISO date or time, default the current time; the environment variable `AUTONOMY_NOW` does the same). `--now` and `AUTONOMY_NOW` exist for tests and replays: CI must not set them, because a back-dated clock hides stale profiles and stop tests. `check`, `census` and `ledger` take `--json` to print the result as JSON; `check --register F` reads a register other than `.autonomy.yaml`. Every command exits 2 on invalid input or a tool error.
 
 | Command | What it does | Exit code |
 |---|---|---|
 | `autonomy check` | Validates `.autonomy.yaml` against the schema, computes each workflow's effective grant, and fails on the rules below. Needs `--commits`, `--git-range` or an explicit `--no-commits` | 0 ok, 1 failed, 2 error |
-| `autonomy census` | Probes the repository, writes `.autonomy/profile.json` and `.autonomy/worksheet.json` | 0 |
-| `autonomy ledger` | Reads `.autonomy/ledger/<workflow>.jsonl`, prints a promotion evidence report, optionally applies a demotion | 0 |
+| `autonomy census` | Probes the repository, writes `.autonomy/profile.json` and `.autonomy/worksheet.json` | 0, 2 error |
+| `autonomy ledger` | Reads `.autonomy/ledger/<workflow>.jsonl`, prints a promotion evidence report, optionally applies a demotion | 0, 2 error |
 | `autonomy drill` | Runs the stop drill for one workflow and writes `stop.last_tested` | 0 passed, 1 failed, 2 tool fault |
-| `autonomy hook` | Claude Code hook entry point: `pre-tool-use` and `session-start` | 0 |
+| `autonomy hook` | Claude Code hook entry point: `pre-tool-use` and `session-start` | 0 (the decision is in the JSON), 2 invalid input |
 
 ### TypeScript
 
@@ -53,7 +53,7 @@ uv run autonomy check --dir ../fixtures/registers/valid --now 2026-11-18T00:00:0
 
 ### Run Against Your Own Repository
 
-Build once in this repository, then point `--dir` at your repository's root. The census reads one repository; to compare repositories, run it in each. `census` needs no register; `check` needs `.autonomy.yaml` and a profile.
+There is no packaged command: clone this repository, build once (Node 22 or Python 3.12 with uv), then point `--dir` at your repository's root. The census reads one repository; to compare repositories, run it in each. `census` needs no register; `check` needs `.autonomy.yaml` and a profile.
 
 ```bash
 cd examples/autonomy/typescript
@@ -76,26 +76,7 @@ autonomy check: FAILED
 governance check: skipped (--no-commits)
 ```
 
-```text
-$ autonomy ledger --dir fixtures/ledgers/project --workflow dep-bump --now 2026-11-18T00:00:00Z
-Evidence report: dep-bump
-Date: 2026-11-18T00:00:00Z
-Granted level: 3; target: 4
-Window: 60 days, 130 runs (130 at the granted level)
-First-run pass: 129/130 = 0.9923, Wilson lower bound 0.9577
-Reverts: 0/130 merged = 0, Wilson upper bound 0.0287
-Escaped defects: 0
-Band: promote (promote at revert upper <= 0.03, demote above 0.06)
-
-| Criterion | Required | Actual | Result |
-|---|---|---|---|
-| runs-at-level | >= 30 | 130 | pass |
-| first-run-pass-lower | >= 0.90 | 0.9577 | pass |
-| revert-upper | <= 0.03 | 0.0287 | pass |
-...
-Automated criteria: all met
-Demotion: not triggered
-```
+`autonomy ledger --dir fixtures/ledgers/project --workflow dep-bump --now 2026-11-18T00:00:00Z` prints the evidence report whose JSON form is `fixtures/expected/ledger-dep-bump.json`: 130 runs, first-run pass lower bound 0.9577, revert upper bound 0.0287, band `promote`.
 
 ## The Register
 
@@ -139,7 +120,7 @@ Demotion: not triggered
 
 Rules enforced by the schema:
 
-- `granted_level >= 4` requires `stop` (with `mechanism`, `command` and `last_tested`), `review_date`, `limits`, a non-person `identity`, `risk.reversible: true` and `risk.verification: mechanical`.
+- `granted_level >= 4` requires the A4+ fields above, `stop.command` and `stop.last_tested`, a non-person `identity`, `risk.reversible: true` and `risk.verification: mechanical`.
 - `granted_level == 5` also requires `stop_rule`, `baseline` and `target`.
 - A full trifecta at `granted_level >= 3` is rejected unless `risk.gate` names a deterministic gate.
 
@@ -151,7 +132,7 @@ effective = min(granted, cap(profile), freshness_gate, harness_gate, demotion_ov
 
 | Term | Value |
 |---|---|
-| `cap(profile)` | Lowest position of platform, governance, ownership and measuring. A dimension that is `unknown` or absent counts as C2. A missing profile caps at C2 |
+| `cap(profile)` | Lowest position of platform, governance, ownership and measuring. A dimension that is `unknown` or absent counts as C2. A missing profile (no file, or no `generated` time) caps at C1 |
 | `freshness_gate` | 2 when an A4-or-above stop test is older than `stop_test_max_age_days`, the review date has passed, access has expired, or the profile is older than 30 days or missing |
 | `harness_gate` | 3 when `.autonomy/state.json` holds a `harness_hash` that differs from `task_bank_passed_hash` for the workflow |
 | `demotion_override` | `demotion_override` for the workflow in `.autonomy/state.json` |
@@ -161,8 +142,8 @@ effective = min(granted, cap(profile), freshness_gate, harness_gate, demotion_ov
 - the register does not validate against the schema;
 - any `granted_level` exceeds the cap (`grant-exceeds-cap`);
 - the profile is older than 30 days (`profile-stale`) or missing (`profile-missing`);
-- an agent identity changed a tier 1 governance file (`governance-file-changed-by-agent`);
-- an agent identity changed a tier 2 file, `.github/workflows/*`, and no later non-agent commit acknowledges it (`workflow-change-unacknowledged`);
+- an agent identity changed a locked file (`governance-file-changed-by-agent`);
+- an agent identity changed a workflow file, `.github/workflows/*`, and no later non-agent commit acknowledges it (`workflow-change-unacknowledged`);
 - an agent commit is a merge with more than two parents (`merge-unsupported`) or changes a path that is not valid UTF-8 (`path-undecodable`); both fail closed because the changed files cannot be listed reliably;
 - no commits were supplied (`governance-check-skipped`). Pass `--commits`, `--git-range`, or `--no-commits` to skip the rule on purpose; the text output then prints `governance check: skipped (--no-commits)`. A required CI check should pass `--git-range origin/main..HEAD`.
 
@@ -170,18 +151,18 @@ A reduced effective grant is reported but does not fail the check: the hook enfo
 
 ### Governance files
 
-Governance files are matched case-insensitively in two tiers. The tier lists are constants in the code, with no configuration switch.
+Governance files are matched case-insensitively in two lists, constants in the code with no configuration switch.
 
-- Tier 1 is never changed by an agent commit: `.autonomy*`, `CODEOWNERS` (any directory), `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`. The last three keep an agent from removing the hook.
-- Tier 2 is `.github/workflows/*`. An agent commit may change it when a later commit in the same range, by a non-agent identity, has the message line `Governance-Approved: <sha>`. The sha is a hex prefix of at least 7 characters that matches exactly one agent commit in the range. It is a whole line in the body, not the subject, one line per agent commit; `git commit --allow-empty` is enough.
+- Locked files are never changed by an agent commit: `.autonomy*` (the register and everything under `.autonomy/`, including the state file that holds `demotion_override`), `CODEOWNERS` (any directory), `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`. The last three keep an agent from removing the hook.
+- Workflow files are `.github/workflows/*`. An agent commit may change one when a later commit in the same range, by a non-agent identity, has the message line `Governance-Approved: <sha>`. The sha is a hex prefix of at least 7 characters that matches exactly one agent commit in the range. It is a whole line in the body, not the subject, one line per agent commit; `git commit --allow-empty` is enough.
 - An agent commit cannot acknowledge any commit. An acknowledgement before the agent commit does not count. A malformed, short, ambiguous or different sha never matches.
 - Each acknowledged change prints `governance: <sha7> changed <file> (acknowledged by <sha7>)`, and the JSON result lists it under `acknowledged`.
-- The acknowledgement is a trailer-based record, not a cryptographic control: author and committer identity are self-asserted, and CODEOWNERS and required review remain the boundary. Tier 2 relief applies to agent commits made outside the Claude Code hook, because the hook still denies a hooked session's writes to both tiers. The register and the checker code live under `examples/`, so reviewers must read changes to them.
+- The acknowledgement is a trailer-based record, not a cryptographic control: author and committer identity are self-asserted, and CODEOWNERS and required review remain the boundary. The acknowledgement applies to agent commits made outside the Claude Code hook, because the hook still denies a hooked session's writes to both lists. The register and the checker code live under `examples/`, so reviewers must read changes to them.
 
 Commit input:
 
 - `--commits file.json` takes a list of `{sha, author, email, body, files}`, with optional `committer`, `committer_email` and `parents`. The list order is the commit order.
-- `--git-range A..B` lists commits oldest first. A range must look like a revision. Renames are reported as a delete plus an add, so moving a governed file is visible. Each commit is read in its own git call with NUL framing, so a message cannot forge a commit. A merge commit is checked for what it changed beyond the automatic merge. Output is decoded as UTF-8 without newline translation in both languages.
+- `--git-range A..B` lists commits oldest first. A range must look like a revision. Renames are reported as a delete plus an add, so moving a governed file is visible. Each commit is read in its own git call with NUL framing, so a message cannot forge a commit. A merge commit is checked for what it changed beyond the automatic merge.
 
 A commit is an agent commit when its author or committer name or email contains `[bot]` or the name part of a workflow `identity`, or its message has a `Co-Authored-By:` trailer naming Claude or Anthropic in any case.
 
@@ -206,13 +187,15 @@ Probe ids per dimension (each id is the name shown in `evidence` and `missing_fo
 | skill | worksheet | worksheet | worksheet | worksheet |
 | measuring | `outcome-tracking` | `baseline` | `task-banks` | `per-workflow-targets` |
 
-`constitutional-rules` passes when "constitutional" appears in CLAUDE.md, or in an AGENTS.md that CLAUDE.md imports with `@AGENTS.md`, or in AGENTS.md when no CLAUDE.md exists. The other CLAUDE.md probes read CLAUDE.md only. `sandbox-locked` reads `.claude/settings.json`, which an agent can edit; `autonomy check` and the hook protect it as a tier 1 governance file, but the probe cannot see whether developer machines enforce the same keys.
+`constitutional-rules` passes when "constitutional" appears in CLAUDE.md, or in an AGENTS.md that CLAUDE.md imports with `@AGENTS.md`, or in AGENTS.md when no CLAUDE.md exists. The other CLAUDE.md probes read CLAUDE.md only. `sandbox-locked` reads `.claude/settings.json`, which an agent can edit; `autonomy check` and the hook protect it as a locked file, but the probe cannot see whether developer machines enforce the same keys.
+
+`non-author-approval` passes when a committed ruleset (export it from repository settings to `.github/rulesets/`) has a `pull_request` rule with `required_approving_review_count` of at least 1, or with `require_code_owner_review` and a CODEOWNERS rule. Code-owner review applies only to pull requests that change an owned file ([rulesets API](https://docs.github.com/en/rest/repos/rules)), so with owners on the high-tier paths only, an A4 low-tier change merges on checks alone ([Pattern 2.13](../../docs/L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)).
 
 Main files the probes read: `CLAUDE.md`, `AGENTS.md`, `CODEOWNERS`, `.claude/settings.json` (sandbox, permissions, hooks), `.claude/pins.json` (`{"pins": [{"name": "...", "sha256": "..."}]}`), `.github/workflows/*.yml`, `.github/rulesets/*.json`, `.autonomy.yaml`, `.autonomy/baseline.json` (`captured`, `flow`, `stability`; `outcome-tracking` needs the file to exist, `baseline` needs non-empty `flow` and `stability` objects and `captured` within 90 days), `.autonomy/audit/*.jsonl`, `.autonomy/ledger/*.jsonl`, `.autonomy/reviews.jsonl`, `.autonomy/retirements.jsonl`.
 
 ## Ledger
 
-One JSON line per run in `.autonomy/ledger/<workflow>.jsonl`, written by CI. Fields used: `ts`, `level`, `outcome`, `first_run_pass`, `reverted_at`, `escaped_defect`, `diff_lines`, `cost_usd`, `checks["context-eval"]`.
+One JSON line per run in `.autonomy/ledger/<workflow>.jsonl`, written by CI. `census` and `ledger` read that directory in `--dir` and take no other location; when CI keeps the ledger files at the root of a bot-only branch, check it out there first: `git fetch origin autonomy-ledger && git worktree add --detach .autonomy/ledger FETCH_HEAD`. Fields used: `ts`, `level`, `outcome`, `first_run_pass`, `reverted_at`, `escaped_defect`, `diff_lines`, `cost_usd`, `checks["context-eval"]`.
 
 `autonomy ledger --workflow ID` reports the evidence for the next grant using the Wilson 95 percent interval. Counts come from runs inside the evidence window.
 
@@ -222,7 +205,7 @@ One JSON line per run in `.autonomy/ledger/<workflow>.jsonl`, written by CI. Fie
 | A4 | At least 30 runs at A3 (the minimum sample, not sufficient alone); first-run pass lower bound at least 0.90; revert upper bound at most 0.03 (zero reverts clears this only from about 125 merged runs); zero escaped defects; task bank score at least 0.90 on the latest run; reversible and mechanical; stop drill within 30 days; cap at least C4; no demotion in the last 30 days |
 | A5 | At least 90 days at A4; baseline, target and stop rule set; cost per merged outcome reported; cap at least C5; no demotion in the last 30 days; a recorded review cycle is listed as a human step |
 
-A gap separates the promote and demote thresholds. A revert upper bound of 0.03 or less allows promotion. An upper bound above 0.06 demotes. Between the two the band is `hold`. Zero reverts clear 0.03 only from 125 merged runs, so a small sample cannot promote. A revert demotion needs at least one revert in the window and at least `min_runs` merged runs, so a small clean sample is not demoted.
+A gap separates the promote and demote thresholds. A revert upper bound of 0.03 or less allows promotion. An upper bound above 0.06 demotes. Between the two the band is `hold`. A revert demotion needs at least one revert in the window and at least `min_runs` merged runs, so a small clean sample is not demoted.
 
 Demotion triggers over runs at A3 and above: an escaped defect (to A2); a revert upper bound above 0.06; a latest task bank score below 0.80; a run over `max_diff_lines`; a run over `max_cost_usd_per_run`; a day over `max_runs_per_day` (each to A3). `--apply-demotion` writes the lowest target to `.autonomy/state.json` as `demotion_override` with `demoted_at`. It never raises an existing override.
 
@@ -233,7 +216,7 @@ Demotion triggers over runs at A3 and above: an escaped defect (to A2); a revert
 1. Starts a canary process that writes a heartbeat file every 50 ms and exits when a stop file appears.
 2. Waits for the heartbeat, then runs the workflow's `stop.command` with `AUTONOMY_CANARY_PID`, `AUTONOMY_STOP_FILE` and `AUTONOMY_HEARTBEAT` set.
 3. Asserts the canary exits within the bound and the heartbeat stops changing.
-4. On success writes today's date to `stop.last_tested` in `.autonomy.yaml` (an in-place text edit that keeps comments).
+4. On success writes the date (`--now`, default today) to `stop.last_tested` in `.autonomy.yaml` (an in-place text edit that keeps comments) and prints it as `last_tested` in the JSON result.
 5. On failure writes `demotion_override: 3` to `.autonomy/state.json`. A missing `stop.command`, a failing command, a canary that keeps running and a stop that takes longer than the bound (the bound includes the command's own run time) are all failures. A canary that never starts is a tool fault: exit code 2, no demotion, no date written.
 
 Every drill appends a line to `.autonomy/drills.jsonl`. The drill does not check that tokens were revoked or that the workflow can be restored.
@@ -247,13 +230,13 @@ The drill runs `stop.command` through `sh -c` in the repository root with only `
 - `session-start` returns `additionalContext` naming the effective grant and the reasons for any reduction.
 - `pre-tool-use` returns `hookSpecificOutput` with `permissionDecision: "deny"` and a reason that starts with a code. An allowed call prints nothing, so the normal permission flow applies.
 
-Add `hooks/settings.typescript.example.json` or `hooks/settings.python.example.json` to `.claude/settings.json`. Both are command hooks whose path is `$CLAUDE_PROJECT_DIR/examples/autonomy/...`; in another repository, point the command at your built copy of the CLI. Every handler in both bindings sets `"onFailure": "block"` (Claude Code v2.1.295 or later, [hooks reference](https://code.claude.com/docs/en/hooks#block-the-action-when-a-hook-fails)), so a `PreToolUse` hook that cannot start, crashes or times out blocks the tool call instead of letting it through; an unbuilt `dist/` or a missing `uv` environment then denies every call.
+Add `hooks/settings.typescript.example.json` or `hooks/settings.python.example.json` to `.claude/settings.json`. Both are command hooks whose path is `$CLAUDE_PROJECT_DIR/examples/autonomy/...`; in another repository, point the command at your built copy of the CLI. Every handler in both bindings sets `"onFailure": "block"` ([hooks reference](https://code.claude.com/docs/en/hooks#block-the-action-when-a-hook-fails)), so a `PreToolUse` hook that cannot start, crashes or times out blocks the tool call instead of letting it through; an unbuilt `dist/` or a missing `uv` environment then denies every call.
 
 | Rule | Code |
 |---|---|
 | Write, Edit, MultiEdit or NotebookEdit on a governance file (the list above, case-insensitive, after resolving `..` and symlinks); a shell command that mentions one and writes (redirect, `tee`, `sed -i`, `mv`, `cp`, `rm` and similar) | `governance-write` |
 | Workflow missing from the register, or no register: only read-only tools | `unknown-workflow` |
-| A1: any write tool or non-read-only command | `read-only-level` |
+| A1: any write tool; any command but `ls`, `cat`, `head`, `tail`, `grep`, `rg`, `find`, `pwd`, `echo`, `wc`, `which`, `sort`, `diff`, `stat` and `git status`, `diff`, `log`, `show`, checked as written (no `VAR=x`, `env`, `sudo`, `git -c`, redirect or substitution); and their write flags: `find -delete`, `-exec*`, `-ok*`, `-fprint*`, `-fls`, `sort -o`, `--output`, `--compress-program`, `rg --pre`, `--hostname-bin`, `git --output` | `read-only-level` |
 | Tool name that is not recognized and not listed in `permitted_actions.tools` | `unknown-tool` |
 | `sh -c`, `eval`, `python -c`, `node -e`, `perl -e` and similar inline code, unless an explicit `Bash(...)` pattern permits it | `inline-interpreter` |
 | Tool or Bash command outside `permitted_actions.tools`; every segment of a compound command must match; command substitution is rejected | `outside-permitted-tools` |
@@ -269,15 +252,15 @@ Add `hooks/settings.typescript.example.json` or `hooks/settings.python.example.j
 
 Input that is not a JSON object with a string `tool_name` and an object `tool_input` exits with code 2, which blocks the call. Leading `VAR=x`, `env`, `command`, `sudo`, `time`, `timeout N`, `nice`, `nohup`, `exec` and git global options (`git -C dir`, `-c k=v`, `--git-dir`) are stripped before the git, merge and egress rules apply.
 
-The Bash rules match command strings. That is a nudge, not a boundary: a shell can reach the same effect through paths the matcher does not parse. The controls that hold are a `permitted_actions.tools` allowlist (Bash is default-deny once the list exists), CODEOWNERS with required review, `autonomy check` in CI, and the container or sandbox the agent runs in (see Pattern 2.3 in the L2 document: hooks reduce mistakes; isolation limits damage).
+The Bash rules match command strings. That is a nudge, not a boundary: a shell can reach the same effect through paths the matcher does not parse. The controls that hold are a `permitted_actions.tools` allowlist (Bash is default-deny once the list exists), CODEOWNERS with required review, `autonomy check` in CI, and the container or sandbox the agent runs in ([Pattern 2.3](../../docs/L2-behavioral-guardrails.md#pattern-23--hook-automation): hooks reduce mistakes; isolation limits damage).
 
-The hook appends every decision to `.autonomy/audit/<session>.jsonl` with the fields `ts`, `agent` (the workflow id), `human` (from `AUTONOMY_SPONSOR`), `tool`, `decision` and `code`; the record has no outcome field. It records the untrusted-input flag in `.autonomy/sessions/<session>.json`. Both are runtime state, not source: keep `.autonomy/audit/` and `.autonomy/sessions/` out of version control. The Bash rules are a backstop. CODEOWNERS and `autonomy check` remain the control for governance files.
+The hook appends every decision to `.autonomy/audit/<session>.jsonl` with the fields `ts`, `agent` (the workflow id), `human` (from `AUTONOMY_SPONSOR`), `tool`, `decision` and `code`; the record has no outcome field. It records the untrusted-input flag in `.autonomy/sessions/<session>.json`. Both are runtime state, not source: keep `.autonomy/audit/` and `.autonomy/sessions/` out of version control.
 
 ## Eval Suite
 
-`fixtures/eval/scenarios.json` holds 17 scenarios. They cover:
+`fixtures/eval/scenarios.json` holds 18 scenarios. They cover:
 
-- A1, and A2 including egress;
+- A1, including write-capable flags of the read-only commands, and A2 including egress;
 - A3, including bypass attempts: wrappers, inline interpreters, `..` and case-variant paths, hook configuration, unknown tools;
 - A4 within limits, with a diff too large and with a stray file;
 - a cap below the grant, a stale stop, a demotion override and a changed harness;
@@ -294,7 +277,7 @@ Both suites cover the same behavior.
 | Group | Location | What it shows |
 |---|---|---|
 | Unit | `tests/unit/` | Schema rules, effective grant, Wilson bounds, promote and demote thresholds, drill, hook decisions, CLI exit codes, `onFailure: block` on every hook binding |
-| Stack | `tests/stack/` | `census` against committed fixture repositories (copied to a temporary git repository with a fixed commit date); asserts the profile and the cap, and that a baseline with an empty or missing `flow` or `stability` object stays at measuring C2; `check` then fails because a grant exceeds the cap |
+| Stack | `tests/stack/` | `census` against committed fixture repositories (copied to a temporary git repository with a fixed commit date): the profile, the cap, a stub baseline staying at measuring C2, and the ruleset forms `non-author-approval` accepts; `check` then fails because a grant exceeds the cap. `drill` through the CLI: a passing drill writes the date it prints and `check` restores the grant; a failing one demotes it |
 | Eval | `tests/eval/` | pass^k over the shared scenarios |
 
 Both suites compare results with the golden files in `fixtures/expected/`, so TypeScript and Python are held to the same output.
@@ -306,10 +289,10 @@ Both suites compare results with the golden files in `fixtures/expected/`, so Ty
 | `fixtures/registers/valid/` | A valid register, a current profile and state |
 | `fixtures/registers/over-cap/` | An A4 grant under a cap of C2 |
 | `fixtures/registers/invalid/` | Eight invalid registers and `expected.json` with the exact schema errors |
-| `fixtures/repos/adopter/` | Fixture repository: cap C3 with an A4 workflow |
+| `fixtures/repos/adopter/` | Fixture repository: cap C3 with an A4 workflow; its ruleset requires code-owner review |
 | `fixtures/repos/bare/` | Fixture repository with only a `CLAUDE.md`: cap C1 |
 | `fixtures/repos/rules-*/` | Five repositories for the `constitutional-rules` probe: CLAUDE.md importing AGENTS.md, CLAUDE.md only, AGENTS.md only, AGENTS.md not imported, no rules |
 | `fixtures/ledgers/project/` | Four ledgers: ready to promote, hold, regressing, incident |
-| `fixtures/commits/` | Commit lists for the governance-file check, including the tier 2 acknowledgement cases |
+| `fixtures/commits/` | Commit lists for the governance-file check, including the workflow-file acknowledgement cases |
 | `fixtures/eval/scenarios.json` | The hook eval scenarios |
 | `fixtures/expected/` | Golden outputs shared by both languages |

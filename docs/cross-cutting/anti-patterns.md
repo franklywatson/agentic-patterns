@@ -5,8 +5,8 @@ reviewed: 2026-11-19
 
 # Pattern Diagnostic Catalog
 
-Find a symptom you see, then open the pattern that is probably missing; its Anti-Pattern section lists the failure
-modes. Two anti-patterns that cut across layers are described in full at the end of this page.
+Find a symptom you see, then open the pattern that is probably missing. Its Anti-Pattern section lists the failure
+modes and its Solution the fix; after the fix, check that the symptom no longer appears.
 
 ## Symptom to Pattern
 
@@ -22,8 +22,8 @@ modes. Two anti-patterns that cut across layers are described in full at the end
 | Docs are unreachable from AGENTS.md, duplicate each other, or no longer match the code | [0.7 Documentation as System Map](../L0-foundation.md#pattern-07--documentation-as-system-map) |
 | Commented-out code, unused functions and never-enabled flags remain in the working tree | [0.8 Aggressive Cleanup](../L0-foundation.md#pattern-08--aggressive-cleanup) |
 | A reader with no context cannot follow the quick start or learn why a decision was made | [0.9 AI-as-New-Starter Standard](../L0-foundation.md#pattern-09--ai-as-new-starter-standard) |
-| Skills, hooks and rules have only been added, and no one can say which task each one fixed | [0.10 Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context) (see [We Added It So It Must Help](#we-added-it-so-it-must-help)) |
-| The instruction file passes a line-count check and still holds stale rules | [0.10](../L0-foundation.md#pattern-010--prune-and-re-baseline-context) (see [Line Caps as a Proxy for Signal](#line-caps-as-a-proxy-for-signal)) |
+| Skills, hooks and rules have only been added, and no one can say which task each one fixed | [0.10 Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context) |
+| The instruction file passes a line-count check and still holds stale rules | [0.10](../L0-foundation.md#pattern-010--prune-and-re-baseline-context) |
 
 ### L1 Closed Loop Design and Verification
 
@@ -68,7 +68,7 @@ modes. Two anti-patterns that cut across layers are described in full at the end
 Changes in one repository that break a contract in another are an architecture question, not an L3 pattern: see
 [Monorepo or multi-repo for agents?](faq.md#monorepo-or-multi-repo-for-agents).
 
-### L4 Standards & Measurement, and Earned Autonomy
+### L4 Standards and Measurement, and Earned Autonomy
 
 | Symptom | Likely missing pattern |
 |---------|------------------------|
@@ -84,44 +84,3 @@ Changes in one repository that break a contract in another are an architecture q
 | Nobody can say which practices exist in the repository and which are only written down | [A.4 Census](../earned-autonomy.md#pattern-a4--census) |
 | An unattended workflow has no stop, or the stop was never used | [A.5 Tested Stop](../earned-autonomy.md#pattern-a5--tested-stop) |
 | The agent's own hooks or harness settings can be edited by the agent | [A.6 Enforcement Through Hooks](../earned-autonomy.md#pattern-a6--enforcement-through-hooks) |
-
-## Anti-Patterns Linked From Pattern Docs
-
-[Pattern 0.10](../L0-foundation.md#pattern-010--prune-and-re-baseline-context) links to these two entries.
-
-### We Added It So It Must Help
-
-**Symptom**: Skills, hooks, routing notes and instruction-file rules have only ever been added. No one can say which
-task each one fixed. The configuration was last changed before the current model generation.
-
-**Why it happens**: Each addition answered a real failure, so removing it feels like reintroducing the failure.
-Nothing measures an artifact's contribution, so it stays by default.
-
-**Fix**: Apply [Pattern 0.10](../L0-foundation.md#pattern-010--prune-and-re-baseline-context):
-
-- Give each artifact an owner and a `reviewed:` date
-- Run the [task bank](../references/task-bank.md) without the artifact at each model upgrade
-- Keep the artifact only if a task regresses, and record that task next to it
-- Move rules that must always hold into a command hook, deny rule or CI check
-
-### Line Caps as a Proxy for Signal
-
-**Symptom**: The instruction file passes a line-count check, so it is treated as healthy. It holds rules the agent
-discovers from the code anyway, stale commands and rules for weaknesses the current model no longer has. Or a useful
-rule is cut because the file is at its cap.
-
-**Why it happens**: A line count is the one property of the file that CI measures cheaply. Length costs context on
-every session, but the count says nothing about which lines change what the agent does.
-
-**Fix**: Keep the length warning as a prompt to look, and test the content with
-[Pattern 0.10](../L0-foundation.md#pattern-010--prune-and-re-baseline-context):
-
-- Remove a rule, run the task bank, and keep the rule only if a task regresses
-- Do not trim rules to meet a number before testing them
-- Hold the rules that matter in a command hook or CI, where file length does not affect them
-
-## Using This Page
-
-1. Match the symptom to a row.
-2. Open the pattern and read its Anti-Pattern section for the failure modes, and its Solution for the fix.
-3. After the fix, check that the symptom no longer appears.

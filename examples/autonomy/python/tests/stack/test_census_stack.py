@@ -111,3 +111,27 @@ def test_a_stub_baseline_does_not_satisfy_the_baseline_probe(cli, git_fixture_re
     assert measuring["level"] == 2
     assert "baseline" not in measuring["evidence"]
     assert "baseline" in measuring["missing_for_next"]
+
+
+# (pull_request parameters, keep CODEOWNERS, probe met). GitHub's require_code_owner_review asks for an
+# approving review only on pull requests that change a file with a code owner.
+RULESET_CASES = {
+    "repo-wide-review": ({"required_approving_review_count": 1, "require_code_owner_review": False}, True, True),
+    "code-owner-scoped-review": ({"required_approving_review_count": 0, "require_code_owner_review": True}, True, True),
+    "code-owner-review-without-codeowners": ({"required_approving_review_count": 0, "require_code_owner_review": True}, False, False),
+    "no-review": ({"required_approving_review_count": 0, "require_code_owner_review": False}, True, False),
+    "count-not-an-integer": ({"required_approving_review_count": "1"}, True, False),
+}
+
+
+@pytest.mark.parametrize("name", RULESET_CASES)
+def test_non_author_approval_accepts_a_repo_wide_or_a_code_owner_scoped_review(cli, git_fixture_repo, name):
+    parameters, keep_codeowners, met = RULESET_CASES[name]
+    directory = git_fixture_repo("adopter")
+    ruleset = {"name": "main", "rules": [{"type": "pull_request", "parameters": parameters}]}
+    (directory / ".github" / "rulesets" / "main.json").write_text(json.dumps(ruleset))
+    if not keep_codeowners:
+        (directory / "CODEOWNERS").unlink()
+    governance = census(cli, directory)["dimensions"]["governance"]
+    assert ("non-author-approval" in governance["evidence"]) is met
+    assert ("non-author-approval" in governance["missing_for_next"]) is not met

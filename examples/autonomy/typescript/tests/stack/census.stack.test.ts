@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import { cli, NOW, gitFixtureRepo, readFixtureJson } from "../helpers.js";
@@ -119,5 +119,27 @@ for (const [name, baseline] of Object.entries(STUB_BASELINES)) {
     assert.equal(measuring.level, 2);
     assert.ok(!measuring.evidence.includes("baseline"));
     assert.ok(measuring.missing_for_next.includes("baseline"));
+  });
+}
+
+// [pull_request parameters, keep CODEOWNERS, probe met]. GitHub's require_code_owner_review asks for an
+// approving review only on pull requests that change a file with a code owner.
+const RULESET_CASES: Record<string, [object, boolean, boolean]> = {
+  "repo-wide-review": [{ required_approving_review_count: 1, require_code_owner_review: false }, true, true],
+  "code-owner-scoped-review": [{ required_approving_review_count: 0, require_code_owner_review: true }, true, true],
+  "code-owner-review-without-codeowners": [{ required_approving_review_count: 0, require_code_owner_review: true }, false, false],
+  "no-review": [{ required_approving_review_count: 0, require_code_owner_review: false }, true, false],
+  "count-not-an-integer": [{ required_approving_review_count: "1" }, true, false],
+};
+
+for (const [name, [parameters, keepCodeowners, met]] of Object.entries(RULESET_CASES)) {
+  test(`non-author-approval on ${name} is ${met ? "met" : "not met"}`, () => {
+    const dir = gitFixtureRepo("adopter");
+    writeFileSync(join(dir, ".github", "rulesets", "main.json"), JSON.stringify({ name: "main", rules: [{ type: "pull_request", parameters }] }));
+    if (!keepCodeowners) rmSync(join(dir, "CODEOWNERS"));
+    cli(["census", "--dir", dir, "--now", NOW]);
+    const governance = JSON.parse(readFileSync(join(dir, ".autonomy", "profile.json"), "utf8")).dimensions.governance;
+    assert.equal(governance.evidence.includes("non-author-approval"), met);
+    assert.equal(governance.missing_for_next.includes("non-author-approval"), !met);
   });
 }

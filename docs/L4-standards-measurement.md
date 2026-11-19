@@ -23,7 +23,8 @@ Agents make claims without evidence. "Tests should pass" is a prediction, not ev
 finished is a claim by the party being checked, and a person's report that AI made them faster is also a claim. Both
 can be wrong in ways their authors cannot see. In a 2025 randomized trial, 16 experienced open-source developers took
 longer to finish tasks with AI tools than without, while believing that the tools made them faster
-([IS-6](references/sources.md)).
+([IS-6](references/sources.md)). METR marks the speed result out of date; its later update does not re-test the
+belief gap.
 
 ### Solution
 
@@ -111,8 +112,8 @@ request that edits a skill or the instruction file attaches the task-bank run.
 - [Pattern 4.4 — Agentic Development Metrics](#pattern-44--agentic-development-metrics): artifact-based metrics
 
 **Evidence:** Partial — in one 2025 trial (16 developers), developers believed AI sped them up 20% while their
-measured time rose 19%; METR marks that speed result out of date, and its February 2026 update does not re-test the belief
-gap. Eval-gated configuration releases rest on vendor guidance (IS-6, MV-8, PO-25)
+measured time rose 19%, a speed result METR marks out of date. Eval-gated configuration releases rest on vendor
+guidance (IS-6, MV-8, PO-25)
 
 ---
 
@@ -129,8 +130,7 @@ Measure the outcomes agentic practices are meant to improve, and use each metric
 practice works, where to focus next, and which practice to change. Tokens consumed, commands executed and sessions
 started measure activity, not outcomes.
 
-**Autonomy is a separate axis.** These metrics do not say how much autonomy an agent should hold for a workflow. That
-is a per-workflow grant, capped by the repository's census ([The Curve and the
+Metrics do not set grants; a grant is per workflow, capped by the repository's census ([The Curve and the
 Cap](earned-autonomy.md#the-curve-and-the-cap)).
 
 **Metric categories:**
@@ -153,8 +153,8 @@ Cap](earned-autonomy.md#the-curve-and-the-cap)).
 5. **Repair** (for teams that run a repair loop, [Patterns 1.7 to
    1.12](L1-feedback-loops.md#closing-the-loop-in-production)). Speed and stability are read together, so a fast
    number cannot hide a weak one.
-   - Time to reproduce: from the incident record to a reproduction that is red on the production commit
-   - Time to confirmed repair: from the incident record to a fix that passed the confirmation window
+   - Time to reproduce and time to confirmed repair: from the incident record to a reproduction that is red on the
+     production commit, and to a fix that passed the confirmation window
    - Repair revert rate: share of repairs rolled back or reverted
    - Recurrence rate per fingerprint: share of confirmed repairs whose fingerprint returns within a set number of days
    - Mitigation-to-fix ratio: mitigations shipped for every root-cause fix
@@ -173,6 +173,22 @@ rule violations caught by an enforcement point and, with a repair loop, time to 
 weeks. If the data is noisy or hard to collect, pick a different metric; if it is clear and drives a decision, add
 more.
 
+**Create a baseline.** Before raising any grant, record the repository's flow and stability numbers over the last
+90 days in `.autonomy/baseline.json`, the file the census reads ([Pattern A.4](earned-autonomy.md#pattern-a4--census)):
+
+```json
+{
+  "captured": "2026-11-19",
+  "window_days": 90,
+  "flow": { "merged_prs": 142, "median_cycle_time_hours": 31.5 },
+  "stability": { "reverts": 3, "revert_rate": 0.021, "escaped_defects": 2 }
+}
+```
+
+Cycle time runs from a pull request's first commit to its merge; a revert is a merged commit whose message starts
+with `Revert`; an escaped defect is a bug filed against a merged change. The census checks only that `flow` and
+`stability` are non-empty objects and that `captured` is at most 90 days old, so recompute the file every 90 days.
+
 **Cadence.** Record cycle time and intervention rate per task; review defect rate, review rejection rate and drift
 counts weekly; review trends and each workflow's autonomy grant quarterly.
 
@@ -185,13 +201,11 @@ counts weekly; review trends and each workflow's autonomy grant quarterly.
 - **Measuring without acting:** collecting data with no thresholds, actions or owners.
 - **Gaming the metrics:** lowering the intervention rate by making tasks so small the agent never needs help, or by
   skipping review. A low rate can mean good work or no oversight.
-- **All-or-nothing:** trying to measure everything from day one.
 
 ### Cross-References
 
 - [L2: Behavioral Guardrails](L2-behavioral-guardrails.md): rule violations caught per enforcement point are a
   governance signal
-- [Earned Autonomy](earned-autonomy.md): the grant decision that the supervision-load metrics feed
 
 **Evidence:** Partial — independent sources warn against throughput and activity counts used alone (MV-1, MV-5);
 vendor frameworks still track adoption and spend beside outcomes (MV-2, AN-48); the metric set and thresholds are
@@ -222,24 +236,10 @@ An application repository makes these required checks: unit tests; stack tests (
 
 ### In Practice
 
-This repository has no application code and no coverage workflow; the example projects run their own tests. Its
-`.github/workflows/docs.yml` ("Documentation Guardrails") runs on pushes and pull requests to `main` that touch
-Markdown, `scripts/`, Python files, the lint config, `package.json`, the workflow itself, `.autonomy.yaml` or
-`examples/autonomy/`. It has eight jobs:
-
-| Job | Check | Failure behavior |
-|-----|-------|-------------------|
-| Markdown Lint | `npm run lint:md` (markdownlint-cli2, config in `.markdownlint-cli2.jsonc`) | Fails the build |
-| Instruction File Length | `wc -l` on `AGENTS.md` and `CLAUDE.md`; warns above 200 lines | Warning only |
-| Link Integrity | `scripts/check-doc-links.py`: internal links and anchors resolve | Fails the build |
-| Doc Reachability | `scripts/check-doc-reachability.py`: every Markdown file under `docs/` is reachable from `AGENTS.md` by following links | Fails the build |
-| Source IDs | `scripts/sourcecheck.py`: every cited source ID has a row in `docs/references/sources.md` | Fails the build |
-| Doc Freshness | `scripts/check-doc-freshness.py`: warns at 90 days and fails at 180 days since a pattern doc was reviewed; runs the script tests | Warning, then fails the build |
-| Autonomy Check | Builds the autonomy CLI, computes the census profile, checks `.autonomy.yaml` against the cap and, on pull requests, the commits in the range ([Earned Autonomy](earned-autonomy.md)) | Fails the build |
-| Writing Conventions | Greps `docs/` for the filler words "basically" and "simply" outside code blocks | Warning only |
-
-The task-bank runner of [Pattern 4.6](#pattern-46--context-eval) needs an agent harness, so it is run by hand and is
-not one of these jobs.
+This repository's checks are the jobs in `.github/workflows/docs.yml`, named with the rule each holds in
+[AGENTS.md](../AGENTS.md). `main` has no branch protection, so a failing job is advisory until the check is required
+on `main`, and the workflow has a path filter, which the [adoption
+guide](cross-cutting/adoption-guide.md#make-the-test-job-a-required-check) advises against for a required check.
 
 ### Anti-Pattern
 
@@ -313,9 +313,9 @@ that changes a skill, a hook, the instruction file, the harness configuration or
   The runner is `scripts/task-bank/run.py`. It runs each task once per invocation, so pass^3 means three invocations
   per configuration. Its `--model` flag writes the model id to the run log only.
 - **Decision-code evals** use the same scoring without an agent in the loop. The autonomy example's eval
-  ([examples/autonomy](../examples/autonomy/README.md#eval-suite)) runs 17 scenarios through the real hook and
+  ([examples/autonomy](../examples/autonomy/README.md#eval-suite)) runs its scenarios through the real hook and
   requires a score of exactly 1 at pass^5. The repair-loop gate eval
-  ([examples/repair-loop](../examples/repair-loop/README.md)) runs 43 scenarios at pass^5.
+  ([examples/repair-loop](../examples/repair-loop/README.md)) runs its gate scenarios at pass^5.
 
 ### Anti-Pattern
 
@@ -412,9 +412,9 @@ teams apply it (PO-16, PO-17, PO-19, PO-20)
 ### Problem
 
 Safe delegation depends on a person who can read what the agent wrote, debug it and judge whether it is right.
-Heavy delegation can erode that skill. In a randomized trial from Anthropic, people who used an AI assistant
-to learn a new library scored lower on a comprehension test than people who coded by hand, and the gap
-depended on how they used the assistant ([IS-1](references/sources.md)). Anthropic's staff reported the same
+Heavy delegation can erode that skill. In a randomized trial from Anthropic (52 mostly junior engineers), people
+who used an AI assistant to learn a new library scored lower on a comprehension test than people who coded by
+hand, and the gap depended on how they used the assistant ([IS-1](references/sources.md)). Anthropic's staff reported the same
 worry in a survey ([IS-4](references/sources.md)). Thoughtworks calls the team-level version codebase
 cognitive debt: the code works, and nobody understands it ([IS-12](references/sources.md)).
 

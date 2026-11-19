@@ -5,7 +5,7 @@
     "PreToolUse": [
       {
         "matcher": "Edit|Write",
-        "hooks": [{ "type": "command", "command": ".claude/hooks/block-edits.sh" }]
+        "hooks": [{ "type": "command", "command": ".claude/hooks/block-edits.sh", "onFailure": "block" }]
       }
     ]
   }

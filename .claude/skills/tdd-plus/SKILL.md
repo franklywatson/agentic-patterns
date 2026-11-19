@@ -28,7 +28,7 @@ runs and warn about stale tests; without hooks, the agent follows the same rules
 
 1. Announce phase entry:
 
-   ```
+   ```text
    Now using tdd+ skill. Rules for this phase:
    - Test scope: scoped runs only (full suite reserved for verify+)
    - Stale tests: update the test when a source file changes
@@ -55,7 +55,7 @@ runs and warn about stale tests; without hooks, the agent follows the same rules
    **GREEN — Write minimal code to make the test pass:**
    - Write the smallest possible implementation
    - Do not add features not in the plan
-   - Run the scoped test with the project's test command (listed in AGENTS.md), limited to the test file or case
+   - Run the scoped test with the project's test command (see the README of the example you are changing), limited to the test file or case
    - Show the passing output
 
    **REFACTOR — Clean up while tests pass:**
@@ -80,12 +80,12 @@ runs and warn about stale tests; without hooks, the agent follows the same rules
 
 ## Test Scope Rules
 
-During tdd+ phase, run the project's test command (listed in AGENTS.md) on one test file or case, not on the
+During tdd+ phase, run the project's test command (see the README of the example you are changing) on one test file or case, not on the
 whole suite. Examples of scoped commands, depending on the project's runner:
 
-```
+```text
 npm test -- tests/unit/gate.test.ts
-uv run pytest tests/unit/test_gate.py::test_gate_blocks_mask
+uv run pytest tests/unit/test_gate.py::test_the_masking_patch_routes_to_a_human
 ```
 
 Full suite runs happen during `verify+` phase, not here. Installed hooks can redirect a full-suite command

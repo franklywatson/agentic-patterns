@@ -1,8 +1,6 @@
 # Guardrail Middleware Example
 
-A simplified implementation demonstrating tool routing and intent classification for token-optimized agent behavior.
-
-This is a single-language (TypeScript) example for the optional [L3: Optimization](../../docs/L3-optimization.md) layer. It illustrates Pattern 3.1, Prefer Native Structured Tools; Block Destructive Edits.
+Pattern 3.1 in TypeScript: a hook that routes `grep`, `cat` and `find` to structured tools when the session has them and blocks `sed -i`. For a team whose token cost is a measured problem; it is optional ([L3](../../docs/L3-optimization.md)).
 
 ## Overview
 
@@ -19,7 +17,7 @@ This example shows the core routing logic:
 
 ## File Structure
 
-```
+```text
 src/
 ├── core/
 │   ├── intent.ts        # Intent classifier (command → intent)
@@ -90,14 +88,9 @@ A rule's resolution depends on the environment. The router returns the first of 
 `jcodemunch` (if the repository is indexed), `general`, `fallback` and `_` that the rule defines. The search and
 discovery rules define no `general` entry, so they fall to `fallback` (allow) when neither RTK nor an index applies.
 
-| Intent | Matches | Resolution |
-|--------|---------|------------|
-| `file_read` | `cat <file>` (the classifier also labels `head` and `tail`, which have no router rule and pass through) | advise the Read tool |
-| `text_search` | `grep`, `grepr`, `grepx`, `rg` | `rtk`: advise `rtk grep`; `jcodemunch`: advise `jcodemunch search_text`; otherwise allow |
-| `file_discovery` | `find`, `fd` | `jcodemunch`: advise `get_file_tree` (`find` only); otherwise allow |
-| `file_modify` | `sed -i`, `sed --in-place`, `awk` with a redirect | block in every environment |
-| `docker` | `docker`, `docker-compose` | allow |
-| `pass_through` | everything else | allow |
+The intents and their rules are data in [`src/config/routing.config.ts`](src/config/routing.config.ts): `file_read`
+(advise the Read tool), `text_search` and `file_discovery` (advise an RTK or jcodemunch tool when present),
+`file_modify` (`sed -i`, `awk` with a redirect: block in every environment), `docker` and `pass_through` (allow).
 
 No rule advises Claude Code's Grep or Glob tools. On macOS, Linux and WSL Claude Code leaves both out of the default
 tool set and runs `grep` and `find` through Bash (see the
@@ -115,25 +108,8 @@ Relax](../../docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-rel
 
 ## Routing Rules
 
-Rules are defined in `src/config/routing.config.ts`. Each rule specifies:
-
-- **Pattern**: RegExp to match commands
-- **Intent**: Classification type
-- **Resolutions**: Per-environment actions (rtk, jcodemunch, general, fallback)
-
-Example rule for `grep`:
-
-```typescript
-{
-  match: /\b(grep[rx]?|rg)\b/,
-  intent: 'text_search',
-  resolutions: {
-    rtk: { action: 'advise', tool: 'rtk grep', reason: 'structured output, filtered results' },
-    jcodemunch: { action: 'advise', tool: 'jcodemunch search_text', reason: 'indexed search, faster' },
-    fallback: { action: 'allow' },
-  },
-}
-```
+Each rule in `src/config/routing.config.ts` has a `match` RegExp, an `intent` and per-environment `resolutions`
+(`rtk`, `jcodemunch`, `general`, `fallback`).
 
 ## Integration with Claude Code
 

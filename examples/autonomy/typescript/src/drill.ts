@@ -23,6 +23,8 @@ export interface DrillResult {
   reason: string | null;
   halted_in_ms: number | null;
   bound_ms: number;
+  /** The date written to `stop.last_tested`; null when the drill did not pass. */
+  last_tested: string | null;
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -93,6 +95,7 @@ export async function runDrill(opts: {
     reason,
     halted_in_ms: ms,
     bound_ms: boundMs,
+    last_tested: null,
   });
   let result: DrillResult;
   try {
@@ -121,7 +124,7 @@ export async function runDrill(opts: {
         } else {
           const before = readBeat(heartbeat);
           await sleep(300);
-          result = readBeat(heartbeat) === before ? { workflow: workflow.id, passed: true, reason: null, halted_in_ms: took, bound_ms: boundMs } : fail("heartbeat-continued", took);
+          result = readBeat(heartbeat) === before ? { workflow: workflow.id, passed: true, reason: null, halted_in_ms: took, bound_ms: boundMs, last_tested: null } : fail("heartbeat-continued", took);
         }
       }
     }
@@ -137,7 +140,8 @@ export async function runDrill(opts: {
   if (result.reason === "canary-never-started") return result;
   if (result.passed) {
     const text = readFileSync(opts.registerPath, "utf8");
-    writeFileSync(opts.registerPath, setLastTested(text, workflow.id, isoDate(opts.now)));
+    result.last_tested = isoDate(opts.now);
+    writeFileSync(opts.registerPath, setLastTested(text, workflow.id, result.last_tested));
   } else {
     applyDemotion(opts.dir, workflow.id, 3, [`stop-drill-failed:${result.reason}`], opts.now);
   }

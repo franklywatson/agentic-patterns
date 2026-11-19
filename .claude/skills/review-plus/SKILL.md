@@ -22,13 +22,13 @@ Wraps `superpowers:requesting-code-review`. Requires superpowers to be installed
 
 2. Get the list of files changed since the plan was created:
 
-   ```
+   ```text
    git diff --name-only [plan-commit]..HEAD
    ```
 
 3. Invoke the Explore agent to get current codebase state for comparison:
 
-   ```
+   ```text
    Agent(subagent_type="Explore", prompt="Get current state of these files: [changed files list]. For each file, report: key exports and whether a test file exists.")
    ```
 
@@ -52,22 +52,23 @@ Wraps `superpowers:requesting-code-review`. Requires superpowers to be installed
    - [ ] No empty test bodies
    - [ ] No `.skip` without documented reason
 
+4. Name the change's review tier from the [risk model](../../../docs/L1-patterns/1.8-reversibility-blast-radius.md#risk-model) and list the approvals it needs ([Pattern 2.13](../../../docs/L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)). This review is an agent's finding and never counts as one of them.
+
 ### Phase C: Code Quality Review (delegate to superpowers:requesting-code-review)
 
 1. Invoke `superpowers:requesting-code-review` with the gathered context.
 
 2. Check code quality:
-   - Files are focused (one clear responsibility per file)
-   - Interfaces are well-defined
-   - No unnecessary abstractions
-   - No speculative generalization
+   - Each changed file has one responsibility, named in its first comment or docstring
+   - Each new exported function or class has a caller in this change or a test
+   - No abstraction with a single implementation and no stated second use
    - Positive framing in code comments and error messages
 
 ### Phase D: Review Report
 
 1. Produce a two-stage review report:
 
-   ```
+   ```text
    ## Review Report
 
    ### Stage 1: Spec Compliance
@@ -77,9 +78,8 @@ Wraps `superpowers:requesting-code-review`. Requires superpowers to be installed
    - [ ] Constitutional Rules in AGENTS.md followed
 
    ### Stage 2: Code Quality
-   - [ ] Files are focused and well-structured
-   - [ ] Interfaces are clean
-   - [ ] No unnecessary complexity
+   - [ ] Each changed file has one responsibility
+   - [ ] No unused exports or single-use abstractions
    - [ ] Positive framing throughout
 
    ### Verdict
@@ -87,7 +87,7 @@ Wraps `superpowers:requesting-code-review`. Requires superpowers to be installed
    ```
 
 2. If PASS: the implementation is complete. Proceed to integration.
-    If FAIL: list specific items, return to tdd+ to fix, then re-run verify+ and review+.
+   If FAIL: list specific items, return to tdd+ to fix, then re-run verify+ and review+.
 
 ## Skill Chain
 

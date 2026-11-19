@@ -79,7 +79,7 @@ accessed on 17 November 2026 unless the entry says otherwise.
 | ID | Source | Tier and read status | Link |
 |----|--------|----------------------|------|
 | PL-3 | Capabilities: Continuous integration. DORA; living page, no date shown. | Independent research. Read: Section. | <https://dora.dev/capabilities/continuous-integration/> |
-| PL-5 | AI Agent Authentication and Authorization, draft-klrc-aiagent-auth-03. IETF individual draft, 6 Jul 2026 (expired, replaced by a working-group draft). | Standards draft. Read: Section. | <https://www.ietf.org/archive/id/draft-klrc-aiagent-auth-03.txt> |
+| PL-5 | AI Agent Authentication and Authorization, draft-klrc-aiagent-auth-03. IETF individual draft, 6 Jul 2026 (no longer active, replaced by draft-ietf-wimse-aims, PL-6; its text expires 7 Jan 2027). | Standards draft. Read: Section. | <https://www.ietf.org/archive/id/draft-klrc-aiagent-auth-03.txt> |
 | PL-6 | AI Identity Management System, draft-ietf-wimse-aims. IETF WIMSE working group; active working-group draft, last updated 2 Nov 2026. | Standards draft. Read: Abstract. | <https://datatracker.ietf.org/doc/draft-ietf-wimse-aims/> |
 | PL-7 | OAuth 2.0 Token Exchange, RFC 8693. IETF, Jan 2020. | Standards body. Read: Section (1.1). | <https://www.rfc-editor.org/rfc/rfc8693> |
 | PL-8 | MCP Authorization, revision 2026-07-28. Model Context Protocol (accessed 19 Nov 2026). "MCP servers MUST NOT accept or transit any other tokens." | Standards body (open specification). Read: Section (token handling). | <https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization> |

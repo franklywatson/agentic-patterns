@@ -32,8 +32,16 @@ def test_unknown_counts_as_level_2():
     assert cap_of(dims({"platform": 4, "governance": 4, "ownership": 4, "measuring": "unknown"})) == 2
 
 
-def test_a_missing_profile_caps_at_2():
-    assert cap_of(None) == 2
+def test_a_missing_profile_caps_at_1():
+    assert cap_of(None) == 1
+    assert cap_of({"dimensions": FULL["dimensions"]}) == 1
+    assert cap_of([]) == 1
+
+
+def test_a_missing_profile_holds_every_grant_at_1():
+    e = effective_level({"id": "interactive", "granted_level": 2}, None, None, {}, NOW)
+    assert e.effective == 1
+    assert e.reasons == ["cap:1"]
 
 
 def test_profile_status_distinguishes_ok_stale_and_missing():

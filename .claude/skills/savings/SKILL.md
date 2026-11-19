@@ -35,7 +35,7 @@ Report token savings from rtk and jcodemunch usage during this session.
 
 With session data (baseline + delta available):
 
-```
+```text
 [rig] Session Savings
   rtk: X.XM saved (N calls, +XK this session)
   jcodemunch: XK saved (N queries, XM total all-time)
@@ -43,14 +43,14 @@ With session data (baseline + delta available):
 
 Without session data (no cache file found):
 
-```
+```text
 [rig] Session Savings (all-time)
   rtk: X.XM saved (N commands, XX.X% avg savings)
 ```
 
 If rtk is not installed:
 
-```
+```text
 [rig] Session Savings
   rtk: not installed
 ```

@@ -9,12 +9,12 @@ A minimal, working example of stack tests in Python using pytest. Each test mode
 - **Unique compose project**: `docker compose -p stacktest-{pid}-{random}` isolates containers, network and volumes; the compose file sets no fixed `container_name`
 - **Transient volumes**: Data disappears when the stack is removed
 - **Full-loop assertions**: Primary response, second-order cross-API verification, third-order audit/observability
-- **Sequential ordering**: Tests numbered `01_`, `02_` to establish dependency ladder
+- **Sequential ordering**: Tests numbered `test_01_`, `test_02_` to establish dependency ladder
 - **Health endpoint test mode**: `GET /health?mode=test` returns per-service diagnostics ([Pattern 1.1](../../../docs/L1-patterns/1.1-stack-tests.md))
 
 ## File Structure
 
-```
+```text
 .
 ├── pyproject.toml             # Test dependencies (uv project, not a package)
 ├── pytest.ini                 # Pytest settings: 300s timeout, warnings are errors
@@ -71,7 +71,7 @@ Tests are numbered `test_01_`, `test_02_` etc. Pytest runs files in alphabetical
 
 ### 3. Full-Loop Assertions
 
-Each test verifies at multiple levels:
+Each test asserts in three layers:
 
 - **Primary**: API response status and body
 - **Second-order**: Derived effects verified through a different API endpoint than the one that performed the action (cross-API verification)
@@ -87,7 +87,7 @@ Every test session gets a unique compose project name and dynamically allocated 
 
 ### 6. No Escape Hatches
 
-Assertions use direct `assert` statements. No conditional checks, no try-catch that swallows errors, no early returns. Tests fail loudly and clearly.
+Assertions use direct `assert` statements. No conditional checks, no try-catch that swallows errors, no early returns. A failing assertion stops the test and names the value.
 
 ## The App Under Test
 

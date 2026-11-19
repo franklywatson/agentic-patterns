@@ -81,7 +81,7 @@ the material the patterns draw on beyond those citations.
 - **Summary:** Context engineering framework: Write, Isolate, Select, Compress. The video claims that most agent
   failures come from context management rather than the model; the claim comes from a single uncontrolled
   source (evidence: Thin). Write externalizes memory (progress files, separate planning and implementation
-  sessions). Isolate splits work across sub-agents. Select loads only what a task needs through tiered rules and
+  sessions). Isolate splits work across subagents. Select loads only what a task needs through tiered rules and
   reference docs. Compress covers focused compaction and session handoffs. The scout in [Pattern
   3.2](../L3-optimization.md#pattern-32--context-isolation-scout) corresponds to Isolate.
 - **Related to:** L3
@@ -123,7 +123,7 @@ license, pin a version and review updates before installing any tool listed here
 
 - **Type:** Tool
 - **Creator:** Anthropic
-- **Summary:** Coding agent CLI with skills, hooks, sub-agents and settings-based permissions; the harness that the
+- **Summary:** Coding agent CLI with skills, hooks, subagents and settings-based permissions; the harness that the
   L2 examples target.
 - **Related to:** L2, L3
 - **URL:** <https://code.claude.com/docs/en/overview>

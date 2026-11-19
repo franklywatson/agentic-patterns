@@ -44,23 +44,23 @@ export interface Commit {
   files: string[];
 }
 
-// Tier 1: never changed by an agent commit, no relief.
-const TIER1 = [/^\.autonomy/, /(^|\/)codeowners$/, /^\.claude\/settings[^/]*\.json$/, /^\.claude\/hooks\//, /^\.harness\.yaml$/];
-// Tier 2: changed by an agent commit only when a later non-agent commit acknowledges it.
-const TIER2 = [/^\.github\/workflows\//];
+// Locked files: never changed by an agent commit, no relief.
+const LOCKED_FILES = [/^\.autonomy/, /(^|\/)codeowners$/, /^\.claude\/settings[^/]*\.json$/, /^\.claude\/hooks\//, /^\.harness\.yaml$/];
+// Workflow files: changed by an agent commit only when a later non-agent commit acknowledges it.
+const WORKFLOW_FILES = [/^\.github\/workflows\//];
 
-export function isTier1File(path: string): boolean {
+export function isLockedFile(path: string): boolean {
   const lower = path.toLowerCase();
-  return TIER1.some((re) => re.test(lower));
+  return LOCKED_FILES.some((re) => re.test(lower));
 }
 
-export function isTier2File(path: string): boolean {
+export function isWorkflowFile(path: string): boolean {
   const lower = path.toLowerCase();
-  return !isTier1File(path) && TIER2.some((re) => re.test(lower));
+  return !isLockedFile(path) && WORKFLOW_FILES.some((re) => re.test(lower));
 }
 
 export function isGovernanceFile(path: string): boolean {
-  return isTier1File(path) || isTier2File(path);
+  return isLockedFile(path) || isWorkflowFile(path);
 }
 
 const ACK_LINE = /^governance-approved:[ \t]*([0-9a-f]{7,40})$/i;
@@ -189,9 +189,9 @@ export function runCheck(opts: CheckOptions): CheckResult {
     for (const file of commit.files) {
       if (file.includes("\ufffd")) {
         result.failures.push({ code: "path-undecodable", commit: commit.sha, file });
-      } else if (isTier1File(file)) {
+      } else if (isLockedFile(file)) {
         result.failures.push({ code: "governance-file-changed-by-agent", commit: commit.sha, file });
-      } else if (isTier2File(file)) {
+      } else if (isWorkflowFile(file)) {
         if (acknowledger) result.acknowledged.push({ commit: commit.sha, file, by: acknowledger.sha });
         else result.failures.push({ code: "workflow-change-unacknowledged", commit: commit.sha, file });
       }

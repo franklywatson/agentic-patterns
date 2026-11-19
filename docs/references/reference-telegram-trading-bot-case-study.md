@@ -23,7 +23,7 @@ appears in the codebase.
 
 ### CLAUDE.md as Constitution
 
-The project's CLAUDE.md is 218 lines, above the 200-line threshold that
+The project's CLAUDE.md is longer than the 200-line threshold that
 [Pattern 0.4](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution) sets. It lists nine
 constitutional mandates:
 
@@ -48,7 +48,7 @@ Four entry points lead an agent from shallow to deep
 
 1. **README.md**: platform overview, quick start, feature list
 2. **CLAUDE.md**: constitutional mandates, skills reference, quick checks
-3. **docs/README.md**: documentation hub, which records its own coverage figure (92%)
+3. **docs/README.md**: documentation hub with its coverage summary
 4. **docs/index.md**: full documentation index by functional area
 
 Each step gives enough context to decide whether to go deeper. Completed plans and superseded docs are deleted once
@@ -70,7 +70,7 @@ their work is merged, not archived; version control is the archive
 - **Log search**: `searchDockerLogs()`
 - **Chain verification**: `verifyTransactionOnChain()`
 
-It is one class of 5,888 lines and breaks the rule in
+It is one class of several thousand lines and breaks the rule in
 [Pattern 1.1](../L1-patterns/1.1-stack-tests.md#stack-tooling-is-production-code) that stack tooling is split into
 focused modules. Direct database verification breaks
 [Pattern 1.2](../L1-patterns/1.2-full-loop-assertions.md#anti-pattern), which keeps assertions on the API.
@@ -110,7 +110,7 @@ tests/stack/
 └── trading/
     ├── dex-swap-execution.stack.test.js
     ├── limit-order-4-stage-pipeline-e2e.stack.test.js
-    └── ... (13 further trading journeys)
+    └── ... (further trading journeys)
 ```
 
 If `app-startup-dependencies` fails, the agent does not debug trading logic: the foundation is broken.
@@ -176,7 +176,7 @@ not measure the token or error effect of any of these tools.
 
 ---
 
-## L4: Standards & Measurement
+## L4: Standards and Measurement
 
 The `verify+` skill asks for a completion report with pasted output: unit test output with 0 failures, stack suite
 output, and a checklist of primary, second-order and third-order effects verified. Its rule is "No completion claims

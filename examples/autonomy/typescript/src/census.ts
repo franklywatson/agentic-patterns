@@ -112,15 +112,23 @@ function codeownersSets(c: Ctx): Set<string> {
   return sets;
 }
 
+/**
+ * A committed ruleset requires a non-author approval: on every pull request (an integer
+ * `required_approving_review_count` of at least 1), or on pull requests that change a file with a
+ * code owner (`require_code_owner_review`, which needs a CODEOWNERS file with at least one rule).
+ */
 function rulesetApproves(c: Ctx): boolean {
   return c.files
     .filter((f) => /^\.github\/rulesets\/.+\.json$/.test(f))
     .some((f) => {
       try {
         const rules: Json[] = JSON.parse(c.text(f)).rules ?? [];
-        return rules.some(
-          (r) => r.type === "pull_request" && (r.parameters?.required_approving_review_count ?? 0) >= 1,
-        );
+        return rules.some((r) => {
+          if (r === null || typeof r !== "object" || r.type !== "pull_request") return false;
+          const count = r.parameters?.required_approving_review_count;
+          if (Number.isInteger(count) && count >= 1) return true;
+          return r.parameters?.require_code_owner_review === true && codeownersSets(c).size > 0;
+        });
       } catch {
         return false;
       }

@@ -54,7 +54,7 @@ Run each check and report PASS/FAIL with evidence.
 
 ## Report Format
 
-```
+```text
 Session Verification Report
 ============================
 Session Start:  X/4 passed
