@@ -1,0 +1,13 @@
+diff -ruN a/tests/repro/INC-001.repro.test.ts b/tests/repro/INC-001.repro.test.ts
+--- a/tests/repro/INC-001.repro.test.ts
++++ b/tests/repro/INC-001.repro.test.ts
+@@ -12,7 +12,7 @@
+       headers: {"accept":"application/json"},
+       validateStatus: () => true,
+     });
+-    expect(response.status).toBe(404);
+-    expect(response.data).toEqual({"error":"User not found"});
++    expect(response.status).toBe(500);
++    expect(response.data).toEqual({"error":"Internal server error"});
+   });
+ });

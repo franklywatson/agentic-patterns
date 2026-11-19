@@ -1,0 +1,6 @@
+node_modules/
+dist/
+app/node_modules/
+app/dist/
+.workspaces/
+coverage/

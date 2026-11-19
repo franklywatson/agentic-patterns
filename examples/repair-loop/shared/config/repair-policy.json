@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "workflow": "repair-loop",
+  "grant": "A3",
+  "minGrantForAuto": "A3",
+  "autoCeiling": { "reversibility": "R2", "blast": "B1" },
+  "protectedPaths": [
+    "tests/repro/**",
+    "tests/regression/**",
+    "tests/stack/**",
+    ".autonomy.yaml",
+    ".github/**",
+    "shared/config/**"
+  ],
+  "existingTestsGlob": "tests/**",
+  "budget": {
+    "attemptsPerFingerprint": 1,
+    "cooldownSeconds": 900
+  },
+  "breaker": {
+    "recurrenceWindowDays": 14,
+    "tripRecurrences": 1,
+    "resetCleanRepairs": 5
+  },
+  "confirm": {
+    "minSamples": 50,
+    "maxFingerprintCount": 0
+  },
+  "owner": "team-platform"
+}

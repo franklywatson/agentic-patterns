@@ -1,0 +1,36 @@
+{
+  "id": "INC-001",
+  "journey": "user-lookup",
+  "entrypoint": "GET /users/:id",
+  "errorClass": "pg:22P02",
+  "fingerprint": "92e2a8020bd5",
+  "request": {
+    "method": "GET",
+    "path": "/users/undefined",
+    "headers": {
+      "accept": "application/json"
+    },
+    "body": null
+  },
+  "observed": {
+    "status": 500,
+    "body": {
+      "error": "Internal server error"
+    }
+  },
+  "expected": {
+    "status": 404,
+    "body": {
+      "error": "User not found"
+    }
+  },
+  "dependencies": {
+    "postgres": {
+      "connected": true
+    },
+    "redis": {
+      "connected": true
+    }
+  },
+  "detectedAt": "2026-11-18T09:14:00Z"
+}
