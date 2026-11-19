@@ -71,6 +71,10 @@ if (resolution.action === 'advise') {
 | `docker` | Container operations | Allow (pass-through) |
 | `pass_through` | Unknown/benign commands | Allow |
 
+### Docker is default-allow
+
+The router allows every `docker` and `docker-compose` command (`src/config/routing.config.ts`, intent `docker`). It does not inspect subcommands or flags, so `docker run -v /:/host` and `docker exec` pass. Access to the Docker socket is root-equivalent on the host. Treat this rule as a statement that no dedicated tool exists for Docker commands, not as a security control. Restrict Docker access with a containment boundary (sandbox, credential scope); see [the containment prerequisite track](../../docs/refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people).
+
 ## Routing Rules
 
 Rules are defined in `src/config/routing.config.ts`. Each rule specifies:

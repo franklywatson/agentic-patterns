@@ -210,6 +210,8 @@ hook.on('PreToolUse', (tool, args) => {
 });
 ```
 
+**Limits of string matching.** Matching `sed -i` in the command string is an ergonomic nudge that steers the agent to the Edit tool. It is not a security control: `/usr/bin/sed -i`, `perl -pi`, `python -c` file writes and `$(...)` substitution all bypass it. Enforce destructive-operation limits with a containment boundary (sandbox, credential scope); see [the containment prerequisite track](refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people).
+
 A context-aware hook:
 
 ```typescript
@@ -217,9 +219,10 @@ hook.on('PreToolUse', (tool, args) => {
   if (tool === 'Bash' && args.command.startsWith('docker logs')) {
     const recentLogs = findRecentTestLogs(5 * 60 * 1000); // 5 minutes
     if (recentLogs.length > 0) {
-      console.warn(`Recent test logs available: ${recentLogs.join(', ')}`);
-      console.warn('Use test logs instead of docker logs');
-      return; // block the docker logs command
+      throw new Error(
+        `Recent test logs available: ${recentLogs.join(', ')}. ` +
+        'Read those files instead of running docker logs.'
+      ); // throwing blocks the docker logs command
     }
   }
 });

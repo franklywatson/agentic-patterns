@@ -112,7 +112,9 @@ export const ROUTING_RULES: readonly RoutingRule[] = [
     },
   },
 
-  // Docker operations - pass through (no dedicated tool)
+  // Docker operations - default-allow: every docker command passes, including
+  // `docker run -v /:/host` and `docker exec`. Docker socket access is
+  // root-equivalent, so this rule is not a security control.
   {
     match: /\bdocker(-compose)?\b/,
     intent: 'docker',
