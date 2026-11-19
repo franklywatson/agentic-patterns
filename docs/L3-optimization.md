@@ -1,6 +1,6 @@
 # L3: Optimization (Optional)
 
-**Level**: Optimization (L3)
+**Layer**: Optimization (L3)
 **Prerequisites**: [L2 Guardrails](./L2-behavioral-guardrails.md)
 
 L3 is optional. It reduces the tokens an agent spends on exploration and tool output. It is not on the path to verified or unattended work: L0, L1, L2 and L4 carry that. Adopt L3 when token cost or context noise is a measured problem, and measure the effect in tokens on your own sessions.

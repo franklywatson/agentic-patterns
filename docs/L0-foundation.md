@@ -190,7 +190,7 @@ Tree diagram showing major directories and their purposes.
 2. Evidence-based claims only
 3. Zero-defect tolerance
 
-## Level Documentation
+## Layer Documentation
 - [docs/L0-foundation.md](docs/L0-foundation.md)
 - [docs/L1-feedback-loops.md](docs/L1-feedback-loops.md)
 ```
@@ -286,7 +286,7 @@ Convention: `.worktrees/<branch-name>/` directory.
 
 ## Pattern 0.7 — Documentation as System Map
 
-**Problem**: Documentation, tests and code drift apart. A pattern is renamed in code but not in the docs, a test calls a deleted function, a doc describes behavior that changed months ago. Agents follow stale docs with full confidence, which costs tokens and produces wrong implementations. File structure ([Pattern 0.3](#pattern-03--conceptual-file-organization)) and documentation serve the same purpose at different levels: both help agents navigate. When either drifts, discoverability breaks.
+**Problem**: Documentation, tests and code drift apart. A pattern is renamed in code but not in the docs, a test calls a deleted function, a doc describes behavior that changed months ago. Agents follow stale docs with full confidence, which costs tokens and produces wrong implementations. File structure ([Pattern 0.3](#pattern-03--conceptual-file-organization)) and documentation serve the same purpose at different scales: both help agents navigate. When either drifts, discoverability breaks.
 
 **Solution**: Treat documentation as the system map: the navigational layer for structure, intent and conventions. Update the affected docs in the same task as the code change, and check for drift with commands that run in CI.
 
@@ -303,7 +303,7 @@ This repository runs these checks in `.github/workflows/docs.yml`:
 |-------|------------------|-------------------|
 | `markdown-lint` (`npm run lint:md`) | Markdown style rules | Fails |
 | `link-integrity` (`python3 scripts/check-doc-links.py .`) | Every relative link and `#anchor` resolves | Fails |
-| `doc-reachability` | Every file under `docs/` is referenced from CLAUDE.md | Warns |
+| `doc-reachability` | Every file under `docs/` is referenced from AGENTS.md | Warns |
 | `writing-conventions` | No filler words ("basically", "simply") | Warns |
 
 Run the link check locally before committing:
@@ -436,7 +436,7 @@ Audit quarterly and after each major structural change:
 
 - [ ] README explains the project in under 30 seconds.
 - [ ] The quick start runs without reading beyond the README.
-- [ ] CLAUDE.md is a map with stated rules, not a wall of links.
+- [ ] AGENTS.md is a map with stated rules, not a wall of links.
 - [ ] Examples in docs run as written.
 - [ ] Directory names communicate intent ([Pattern 0.2](#pattern-02--progressive-disclosure)).
 

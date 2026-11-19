@@ -1,6 +1,6 @@
 # L1 Closed Loop Design and Verification
 
-**Level 1** in the agentic patterns hierarchy: the level where agents stop guessing and start designing. L0 provides navigable structure — deep modules, progressive disclosure, CLAUDE.md as constitution, unit tests as contract. L1 is where the agent uses that structure to gather evidence, form hypotheses, propose architectural changes, and validate the result through closed-loop verification.
+**Layer 1** of the agentic patterns: the layer where agents stop guessing and start designing. L0 provides navigable structure — deep modules, progressive disclosure, the agent instruction file as constitution, unit tests as contract. L1 is where the agent uses that structure to gather evidence, form hypotheses, propose architectural changes, and validate the result through closed-loop verification.
 
 The "closed loop" is design→implement→verify→confirm, not just test→fix→test. Stack tests are the validation mechanism that closes the loop — they confirm that the design intent was implemented correctly. But the design comes first. Every plan, every bugfix, every investigation begins with harvesting the right context: understanding what the system does, what it should do, and what evidence supports the proposed change.
 
@@ -54,7 +54,7 @@ The [rig](https://github.com/franklywatson/claude-rig) framework automates this 
 
 Stack tests validate design intent. But if the design is wrong, perfect tests just confirm the wrong thing with high confidence. The agent needs to understand the system before changing it.
 
-This is why L0 exists as a prerequisite: deep modules make code contracts discoverable, progressive disclosure makes structure navigable, and CLAUDE.md makes rules explicit. L1 is where the agent activates those foundations — reading the map before charting the course, then verifying the destination was reached.
+This is why L0 exists as a prerequisite: deep modules make code contracts discoverable, progressive disclosure makes structure navigable, and the agent instruction file makes rules explicit. L1 is where the agent activates those foundations — reading the map before charting the course, then verifying the destination was reached.
 
 ### Targeted Context, Not Exhaustive Reading
 

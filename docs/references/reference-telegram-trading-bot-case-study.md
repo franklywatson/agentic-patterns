@@ -6,7 +6,7 @@
 
 **Scale:** Production-grade with comprehensive test coverage, real testnet blockchain trading
 
-This case study demonstrates how all five levels of the agentic patterns pyramid manifest in a production codebase. The project handles real blockchain transactions, manages user funds, and operates with financial-grade reliability requirements.
+This case study demonstrates how all five layers of the agentic patterns manifest in a production codebase. The project handles real blockchain transactions, manages user funds, and operates with financial-grade reliability requirements.
 
 ---
 
@@ -416,7 +416,7 @@ Every error, warning, and failure must be addressed. Not "relevant" errors — A
 
 ---
 
-## Cross-Level Integration
+## Cross-Layer Integration
 
 ### How L0 Enables L1
 
@@ -448,7 +448,7 @@ In this project, L3 added structured search, smart routing and compact MCP seria
 
 5. **Documentation is the system map** — 92% coverage tracking and continuous reorganization treat docs as living artifacts. Superseded docs are deleted, not archived — version control preserves history.
 
-6. **All levels integrate** — L0 constitutional rules enable L1 stack tests, which provide targets for L2 skills, which L3 amplifies through token optimization, which L4 standards & measurement maintains.
+6. **All layers integrate** — L0 constitutional rules enable L1 stack tests, which provide targets for L2 skills, which L3 amplifies through token optimization, which L4 standards & measurement maintains.
 
 ---
 

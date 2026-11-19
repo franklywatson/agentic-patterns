@@ -14,7 +14,7 @@ In the reference project, deployment was handled in a separate DevOps repository
 - **Tooling to audit environment variables and config** across dev and ops repos for consistency.
 - **A commit-driven deployment model** — the DevOps repo deep-dived into GitHub commit changes to key application files, then followed a structured process for mapping those changes into infrastructure updates.
 
-The agentic patterns from L0–L4 applied equally to the DevOps repo — CLAUDE.md, progressive disclosure, evidence-based claims all work in infrastructure code. The discipline transfers; the tooling doesn't have to.
+The agentic patterns from L0–L4 applied equally to the DevOps repo — the agent instruction file, progressive disclosure, evidence-based claims all work in infrastructure code. The discipline transfers; the tooling doesn't have to.
 
 This was a preference for this project's scale and team structure. Teams deploying to Kubernetes, serverless platforms, or managed services would adapt the deployment model to their context. What transfers is the discipline (evidence-based changes, structured context, clear contracts between repos), not the specific tools.
 

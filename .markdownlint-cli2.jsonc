@@ -1,5 +1,5 @@
 // markdownlint-cli2 configuration
-// Aligned with CLAUDE.md markdown conventions:
+// Aligned with AGENTS.md markdown conventions:
 //   Line length: Prefer 80-100, hard limit 120
 //   Headers: # for page title, ## for main sections, ### for subsections
 //   Code blocks: Specify language
@@ -10,7 +10,7 @@
     "default": true,
 
     // MD013/line-length
-    // CLAUDE.md says "prefer 80-100, hard limit 120" but existing prose
+    // AGENTS.md says "prefer 80-100, hard limit 120" but existing prose
     // exceeds 120 extensively. Disabled for now - enforce on new content
     // by ratcheting down over time. Code blocks and headings are checked
     // via other rules.
@@ -29,7 +29,7 @@
     "MD041": false,
 
     // MD040/fenced-code-language - code blocks should specify language
-    // CLAUDE.md requires this but 42 existing blocks lack language tags
+    // AGENTS.md requires this but 42 existing blocks lack language tags
     // (mostly directory structure diagrams). Disabled for now - enable
     // after adding language tags to existing blocks (use `text` for
     // directory trees and plain output).

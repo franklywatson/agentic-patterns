@@ -448,7 +448,7 @@ Adopt this checklist for code reviews, PR reviews, and task completion verificat
 
 ### Constitutional Compliance
 
-- [ ] CLAUDE.md rules followed (if applicable)
+- [ ] AGENTS.md rules followed (if applicable)
 - [ ] No hardcoded paths or secrets
 - [ ] No blocking I/O without timeout
 - [ ] Error handling covers all branches
@@ -474,8 +474,8 @@ Adopt this checklist for code reviews, PR reviews, and task completion verificat
 ### Documentation
 
 - [ ] Code changes documented in same task
-- [ ] CLAUDE.md updated if structure changed
-- [ ] New docs linked from CLAUDE.md (no orphans)
+- [ ] AGENTS.md updated if structure changed
+- [ ] New docs linked from AGENTS.md (no orphans)
 - [ ] Code examples tested and verified
 - [ ] Deprecated features marked as such
 

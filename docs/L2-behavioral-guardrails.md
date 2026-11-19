@@ -556,9 +556,9 @@ prune learnings that no longer hold.
 
 The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin implements this with `/ce:compound`, which captures solved problems into structured documentation (`docs/solutions/`) with YAML frontmatter for searchability. The vendor describes a split of 80% planning and review to 20% execution; that ratio is a vendor claim, not a measured result in this library.
 
-**Compounding across the pattern pyramid:**
+**Compounding across the layers:**
 
-| Level | What Compounds | Mechanism |
+| Layer | What Compounds | Mechanism |
 |-------|---------------|-----------|
 | L0 | Clean structure, current docs | [Pattern 0.8 — Aggressive Cleanup](L0-foundation.md#pattern-08--aggressive-cleanup) removes noise each session |
 | L1 | Test coverage, verification infrastructure | Stack tests accumulate; each new test catches regressions permanently |

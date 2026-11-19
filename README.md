@@ -1,6 +1,6 @@
 # Agentic Patterns
 
-A toolkit of patterns for making codebases work effectively with AI coding agents — gathered from production use, organized by increasing capability, and designed to adopt incrementally.
+A toolkit of patterns for making codebases work effectively with AI coding agents — gathered from production use, organized into five layers, and designed to adopt incrementally.
 
 ## Why This Exists
 
@@ -36,23 +36,55 @@ The lineage: patterns were extracted from the reference project, organized into 
 | [rig](https://github.com/franklywatson/claude-rig) | Guardrails framework: L2 enforcement pipeline, L3 tool routing + token-optimized scout agent, L4 context eval, skill chain with phase transitions, CI guardrails. Configurable via `.harness.yaml`. | TypeScript |
 | [superpowers](https://github.com/obra/superpowers) | L2 base skills (brainstorming, TDD, verification, review), automated worktree management | Markdown/JS |
 
-## The Pattern Pyramid
+## The Pattern Layers
 
-Patterns are organized into five levels, each building on the previous. The levels suggest an adoption order — earlier levels provide the foundation that later levels depend on — but teams should start where their gaps are and adopt what helps.
+The library has five layers, L0 to L4. A layer is a group of patterns that depend on the layers below it: L1 verification needs the navigable structure of L0, and L2 enforcement needs the checks of L1. The layers are not a maturity scale. Finishing L4 does not make a team ready for unattended agent work. Adoption starts where your gaps are, not at L0 by default.
 
-![The Agentic Patterns Pyramid](docs/diagrams/pyramid.png)
+![Layer dependencies: each layer builds on the one below](docs/diagrams/pyramid.png)
 
-### Level Overviews
+### Layer Overviews
 
 **[L0: Foundation](docs/L0-foundation.md)** — Structure your codebase so an AI with zero prior context can navigate, understand, and contribute. Deep modules, progressive disclosure, conceptual file organization, an agent instruction file (AGENTS.md) as project constitution, unit tests as contract, documentation as system map, and aggressive cleanup. The "can a new starter figure this out?" test.
 
-**[L1: Closed Loop Design and Verification](docs/L1-feedback-loops.md)** — The level where agents stop guessing and start designing. Context harvesting gathers targeted evidence before implementation. Design rinsing extends this beyond the current project — extracting distilled architectural understanding from external sources (codebases, transcripts, articles) and translating it into design decisions for the target project. Stack tests validate design intent end-to-end through the full application stack — real dependencies (no mocks in stack tests), no partial integration, no ambiguous results. Mocks are appropriate in unit tests for isolation. Full-loop assertion layering catches regressions at primary, secondary, and tertiary levels.
+**[L1: Closed Loop Design and Verification](docs/L1-feedback-loops.md)** — The layer where agents stop guessing and start designing. Context harvesting gathers targeted evidence before implementation. Design rinsing extends this beyond the current project — extracting distilled architectural understanding from external sources (codebases, transcripts, articles) and translating it into design decisions for the target project. Stack tests validate design intent end-to-end through the full application stack — real dependencies (no mocks in stack tests), no partial integration, no ambiguous results. Mocks are appropriate in unit tests for isolation. Full-loop assertion layering catches regressions at primary, secondary, and tertiary levels of assertion.
 
 **[L2: Behavioral Guardrails](docs/L2-behavioral-guardrails.md)** — Prose is guidance. Hooks are deterministic policy within the harness. Containment and credentials are the boundary. Put each rule at the lowest layer that can hold it, and name that layer for every constitutional rule. Skills overlay project rules on base agent capabilities; the skill chain and phase tracking are optional and scale with risk.
 
 **[L3: Optimization (optional)](docs/L3-optimization.md)** — Reduces tokens spent on exploration and tool output. It is not on the path to verified or unattended work. Covers preferring native structured tools and blocking destructive shell edits, context isolation with a scout sub-agent (from the WISC framework), and a pointer to rig's code for environment-aware routing.
 
-**[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, spec drift detection, the new starter audit, development metrics, CI guardrails, and context eval for routing effectiveness. The maturity layer that verifies L0-L3 are holding and measures their impact over time.
+**[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, spec drift detection, the new starter audit, development metrics, CI guardrails, and context eval for routing effectiveness. Verifies that L0-L3 are holding and measures their impact over time.
+
+## How Far a Team Can Let Go
+
+The layers say whether letting go is safe. Two further scales say how far a team has got and how much one workflow may do on its own. They are defined in [the refresh synthesis](docs/refresh/synthesis.md#2-where-the-library-stands) and the baseline described in [Baseline structure](docs/references/sources.md#baseline-structure).
+
+**The curve (C1-C5).** A five-step curve applied separately to each of seven dimensions: C1 Individual, C2 Grounded, C3 Verified delegation, C4 Governed autonomy, C5 Self-correcting. A team has a position per dimension, not one overall score. The steps carry a C prefix so they are not confused with L0-L4.
+
+**Autonomy grants (A1-A5).** A grant is what one named workflow may do. A1 suggests and a human applies the change. A2 opens pull requests that a human reads. A3 passes required checks before a human merges. A4 acts on an event or schedule within permitted actions, with an owner, limits, an audit record and a tested stop, only where verification is mechanical and the action reversible. A5 is A4 managed as an investment: baseline, target, review date and stop rule. Each grant needs a minimum cap, set out below. A guide to earning and withdrawing grants (`docs/earned-autonomy.md`) arrives in Phase 3 of the refresh.
+
+**The seven dimensions.** Four of them cap unattended work. The table shows the position a team reaches by adopting every pattern as written (synthesis section 2). It is a ceiling set by the content, not an assessment of any team.
+
+| Dimension | Position at full adoption | Caps unattended work |
+|-----------|---------------------------|----------------------|
+| Shared context | C3 | No |
+| Team operating model | C3 | No |
+| Platform | C2-C3 | Yes |
+| Measuring value | C2-C3 | Yes |
+| Individual and team skill | C2 | No |
+| Security and governance | C2 | Yes |
+| Production ownership | C1 | Yes |
+
+The cap line is the lowest position among the four capping dimensions. No workflow grant may sit above it: A2 needs a cap of at least C2, A3 at least C3, A4 at least C4, A5 C5. At full adoption the lowest capping dimension is production ownership at C1, so the cap for unattended work is C1.
+
+## What This Library Does Not Cover Yet
+
+Three dimensions that cap unattended work are not covered, or are covered only in part:
+
+- **Production ownership.** Running and repairing agent-built software in production, including on-call and rollback. The [FAQ](docs/cross-cutting/faq.md) names it as out of scope.
+- **Security and governance.** L2 covers enforcement and containment. It does not cover supply-chain controls, data handling, audit retention or approval policy.
+- **Measuring value against a baseline.** L4 describes metrics. It does not describe how to set a baseline before adopting a pattern or how to compare against it afterwards.
+
+The consequence: a team that adopts every pattern in this library is capped at C1 for unattended work, because the lowest capping dimension sets the cap. Phases 2 to 4 of the refresh add these dimensions. This section is updated as each phase lands. The plan is in [docs/refresh/synthesis.md](docs/refresh/synthesis.md).
 
 ## Getting Started
 
@@ -63,14 +95,14 @@ Patterns are organized into five levels, each building on the previous. The leve
 
 ## Audience
 
-- **Solo developers and small teams** using Claude Code, Cursor, or similar tools — adopt patterns incrementally starting at L0
+- **Solo developers and small teams** using Claude Code, Cursor, or similar tools — adopt patterns incrementally, starting where your gaps are
 - **Team leads and architects** exploring agentic development practices for their organization
 - **Anyone** curious about what "agentic-friendly" software engineering looks like in practice
 
 ## What's in This Repo
 
 ```
-docs/               # Pattern documentation (L0-L4) and guides
+docs/               # Pattern documentation (layers L0-L4) and guides
 examples/           # Working code examples (TypeScript + Python for core patterns; the optional L3 example is TypeScript only)
   stack-test/
     typescript/     # Jest-based stack tests + Playwright browser tests

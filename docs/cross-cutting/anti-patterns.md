@@ -334,7 +334,7 @@ npm test -- tests/stack/
 
 ### Enforce Rules Through Skills and Hooks
 
-**Symptom**: Rules written in CLAUDE.md have no enforcement mechanism. Guidelines are phrased as "should" rather than "must." Agents forget or ignore the rules when context shifts or prompts get complex. Or the opposite: a safety rule ("never touch production") is held only by a hook.
+**Symptom**: Rules written in AGENTS.md have no enforcement mechanism. Guidelines are phrased as "should" rather than "must." Agents forget or ignore the rules when context shifts or prompts get complex. Or the opposite: a safety rule ("never touch production") is held only by a hook.
 
 **Why This Happens**: Writing a rule feels like enforcing it. Prose rules are guidance; agents drop them between phases of work, especially under complex prompts. A hook is stronger, but it runs inside the agent's environment: it gates tool calls, not what a permitted tool does once running, and the agent can often edit project hook files. Rules are only as strong as the layer that holds them.
 
@@ -348,7 +348,7 @@ npm test -- tests/stack/
 Example refactor:
 
 ```
-Before: Rule in CLAUDE.md
+Before: Rule in AGENTS.md
 "Never mock database drivers in stack tests"
 (Enforcement point: prompt only. The agent may mock anyway.)
 
@@ -594,7 +594,7 @@ function currentFeature() {
 
 ## Using This Catalog
 
-This catalog is organized by pyramid level for quick diagnosis:
+This catalog is organized by layer for quick diagnosis:
 
 1. **Identify the symptom** - what friction is the agent encountering?
 2. **Match to an entry** - which description fits your situation?

@@ -2,13 +2,13 @@
 
 ## Project Description
 
-Reference library of patterns and working examples for building agentic AI-friendly projects. Progressive capability pyramid (L0-L4) that teams adopt incrementally.
+Reference library of patterns and working examples for building agentic AI-friendly projects. Five capability layers (L0-L4) that teams adopt where their gaps are.
 
 ## Repository Structure
 
 ```
 agentic-patterns/
-├── README.md                    # Overview + pyramid visualization
+├── README.md                    # Overview + layer dependencies
 ├── AGENTS.md                    # Agent contract + master index (this file)
 ├── CLAUDE.md                    # Imports AGENTS.md; Claude Code-specific lines
 ├── docs/
@@ -66,7 +66,7 @@ See [README.md](README.md) for detailed project overview.
 - No emoji in code files or docs (exception: README.md may use sparingly for visual impact)
 - Line length: Prefer 80-100 chars, hard limit 120
 
-## Level Documentation
+## Layer Documentation
 
 **Foundation:**
 
