@@ -159,6 +159,13 @@ brain+ (design with stack-first considerations)
 The phases are a means. The outcome gates (verification evidence, review) are the point, and they are held
 by CI and the merge process, not by whether the agent visited a phase.
 
+**Phase tracking (optional).** A team that wants an audit trail of which phases ran on large or risky changes can
+add a small state machine. It records each phase visit with a timestamp and checks the declared prerequisites on
+entry (for example, `verify+` after `tdd+`), with strictness set per risk tier: a missing prerequisite blocks on an
+irreversible change and returns an advisory message on a small one. Query methods ("is the agent in the TDD
+phase?") let hooks vary behavior by phase, and a reset starts a new workflow. The tracker records that the agent
+visited a phase, not that the phase did its job.
+
 **Superpowers framework integration:** The [obra/superpowers](https://github.com/obra/superpowers) library
 provides base skills the chain builds on. Skills are instructions the agent follows, so read them before you
 install them ([Pattern 2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)):
@@ -177,6 +184,8 @@ install them ([Pattern 2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)):
 
 Running the full chain on every change regardless of risk, so that agents and reviewers learn to skip phases
 in bulk. The opposite failure is shipping without verification evidence or review because the change "looked small".
+Treating phase visits as proof of quality is a third: visiting `verify+` does not show that verification evidence
+exists.
 
 ### Cross-References
 
@@ -186,9 +195,11 @@ in bulk. The opposite failure is shipping without verification evidence or revie
 
 ### Reference Implementation
 
-The [rig](https://github.com/franklywatson/claude-rig) repo implements the chain as skills, with a phase tracker; see its `src/skills/` directory.
+The [rig](https://github.com/franklywatson/claude-rig) repo implements the chain as skills in `src/skills/`, with a
+phase tracker in `src/skills/phase-tracker.ts` (transition validation, query methods and reset).
 
-**Evidence:** Thin — the chain is a design from trading-bot and rig use; no comparison against unchained work (first-party, n=1)
+**Evidence:** Thin — the chain and phase tracker are designs from trading-bot and rig use; no comparison against
+unchained work and no study of phase enforcement (first-party, n=1)
 
 ---
 
@@ -213,7 +224,7 @@ arguments:
 - Rewrite or redirect a call to a better tool (ergonomic nudge)
 
 **PostToolUse hooks** run after the tool call. They are detective: they can report, record and advise, but
-they cannot prevent a call that has already run ([Pattern 2.6](#pattern-26--enforcement-pipeline-composition)). Use them for:
+they cannot prevent a call that has already run. Use them for:
 
 - Track source file edits in `pending-tests.json`
 - Emit "TEST TASK REQUIRED" when code changes without corresponding test changes
@@ -240,6 +251,27 @@ hook fires
             +-> advise (operation proceeds; a message explains the better path)
             +-> block (PreToolUse only: the call does not run)
 ```
+
+### Composing Checks
+
+Several checks can fire on one tool call (stale tests, mock detection, scope control, failure parsing). Run them
+through one orchestrator so the agent gets one signal:
+
+1. The orchestrator receives the tool name, arguments and (for PostToolUse) the tool result.
+2. It runs every enabled check. Each check has one responsibility and returns a level (block, advise or silent)
+   and a message. Each rule's level is set in a project config file.
+3. It returns the most severe level (block > advise > silent) and the messages of every check at that level.
+4. The harness delivers the result: a PreToolUse "block" stops the call; a PostToolUse result is feedback.
+
+A "block" from a PostToolUse check means "stop and repair before continuing". The call already ran. Prevention
+needs a PreToolUse hook (for structured arguments) or a boundary outside the agent:
+
+| Check timing | Can prevent the call? | Use for |
+|--------------|----------------------|---------|
+| PreToolUse | Yes | Protected paths, mock imports in stack-test files |
+| PostToolUse | No (detective) | Stale-test tracking, failure parsing, audit records |
+| Required CI check | Yes, for merge | Invariants on every change |
+| Sandbox / credential scope | Yes, for the whole session | What must never happen |
 
 ### In Practice
 
@@ -319,19 +351,22 @@ exit 0
 - Advisory hooks for rules that must hold. Agents treat repeated warnings as noise; a rule that must hold needs
   a block (PreToolUse) or a required CI check.
 - Blocking hooks that match too broadly and stop legitimate work. Keep each hook narrow, with documented behavior.
+- Running several checks with no severity resolution, so the agent receives a "block" and an "advise" and has to
+  guess which governs.
+- Describing a PostToolUse check as a guardrail that stops a violation. It reports the violation after the fact.
 
 ### Cross-References
 
 - [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — which enforcement point holds which rule
-- [Pattern 2.6 — Enforcement Pipeline Composition](#pattern-26--enforcement-pipeline-composition) — composing checks
 - [L3: Optimization](L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits) — hooks used as ergonomic routing nudges
 - [examples/guardrails](../examples/guardrails/) — hook-adjacent middleware example
 
 ### Reference Implementation
 
-The [rig](https://github.com/franklywatson/claude-rig) repo implements composable hooks in `src/enforcement/`.
+The [rig](https://github.com/franklywatson/claude-rig) repo implements composable hooks in `src/enforcement/`, with
+an orchestrator, `handlePostToolUse`, that resolves severity.
 
-**Evidence:** Strong — several organisations hold must-hold rules in deterministic checks rather than prose; a hook is deterministic but runs inside the agent's environment (OM-7, OM-12, OM-18, SG-11, SG-16, SC-8)
+**Evidence:** Strong — several organisations hold must-hold rules in deterministic checks rather than prose; a hook is deterministic but runs inside the agent's environment; the composition design is first-party (OM-7, OM-12, OM-18, SG-11, SG-16, SC-8)
 
 ---
 
@@ -467,121 +502,6 @@ Classifying errors as "relevant" or "irrelevant" without evidence. Unless you ca
 The [rig](https://github.com/franklywatson/claude-rig) repo parses test-runner output for failures and warnings in `src/enforcement/checks/zero-defect.ts`.
 
 **Evidence:** Partial — agents declare success on failing tests; the rest is a mechanism argument that agents cannot tell tolerated from real failures (IS-14, IS-15)
-
----
-
-## Pattern 2.6 — Enforcement Pipeline Composition
-
-### Problem
-
-Individual checks (stale tests, zero-defect, constitutional rules) are useful alone, but several checks firing on one tool call produce conflicting messages unless one severity is resolved.
-
-### Solution
-
-A pipeline in which each check is an independent function returning a level (block, advise or silent) and a message. The pipeline runs all checks and resolves to the most severe level (block > advise > silent). Checks are configurable per rule in a project config file.
-
-**PostToolUse checks are detective, not preventive.** A PostToolUse hook runs after the tool call has
-completed. It can report a violation, record it and tell the agent to repair it, but it cannot prevent the call
-that already ran. A "block" level returned from a PostToolUse pipeline means "stop and repair before
-continuing", delivered as feedback to the agent. Prevention needs a PreToolUse hook (for structured
-arguments) or a boundary outside the agent (sandbox, credentials, a required CI check).
-
-| Check timing | Can prevent the call? | Use for |
-|--------------|----------------------|---------|
-| PreToolUse | Yes | Protected paths, mock imports in stack-test files |
-| PostToolUse | No (detective) | Stale-test tracking, failure parsing, audit records |
-| Required CI check | Yes, for merge | Invariants on every change |
-| Sandbox / credential scope | Yes, for the whole session | What must never happen |
-
-**Key concepts:**
-
-- Each check has one responsibility (stale-test detection, scope control, mock detection, failure parsing)
-- Checks compose through a single orchestrator
-- Severity resolution: the most severe level wins, so the agent gets one clear signal
-- Each rule is configurable as block, advise or silent
-
-### In Practice
-
-A pipeline contract in prose:
-
-1. The orchestrator receives the tool name, arguments and (for PostToolUse) the tool result.
-2. It runs every enabled check; each returns a level and a message.
-3. It returns the highest level and the messages of every check at that level.
-4. The harness delivers the result: a PreToolUse "block" stops the call; a PostToolUse result is feedback.
-
-For the implementation, see the reference below.
-
-### Anti-Pattern
-
-- Running checks independently without severity resolution, so the agent receives a "block" and an "advise" and has to guess which governs.
-- Describing a PostToolUse check as a guardrail that stops a violation. It reports the violation after the fact.
-
-### Cross-References
-
-- [Pattern 2.3 — Hook Automation](#pattern-23--hook-automation) — hooks fire checks; the pipeline composes them
-- [Pattern 2.7 — Phase Transition Validation](#pattern-27--phase-transition-validation) — optional phase-aware checks
-
-### Reference Implementation
-
-The [rig](https://github.com/franklywatson/claude-rig) repo implements the pipeline in `src/enforcement/` with an orchestrator, `handlePostToolUse`, that resolves severity. Its code is not reproduced here.
-
-**Evidence:** Thin — composition design from rig (first-party, n=1); the hook exit-code contract it builds on is documented (SG-11)
-
----
-
-## Pattern 2.7 — Phase Transition Validation
-
-**Status: optional.** Scale ceremony to risk; verification and review stay outcome gates. Use phase tracking
-when a team wants an audit trail of which workflow phases ran on large or risky changes. It is not a
-precondition for good work, and it does not replace CI evidence.
-
-### Problem
-
-Where a team uses the skill chain ([Pattern 2.2](#pattern-22--the-skill-chain)), agents can skip phases:
-implementing without a plan, or claiming completion without verification. Teams that want a record of which
-phases ran, or a warning when a phase was skipped on a high-risk change, need state to check.
-
-### Solution
-
-A small state machine that records each phase visit with a timestamp and checks declared prerequisites on
-entry (for example, `verify+` after `tdd+`). Query methods let other checks vary behavior by phase.
-
-**Key concepts:**
-
-- Phase history with timestamps
-- Declared prerequisites per phase, configurable per risk tier (for example, required for irreversible changes, advisory for small ones)
-- Query methods such as "is the agent in the TDD phase?"
-- A reset for new workflows
-
-A phase tracker is state inside the harness. It records that the agent visited a phase, not that the phase
-did its job. The gates that confirm the job (tests ran, evidence shown, review done) are held by CI and the
-merge process.
-
-### In Practice
-
-The contract, in prose:
-
-1. On entering a phase, the tracker checks the declared prerequisites for the current risk tier.
-2. A missing prerequisite on a high-risk change returns a block (PreToolUse) or an advisory message (low-risk change).
-3. The tracker records the phase and timestamp.
-
-For the implementation, see the reference below.
-
-### Anti-Pattern
-
-- Treating phase visits as proof of quality. Visiting `verify+` does not show that verification evidence exists.
-- Applying one blocking policy to every change. A required five-phase path on a typo fix teaches agents and reviewers to bypass the tracker.
-
-### Cross-References
-
-- [Pattern 2.2 — The Skill Chain](#pattern-22--the-skill-chain) — the optional chain this tracks
-- [Pattern 2.3 — Hook Automation](#pattern-23--hook-automation) — hooks can consult phase state
-
-### Reference Implementation
-
-The [rig](https://github.com/franklywatson/claude-rig) repo implements a phase tracker in `src/skills/phase-tracker.ts` with transition validation, query methods and reset. Its code is not reproduced here.
-
-**Evidence:** Thin — state-machine design from rig (first-party, n=1); no study of phase enforcement
 
 ---
 

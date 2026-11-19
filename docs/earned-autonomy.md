@@ -44,7 +44,7 @@ A grant needs its row and every row above it.
 | Grant | Existing patterns | Containment and ownership patterns | Patterns in this guide |
 |-------|-------------------|------------------------------------|------------------------|
 | A2 | 0.2 progressive disclosure, 0.3 conceptual organization, 0.4 agent instruction file, 0.6 worktrees, 0.7 docs as system map, 2.4 constitutional rules | Register with owners ([4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) author of record and agent register) | A.1 |
-| A3 | 0.5 unit tests as contract, 1.1 to 1.6 and testing infrastructure, 2.2 skill chain, 2.3 hooks, 2.5 zero-defect, 2.6 enforcement pipeline, 4.1 evidence-based claims, 4.5 CI guardrails as required checks | [2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) contain before you relax, [2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain) supply chain, [2.13](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review) risk-tiered review, a non-author approval rule, a human author-of-record trailer | A.2 |
+| A3 | 0.5 unit tests as contract, 1.1 to 1.6 and testing infrastructure, 2.2 skill chain, 2.3 hooks and check composition, 2.5 zero-defect, 4.1 evidence-based claims, 4.5 CI guardrails as required checks | [2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) contain before you relax, [2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain) supply chain, [2.13](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review) risk-tiered review, a non-author approval rule, a human author-of-record trailer | A.2 |
 | A4 | 4.6 context eval as a task bank, 3.8 session lifecycle, 4.4 metrics with thresholds and owners | [2.10](L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition) least agency (trifecta gate), [2.11](L2-behavioral-guardrails.md#pattern-211--agent-identity-and-delegation) agent identity, [4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) register with sponsor, expiry and stop authority | A.3, A.4, A.5, A.6 |
 | A5 | 2.8 compound engineering with pruning, 0.8 aggressive cleanup applied to skills and rules, 0.9 new-starter standard | A retirement record per workflow | A.7 |
 
@@ -371,7 +371,7 @@ A hook is deterministic policy inside the harness. It is not a security boundary
 
 ### Cross-References
 
-- [Pattern 2.3 — Hook Automation](L2-behavioral-guardrails.md#pattern-23--hook-automation) and [Pattern 2.6 — Enforcement Pipeline Composition](L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition): the new check joins the existing pipeline.
+- [Pattern 2.3 — Hook Automation](L2-behavioral-guardrails.md#composing-checks): the new check joins the existing checks under one orchestrator.
 - [Pattern 4.6 — Context Eval](L4-standards-measurement.md#pattern-46--context-eval): the `autonomy` suite.
 - [examples/autonomy/README.md](../examples/autonomy/README.md) documents the hook binding.
 

@@ -11,7 +11,7 @@ SEVERITY: dict[str, int] = {"auto": 0, "human": 1, "block": 2}
 
 def gate(bundle: EvidenceBundle, policy: RepairPolicy) -> GateResult:
     """Return the most severe decision any check produced (block > human > auto, as in
-    Pattern 2.6) and the reasons for that decision. The loop builds the bundle from
+    Pattern 2.3) and the reasons for that decision. The loop builds the bundle from
     observations (hashes, test runs, the applied diff), not from the repair agent's claims."""
     findings: list[tuple[Decision, str]] = []
 

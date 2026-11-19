@@ -415,7 +415,7 @@ CI: required check searches stack-test directories for mock libraries
 - Scale ceremony to risk: reversibility and blast radius set how many phases a change needs
 - Verification (evidence before claims) and review stay outcome gates for every change
 - Hold those gates in CI and the merge process, not in whether the agent visited a phase
-- Use [phase tracking](../L2-behavioral-guardrails.md#pattern-27--phase-transition-validation) only where an audit trail of phases is wanted, with strictness set per risk tier
+- Use [phase tracking](../L2-behavioral-guardrails.md#pattern-22--the-skill-chain) only where an audit trail of phases is wanted, with strictness set per risk tier
 
 Example workflow:
 
@@ -434,7 +434,7 @@ Irreversible:       full chain + approver who is not the requester
 
 **Why This Happens**: One mechanism gets used for three jobs: nudging (advise is fine), enforcing a workflow rule (needs a block or a required CI check), and preventing harm (needs a sandbox or downstream authorisation, with a hook as defence in depth). Advisory hooks on rules that must hold are rules written down and abandoned. A PostToolUse hook runs after the tool call, so it is detective: it reports and records, and cannot prevent the call.
 
-**Pattern**: Apply [Pattern 2.3 - Hook Automation](../L2-behavioral-guardrails.md#pattern-23--hook-automation) and [Pattern 2.6 - Enforcement Pipeline Composition](../L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition):
+**Pattern**: Apply [Pattern 2.3 - Hook Automation](../L2-behavioral-guardrails.md#pattern-23--hook-automation), including [composing checks](../L2-behavioral-guardrails.md#composing-checks):
 
 - Use advise for ergonomic nudges
 - Use PreToolUse blocks on structured arguments (a file path in an Edit call) for workflow rules

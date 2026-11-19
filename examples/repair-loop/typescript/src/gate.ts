@@ -7,7 +7,7 @@ const SEVERITY: Record<Decision, number> = { auto: 0, human: 1, block: 2 };
 
 /**
  * The production gate: a pure function of the evidence bundle and the policy. It returns
- * the most severe decision any check produced (block > human > auto, as in Pattern 2.6)
+ * the most severe decision any check produced (block > human > auto, as in Pattern 2.3)
  * and every reason, so the outcome is explainable and eval-able. The repair agent cannot
  * call this with a bundle it assembled itself: the loop builds the bundle from
  * observations (hashes, test runs, the applied diff).

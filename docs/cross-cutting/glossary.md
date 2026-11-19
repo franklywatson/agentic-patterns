@@ -196,7 +196,7 @@ regresses. The justifying task is recorded next to it.
 
 **Layer**: L2 - Behavioral Guardrails
 **Definition**: Composable pipeline where independent enforcement checks return severity levels, resolved to the most severe result (block > advise > silent). PostToolUse checks are detective: they run after the tool call and report it, but cannot prevent it. Prevention needs a PreToolUse hook or a boundary outside the agent.
-**See**: [Pattern 2.6 - Enforcement Pipeline Composition](../L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition)
+**See**: [Pattern 2.3 - Hook Automation, Composing Checks](../L2-behavioral-guardrails.md#composing-checks)
 
 ### Enforcement Point
 
@@ -379,7 +379,7 @@ of rules with a justifying task. The opposite of configuration that is present b
 
 **Layer**: L2 - Behavioral Guardrails
 **Definition**: Optional state machine that records which skill chain phases the agent has visited and checks declared prerequisites, with strictness scaled to the change's risk. It records visits, not outcomes; verification and review remain outcome gates held by CI and the merge process.
-**See**: [Pattern 2.7 - Phase Transition Validation](../L2-behavioral-guardrails.md#pattern-27--phase-transition-validation)
+**See**: [Pattern 2.2 - The Skill Chain](../L2-behavioral-guardrails.md#pattern-22--the-skill-chain)
 
 ---
 

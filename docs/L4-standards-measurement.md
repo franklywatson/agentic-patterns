@@ -516,7 +516,7 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements context e
 - [Pattern 3.1 — Prefer Native Structured Tools](L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits) — Tool routing and intent classification are context eval applications
 - [Pattern 3.3 — Environment-Aware Routing](L3-optimization.md#pattern-33--environment-aware-routing-and-session-lifecycle) — Configuration variants in eval ensure degraded paths work
 - [Pattern 2.4 — Constitutional Rules](L2-behavioral-guardrails.md#pattern-24--constitutional-rules) — Constitutional compliance can be eval'd through scenarios
-- [Pattern 2.6 — Enforcement Pipeline](L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition) — Pipeline behavior can be eval'd through scenarios
+- [Pattern 2.3 — Composing Checks](L2-behavioral-guardrails.md#composing-checks) — Pipeline behavior can be eval'd through scenarios
 - [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — Context eval produces evidence for decision-layer effectiveness claims
 - [Pattern 4.5 — CI Guardrails](#pattern-45--ci-guardrails) — Context eval runs in CI as a non-negotiable quality gate
 - [Pattern 0.10](L0-foundation.md#pattern-010--prune-and-re-baseline-context) — A task bank scored with this method
