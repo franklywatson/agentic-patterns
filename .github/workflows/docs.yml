@@ -100,6 +100,9 @@ jobs:
       - name: Warn at 90 days and fail at 180 days since a pattern doc was reviewed
         run: python3 scripts/check-doc-freshness.py .
 
+      - name: Run the freshness check tests
+        run: python3 -m unittest discover -s scripts/tests
+
   autonomy-check:
     name: Autonomy Check
     runs-on: ubuntu-latest
