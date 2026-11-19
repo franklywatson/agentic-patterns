@@ -4,8 +4,9 @@ This directory holds a critical review of this repository and the plans to act o
 that any session, human or agent, can take over the refresh without the conversation that
 produced it.
 
-Status: **analysis complete; Phase 0 is in progress on branch `refresh/phase-0-correct` and has
-changed pattern docs and examples.** Work starts with [decisions.md](decisions.md), then Phase 0.
+Status: **analysis complete; Phase 0 is complete on branch `refresh/phase-0-correct` (PR pending
+merge) and has changed pattern docs and examples.** Next: confirm the open decisions in
+[decisions.md](decisions.md), then Phase 1.
 
 ## What happened
 

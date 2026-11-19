@@ -1,6 +1,6 @@
 # Phase 0: Correct Defects
 
-- **Status:** In progress (branch `refresh/phase-0-correct`)
+- **Status:** Complete on branch `refresh/phase-0-correct`; PR pending merge
 - **Depends on:** none
 - **Gated by decisions:** none
 - **Suggested branch:** `refresh/phase-0-correct`
