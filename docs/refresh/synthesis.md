@@ -298,7 +298,7 @@ of Claude Code's system prompt for the Claude 5 generation with no eval loss (AN
 
 | Action | Items |
 |--------|-------|
-| Cut, or move to rig's docs | 3.7 TOON; 3.8 Session lifecycle; 3.3 routing code; 2.6/2.7 rig-internal snippets; `specs/` and `docs/plans/`; trading-bot commit-mix analysis presented as evidence |
+| Cut, or move to rig's docs | 3.7 TOON (done in Phase 0); 3.8 Session lifecycle; 3.3 routing code; 2.6/2.7 rig-internal snippets; `specs/` and `docs/plans/` (done in Phase 0); trading-bot commit-mix analysis presented as evidence |
 | Merge | 0.9 + 4.3; 3.1 + 3.2 + 3.5 into "prefer native tools, block destructive edits"; 3.4 Scout into a context-isolation note; 0.7 + 4.2 into a docs-freshness pattern; duplicate L1 summaries |
 | Demote to optional | 2.2 skill chain as mandatory, and 2.7 blocking tracker; rule 6 (150 lines) becomes "short, owned, tested" with a warning at about 200 lines; "3-5 exports"; 3.6 multi-repo alignment |
 | Promote or add | Verification (1.1, 1.2, 1.6) as the core; 4.6 generalised to gate every context, skill or model change, with pass^k; evidence labels and `last-validated-model` on every pattern; a one-day start page; a repo census |

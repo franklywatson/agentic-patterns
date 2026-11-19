@@ -91,6 +91,11 @@ Link it from CLAUDE.md.
 - **`docs/cross-cutting/glossary.md`.** Add containment, lethal trifecta / Rule of Two, least
   agency, author of record, agent register, tested stop, approval fatigue and cognitive debt.
 
+- **Section 6 links.** Four links point at `refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people`
+  as a stopgap: `docs/L1-feedback-loops.md`, `docs/L2-behavioral-guardrails.md`,
+  `docs/L3-optimization.md` and `examples/guardrails/README.md`. Repoint each at Pattern 2.10
+  once it exists.
+
 ### T5. Working example
 
 Add a containment example that runs as-is in TypeScript and Python.

@@ -129,6 +129,19 @@ Apply the lists in synthesis section 7.
 
 Done in Phase 0 by decision D6 (a): `specs/` and `docs/plans/` were deleted (2026-11-19).
 
+### T9. Pattern 1.4 names compose project scoping
+
+Update `docs/L1-patterns/1.4-container-isolation.md` to name compose project scoping
+(`docker compose -p <unique project>`) as the isolation mechanism the examples in
+`examples/stack-test/` use. The examples set no fixed `container_name`.
+
+### T10. Guardrails example is TypeScript-only
+
+`examples/guardrails/` has no Python version. This is a known exception to the CLAUDE.md rule
+"TypeScript and Python versions for each pattern". Resolve it in Phase 1 together with D3
+(prune, merge and demote): either demote the example with its patterns, add a Python version, or
+amend the rule.
+
 ## Acceptance checks
 
 - `npm run lint:md` and `python3 docs/refresh/tools/linkcheck.py .` both report 0 issues.

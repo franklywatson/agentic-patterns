@@ -67,6 +67,7 @@ it, and update the affected plans.
   - Both folders hold completed March-April 2026 plans, and neither is linked from CLAUDE.md.
   - PR #4 edits two files in `specs/` to remove gstack mentions.
   - `docs/refresh/` (this directory) is the active plan set and is linked from CLAUDE.md.
+  - The repo's rig-generated skills (`.claude/skills/plan-plus`, `review-plus`, `tdd-plus`, `verify-plus`) still read and write `docs/plans/`. Running them recreates an unindexed folder. Handling is deferred to Phase 1: repoint the skills through rig configuration, or index the folder.
 - **Options:**
   - (a) Delete both folders, following the repo's "git is the archive" rule.
   - (b) Link both from CLAUDE.md.
@@ -91,3 +92,4 @@ it, and update the affected plans.
 | 2026-11-19 | Remove the former design-rinsing case study and all references to it | Yes | Maintainer |
 | 2026-11-19 | Cut TOON (L3 Pattern 3.7) | Yes | Maintainer |
 | 2026-11-19 | D6: delete `docs/plans/` and `specs/` | (a) | Maintainer |
+| 2026-11-19 | Replace Excalidraw with the archify skill for all diagrams (JSON source, rendered HTML, PNG export); separate PR after Phase 0 | Yes | Maintainer |
