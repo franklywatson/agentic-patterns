@@ -6,8 +6,8 @@ reviewed: 2026-11-19
 # L4: Standards and Measurement
 
 L4 checks that the other layers hold and measures what they change: claims backed by CI output, outcome metrics,
-required CI checks, a task bank that gates context and model changes, a named person for agent-written code, and the
-team's skill to supervise. Read it when "the agent says it passed" is the only evidence, or before a model or context
+required CI checks, a task bank that gates context and model changes, a named person for agent-written code, the
+team's skill to supervise, and a record of every agent run. Read it when "the agent says it passed" is the only evidence, or before a model or context
 change. Drift checks, the new-starter audit and context pruning are in [L0](L0-foundation.md) (Patterns 0.7, 0.9
 and 0.10).
 
@@ -398,6 +398,8 @@ retired workflow is deleted from `.autonomy.yaml`; the repository history keeps 
   credentials an entry refers to
 - [Pattern 4.9 — Deliberate Practice](#pattern-49--deliberate-practice): the author of record must be able to
   explain the change
+- [Pattern 4.10 — Observability of Agent Runs](#pattern-410--observability-of-agent-runs): where each run
+  records its workflow, author of record and merger
 
 **Evidence:** Partial — a rule open-source projects share and one vendor enforces in review; no source measures how
 teams apply it (PO-16, PO-17, PO-19, PO-20)
@@ -456,6 +458,91 @@ Record the result per module. A module nobody can explain gets a hands-on task a
 
 **Evidence:** Partial — the trial result is measured in its setting (one vendor-run trial, 52 mostly junior
 engineers); evidence for experienced engineers is Thin and no study is longitudinal (IS-1, IS-4, IS-12)
+
+---
+
+## Pattern 4.10 — Observability of Agent Runs
+
+Teams that run agent workflows get one record per run that says, after an incident, which workflow acted, under
+which grant and identity, what it did, what it cost and who merged it.
+
+### Problem
+
+A run leaves traces in the harness, the hook, CI, source control and vendor telemetry. Kept nowhere, an incident
+cannot be tied to a workflow, a grant or a person. Kept in full, they put secrets and customer data in a store many
+people read, and nobody reads them.
+
+### Solution
+
+Record a fixed set of fields per run, each at the enforcement point that observes it, in stores the agent cannot
+edit. Claude Code's OpenTelemetry export is opt-in; managed settings turn it on and lock its destination, and
+repository settings cannot ([monitoring](https://code.claude.com/docs/en/monitoring-usage)).
+
+| Field | Recorded by | Lives in |
+|---|---|---|
+| Workflow id, grant | Autonomy hook (`agent`, from `AUTONOMY_WORKFLOW`; it does not record the grant); CI (`workflow`, `level`) | Audit record; ledger |
+| Session id | Harness: `session_id` names the audit file; OTel `session.id` on every event | Audit file; OTel |
+| Author of record, sponsor | Source control (commit author, `Co-Authored-By:` trailer); hook `human`, from `AUTONOMY_SPONSOR`, unverified | Git; audit record |
+| Acting identity | OTel `user.email`, `user.account_uuid`; with an API key or a cloud provider only `user.id` and `session.id`, so set it in `OTEL_RESOURCE_ATTRIBUTES` | OTel |
+| Model, effort | OTel `api_request` (`model`, `effort`); CI (`model`, `harness_hash`) | OTel; ledger |
+| Prompt | OTel `user_prompt`: `prompt_length` by default, text only with `OTEL_LOG_USER_PROMPTS=1` | OTel |
+| Tool calls, denials | Hook (`tool`, `decision`, `code`) per PreToolUse call; OTel `tool_decision` (`decision`, `source`), `tool_result` | Audit record; OTel |
+| Files changed, cost | Source control; CI (`diff_lines`, `cost_usd`); OTel `cost_usd`, an estimate | Git; ledger; OTel |
+| Outcome | CI and the nightly job (`outcome`, `checks`, `reverted_at`, `escaped_defect`); the hook record has none | Ledger |
+| Approver, merger | The forge: reviews, and `merged_by` on the [pull request](https://docs.github.com/en/rest/pulls/pulls#get-a-pull-request) | Forge |
+
+The [hook](../examples/autonomy/README.md#hook)'s line holds no tool arguments, and the agent's shell can reach the
+file, so it is a record, not evidence ([Pattern 2.3](L2-behavioral-guardrails.md#pattern-23--hook-automation)); the
+CI-written [ledger](earned-autonomy.md#pattern-a2--evidence-ledger) is. Adding `session` and `merged_by` to the
+ledger line, which has neither, is this library's design.
+
+**Privacy and retention.** By default Claude Code exports prompt length, not text, and no tool arguments, file
+contents or responses; each `OTEL_LOG_*` content flag adds some, and raw API bodies carry the whole conversation
+([security and privacy](https://code.claude.com/docs/en/monitoring-usage#security-and-privacy)). The OpenTelemetry
+GenAI conventions (status: Development) say not to capture content by default, and to store sensitive production
+content externally under its own access control ([PL-81](references/sources.md)). Prompts can hold customer data: drop the attribute or hash it
+in the Collector ([PL-82](references/sources.md)). A short value's hash falls to guessing, as the vendor notes for
+its settings digest, so a hash links records without anonymizing them. Keep tokens, keys and sensitive PII out;
+restrict and review read access, log it, copy records to read-only storage, and keep nothing past the required
+period ([PL-80](references/sources.md)). Keep the ledger for the life of the workflow; the other periods are yours.
+
+**After an incident** the record answers: which workflow, grant, session and author of record; whether the session
+read untrusted input first (the hook's session flag); which calls ran or were denied, and by which control
+(`source`); which model, effort and `harness_hash`; who approved and merged; when the stop was invoked and when the
+last call ran. The answers feed [Pattern 1.7](L1-patterns/1.7-incident-to-stack-test.md) and the stop review of
+[Pattern 1.11](L1-patterns/1.11-repair-budget-circuit-breaker-stop.md).
+
+**Alerts.** Claude Code emits raw events and leaves alerting to the backend
+([audit](https://code.claude.com/docs/en/monitoring-usage#audit-security-events)); the example ships no alert. Page
+the `stop.authority` ([Pattern A.5](earned-autonomy.md#pattern-a5--tested-stop)) on `permission_mode_changed` to
+`bypassPermissions` in an unattended workflow, repeated `protected-branch-push`, `network-blocked` or
+`trifecta-external-action` denials, or a session over its spend limit. Send the ledger triggers to demotion ([Pattern
+A.3](earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate)), and add attempted forbidden actions, which
+the example does not demote on. A ledger line with no audit file or telemetry for its session counts as a failed run (this library's design).
+
+### In Practice
+
+1. Put the exporter variables and selectors in managed settings; a developer setting can otherwise disable a signal.
+2. In the launch wrapper or CI job, `export OTEL_RESOURCE_ATTRIBUTES="autonomy.workflow=dep-bump"`.
+3. Ship `.autonomy/audit/` to the collector at session end and keep it out of version control.
+4. At each stop drill, answer the incident questions from the drill run's record; add any field an answer lacked.
+
+### Anti-Pattern
+
+- Logging nothing, so an incident has no workflow, grant or person attached.
+- Logging everything: raw bodies or tool details on in production, readable by everyone with trace access.
+- Traces nobody reads: no alert, and no drill or incident review queries them.
+- A hand-edited audit file, or one the agent's shell can write, presented as evidence.
+- Reading Claude Code's `workflow.run_id` as the register workflow; it names a Workflow tool run.
+
+### Cross-References
+
+- [Pattern 4.7 — Author of Record](#pattern-47--author-of-record): the person and owner the record names
+- [Pattern 2.11](L2-behavioral-guardrails.md#pattern-211--agent-identity-and-delegation): the identity a run acts as
+
+**Evidence:** Partial — vendor documentation defines the export, its default redaction and its audit events, and
+OWASP and the OpenTelemetry GenAI conventions set the privacy rules; the field set, the alerts and the joins are this
+library's design, and no source measures whether run records shorten incidents (AN-80, PL-80, PL-81, PL-82, PL-83)
 
 ---
 

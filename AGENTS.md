@@ -68,7 +68,7 @@ Pattern numbers are stable identifiers and are not contiguous.
 **L0 Foundation:**
 
 - [docs/L0-foundation.md](docs/L0-foundation.md) — Deep modules, progressive disclosure, agent instruction file,
-  prune and re-baseline context
+  prune and re-baseline context, portable instructions across harnesses
 - [examples/project-structure/README.md](examples/project-structure/README.md) — Before and after directory layouts
 
 **L1 Closed Loop Design and Verification:**
@@ -94,19 +94,19 @@ Pattern numbers are stable identifiers and are not contiguous.
 
 - [docs/L2-behavioral-guardrails.md](docs/L2-behavioral-guardrails.md) — Skills, hooks, constitutional rules, zero-defect
   tolerance, compound engineering; containment, least agency, identity, supply chain,
-  risk-tiered review
+  risk-tiered review, delegating to subagents
 - [examples/containment/README.md](examples/containment/README.md) — Runnable policy layer against a container boundary
   (TypeScript and Python)
 
 **L3 Optimization (optional):**
 
-- [docs/L3-optimization.md](docs/L3-optimization.md) — Token efficiency, tool routing, context isolation
+- [docs/L3-optimization.md](docs/L3-optimization.md) — Token efficiency, tool routing, context isolation, model, effort and cost per task
 - [examples/guardrails/README.md](examples/guardrails/README.md) — Token-optimization middleware (TypeScript)
 
 **L4 Standards and Measurement:**
 
 - [docs/L4-standards-measurement.md](docs/L4-standards-measurement.md) — Evidence-based claims, metrics, CI
-  guardrails, context eval, author of record, deliberate practice
+  guardrails, context eval, author of record, deliberate practice, observability of agent runs
 - [docs/references/task-bank.md](docs/references/task-bank.md) — Task bank and run log for re-baselining context
   artifacts
 

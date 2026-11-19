@@ -89,6 +89,18 @@ accessed on 17 November 2026 unless the entry says otherwise.
 | PL-17 | Minions: Stripe's one-shot, end-to-end coding agents. Stripe Dev Blog, 9 Feb 2026. | Practitioner (company self-report). Read: Most of page. | <https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents> |
 | PL-18 | Harness engineering for coding agent users (Böckeler). Thoughtworks / martinfowler.com, 2 Apr 2026. | Practitioner. Read: Section. | <https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html> |
 | PL-21 | AGENTS.md. Stewarded by the Agentic AI Foundation under the Linux Foundation; living page, no date shown. | Standards body (open format). Read: Full. | <https://agents.md/> |
+| PL-50 | AGENTS.md. Agentic AI Foundation (Linux Foundation), living page. | Standards body. Read: Section. | <https://agents.md/> |
+| PL-51 | Agent Skills overview. agentskills.io, living page. | Standards body. Read: Section. | <https://agentskills.io/> |
+| PL-52 | Hooks for GitHub Copilot. GitHub Docs, living page. | Vendor docs. Read: Section. | <https://docs.github.com/en/copilot/concepts/agents/hooks> |
+| PL-53 | Risks and mitigations for GitHub Copilot cloud agent. GitHub Docs, living page. | Vendor docs. Read: Section. | <https://docs.github.com/en/copilot/concepts/agents/cloud-agent/risks-and-mitigations> |
+| PL-54 | Rules (Cursor). Cursor docs, living page. | Vendor docs. Read: Section. | <https://cursor.com/docs/context/rules> |
+| PL-55 | Hooks (Cursor). Cursor docs, living page. | Vendor docs. Read: Section. | <https://cursor.com/docs/agent/hooks> |
+| PL-56 | Agent Skills (Cursor). Cursor docs, living page. | Vendor docs. Read: Section. | <https://cursor.com/docs/context/skills> |
+| PL-57 | Agent skills (GitHub Copilot). GitHub Docs, living page. | Vendor docs. Read: Section. | <https://docs.github.com/en/copilot/concepts/agents/about-agent-skills> |
+| PL-80 | Logging Cheat Sheet. OWASP Cheat Sheet Series; no date shown. Standards body. Read: Section (data to exclude, protection at rest, retention). | Standards body. Read: Section. | <https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html> |
+| PL-81 | Semantic conventions for generative AI systems (model spans: content capture). OpenTelemetry, semantic-conventions-genai repository; status Development; no date shown. Standards body. Read: Section (README status; gen-ai-spans.md content capture). | Standards body. Read: Section. | <https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-spans.md> |
+| PL-82 | Attributes Processor README. OpenTelemetry Collector Contrib; no date shown; stability beta; README says it is superseded by the transform processor. Standards body (project docs). Read: Section (actions). | Standards body. Read: Section. | <https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/attributesprocessor/README.md> |
+| PL-83 | REST API endpoints for pull requests: Get a pull request. GitHub Docs; living page, no date shown. | Vendor docs. Read: Section. | <https://docs.github.com/en/rest/pulls/pulls#get-a-pull-request> |
 
 ### SC: 4.2 · Shared Context
 
@@ -111,6 +123,19 @@ accessed on 17 November 2026 unless the entry says otherwise.
 | OM-12 | Minions, Part 2. Stripe Dev Blog, 19 Feb 2026. | Practitioner (company self-report). Read: Section. | <https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents-part-2> |
 | OM-18 | Technology Radar Vol 35, Techniques (blips cited: risk-tiered human oversight, human-in-the-loop theater, agent instruction bloat, feedback flywheel, agent pipeline responsibility, production-aware coding agents, unattended overnight builds, path-to-production mapping, agent sandboxing, coding throughput as a measure, enterprise harness). Thoughtworks, Nov 2026. Same page as IS-13 and MV-1. | Analyst. Read: Blips read in full. | <https://www.thoughtworks.com/radar/techniques> |
 | OM-20 | Postmortem Culture: Learning from Failure (SRE Workbook); Managing Incidents (SRE Book). Google; living pages, no date shown (origin texts). | Vendor / practitioner canon. Read: Section. | <https://sre.google/workbook/postmortem-culture/> |
+| OM-50 | Custom instructions with AGENTS.md (Codex). OpenAI, living page. | Vendor docs. Read: Section. | <https://learn.chatgpt.com/docs/agent-configuration/agents-md> |
+| OM-51 | Agent approvals & security (Codex). OpenAI, living page. | Vendor docs. Read: Section. | <https://learn.chatgpt.com/docs/agent-approvals-security> |
+| OM-52 | Hooks (Codex). OpenAI, living page. | Vendor docs. Read: Section. | <https://learn.chatgpt.com/docs/hooks> |
+| OM-53 | Build skills (Codex). OpenAI, living page. | Vendor docs. Read: Section. | <https://learn.chatgpt.com/docs/build-skills> |
+| OM-54 | GEMINI.md context files (Gemini CLI). Google, living page. | Vendor docs. Read: Section. | <https://geminicli.com/docs/cli/gemini-md/> |
+| OM-55 | Policy engine (Gemini CLI). Google, living page. | Vendor docs. Read: Section. | <https://geminicli.com/docs/reference/policy-engine/> |
+| OM-56 | Gemini CLI hooks. Google, living page. | Vendor docs. Read: Section. | <https://geminicli.com/docs/hooks/> |
+| OM-57 | Agent Skills (Gemini CLI). Google, living page. | Vendor docs. Read: Section. | <https://geminicli.com/docs/cli/skills/> |
+| OM-58 | Adding repository custom instructions for GitHub Copilot. GitHub Docs, living page. | Vendor docs. Read: Section. | <https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions> |
+| OM-59 | Support for different types of custom instructions. GitHub Docs, living page. | Vendor docs. Read: Section. | <https://docs.github.com/en/copilot/reference/custom-instructions-support> |
+| OM-60 | Why Do Multi-Agent LLM Systems Fail? (Cemri et al., UC Berkeley and others). arXiv 2503.13657, v1 17 Mar 2025, v3 26 Oct 2025. | Independent research. Read: Section. | <https://arxiv.org/abs/2503.13657> |
+| OM-61 | Don't Build Multi-Agents (Walden Yan). Cognition, 12 Jun 2025. | Practitioner. Read: Whole page. | <https://cognition.com/blog/dont-build-multi-agents> |
+| OM-70 | AI model comparison (GitHub Copilot docs). GitHub; living page. | Vendor docs. Read: Section. | <https://docs.github.com/en/copilot/reference/ai-models/model-comparison> |
 
 ### SG: 4.4 · Security and Governance
 
@@ -187,3 +212,17 @@ no read status.
 | AN-27 | The AI-native SDLC playbook. Anthropic, 21 Aug 2026. | Guidance. | <https://claude.com/resources/articles/the-ai-native-sdlc-playbook> |
 | AN-29 | How the Claude Code team does code review. Anthropic (claude.dev), 15 Oct 2026. | Vendor practice. | <https://claude.dev/blog/solving-code-review-at-anthropic/> |
 | AN-48 | A guide to cost visibility and control in Claude. Anthropic, 4 Aug 2026. | Marketing. | <https://claude.com/resources/articles/a-guide-to-cost-visibility-and-control-in-claude> |
+| AN-50 | How Claude remembers your project (Claude Code memory). Anthropic, living page, no date shown. | Docs. | <https://code.claude.com/docs/en/memory> |
+| AN-51 | Extend Claude with skills. Anthropic, living page, no date shown. | Docs. | <https://code.claude.com/docs/en/skills> |
+| AN-60 | How we built our multi-agent research system. Anthropic Engineering, 13 Jun 2025. | Guidance. | <https://www.anthropic.com/engineering/multi-agent-research-system> |
+| AN-61 | Towards Understanding Sycophancy in Language Models (Sharma et al.). Anthropic research, 23 Oct 2023 (arXiv 2310.13548). | Measured. | <https://www.anthropic.com/research/towards-understanding-sycophancy-in-language-models> |
+| AN-70 | Model configuration (Claude Code docs). Anthropic; living page. | Docs. | <https://code.claude.com/docs/en/model-config> |
+| AN-71 | Manage costs effectively (Claude Code docs). Anthropic; living page. | Docs. | <https://code.claude.com/docs/en/costs> |
+| AN-72 | How Claude Code uses prompt caching (Claude Code docs). Anthropic; living page. | Docs. | <https://code.claude.com/docs/en/prompt-caching> |
+| AN-73 | Choosing the right model (Claude Platform docs). Anthropic; living page. | Docs. | <https://platform.claude.com/docs/en/about-claude/models/choosing-a-model> |
+| AN-74 | Optimizing for cost and intelligence (Claude Platform docs). Anthropic; living page. | Docs. | <https://platform.claude.com/docs/en/about-claude/models/optimizing-for-cost-and-intelligence> |
+| AN-75 | Choosing a Claude model and effort level in Claude Code. Anthropic (claude.com blog), 7 Jul 2026. Vendor practice. Read: whole post. | Guidance. | <https://claude.com/blog/claude-model-and-effort-level-in-claude-code> |
+| AN-76 | CLI reference (Claude Code docs). Anthropic; living page. | Docs. | <https://code.claude.com/docs/en/cli-reference> |
+| AN-77 | Models overview (Claude Platform docs). Anthropic; living page. | Docs. | <https://platform.claude.com/docs/en/about-claude/models/overview> |
+| AN-78 | Create custom subagents (Claude Code docs). Anthropic; living page. | Docs. | <https://code.claude.com/docs/en/sub-agents> |
+| AN-80 | Monitoring (Claude Code OpenTelemetry export). Anthropic; living page, no date shown. | Docs. | <https://code.claude.com/docs/en/monitoring-usage> |
