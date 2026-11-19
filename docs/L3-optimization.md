@@ -69,7 +69,7 @@ Cross-References:
 - [L2: Hook Automation](L2-behavioral-guardrails.md#pattern-23--hook-automation) for how pre-execution hooks work
 - [L4: Context Eval](L4-standards-measurement.md#pattern-46--context-eval) for scoring routing decisions against expected outcomes
 
-**Evidence:** Thin — token savings come from tool documentation and are unmeasured here; measurement guidance cautions against them ([MV-1, MV-20](references/sources.md))
+**Evidence:** Thin — token savings come from tool documentation and are unmeasured here; measurement guidance cautions against them (MV-1, MV-20)
 
 ---
 
