@@ -87,3 +87,4 @@ it, and update the affected plans.
 |------|----------|--------|----|
 | 2026-11-19 | Publish the analysis corpus in this public repo in vendor-neutral form, with no organisation-specific material | Yes | Maintainer |
 | 2026-11-19 | Ship the refresh analysis as a PR separate from PR #4 | Yes | Maintainer |
+| 2026-11-19 | Make the corpus self-contained: commit `sources.md` with public URLs, rename Anthropic sources to AN-n, and cite Anthropic sources in place of the companion's own positions and stances | Yes | Maintainer |

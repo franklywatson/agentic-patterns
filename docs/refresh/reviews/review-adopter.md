@@ -2,6 +2,9 @@
 
 > Edited on 2026-11-19 for vendor neutrality. References to the second research input now name it the Anthropic
 > guidance companion (cited as AC). Findings are otherwise unchanged.
+> Edited again on 2026-11-19: Anthropic source IDs renamed from the A27 form to the AN-27 form, and citations of the
+> companion's own positions, stances and recommendations replaced with the Anthropic or baseline sources
+> beneath them. Every ID resolves in [../sources.md](../sources.md).
 
 Reviewer lens: a staff engineer at a 200-person org in Nov 2026, running Claude 5-generation models, deciding whether to adopt this repo. Compared against `research/industry-baseline.txt` (the baseline) and `research/anthropic-companion.txt` (the companion).
 
@@ -26,11 +29,11 @@ Repo state: HEAD dated 2026-04-18, with 24 commits in total between 2026-03-28 a
 
 ### 1b. More important now (under-weighted in the repo)
 
-1. **Verification as the earner of delegation.** Companion position 02 rates this Strong. Stack tests (1.1), full-loop assertions (1.2) and test integrity (1.6) are the repo's best and most durable content. They should be the centre of the repo, but today they are one level of five.
-2. **Containment and sandboxing.** Companion position 03: "Contain, then relax oversight"; "supervise what it's able to do". The repo has **no containment pattern**: no sandbox, permissions, egress, secrets or agent identity. Worktrees (0.6) are about isolating the working tree, not about security. This is the biggest gap for an org.
-3. **Evals that gate every change to context, skills or models.** Companion position 06. 4.6 Context Eval is present but aimed at routing logic. It should be generalised to "every CLAUDE.md, skill, hook or model change runs a fixed task bank before rollout" (baseline recommendation 02 and SC-4).
-4. **Re-baselining at model change.** Companion recommendation 05: "delete first, then add back on failure", with the precedent that Anthropic removed "over 80% of Claude Code's system prompt" for Claude 5-generation models with no eval loss. The repo has no such pattern, and it is itself the counterexample: it has not changed since April.
-5. **Review depth set by risk, and no unattended run without a stop.** Companion positions 07 and 08. The repo's maturity table (4.4) leaps to "Autonomous" without owner, limits, audit record or tested stop.
+1. **Verification as the earner of delegation.** Baseline finding 2 and Anthropic's guidance (AN-2, AN-3) both put this first. Stack tests (1.1), full-loop assertions (1.2) and test integrity (1.6) are the repo's best and most durable content. They should be the centre of the repo, but today they are one level of five.
+2. **Containment and sandboxing.** Anthropic: "Rather than supervising what the agent does, we supervise what it’s able to do" (AN-9); baseline finding 4. The repo has **no containment pattern**: no sandbox, permissions, egress, secrets or agent identity. Worktrees (0.6) are about isolating the working tree, not about security. This is the biggest gap for an org.
+3. **Evals that gate every change to context, skills or models.** Anthropic: build evaluations first, and incidents become evals (AN-6, AN-16, AN-29). 4.6 Context Eval is present but aimed at routing logic. It should be generalised to "every CLAUDE.md, skill, hook or model change runs a fixed task bank before rollout" (baseline recommendation 02 and SC-4).
+4. **Re-baselining at model change.** Re-baseline by deleting first and adding back on failure, with the precedent that Anthropic removed "over 80% of Claude Code's system prompt" for Claude 5-generation models with no eval loss (AN-7). The repo has no such pattern, and it is itself the counterexample: it has not changed since April.
+5. **Review depth set by risk, and no unattended run without a stop.** Anthropic scales review by risk (AN-29) and stops the agent at the production gate (AN-27). The repo's maturity table (4.4) leaps to "Autonomous" without owner, limits, audit record or tested stop.
 6. **Measuring value beyond activity.** 4.4 is reasonable, but it lacks baseline, target, review date and stop rule per investment (baseline 4.7 L5).
 
 ---

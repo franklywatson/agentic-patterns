@@ -2,11 +2,14 @@
 
 > Edited on 2026-11-19 for vendor neutrality. References to the second research input now name it the Anthropic
 > guidance companion (cited as AC). Findings are otherwise unchanged.
+> Edited again on 2026-11-19: Anthropic source IDs renamed from the A27 form to the AN-27 form, and citations of the
+> companion's own positions, stances and recommendations replaced with the Anthropic or baseline sources
+> beneath them. Every ID resolves in [../sources.md](../sources.md).
 
 Reviewer lens: self-repairing software futurist. Sources: the repository at
 `/home/user/agentic-patterns` (README, CLAUDE.md, L0-L4, L1-patterns, cross-cutting incl. faq.md,
 references, examples) against `research/industry-baseline.txt` (cited as **BL §x**) and
-`research/anthropic-companion.txt` (cited as **AC**). Evidence labels (Strong / Partial / Thin / None found)
+`research/anthropic-companion.txt` (cited as **AC**; its Anthropic sources as AN-n). Evidence labels (Strong / Partial / Thin / None found)
 follow the baseline's convention. Where a claim is my own inference it is marked *(inference)*.
 
 ---
@@ -54,7 +57,7 @@ substrate for self-repair, and on its own does not license any of it.*
 | Hooks / enforcement pipeline (2.3, 2.6) block/advise/silent | The **deterministic gate** shape; severity resolution is what a production gate needs | Only PreToolUse/PostToolUse in a dev session. No deploy-time hook, no gate outside the agent session |
 | Phase tracker (2.7) | State machine pattern for loop stages; "cannot enter verify+ without tdd+" generalises to "cannot enter deploy without reproduce+verify" | Phases are dev-lifecycle only; no `reproduce`, `canary`, `confirm`, `rollback` states |
 | Constitutional rules (2.4) | Where hard limits on a repairing agent would be declared | No rule about irreversible actions, production access, or stop authority |
-| Compound engineering (2.8) | The **learn** step: each solved problem documented for lookup | Learnings are prose docs (`docs/solutions/`). The research says incidents should become *executable* evals/tests (AC: "Any incidents are now an eval", A29), not notes |
+| Compound engineering (2.8) | The **learn** step: each solved problem documented for lookup | Learnings are prose docs (`docs/solutions/`). The research says incidents should become *executable* evals/tests ("Any incidents are now an eval", AN-29), not notes |
 | Context eval (4.6), graduated scoring, threshold gate | The **eval harness for the repair agent's decisions** (classify, gate, roll back) | Applied only to routing/enforcement. Graduated 0.5 scoring is the wrong instrument for irreversible-action decisions (must be exact, i.e. pass^k, BL §4.7) |
 | Evidence-based claims (4.1) | Requires that "fixed" is shown, not asserted | Before/after evidence is defined for local reproductions only; no production confirmation evidence |
 | Worktrees (0.6), container isolation (1.4) | Isolation for parallel repair attempts; matches BL "sandboxing a sensible default" (OM-18) | Nothing about the repair agent's own identity, credentials or sandbox |
@@ -70,10 +73,10 @@ substrate for self-repair, and on its own does not license any of it.*
 5. **Progressive delivery / canary / feature flags.** Absent. BL §4.5 (PO-28) notes rollback "becomes
    highly risky when dozens of changes have been submitted in rapid succession" (intervening PR
    problem) and recommends flags and fix-forward.
-6. **Repair budget, circuit breaker, cooldown.** Absent. AC notes Anthropic's own circuit breaker
-   "that tighten[s] approval when reverts rise" is "not yet built" (A29).
+6. **Repair budget, circuit breaker, cooldown.** Absent. Anthropic notes that its own circuit breaker
+   "that tighten[s] approval when reverts rise" is "not yet built" (AN-29).
 7. **Ownership of the repairing agent** (sponsor, permitted actions, limits, audit, tested stop —
-   BL level 4, AC "No unattended run without a stop"). Absent.
+   BL level 4; AN-27). Absent.
 8. **Stop and restore authority.** Absent. BL PO-14: "a healthy agent can still take harmful actions".
 9. **Confirmation in production** with a defined window and evidence. Absent.
 10. **Repair-loop metrics** (MTTR, repair revert rate, recurrence rate, masked-defect rate). L4.4
@@ -119,8 +122,8 @@ toolkit, never against production data.
 incident record; structured logging (FAQ already says the app repo "owns (produces)" logs).
 
 **Evidence.** Human-run equivalent is **Strong** (SRE postmortem canon with owned, tracked action
-items, OM-20). "Incidents become evals" is **Partial** (Anthropic first-party, A29; "start with 20-50
-tasks drawn from real failures", A16). Agent-generated reproduction from incident records: **None
+items, OM-20). "Incidents become evals" is **Partial** (Anthropic first-party, AN-29; "start with 20-50
+tasks drawn from real failures", AN-16). Agent-generated reproduction from incident records: **None
 found** in either document.
 
 **Failure modes.** Over-fitted reproduction (asserts the exact payload, not the invariant), so the
@@ -149,7 +152,7 @@ target, before any human sees it**, on two axes:
 | B0 single journey, internal | which stack tests touch changed files (mechanical, from coverage) |
 | B1 one service, all users | |
 | B2 cross-service contract | changed public interface (deep-module seam, 0.1) |
-| B3 money, auth, PII, audit | owner-listed paths (cf. AC rule "owner-listed paths and CI workflow files always need a person") |
+| B3 money, auth, PII, audit | owner-listed paths (cf. AN-29: owner-listed paths and CI workflow files always need a person) |
 
 The classification is data-driven config (same shape as `examples/guardrails/src/config/routing.config.ts`)
 and is itself covered by context-eval scenarios with **exact** scoring.
@@ -211,7 +214,7 @@ behaviour is the claim.
 
 **Solution.**
 
-- **The repair agent may act up to the production gate and cannot pass it** (AC, A27). The gate is
+- **The repair agent may act up to the production gate and cannot pass it** (AN-27). The gate is
   deterministic code outside the agent (a deploy hook / pipeline step), consuming the evidence
   bundle and classification and returning `auto | human | block` — the same block/advise/silent
   severity resolution as 2.6.
@@ -222,14 +225,14 @@ behaviour is the claim.
 - Confirmation evidence is graded, not binary (see §3 on the tension with the repo's binary ethos):
   a pre-declared statistical rule (e.g. fingerprint count zero over N requests on the cohort,
   error rate not worse than control) decided by code, not by the agent.
-- Rollback / flag-off is automatic on confirmation failure and is **rehearsed** (AC, A27 "rehearsed
+- Rollback / flag-off is automatic on confirmation failure and is **rehearsed** (AN-27 "rehearsed
   rollback").
 - Prefer flag-off over revert at high change volume (intervening PR problem, PO-28).
 
 **Prerequisites.** Feature flags; deploy pipeline that accepts a gate; production health signals;
 the FAQ's app/DevOps contract written down.
 
-**Evidence.** Production gate: **Partial/Thin** (one vendor playbook, A27). Progressive access and
+**Evidence.** Production gate: **Partial/Thin** (one vendor playbook, AN-27). Progressive access and
 circuit breakers for agents: **Partial** (one position paper, PO-28). Flags over rollback: **Thin**
 (PO-28). Canary/progressive delivery for human changes is mature general practice but neither
 research document evidences it, so I label it **not assessed here**.
@@ -247,13 +250,13 @@ Zero-defect turns every alert into a trigger. A healthy agent can take harmful a
 **Solution.**
 
 - **Per-fingerprint attempt budget** (e.g. one automatic attempt, then human); **per-service daily
-  budget**; **cooldown** after any rollback; global spend/turn caps (AC "turn and spend caps").
+  budget**; **cooldown** after any rollback; global spend/turn caps (AN-3 asks what stops an unattended run).
 - **Circuit breaker on outcomes**: if the repair revert rate, or recurrence rate (same fingerprint
   within N days of a "confirmed" repair), crosses a threshold, the workflow drops one autonomy tier
   automatically (auto -> human-approved -> read-only diagnosis). Raising it back is a named human
-  decision recorded in the register. This is the breaker Anthropic says it has not built (A29).
+  decision recorded in the register. This is the breaker Anthropic says it has not built (AN-29).
 - **Stop authority**: a named person/role can stop the repair workflow; the stop is a single
-  deterministic switch, **tested on a schedule** ("tested stop", BL level 4; AC). A named role
+  deterministic switch, **tested on a schedule** ("tested stop", BL level 4). A named role
   approves restore after an agent-caused incident (PO-14).
 - Hysteresis: thresholds to trip differ from thresholds to reset, to avoid tier flapping.
 
@@ -261,7 +264,7 @@ Zero-defect turns every alert into a trigger. A healthy agent can take harmful a
 
 **Evidence.** Circuit breakers and per-agent rate limits: **Partial** (PO-28, one paper). Stop and
 restore authority: **Partial** (vendor guidance PO-14, PO-12). Outcome-triggered autonomy
-reduction: **None found** in practice (named as unbuilt by A29).
+reduction: **None found** in practice (named as unbuilt by AN-29).
 
 **Failure modes.** Budget exhaustion during a real outage when repair would help — acceptable;
 humans are the fallback. Breaker never trips because recurrence detection depends on fingerprint
@@ -299,7 +302,7 @@ of how good its tests are (BL §4.5 level table).
 
 **Solution.** Each repair workflow has a register entry: owner and sponsor, permitted action classes
 (R/B tiers), budgets, stop switch and last tested date, eval suite and its owner, review date and
-stop rule (BL level 5; AC "a register of workflows: baseline, target, review date and stop rule").
+stop rule (BL level 5 and §4.7).
 Metrics, in tension-pairs per SPACE/DORA (MV-3, MV-5):
 
 - speed: time-to-reproduce, time-to-confirmed-repair (MTTR);
@@ -316,8 +319,8 @@ evidence, BL §4.5 "What is not known"). Pass^k task banks: **Strong as engineer
 
 ### Mapping to the always-on primitives and the curve
 
-AC lists always-on agent primitives "an event inbox, timers, memory, permissions, and an outbox"
-(A32). The repair loop maps cleanly *(inference)*:
+Anthropic lists always-on agent primitives "an event inbox, timers, memory, permissions, and an outbox"
+(AN-32). The repair loop maps cleanly *(inference)*:
 
 | Primitive | Repair loop element |
 |---|---|
@@ -380,13 +383,13 @@ R3/R4 repairs are not unattended at any level supported by current evidence.
   generate understanding. Review time is already up 91% on high-adoption teams (MV-11). Unless repair
   PRs are mechanically verifiable, a repair loop moves load onto reviewers rather than off them —
   Anthropic's own guardrail: "if [revert and incident rates] rise, we haven't saved human time, we've
-  only moved it" (A29).
+  only moved it" (AN-29).
 - **Ownership gap (finding 7).** No published postmortem names who answers for an agent's harmful
   action (BL §4.5). A repair agent that causes an outage while fixing one is precisely that case.
-  "You land it, you own it" (A29) needs a human who "landed" it: the register's sponsor. Without
+  "You land it, you own it" (AN-29) needs a human who "landed" it: the register's sponsor. Without
   that, the library would be recommending the one practice the field has least evidence for.
 - **Thin evidence top-to-bottom.** Incident first-pass investigation: one first-party account
-  (OM-14). Production gate: one playbook (A27). Circuit breakers: one paper (PO-28). Unattended
+  (OM-14). Production gate: one playbook (AN-27). Circuit breakers: one paper (PO-28). Unattended
   incident *repair* (as opposed to maintenance): none found. The repo's writing rule "every claim
   must be specific and verifiable" means any self-repair section must carry evidence labels, which
   the current docs do not use anywhere.
@@ -467,7 +470,7 @@ examples/repair-loop/
 Key design points:
 
 - The gate is a pure function of a typed evidence bundle; that is what makes it eval-able (4.6) and
-  keeps "detection stays deterministic" (A27).
+  keeps "detection stays deterministic" (AN-27).
 - Production confirmation is simulated by a second container running the candidate behind a flag
   with a traffic generator; the confirm rule (min sample size, fingerprint count = 0) is in config.
   README states plainly that this simulates, not proves, production confirmation.

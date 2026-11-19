@@ -2,12 +2,15 @@
 
 > Edited on 2026-11-19 for vendor neutrality. References to the second research input now name it the Anthropic
 > guidance companion (cited as AC). Findings are otherwise unchanged.
+> Edited again on 2026-11-19: Anthropic source IDs renamed from the A27 form to the AN-27 form, and citations of the
+> companion's own positions, stances and recommendations replaced with the Anthropic or baseline sources
+> beneath them. Every ID resolves in [../sources.md](../sources.md).
 
 Reviewer lens: "software that ladders itself up to autonomy". Sources compared:
 
 - Repo: README.md, CLAUDE.md, docs/L0-L4, docs/L1-patterns/*, docs/cross-cutting/*, docs/references/* (HEAD a07ad93).
 - Research: `research/industry-baseline.txt` (5 levels x 7 dimensions, cap rule, placement by artefacts,
-  defensible top, 8 findings, gaps) and `research/anthropic-companion.txt` (ten positions, gaps table, stances, placement).
+  defensible top, 8 findings, gaps) and `research/anthropic-companion.txt` (Anthropic sources, cited as AN-n).
 
 Curve levels are written **C1-C5** (Individual, Grounded, Verified delegation, Governed autonomy,
 Self-correcting) to avoid colliding with the repo's L0-L4.
@@ -95,7 +98,8 @@ autonomy.
   value C5) and mildly to platform. It is not a prerequisite for any autonomy level. Its position in the
   stack implies otherwise.
 - **Counts as a level signal.** README and L1/L2 cite Steinberger's "5-10 parallel agents" as an
-  aspiration. The baseline (3.3) and companion stance 05 treat agent counts as illustrative only.
+  aspiration. The baseline (3.3) treats agent counts as illustrative only, and Cherny's own
+  table warns against "scaling agent count before the loop has earned widespread trust" (AN-49).
 - **Presence as practice.** Checks the repo proposes (CLAUDE.md line count, reachability, linked docs)
   measure presence. RAMP's finding (most committed artefacts never change after being added) means these
   checks cannot distinguish C2 from C3.
@@ -373,8 +377,8 @@ level.
 
 Every A4+ workflow has a stop that is exercised, not documented. A scheduled drill job (monthly) triggers
 the stop mechanism against a canary run, asserts the run halts within a bound and tokens are revoked,
-restores, and writes `stop.last_tested`. Failure demotes the workflow. This fills the gap the companion names
-("the SDLC playbook asks for rehearsed rollback, not a tested stop for the agent itself") and the
+restores, and writes `stop.last_tested`. Failure demotes the workflow. This fills a gap in Anthropic's guidance
+(the SDLC playbook asks for rehearsed rollback, not a tested stop for the agent itself, AN-27) and the
 baseline's "nothing found on whether kill switches work".
 
 ### A.6 Enforcement through rig and hooks
@@ -441,7 +445,7 @@ A grant requires its row and every row above it. "New" = proposed pattern not ye
 Observation: L1 is the hinge. It is the only layer that turns "the agent says it worked" into a signal a
 machine can trust, and A4's `verification: mechanical` condition is satisfiable only where L1 coverage
 exists for the workflow's journey. The repo should say this directly: stack tests are what earn autonomy,
-which is the research's "verification earns delegation" (companion position 02) in the repo's own vocabulary.
+which is the research's "verification earns delegation" (baseline finding 2; AN-2, AN-3) in the repo's own vocabulary.
 
 ---
 

@@ -1,10 +1,10 @@
 # Synthesis: Agentic Patterns Refresh
 
 Combined findings of five independent reviews of `franklywatson/agentic-patterns` at commit `a07ad93`,
-written 2026-11-19. The full reviewer reports are in [reviews/](reviews/). Reference IDs (MC-, SC-,
-OM-, SG-, PO-, IS-, MV-) belong to the research baseline described in [README.md](README.md). A-numbers, positions and
-stances belong to the Anthropic guidance companion, a document mapping Anthropic's published
-practice onto the baseline (vendor guidance, not independent evidence).
+written 2026-11-19. The full reviewer reports are in [reviews/](reviews/). Reference IDs (MC-, PL-,
+SC-, OM-, SG-, PO-, IS-, MV-) belong to the research baseline described in [README.md](README.md). AN-numbers are
+Anthropic publications cited by the Anthropic guidance companion (vendor guidance, not independent
+evidence). Every ID resolves to a public source in [sources.md](sources.md).
 
 Lens tags in brackets show which reviewer raised a finding:
 
@@ -20,7 +20,7 @@ Lens tags in brackets show which reviewer raised a finding:
 
 - **Stack tests, full-loop assertions and test integrity (1.1, 1.2, 1.6).** They turn "the agent
   says it worked" into a signal a machine can trust. That signal is what earns delegation (baseline
-  finding 2; companion position 02).
+  finding 2; AN-2, AN-3).
 - **"Prose is suggestion; enforcement is deterministic" (L2).** This is now supported by independent
   sources (SC-8, OM-7, OM-18, SG-11, SG-16).
 - **Evidence-based claims (4.1) and context eval (4.6).** Both match the field on self-report and
@@ -215,8 +215,8 @@ maturity rather than stacked on it.
 | 1.7 | Incident-to-stack-test | Every incident in owned code ends with a reproduction stack test that is red before the fix and green after it, placed in the sequential suite. No repair is proposed until the reproduction is red. "Cannot reproduce" routes to a human. Incidents in agent configuration become eval cases. Ship this first: it is useful at A3 with no autonomy. | Strong (human practice), Partial (agent) |
 | 1.8 | Reversibility and blast-radius classes | Each change is classified deterministically from its diff, failing closed. Reversibility: R0 inert, R1 flag-reversible, R2 deploy-reversible, R3 data-forward, R4 irreversible or external. Blast radius: B0 one journey, B1 one service, B2 a cross-service contract, B3 money, auth, PII or audit. | Partial; the taxonomy is new |
 | 1.9 | Repair loop with a frozen oracle | The reproduction test is frozen as a protected path before the fix is written, and the fix may not touch existing tests. An anti-masking scan applies 1.6's forbidden patterns to production diffs. A hit reclassifies the change as a mitigation, which routes to a human. | Strong (principle); separating the oracle from the fix is new |
-| 1.10 | Production gate and progressive confirmation | "The agent may act up to the production gate and cannot pass it" (A27). The gate is deterministic code outside the agent that returns auto, human or block. An auto result ships behind a flag or canary, with a pre-declared confirmation rule and a minimum sample. Rollback is automatic and rehearsed. | Partial, Thin |
-| 1.11 | Repair budget, circuit breaker, stop authority | Each fingerprint gets an attempt budget, with a cooldown after a rollback. Revert or recurrence rates drop the grant automatically, and a human restores it. A named on-call role holds a tested stop. Anthropic names this breaker as not yet built (A29). | Partial; none found in practice |
+| 1.10 | Production gate and progressive confirmation | "The agent may act up to the production gate and cannot pass it" (AN-27). The gate is deterministic code outside the agent that returns auto, human or block. An auto result ships behind a flag or canary, with a pre-declared confirmation rule and a minimum sample. Rollback is automatic and rehearsed. | Partial, Thin |
+| 1.11 | Repair budget, circuit breaker, stop authority | Each fingerprint gets an attempt budget, with a cooldown after a rollback. Revert or recurrence rates drop the grant automatically, and a human restores it. A named on-call role holds a tested stop. Anthropic names this breaker as not yet built (AN-29). | Partial; none found in practice |
 | 1.12 | Self-healing tests are not self-healing systems | Tests never heal themselves. A test the loop wants to change means the spec changed. Systems heal at three depths: runtime recovery, mitigation, repair. Recovery that repeats without a repair ticket is a masked defect. | Definitional |
 
 Repair capability that is defensible at each grant:
@@ -258,15 +258,15 @@ A hook is inside the agent's operating environment, so it is not a security boun
 
 | Proposed pattern | Problem it solves | Evidence | Sources |
 |------------------|-------------------|----------|---------|
-| Contain before you relax | Agents run on the host with shell, keys, network and the Docker socket. Sandbox on and locked by default; secrets injected outside the boundary; fail closed. | Partial | PL-14 PL-15 SG-10 A9 A11 |
+| Contain before you relax | Agents run on the host with shell, keys, network and the Docker socket. Sandbox on and locked by default; secrets injected outside the boundary; fail closed. | Partial | PL-14 PL-15 SG-10 AN-9 AN-11 |
 | Layered enforcement | One mechanism used for nudging, quality and safety alike. Declare each rule's enforcement point. PostToolUse detects; it does not prevent. | Strong | SG-7 SG-11 SG-16 SC-8 OM-7 |
 | Least agency and session composition | Untrusted input, private data and external action never meet in one session without a gate. Rinsing runs read-only. | Strong | SG-1 SG-2 SG-3 SG-16 |
 | Agent identity and delegation | Per-agent, short-lived, audience-bound credentials; "agent X for person Y" in logs | Partial | PL-5 PL-7 PL-8 SG-20 |
 | Skill, plugin and MCP supply chain | 13.4% of 3,984 public skills had a critical issue. Allowlist, pin, read before install, review updates as diffs. | Strong (threat) | SG-28 SG-29 IS-13 |
-| Risk-tiered review | Uniform review is "human-in-the-loop theater". Tier by reversibility and blast radius. The requester cannot approve their own change; an agent's approval never counts as a human's. | Partial | SG-9 SG-26 OM-18 A29 |
+| Risk-tiered review | Uniform review is "human-in-the-loop theater". Tier by reversibility and blast radius. The requester cannot approve their own change; an agent's approval never counts as a human's. | Partial | SG-9 SG-26 OM-18 AN-29 |
 | Author of record and agent register | The requester answers for agent-written code. The register records owner, sponsor, expiry and retirement (folds into A.1). | Partial | PO-10 to PO-17 |
 | Evidence over self-report | Completion evidence comes from systems the agent cannot edit | Strong | IS-6 MC-22 MV-8 |
-| Deliberate practice | Protect hands-on debugging; explain-before-merge for owned modules; a work sample in the new-starter audit | Partial | IS-1 IS-4 A20 |
+| Deliberate practice | Protect hands-on debugging; explain-before-merge for owned modules; a work sample in the new-starter audit | Partial | IS-1 IS-4 AN-20 |
 | Threat model page | Assets, untrusted entry points, capabilities, and the pattern that mitigates each | Synthesis | SG chapter |
 
 **Vendor neutrality:**
@@ -284,7 +284,7 @@ capturing learnings with pruning them.
 
 The repo has not changed since 2026-04-18, which makes it an instance of the RAMP finding: committed
 AI configuration that is present but never maintained (MC-11). Anthropic reports removing over 80%
-of Claude Code's system prompt for the Claude 5 generation with no eval loss (A7). `[adopter]`
+of Claude Code's system prompt for the Claude 5 generation with no eval loss (AN-7). `[adopter]`
 `[evidence]`
 
 **New pattern: Prune and re-baseline context.**

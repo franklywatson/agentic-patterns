@@ -2,13 +2,15 @@
 
 > Edited on 2026-11-19 for vendor neutrality. References to the second research input now name it the Anthropic
 > guidance companion (cited as AC). Findings are otherwise unchanged.
+> Edited again on 2026-11-19: Anthropic source IDs renamed from the A27 form to the AN-27 form, and citations of the
+> companion's own positions, stances and recommendations replaced with the Anthropic or baseline sources
+> beneath them. Every ID resolves in [../sources.md](../sources.md).
 
 Reviewer lens: evidence auditor and sceptic. The repo's own constitution (CLAUDE.md:36-38, CLAUDE.md:103-104)
 requires that "every claim must be specific and verifiable" and "evidence-based claims only". This review holds
 the repo to that rule.
 
-Sources: `industry-baseline.txt` (IDs MC-, PL-, SC-, OM-, SG-, PO-, IS-, MV-) and `anthropic-companion.txt` (IDs A-n,
-stances 1-10). Repo state: last commit 2026-04-18; CLAUDE.md:113 "Last updated 2026-04-18". That is seven months
+Sources: `industry-baseline.txt` (IDs MC-, PL-, SC-, OM-, SG-, PO-, IS-, MV-) and `anthropic-companion.txt` (IDs AN-n). Repo state: last commit 2026-04-18; CLAUDE.md:113 "Last updated 2026-04-18". That is seven months
 old at review date (2026-11-19). No repo files were edited.
 
 Legend for the proposed labels (adopted from the baseline, line 36): **Strong** = evidence supports it, or it
@@ -32,7 +34,7 @@ only, little or no measured support.
   format separates rows with newlines and allows pipe as an alternative *field* delimiter. Check this against
   the spec before keeping the line.
 - Characters are not tokens. The section's title claims token optimisation but reports only character counts.
-- Research context: MV-1 says "measure before optimizing" applies to token spend. Companion stance 9 and A48 say
+- Research context: MV-1 says "measure before optimizing" applies to token spend. AN-48 and AN-26 say
   cost per outcome, not token consumption, is the primary measure of value. The baseline gives no evidence
   that TOON's output keeps model accuracy unchanged.
 - **Fix:** recompute the example, or remove it. Replace the table with a reproducible script that names its
@@ -56,7 +58,7 @@ only, little or no measured support.
   claims with no evidence behind them. MV-20 (Princeton HAL) found that more spend often buys no accuracy
   (21 of 36 configurations). By the same logic, cutting tokens does not automatically buy quality.
 - Internal contradiction: `docs/L4-standards-measurement.md:358` lists "Tracking tokens consumed" as a *vanity
-  metric*, yet L3's headline value proposition is token reduction. MV-1, MV-2 and companion stance 9 side with L4.
+  metric*, yet L3's headline value proposition is token reduction. MV-1, MV-2 and AN-48 side with L4.
 - **Fix:** pick one number and attribute it ("rtk's README claims...", "jcodemunch's README claims..."), label it
   Vendor/Thin, or measure it on a fixed task bank as MV-9 describes. Reframe L3's value as cost per completed
   task at equal pass rate, not as raw token reduction.
@@ -77,15 +79,15 @@ only, little or no measured support.
 
 - `CLAUDE.md:109` and `docs/L0-foundation.md:167` set a hard limit of 150 lines. But CLAUDE.md:30, 70-99 reference
   every doc with `@docs/...` syntax. In Claude Code, an `@path` in CLAUDE.md is an *import* that is expanded into
-  context at load time (SC-8 / A8, memory docs). The effective always-loaded context is therefore the whole
+  context at load time (SC-8 / AN-8, memory docs). The effective always-loaded context is therefore the whole
   library: README plus all L0-L4 docs plus cross-cutting plus references, several thousand lines. This session
   loaded exactly that.
 - That is the pattern the research warns against. SC-4, the only controlled study, found context files "do not
   generally improve task success rates, while increasing inference cost by over 20%" and that repository
-  overviews "are not helpful". SC-6 found 68% accuracy at 500 simultaneous instructions. A7 reports Anthropic
+  overviews "are not helpful". SC-6 found 68% accuracy at 500 simultaneous instructions. AN-7 reports Anthropic
   removed over 80% of Claude Code's system prompt with no loss.
 - The number 150 itself has no source. Anthropic's own guidance is "target under 200 lines per CLAUDE.md file"
-  (A8, companion 4.2 level 3). SC-1 adds "minimal does not necessarily mean short". The research supports "small and
+  (AN-8: "target under 200 lines per CLAUDE.md file"). SC-1 adds "minimal does not necessarily mean short". The research supports "small and
   non-redundant" (Partial), not a specific line count.
 - The repo's own flagship breaks the rule: `reference-telegram-trading-bot-case-study.md:17` calls a
   **218-line** CLAUDE.md "concise".
@@ -170,14 +172,14 @@ vendor / first-party case study / practitioner). Proposed labels, and the resear
 
 | Repo pattern | Proposed label | Basis |
 |---|---|---|
-| 2.3/2.4 hooks over prose; hard rules in deterministic checks | **Strong** | OM-7, OM-18, OM-12 (three orgs independently), SG-11, SG-16, SC-8; baseline finding 3; companion position 04 |
-| L1 closed loop: agent ends on a check it can run | **Strong** (principle), Partial (numbers) | OM-7, OM-9, MC-3, MC-7; finding 2; companion position 02 |
+| 2.3/2.4 hooks over prose; hard rules in deterministic checks | **Strong** | OM-7, OM-18, OM-12 (three orgs independently), SG-11, SG-16, SC-8; baseline finding 3; AN-3 |
+| L1 closed loop: agent ends on a check it can run | **Strong** (principle), Partial (numbers) | OM-7, OM-9, MC-3, MC-7; finding 2; AN-2, AN-3 |
 | 4.1 evidence-based claims; distrust self-report | **Strong** | IS-6 (believed +20% after a measured 19% slowdown), MV-7, MV-8, MC-22; finding 5 |
 | 4.6 context eval | **Strong as practice**, no outcome evidence | MV-9 (task banks, pass^k, read transcripts), MV-10, PO-25 |
-| 4.4 metrics: no vanity metrics | **Strong** | MV-1, MV-2, MV-5 (SPACE); companion stance 1 |
+| 4.4 metrics: no vanity metrics | **Strong** | MV-1, MV-2, MV-5 (SPACE); AN-26, AN-48 |
 | 1.6 test integrity | **Partial** | IS-15 (agents declare success on failing tests), IS-14 |
 | 0.6 worktrees / isolation | **Partial** | OM-18 (sandboxing as default), PL-15; now native in Claude Code |
-| 0.4 short CLAUDE.md | **Partial**; the 150 figure is a house rule | SC-1, SC-4, SC-5, SC-11 disagree; A8 says <200 |
+| 0.4 short CLAUDE.md | **Partial**; the 150 figure is a house rule | SC-1, SC-4, SC-5, SC-11 disagree; AN-8 says <200 |
 | 0.7 docs updated with code | **Thin** for agents | MC-11: committed artefacts are mostly never updated (presence is not practice) |
 | 1.1/1.5 stack tests, real deps | **Partial** (mechanism) / **Thin** (absolutism) | PL-3, PL-18 tiering; no study |
 | 2.8 compound engineering, "80/20" (`L2:487`) | **Thin** | Vendor plugin claim; IS-13 says the flywheel must "remove as well as add" |
@@ -228,7 +230,7 @@ found 13.4% of 3,984 scanned public skills had a critical issue and 76 were conf
 - L4.6 graduated scoring and threshold gating are consistent with MV-9. The pattern should also adopt pass^k
   reporting and "read the transcripts" from MV-9. Note that its 0.5 partial credit and 0.7 threshold
   (`L4:551, 568`) are arbitrary.
-- L4.4's vanity-metric anti-pattern (`L4:358`) is supported by MV-1, MV-2 and companion stance 1.
+- L4.4's vanity-metric anti-pattern (`L4:358`) is supported by MV-1, MV-2, AN-26 and AN-48.
 - The worktree and isolation thesis is supported by OM-18 ("agent sandboxing a sensible default").
 
 ---
@@ -249,8 +251,8 @@ Each needs a manual check.
    `code.claude.com/docs` (PL-13, PL-16, SC-8 and others all cite it).
 4. **Matt Pocock article** (`further-reading.md:15`) links to a Medium profile, not to the article. The claim
    cannot be checked.
-5. **Product facts that have moved since April 2026** (companion 4.1-4.4). The repo does not mention: the sandbox
-   (off by default, A11); auto mode as the default start mode from v2.1.283 (A12); managed and server-managed
+5. **Product facts that have moved since April 2026** (Anthropic product docs, cited inline). The repo does not mention: the sandbox
+   (off by default, AN-11); auto mode as the default start mode from v2.1.283 (AN-12); managed and server-managed
    settings; plugins and marketplaces; Code Review; AGENTS.md as an open format under the Agentic AI Foundation
    (PL-19, PL-21); the Agent Skills open specification (PL-22). L2's description of a skill as markdown with a
    "base reference" (`L2:44-51`) predates the spec. L0.6 recommends a superpowers skill for worktrees, but
@@ -258,9 +260,9 @@ Each needs a manual check.
 6. **Hook pseudocode** (`L2:186-225`, `anti-patterns.md:389-409`) shows a JS `hook.on(...)` / `throw` API. Real
    Claude Code hooks are configured commands that block via exit code or a JSON decision (SG-11). Label the
    snippets as pseudocode for a fictional API, or show the real configuration.
-7. **Model generation drift.** A7 reports that Claude 5-generation models needed 80% less system prompt. Routing
+7. **Model generation drift.** AN-7 reports that Claude 5-generation models needed 80% less system prompt. Routing
    tables and "always prefer tool X" savings measured on older models may no longer hold. Add a "re-baseline at
-   each model upgrade" note (companion 4.2 rec 05; baseline 4.2 level 5).
+   each model upgrade" note (AN-7; baseline 4.2 level 5).
 8. **Steinberger descriptor** (`README.md:24`, `L1:173`, `L2:548`, `L3:624`): "creator of OpenClaw". Reportedly
    he moved to OpenAI in early 2026. The attribution still holds, but check whether the role description is
    current.

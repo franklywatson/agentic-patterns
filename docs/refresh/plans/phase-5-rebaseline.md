@@ -38,7 +38,7 @@ It covers:
   - "we added it, so it must help"
   - line caps used as a proxy for signal
 
-Evidence: Partial (MC-11; A7 for Anthropic removing over 80% of a system prompt with no eval loss).
+Evidence: Partial (MC-11; AN-7 for Anthropic removing over 80% of a system prompt with no eval loss).
 
 ### T2. Front-matter on this repo's patterns
 

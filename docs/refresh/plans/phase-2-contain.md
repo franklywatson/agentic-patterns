@@ -36,11 +36,11 @@ binding.
 
 | Number (suggested) | Pattern | Evidence label | Sources |
 |--------------------|---------|----------------|---------|
-| 2.9 | Contain before you relax (sandbox-first; secrets outside the boundary; fail closed; rootless or per-session Docker for stack tests) | Partial | PL-14 PL-15 PL-17 SG-10 A9 A11 |
+| 2.9 | Contain before you relax (sandbox-first; secrets outside the boundary; fail closed; rootless or per-session Docker for stack tests) | Partial | PL-14 PL-15 PL-17 SG-10 AN-9 AN-11 |
 | 2.10 | Least agency and session composition (lethal trifecta / Rule of Two; read-only rinsing) | Strong | SG-1 SG-2 SG-3 SG-16 |
 | 2.11 | Agent identity and delegation (per-agent short-lived credentials; "agent X for person Y") | Partial | PL-5 PL-7 PL-8 SG-20 |
 | 2.12 | Skill, plugin and MCP supply chain (allowlist, pin, read before install, review updates as diffs) | Strong (threat) | SG-28 SG-29 IS-13 |
-| 2.13 | Risk-tiered review (tier by reversibility and blast radius; requester cannot approve; agent approval never counts as human) | Partial | SG-9 SG-26 OM-18 A29 |
+| 2.13 | Risk-tiered review (tier by reversibility and blast radius; requester cannot approve; agent approval never counts as human) | Partial | SG-9 SG-26 OM-18 AN-29 |
 
 - Add a pointer from L0 (structure) to 2.9, because containment is a day-one decision.
 - Apply 2.12 to the repo's own recommendations: rig, superpowers, compound-engineering, RTK and
@@ -54,7 +54,7 @@ binding.
 |--------------------|---------|----------------|---------|
 | 4.7 | Author of record and agent register. Phase 3's `.autonomy.yaml` is its machine-readable form. Write 4.7 so the register can begin as a table and grow into A.1. | Partial | PO-10 to PO-17 |
 | 4.8 | Evidence over self-report (rewrite of the 4.1 basis: completion evidence from systems the agent cannot edit; config changes as eval-gated releases) | Strong | IS-6 IS-3 MC-22 MV-8 PO-25 |
-| 4.9 | Deliberate practice: keep supervision skill alive (protected hands-on time; explain-before-merge; work sample added to the new-starter audit) | Partial | IS-1 IS-4 IS-12 A20 A21 |
+| 4.9 | Deliberate practice: keep supervision skill alive (protected hands-on time; explain-before-merge; work sample added to the new-starter audit) | Partial | IS-1 IS-4 IS-12 AN-20 AN-21 |
 
 The tested stop is specified in Phase 3 (A.5). Reference it from 4.7; do not duplicate it.
 

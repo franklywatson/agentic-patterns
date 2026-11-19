@@ -16,12 +16,14 @@ different lens. Their reports were combined into one synthesis.
 | Input | What it is |
 |-------|------------|
 | Research baseline | Vendor-neutral AI-native engineering maturity research. It defines a five-level curve over seven dimensions, the cap rule, eight findings, an evidence gap list, and source IDs (MC-, PL-, SC-, OM-, SG-, PO-, IS-, MV-). |
-| Anthropic guidance companion | Maps Anthropic's published principles, practices and Claude capabilities onto the baseline. It has ten positions, a table of what the guidance does not supply, and ten stances where the guidance and the independent evidence diverge. Its source IDs (A-n) are Anthropic publications. It leans towards Anthropic by design, so the reviews treat it as vendor guidance, not independent evidence. |
+| Anthropic guidance companion | Maps Anthropic's published principles, practices and Claude capabilities onto the baseline. Its source IDs (AN-n) are Anthropic publications. It leans towards Anthropic by design, so the reviews treat it as vendor guidance, not independent evidence. |
 
-Neither input is committed or linked. The reviews cite them as `research/industry-baseline.txt` and
-`research/anthropic-companion.txt`, plain-text extracts made during the review. Every finding a plan
-depends on is restated in [synthesis.md](synthesis.md) or the reviews, so the plans can be executed
-without the inputs. A session that needs a source behind a reference ID should ask the maintainer.
+Neither input is committed. The reviews name them by the plain-text extracts made during the review,
+`research/industry-baseline.txt` and `research/anthropic-companion.txt`. Instead,
+[sources.md](sources.md) restates the baseline's structure (curve, cap rule, findings, chapters) and
+lists every source the corpus cites, with its public URL, so every reference ID can be checked
+without the inputs. `python3 docs/refresh/tools/sourcecheck.py` confirms that each cited ID
+resolves.
 
 The synthesis is committed twice: as a page snapshot,
 [agentic-patterns-refresh.html](agentic-patterns-refresh.html), and as text,
@@ -32,6 +34,7 @@ The synthesis is committed twice: as a page snapshot,
 | File | Purpose |
 |------|---------|
 | [synthesis.md](synthesis.md) | The combined findings, the reframe, both goals, the prerequisite track, pruning, defects, roadmap and decisions |
+| [sources.md](sources.md) | Every cited source with its public URL, and the baseline's structure, so each reference ID resolves |
 | [decisions.md](decisions.md) | Open decisions with recommendations. **Read first**: several plans are gated on them. |
 | [plans/](plans/) | One scoped plan per phase, each written to be executed by a session that has read only this directory |
 | [reviews/review-evidence.md](reviews/review-evidence.md) | Evidence auditor: holds the repo to its own "every claim verifiable" rule |
@@ -41,8 +44,9 @@ The synthesis is committed twice: as a page snapshot,
 | [reviews/review-adopter.md](reviews/review-adopter.md) | Adopter red team and model-generation realist |
 | [tools/linkcheck.py](tools/linkcheck.py) | Link and anchor checker used by the adopter review (`python3 docs/refresh/tools/linkcheck.py .`) |
 | [tools/anchors.py](tools/anchors.py) | Anchor-only checker used by the evidence review |
+| [tools/sourcecheck.py](tools/sourcecheck.py) | Checks that every reference ID cited in this directory resolves in sources.md |
 
-The reviews are kept verbatim. Their line numbers refer to commit `a07ad93`, and some have moved
+The reviews are kept as written, apart from the edits noted at the top of each. Their line numbers refer to commit `a07ad93`, and some have moved
 since then. Two later commits are not on main yet: gstack removal and an L4 lint fix, both in
 PR #4.
 
