@@ -76,7 +76,7 @@
 - **Related to:** L0
 - **URL:** <https://youtu.be/uC44zFz7JSM>
 
-### The WISC Framework: AI Coding Results Video
+### The WISC Framework (Cole Medin video)
 
 - **Type:** Video / Framework
 - **Creator:** Cole Medin (original), DIY Smart Code (adaptation)

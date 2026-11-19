@@ -425,7 +425,7 @@ hook.on('PreToolUse', (tool, args) => {
 
 ### Use Structured Search When Available
 
-**Symptom**: Raw grep/rg is used for code search when the repository is indexed. Megabytes of unstructured text output where structured search would return 5 typed results.
+**Symptom**: Raw grep/rg is used for code search when the repository is indexed. Megabytes of unstructured text output where structured search would return a short list of typed results.
 
 **Why This Happens**: grep is familiar and always available. Reaching for it is muscle memory. But when the repository is indexed by a tool like jcodemunch, raw grep returns more tokens for the same information - and misses symbols that match text patterns inexactly.
 
@@ -439,10 +439,10 @@ hook.on('PreToolUse', (tool, args) => {
 Example refactor:
 
 ```bash
-# Raw grep (200 lines of unstructured text)
+# Raw grep (illustrative: hundreds of lines of unstructured text)
 grep -r "export.*function" src/
 
-# Structured search (5 typed symbols with file locations and summaries)
+# Structured search (illustrative: a few typed symbols with file locations and summaries)
 search_symbols(query="function", kind="function")
 ```
 

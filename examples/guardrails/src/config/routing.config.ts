@@ -43,17 +43,17 @@ export const ROUTING_RULES: readonly RoutingRule[] = [
       rtk: {
         action: 'advise',
         tool: 'rtk grep',
-        reason: 'structured output, filtered results (~60% token savings)',
+        reason: 'structured output, filtered results',
       },
       jcodemunch: {
         action: 'advise',
         tool: 'jcodemunch search_text',
-        reason: 'indexed search, faster (~80% token savings)',
+        reason: 'indexed search, faster',
       },
       general: {
         action: 'advise',
         tool: 'Grep tool',
-        reason: 'structured results, no artifacts (~80% token savings)',
+        reason: 'structured results, no artifacts',
       },
       fallback: {
         action: 'allow',
@@ -69,7 +69,7 @@ export const ROUTING_RULES: readonly RoutingRule[] = [
       general: {
         action: 'advise',
         tool: 'Read tool',
-        reason: 'clean output, no line artifacts (~75% token savings)',
+        reason: 'clean output, no line artifacts',
       },
       fallback: {
         action: 'allow',
@@ -85,12 +85,12 @@ export const ROUTING_RULES: readonly RoutingRule[] = [
       jcodemunch: {
         action: 'advise',
         tool: 'jcodemunch get_file_tree',
-        reason: 'structured file tree with summaries (~77% token savings)',
+        reason: 'structured file tree with summaries',
       },
       general: {
         action: 'advise',
         tool: 'Glob tool',
-        reason: 'pattern matching, targeted discovery (~77% token savings)',
+        reason: 'pattern matching, targeted discovery',
       },
       fallback: {
         action: 'allow',
@@ -104,7 +104,7 @@ export const ROUTING_RULES: readonly RoutingRule[] = [
       general: {
         action: 'advise',
         tool: 'Glob tool',
-        reason: 'pattern matching, more efficient than fd (~70% token savings)',
+        reason: 'pattern matching, more efficient than fd',
       },
       fallback: {
         action: 'allow',

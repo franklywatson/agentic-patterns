@@ -439,9 +439,9 @@ balances[2]{id,symbol,balance,usd}:
   2,USDC,1500.0,1500.00
 ```
 
-Both counts were produced with a script over the exact strings above. They measure characters, not tokens; token counts depend on the tokenizer.
+Reproduce the counts with `python3 -c "import json;print(len(json.dumps([{'id':1,'symbol':'ETH','balance':'2.5','usd':'8125.00'},{'id':2,'symbol':'USDC','balance':'1500.0','usd':'1500.00'}],separators=(',',':'))),len('balances[2]{id,symbol,balance,usd}:\\n  1,ETH,2.5,8125.00\\n  2,USDC,1500.0,1500.00'))"` (prints `117 79`). They measure characters, not tokens; token counts depend on the tokenizer.
 
-The header `balances[2]{id,symbol,balance,usd}:` declares the record count and field names once. Each row contains only values, separated by commas. Records are separated by newlines. Field names are not repeated per row, so the character saving grows with record count.
+The header `balances[2]{id,symbol,balance,usd}:` declares the record count and field names once. Each row contains only values, separated by commas. Records are separated by newlines. Field names are not repeated per row, so the absolute saving grows with record count, while the percentage approaches a limit set by the ratio of key length to value length.
 
 **Key TOON format rules:**
 

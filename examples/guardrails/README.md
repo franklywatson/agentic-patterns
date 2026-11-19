@@ -86,8 +86,8 @@ Example rule for `grep`:
   match: /\b(grep[rx]?|rg)\b/,
   intent: 'text_search',
   resolutions: {
-    rtk: { action: 'advise', tool: 'rtk grep', reason: '60% token savings' },
-    jcodemunch: { action: 'advise', tool: 'search_text', reason: '80% token savings' },
+    rtk: { action: 'advise', tool: 'rtk grep', reason: 'structured output' },
+    jcodemunch: { action: 'advise', tool: 'search_text', reason: 'indexed search' },
     general: { action: 'advise', tool: 'Grep tool', reason: 'structured output' },
     fallback: { action: 'allow' },
   },
