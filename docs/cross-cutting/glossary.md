@@ -9,11 +9,12 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Agent Register
 
 **Layer**: L4 - Standards & Measurement
-**Definition**: One list of every agent, unattended workflow, skill, hook pack and MCP server in use, with its
-owner, sponsor, permitted actions, access expiry, state, last review, retirement rule and stop. It can start
-as a table and grow into a machine-readable file checked in CI.
+**Definition**: The register of agent workflows that Pattern 4.7 requires. It is the autonomy register,
+`.autonomy.yaml`: owner, sponsor, identity, permitted actions, access expiry, review date, retirement rule and stop
+per workflow. Skills, hooks and servers record their owner in the pinned allowlist (Pattern 2.12).
 **See**: [Pattern 4.7 - Author of Record and Agent
-Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)
+Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) and [Pattern A.1 - Autonomy
+Register](../earned-autonomy.md#pattern-a1--autonomy-register)
 
 ### Agentic Testing
 
@@ -56,8 +57,8 @@ Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-
 ### Autonomy Register
 
 **Layer**: Cross-cutting - Earned Autonomy
-**Definition**: Committed, schema-validated `.autonomy.yaml` listing every agent workflow with owner, grant, identity, limits, stop mechanism and review date. No agent may write it.
-**See**: [Earned Autonomy](../earned-autonomy.md)
+**Definition**: Committed, schema-validated `.autonomy.yaml` listing every agent workflow with owner, grant, identity, limits, stop mechanism and review date. No agent may write it. It is also the agent register of Pattern 4.7.
+**See**: [Pattern A.1 - Autonomy Register](../earned-autonomy.md#pattern-a1--autonomy-register)
 
 ---
 
@@ -471,7 +472,7 @@ mechanical check, run against a pinned model to test whether a context artefact 
 **Layer**: L4 - Standards & Measurement
 **Definition**: A way to halt an unattended workflow that someone has used in a drill: a named person who can
 invoke it, a mechanism such as credential revocation or a queue pause, and a named role that approves restart.
-The agent register records whether one exists. Under [Earned Autonomy](../earned-autonomy.md) a scheduled drill
+The register (`.autonomy.yaml`) records the stop and the date of its last drill. Under [Earned Autonomy](../earned-autonomy.md) a scheduled drill
 runs the stop against a canary and writes the date it last passed; a failed or overdue drill demotes the workflow.
 **See**: [Pattern 4.7 - Author of Record and Agent
 Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)

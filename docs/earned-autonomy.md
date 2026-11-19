@@ -11,6 +11,50 @@ The patterns L0 to L4 say whether letting go is safe. They do not say how far a 
 
 Evidence for this guide is uneven. The grants A1 to A3 follow published practice. The grants A4 and A5, and the promotion, stop-drill and portfolio-review mechanisms, are design proposals with little outside evidence. Each pattern carries its own label, and the labels say so.
 
+## The Curve and the Cap
+
+The curve C1 to C5 places a team on each of seven dimensions separately. It comes from the research baseline
+(section 3.5), whose sections and sources are listed on [the sources page](references/sources.md#baseline-structure).
+The curve is distinct from the layers L0 to L4 and from the grants A1 to A5.
+
+### The curve
+
+| Level | Name | Defined by |
+|-------|------|------------|
+| C1 | Individual | People use AI as they choose. Nothing is shared or committed. |
+| C2 | Grounded | Approved tools, committed shared context, and every agent change read by a human. |
+| C3 | Verified delegation | Autonomy chosen per task. Agent changes pass automated checks before a human sees them. Skills and instructions are versioned and reviewed. Every agent change has a named owner. |
+| C4 | Governed autonomy | Agents run unattended on events, schedules or a backlog, each workflow with an owner, permitted actions, limits, an audit record and a tested stop. Controls are enforced by the system. |
+| C5 | Self-correcting | Workflows are managed as a portfolio with cost, value, risk and a review date, and some are retired. Autonomy is extended or withdrawn per workflow on evidence. Shared context is pruned as well as grown. |
+
+### The grid
+
+Each row is one dimension, with the baseline chapter that covers it in brackets.
+
+| Dimension | C1 | C2 | C3 | C4 | C5 |
+|-----------|----|----|----|----|----|
+| Platform (4.1) | Personal keys; agents cannot be listed | Agents and keys listed and mapped to teams | Agent identity from a template; one gateway; a check command CI runs | Isolation by default; delegated actions audited; loop alerts | Contribution path for tools and skills; vendor change touches configuration only |
+| Shared context (4.2) | Knowledge in heads and chats | Instruction files committed, often long and untested | Short, owned, tested files; hard rules in hooks | Governed connectors; permissions enforced at query time | Layered, owned, expiring; re-baselined when models change |
+| Team operating model (4.3) | Private use; no stated stance | Written stance; one human review per PR | Conventions as checks; automated plus human review | Review depth by risk; sandboxed loops; agent first-pass on incidents | Unattended work routine; process retired when its gap closes |
+| Security and governance (4.4) | Unvetted tools; broad access | Policy written; nearly every prompt approved | Sandboxed, scoped, vetted; agent PRs pass the same gates | Autonomy tiers; risky combinations gated; deterministic policy | Controls tested against adaptive attacks; tiers change with evidence |
+| Production ownership (4.5) | Nobody can list or stop agents | Inventory with individual owners | Sponsor per agent; expiring access; human author of record | Changes eval-gated and versioned; stop and restore authority assigned | Automatic handover and retirement; shared tooling owned as a product |
+| Individual and team skill (4.6) | Habit; nobody can say how output is checked | Engineers state what they hand over | Output checked against specs and tests; debugging practised; reviewed skills shared | Work broken down for unattended agents; supervision by outcome and exception; failure drills | Pruning, protected practice, autonomy raised only with feedback loops |
+| Measuring value (4.7) | Counting use | Measuring speed | Flow and stability against a baseline | Task banks, leading indicators, maintained configuration | Baseline, target, review date and stop rule per investment |
+
+### The cap rule
+
+Four dimensions cap unattended work: platform, security and governance, production ownership and measuring value.
+The cap is the lowest position among those four. No grant may exceed it. A team at C4 on operating model and C2 on
+production ownership has a cap of C2. The rule is the baseline's own inference (baseline 3.5).
+
+The cap has no exception field. A grant above the cap is a configuration error, and CI fails.
+
+### The defensible top
+
+The top of the curve is "the ability to raise autonomy for a named workflow when evidence supports it, show that
+evidence, and lower it again" (baseline 3.7). Some workflows run unattended because verification is mechanical and
+the action reversible (MC-21). It is not "most agents" or "no humans".
+
 ## The Grants
 
 A grant belongs to one workflow, not to an agent or a team. One agent may run several workflows at different grants. An interactive developer session is a workflow too.
@@ -24,12 +68,6 @@ A grant belongs to one workflow, not to an agent or a team. One agent may run se
 | A5 | Portfolio-managed | A4 plus a baseline, a target, a review date and a stop rule. The grant moves on evidence. The workflow can be retired. | C5 |
 
 A4 applies only where verification is mechanical and the action is reversible. A5 grants no more power than A4. It is A4 managed as an investment, so the top of the scale is the ability to move grants on evidence, not a larger grant.
-
-### The cap rule
-
-The curve C1 to C5 and its seven dimensions are described in the [baseline structure](references/sources.md#baseline-structure). Four dimensions cap unattended work: platform, security and governance, production ownership and measuring value. The cap is the lowest position among those four. No grant may exceed it. A team at C4 on operating model and C2 on production ownership has a cap of C2.
-
-The cap has no exception field. A grant above the cap is a configuration error, and CI fails.
 
 ### Why stack tests earn autonomy
 
@@ -45,7 +83,7 @@ A grant needs its row and every row above it.
 |-------|-------------------|------------------------------------|------------------------|
 | A2 | 0.2 progressive disclosure, 0.3 conceptual organization, 0.4 agent instruction file, 0.6 worktrees, 0.7 docs as system map, 2.4 constitutional rules | Register with owners ([4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) author of record and agent register) | A.1 |
 | A3 | 0.5 unit tests as contract, 1.1 to 1.6 and testing infrastructure, 2.2 skill chain, 2.3 hooks and check composition, 2.5 zero-defect, 4.1 evidence-based claims, 4.5 CI guardrails as required checks | [2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) contain before you relax, [2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain) supply chain, [2.13](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review) risk-tiered review, a non-author approval rule, a human author-of-record trailer | A.2 |
-| A4 | 4.6 context eval as a task bank, 3.8 session lifecycle, 4.4 metrics with thresholds and owners | [2.10](L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition) least agency (trifecta gate), [2.11](L2-behavioral-guardrails.md#pattern-211--agent-identity-and-delegation) agent identity, [4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) register with sponsor, expiry and stop authority | A.3, A.4, A.5, A.6 |
+| A4 | 4.6 context eval as a task bank, 4.4 metrics with thresholds and owners | [2.10](L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition) least agency (trifecta gate), [2.11](L2-behavioral-guardrails.md#pattern-211--agent-identity-and-delegation) agent identity, [4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) register with sponsor, expiry and stop authority | A.3, A.4, A.5, A.6 |
 | A5 | 2.8 compound engineering with pruning, 0.8 aggressive cleanup applied to skills and rules, 0.9 new-starter standard | A retirement record per workflow | A.7 |
 
 Layer L3 is on no row. It reduces cost per outcome, which A5 reports, but it is not a safety prerequisite at any grant.
@@ -131,7 +169,7 @@ Keep the register separate from the harness configuration. The harness file is t
 ### Cross-References
 
 - [Pattern 2.4 — Constitutional Rules](L2-behavioral-guardrails.md#pattern-24--constitutional-rules): "no exception field" follows the rule that a rule with exceptions is a guideline.
-- [Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) (author of record and agent register) is the table form of this register.
+- [Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) (author of record and agent register) names the author of record and uses this file as its register.
 - [examples/autonomy/README.md](../examples/autonomy/README.md) is the runnable reference for the schema and the `check` command.
 
 **Evidence:** Partial — tiered, per-workflow grants appear in analyst and preprint models, and ownership with expiring access appears in vendor identity governance; the register schema is this library's design (SG-6, SG-26, PO-10, PO-11, MC-21)

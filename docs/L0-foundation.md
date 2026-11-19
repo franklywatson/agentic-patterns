@@ -508,8 +508,10 @@ A **context artefact** is any file or setting that adds instructions to an agent
 skill, a hook, a deny rule, a routing note, a memory file. The steps:
 
 1. **Owner, `reviewed:` date and expiry per artefact.** Record them in the artefact's own front matter when it is a
-   file (instruction file, skill, doc). A hook or setting has no front matter, so record them in the
-   [agent register](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register). An artefact past its
+   file (instruction file, skill, doc). A hook or setting has no front matter, so record them in the pinned
+   allowlist of [Pattern 2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain). Agent
+   workflows have theirs in the register, `.autonomy.yaml` ([Pattern
+   4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)). An artefact past its
    expiry is retired or re-reviewed; there is no third state.
 2. **A fixed task bank, run against a pinned model.** [Pattern
    4.6](L4-standards-measurement.md#pattern-46--context-eval) defines the bank, its scoring and its runner. Pin the
@@ -590,8 +592,9 @@ bank has no task that exercises the rule, add the task before deleting.
 file's owner and review date. [Pattern 0.8](#pattern-08--aggressive-cleanup) is the same discipline for code. [Pattern
 2.4](L2-behavioral-guardrails.md#pattern-24--constitutional-rules) places each rule at an enforcement point. [Pattern
 4.6](L4-standards-measurement.md#pattern-46--context-eval) defines the task bank, its scoring and its runner. [Pattern
-4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) holds owner and expiry for hooks and
-settings.
+2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain) holds owner and review date for hooks
+and settings, and [Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) for agent
+workflows.
 
 **Evidence:** Partial — most committed AI config is never changed; a vendor cut 80% of a prompt (MC-11, AN-7, MV-9)
 

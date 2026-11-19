@@ -929,8 +929,9 @@ Treat every skill, plugin, hook pack and MCP server as a third-party dependency.
 4. **Review updates as diffs.** An update is a new change. Read the diff before accepting it.
 5. **Treat fetched content as untrusted.** What a server returns is input ([Pattern
    2.10](#pattern-210--least-agency-and-session-composition)).
-6. **Record owner and provenance.** Each item has a named owner, a source and a review date in the register
-   ([Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)).
+6. **Record owner and provenance.** Each item has a named owner, a source, a pinned version and a review date in
+   the allowlist. Agent workflows are listed separately, in the register `.autonomy.yaml` ([Pattern
+   4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)).
 7. **Enforce outside the agent.** The list lives where the agent cannot edit it.
 
 ### In Practice

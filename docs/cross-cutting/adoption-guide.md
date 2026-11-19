@@ -136,7 +136,7 @@ developer machines, start with containment. Do not loosen approvals first.
 3. **Vet dependencies and tier review** — Allowlist and pin skills, plugins and servers. Write the high-tier
    list. See [Pattern 2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain) and
    [Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review).
-4. **Name owners** — Name an author of record and start the agent register. See [Pattern
+4. **Name owners** — Name an author of record and start the register, `.autonomy.yaml`. See [Pattern
    4.7](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register).
 5. **Then** continue with L1 and L2 as in Path A. Check the [Containment and governance
    block](#containment-and-governance) before each step toward unattended work.

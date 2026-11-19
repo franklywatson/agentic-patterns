@@ -422,7 +422,7 @@ document sponsor and lifecycle mechanisms for agent identities. No source measur
 
 ### Solution
 
-Name a person for every piece of agent-written code, and list every agent and agent-facing artefact in one register.
+Name a person for every piece of agent-written code, and list every agent workflow in one register.
 
 **Author of record.** The person who asks an agent for a change is its author of record. They read it, they
 answer for it, and they cannot approve it ([Pattern
@@ -433,43 +433,64 @@ for its cloud agent says the same about the person who asked for the work ([PO-2
 Record the tool in a commit trailer, such as a co-author line, so reviewers and later readers can see which
 changes an agent wrote.
 
-**Agent register.** One list of every agent, unattended workflow, skill, hook pack and MCP server in use. Each
-entry holds:
+**Agent register.** The register is `.autonomy.yaml`, the committed, schema-validated file that [Pattern
+A.1](earned-autonomy.md#pattern-a1--autonomy-register) defines. It lists every agent workflow, unattended or
+interactive, and CI checks it. The fields this pattern needs map to its keys:
 
-| Field | Meaning |
-|-------|---------|
-| Item | Name and where it lives |
-| Owner | The person who maintains it |
-| Sponsor | The person accountable for it and for renewing or retiring it ([PO-10, PO-11](references/sources.md)) |
-| Permitted actions | What it may read, write and call |
-| Access expiry | When its credentials stop working unless renewed |
-| State | Proposed, active, suspended or retired ([PO-12](references/sources.md)) |
-| Last review | Date a person last checked that it is still needed and still correct |
-| Retirement rule | What triggers removal: owner leaves, review lapses, no use for 90 days |
-| Stop | For an unattended workflow: who can halt it, how, and when the stop was last tested |
+| Field | Meaning | `.autonomy.yaml` key |
+|-------|---------|----------------------|
+| Owner | The person or team who maintains it | `owner` |
+| Sponsor | The person accountable for it and for renewing or retiring it ([PO-10, PO-11](references/sources.md)) | `sponsor` |
+| Identity | The credential it runs under | `identity` |
+| Permitted actions | What it may read, write and call | `permitted_actions`, `forbidden_actions` |
+| Access expiry | When its credentials stop working unless renewed | `access_expires` |
+| Last review | When a person next checks that it is still needed and still correct | `review_date` |
+| Retirement rule | What triggers removal | `stop_rule` |
+| Stop | Who can halt it, how, and when the stop was last tested | `stop.authority`, `stop.mechanism`, `stop.last_tested` |
 
-The register starts as a table in the repository. As the number of entries grows, move it to a
-machine-readable file (YAML or JSON) and add a CI check that fails when an entry has no owner, a review date
-is older than the review interval, or an access expiry has passed. The fields stay the same.
+Skills, hooks, plugins and MCP servers are not workflows. Each has a named owner, a source and a review date where it
+is installed: front matter on a skill file ([Pattern 0.10](L0-foundation.md#pattern-010--prune-and-re-baseline-context))
+and the pinned allowlist for hooks, plugins and servers ([Pattern
+2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)).
 
 A **tested stop** is a halt mechanism that someone has used in a drill, with a named person who can invoke it
-and a named role who approves restart. This pattern only records whether one exists and when it was last
-tested.
+and a named role who approves restart. [Pattern A.5](earned-autonomy.md#pattern-a5--tested-stop) runs the drill and
+writes `stop.last_tested`.
 
 Retirement is part of [Pattern 0.8 — Aggressive Cleanup](L0-foundation.md#pattern-08--aggressive-cleanup),
 applied to agents, skills and hooks: an item whose owner has left or whose review has lapsed is suspended,
-then removed.
+then removed. A retired workflow is deleted from `.autonomy.yaml`; the repository history keeps the entry.
 
 ### In Practice
 
-Start with a table in `docs/agents.md`:
+A register entry for a nightly dependency-update workflow, with the keys above (the full schema is in [Pattern
+A.1](earned-autonomy.md#pattern-a1--autonomy-register)):
 
-| Item | Owner | Sponsor | Permitted actions | Access expiry | State | Last review | Retirement rule | Stop |
-|------|-------|---------|-------------------|---------------|-------|-------------|-----------------|------|
-| Nightly dependency-update agent | A. Rivera | J. Chen | Push to `deps/*` branches; open PRs | 2027-03-01 | Active | 2026-11-10 | Owner leaves or no PR in 90 days | Revoke token (J. Chen); drilled 2026-10-20 |
-| `protect-paths` hook | M. Okafor | J. Chen | Block Edit and Write on protected paths | None | Active | 2026-11-10 | Review lapses | Not applicable |
+```yaml
+workflows:
+  - id: dep-bump
+    owner: team-platform
+    sponsor: "@alice"
+    granted_level: 3
+    identity: github-app:deps-bot
+    access_expires: 2027-03-01
+    permitted_actions:
+      paths: ["package.json", "package-lock.json"]
+      git: [branch, commit, open_pr]
+    forbidden_actions: [deploy, read_secrets, force_push, edit_autonomy]
+    risk: { reversible: true, verification: mechanical, blast_radius: repo,
+            trifecta: { untrusted_input: true, sensitive_data: false, external_action: false } }
+    stop:
+      mechanism: "gh workflow disable deps-bot.yml; revoke app installation token"
+      authority: ["@alice"]
+    review_date: 2027-02-01
+    stop_rule: "retire if no merged PR in 90 days"
+```
 
-At each quarterly review, confirm each entry still has a person who answers for it. Remove entries nobody claims.
+The schema requires `owner`, `sponsor` and `identity`, so `autonomy check` fails CI on an entry without them. A
+review date or access expiry that has passed lowers the workflow's effective grant to A2 ([Pattern
+A.3](earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate); [examples/autonomy](../examples/autonomy/README.md)). At each quarterly review, confirm
+each entry still has a person who answers for it. Remove entries nobody claims.
 
 For pull requests, use a template line "Requested by: <person>. Agent: <tool>." and a CI check that the commit
 trailer is present.
@@ -478,7 +499,8 @@ trailer is present.
 
 - Agent-written code that nobody is named for, merged because "the agent wrote it".
 - The requester approving their own agent's change.
-- A register that lists agents but not the skills, hooks and servers they depend on.
+- A second register (a table in a doc) beside `.autonomy.yaml`. The two drift apart, and only one is checked.
+- Skills, hooks and servers with no owner where they are installed.
 - No access expiry, so a departed owner's agent keeps its credentials.
 - Writing the register once and never reviewing it.
 
@@ -493,6 +515,8 @@ trailer is present.
 - [Pattern 2.13 — Risk-Tiered Review](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review) — requester
   cannot approve
 - [Pattern 0.8 — Aggressive Cleanup](L0-foundation.md#pattern-08--aggressive-cleanup) — retirement
+- [Pattern A.1 — Autonomy Register](earned-autonomy.md#pattern-a1--autonomy-register) — the register file and its
+  schema
 
 **Evidence:** Partial — converged open-source rule and vendor-documented mechanisms; no practice data (PO-10
 to PO-17, PO-19, PO-20, PO-31, AN-42)
@@ -618,7 +642,7 @@ Adopt this checklist for code reviews, PR reviews, and task completion verificat
   4.7](#pattern-47--author-of-record-and-agent-register))
 - [ ] High-tier changes have a second human approver ([Pattern
   2.13](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review))
-- [ ] New agents, skills and hooks have a register entry with an owner
+- [ ] New agent workflows have an entry in `.autonomy.yaml`; new skills, hooks and servers have a named owner
 
 ### Code Quality
 
@@ -647,7 +671,7 @@ L4 holds the practices that check L0-L3 and measure their impact:
 3. **Pattern 4.5 (CI Guardrails):** Non-negotiable enforcement through CI workflows
 4. **Pattern 4.6 (Context Eval):** A fixed task bank, scored by exact pass^k, gates every context or model change
 5. **Pattern 4.7 (Author of Record and Agent Register):** Name a person for agent-written code; list every agent
-   and its owner
+   workflow and its owner in `.autonomy.yaml`
 6. **Pattern 4.9 (Deliberate Practice):** Keep the skill to supervise the agent alive
 
 **The review checklist is the enforcement mechanism.** Apply it to every task, every PR, every completion.

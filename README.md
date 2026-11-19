@@ -64,7 +64,7 @@ detection, the new-starter audit and pruning of context artefacts live in L0 ([P
 
 ## How Far a Team Can Let Go
 
-The layers say whether letting go is safe. Two further scales say how far a team has got and how much one workflow may do on its own. The curve is defined in [Baseline structure](docs/references/sources.md#baseline-structure).
+The layers say whether letting go is safe. Two further scales say how far a team has got and how much one workflow may do on its own. The curve is defined in [Earned Autonomy](docs/earned-autonomy.md#the-curve-and-the-cap).
 
 **The curve (C1-C5).** A five-step curve applied separately to each of seven dimensions: C1 Individual, C2 Grounded, C3 Verified delegation, C4 Governed autonomy, C5 Self-correcting. A team has a position per dimension, not one overall score. The steps carry a C prefix so they are not confused with L0-L4.
 

@@ -13,7 +13,7 @@ Run `python3 scripts/sourcecheck.py` to confirm that every ID cited under `docs/
 | `MC-11`, `PL-5`, `SC-8`, `OM-7`, `SG-28`, `PO-10`, `IS-6`, `MV-1` | A source cited by the research baseline | [Baseline sources](#baseline-sources) |
 | `AN-27` | An Anthropic publication cited by the Anthropic guidance companion | [Anthropic sources](#anthropic-sources-an-n) |
 | `baseline 3.7`, `BL §4.5`, `IB 4.4`, `finding 2` | A section or finding of the baseline document | [Baseline structure](#baseline-structure) |
-| `BL level 4`, `baseline 4.2 level 5` | A cell of the baseline's maturity grid | [The grid](#the-grid) |
+| `BL level 4`, `baseline 4.2 level 5` | A cell of the baseline's maturity grid | [The grid](../earned-autonomy.md#the-grid) |
 | `AC` | The Anthropic guidance companion as a whole | Its citations are the `AN-n` sources |
 | `A1`-`A5` | Autonomy grants | Not sources |
 
@@ -43,37 +43,11 @@ carries one of the source IDs listed below; statements that are its own synthesi
 | 5 | Eight findings that recur across the chapters |
 | 6 | Evidence gaps (6.1) and research agenda (6.2) |
 
-### The curve
+### The curve and the grid
 
-| Level | Name | Defined by |
-|-------|------|------------|
-| C1 | Individual | People use AI as they choose. Nothing is shared or committed. |
-| C2 | Grounded | Approved tools, committed shared context, and every agent change read by a human. |
-| C3 | Verified delegation | Autonomy chosen per task. Agent changes pass automated checks before a human sees them. Skills and instructions are versioned and reviewed. Every agent change has a named owner. |
-| C4 | Governed autonomy | Agents run unattended on events, schedules or a backlog, each workflow with an owner, permitted actions, limits, an audit record and a tested stop. Controls are enforced by the system. |
-| C5 | Self-correcting | Workflows are managed as a portfolio with cost, value, risk and a review date, and some are retired. Autonomy is extended or withdrawn per workflow on evidence. Shared context is pruned as well as grown. |
-
-The curve is C1-C5, which keeps it distinct from this repository's L0-L4.
-
-**The cap rule (baseline 3.5, the baseline's own inference).** The lowest of platform, security and
-governance, production ownership and measuring value limits how much autonomy can safely be granted. A team
-at level 4 on its operating model and level 2 on ownership is treated as level 2 for unattended work.
-
-**The defensible top (baseline 3.7).** "The ability to raise autonomy for a named workflow when evidence
-supports it, show that evidence, and lower it again", with some workflows running unattended because
-verification is mechanical and the action reversible (MC-21). It is not "most agents" or "no humans".
-
-### The grid
-
-| Dimension | C1 | C2 | C3 | C4 | C5 |
-|-----------|----|----|----|----|----|
-| Platform (4.1) | Personal keys; agents cannot be listed | Agents and keys listed and mapped to teams | Agent identity from a template; one gateway; a check command CI runs | Isolation by default; delegated actions audited; loop alerts | Contribution path for tools and skills; vendor change touches configuration only |
-| Shared context (4.2) | Knowledge in heads and chats | Instruction files committed, often long and untested | Short, owned, tested files; hard rules in hooks | Governed connectors; permissions enforced at query time | Layered, owned, expiring; re-baselined when models change |
-| Team operating model (4.3) | Private use; no stated stance | Written stance; one human review per PR | Conventions as checks; automated plus human review | Review depth by risk; sandboxed loops; agent first-pass on incidents | Unattended work routine; process retired when its gap closes |
-| Security and governance (4.4) | Unvetted tools; broad access | Policy written; nearly every prompt approved | Sandboxed, scoped, vetted; agent PRs pass the same gates | Autonomy tiers; risky combinations gated; deterministic policy | Controls tested against adaptive attacks; tiers change with evidence |
-| Production ownership (4.5) | Nobody can list or stop agents | Inventory with individual owners | Sponsor per agent; expiring access; human author of record | Changes eval-gated and versioned; stop and restore authority assigned | Automatic handover and retirement; shared tooling owned as a product |
-| Individual and team skill (4.6) | Habit; nobody can say how output is checked | Engineers state what they hand over | Output checked against specs and tests; debugging practised; reviewed skills shared | Work broken down for unattended agents; supervision by outcome and exception; failure drills | Pruning, protected practice, autonomy raised only with feedback loops |
-| Measuring value (4.7) | Counting use | Measuring speed | Flow and stability against a baseline | Task banks, leading indicators, maintained configuration | Baseline, target, review date and stop rule per investment |
+The baseline's curve (C1 to C5), its grid of seven dimensions and the cap rule (section 3.5) and its defensible top
+(section 3.7) are defined in [Earned Autonomy](../earned-autonomy.md#the-curve-and-the-cap). A citation such as
+`BL level 4` or `baseline 4.2 level 5` names a cell of [that grid](../earned-autonomy.md#the-grid).
 
 ### Findings
 
