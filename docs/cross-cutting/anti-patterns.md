@@ -406,8 +406,9 @@ echo "Prefer the Edit tool for protected files" >&2
 exit 0
 
 # PreToolUse block on a structured argument (Edit tool, file_path).
+# Fail closed: exit 2 if the path cannot be parsed. Match absolute paths.
 case "$path" in
-  .github/workflows/*) echo "Blocked: protected path" >&2; exit 2 ;;
+  */.github/workflows/*) echo "Blocked: protected path" >&2; exit 2 ;;
 esac
 ```
 

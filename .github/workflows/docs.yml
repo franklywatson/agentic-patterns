@@ -75,29 +75,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check all docs are reachable from AGENTS.md
-        run: |
-          # Collect all markdown files in docs/
-          all_docs=$(find docs -name '*.md' | sort)
+      - name: Check all docs are reachable from AGENTS.md by following links
+        run: python3 scripts/check-doc-reachability.py .
 
-          # Collect all files referenced from AGENTS.md (@ syntax and markdown links)
-          referenced=$(grep -oP '(?:@|]\()\.?/?docs/[^)\s]+\.md' AGENTS.md | sed 's/^@//' | sed 's/^](//' | sed 's/^(//' | sort -u)
+  source-ids:
+    name: Source IDs Resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-          orphans=0
-          for doc in $all_docs; do
-            # Normalize path (strip leading ./)
-            doc_clean="${doc#./}"
-            if ! echo "$referenced" | grep -qF "$doc_clean"; then
-              echo "::warning file=$doc_clean::Orphaned doc: $doc_clean is not referenced from AGENTS.md"
-              orphans=$((orphans + 1))
-            fi
-          done
-
-          if [ "$orphans" -gt 0 ]; then
-            echo "$orphans orphaned doc(s) found. All docs should be reachable from AGENTS.md."
-            echo "This is a warning, not a failure - add links to AGENTS.md or delete orphaned files."
-          fi
-          echo "Reachability check complete."
+      - name: Check every cited source ID has a row in docs/references/sources.md
+        run: python3 scripts/sourcecheck.py .
 
   writing-conventions:
     name: Writing Conventions

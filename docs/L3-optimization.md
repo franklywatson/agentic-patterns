@@ -69,6 +69,8 @@ Cross-References:
 - [L2: Hook Automation](L2-behavioral-guardrails.md#pattern-23--hook-automation) for how pre-execution hooks work
 - [L4: Context Eval](L4-standards-measurement.md#pattern-46--context-eval) for scoring routing decisions against expected outcomes
 
+**Evidence:** Thin — token savings come from tool documentation and are unmeasured here; measurement guidance cautions against them (MV-1, MV-20)
+
 ---
 
 ## Pattern 3.2 — Context Isolation (Scout)
@@ -98,6 +100,8 @@ Cross-References:
 - [Further reading: WISC](references/further-reading.md)
 - [WISC video](https://youtu.be/gyo0eRgsUWk) and [WISC repository](https://github.com/coleam00/context-engineering-intro/tree/main/use-cases/ai-coding-wisc-framework)
 
+**Evidence:** Partial — vendor guidance on isolating exploration in sub-agents; no measured comparison (SC-1, OM-8)
+
 ---
 
 ## Pattern 3.3 — Environment-Aware Routing and Session Lifecycle
@@ -105,6 +109,8 @@ Cross-References:
 Routing should depend on which tools exist: an indexed repository can use symbol search, and a machine without the indexer should fall back to the Grep tool. Detect available tools once per session, cache the result, and degrade to the native tool when a specialized one is missing.
 
 This guide does not reproduce the detection and caching code. The reference implementations are in the [rig](https://github.com/franklywatson/claude-rig) repository: [`src/router`](https://github.com/franklywatson/claude-rig/tree/main/src/router) for environment-aware resolution and [`src/session`](https://github.com/franklywatson/claude-rig/tree/main/src/session) for session-start detection and caching. rig is by this repository's author.
+
+**Evidence:** Thin — design from rig (first-party, n=1); no study of detection caching
 
 ---
 
@@ -145,6 +151,8 @@ Cross-References:
 
 - [Pattern 0.2 — Progressive Disclosure](L0-foundation.md#pattern-02--progressive-disclosure)
 - [Pattern 3.2 — Context Isolation](#pattern-32--context-isolation-scout)
+
+**Evidence:** Thin — reasoned trade-off; no source compares multi-repo with monorepo for agents
 
 ---
 

@@ -1,5 +1,7 @@
 # Further Reading
 
+The sources cited by the evidence labels on each pattern are listed in [sources.md](sources.md).
+
 ## Articles
 
 ### Your codebase is NOT ready for AI (here's how to fix it)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that every reference ID cited in docs/ resolves in docs/references/sources.md.
 
-Usage: python3 docs/refresh/tools/sourcecheck.py [repo_root]
+Usage: python3 scripts/sourcecheck.py [repo_root]
 Exits 1 and lists the IDs if any cited ID has no row in sources.md.
 """
 import re

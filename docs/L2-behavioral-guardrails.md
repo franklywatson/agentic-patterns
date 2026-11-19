@@ -1,6 +1,6 @@
 # L2: Behavioral Guardrails
 
-Prose is guidance. Hooks are deterministic policy within the harness. Containment and credentials are the boundary. Put each rule at the lowest layer that can hold it:
+Prose is guidance. Hooks are deterministic policy within the harness. Containment and credentials are the boundary. Put each rule at the weakest enforcement point that can hold it:
 
 - What must never happen is prevented by the sandbox, credential scope, or downstream authorisation.
 - What must always happen runs as a hook and a required CI check.
@@ -22,9 +22,9 @@ reference implementation. Hook syntax in this document follows Claude Code; each
 
 ## Overview
 
-L2 decides where each rule is held. A rule is as strong as its weakest enforcement point and no stronger. The layers, from weakest to strongest:
+L2 decides where each rule is held. A rule is as strong as its weakest enforcement point and no stronger. The enforcement points, from weakest to strongest:
 
-| Layer | Mechanism | Holds | Can the agent bypass it? |
+| Enforcement point | Mechanism | Holds | Can the agent bypass it? |
 |-------|-----------|-------|--------------------------|
 | Prompt | CLAUDE.md / AGENTS.md, skills | Conventions, preferences, procedure | Yes. The model may not follow it |
 | Hook | PreToolUse and PostToolUse scripts | Policy that matches structured tool arguments | Often. Hooks match tool calls, not what a permitted tool does once running, and project hook files are usually editable by the agent |
@@ -34,12 +34,12 @@ L2 decides where each rule is held. A rule is as strong as its weakest enforceme
 
 A sandbox with credentials kept outside it makes hooks such as "block `sed -i`" or "block `docker system
 prune`" unnecessary as safety controls. They remain useful as ergonomic nudges
-([AN-9, SG-10](references/sources.md)). Sandbox and credential setup is outside the scope of this document.
+([AN-9, PL-15](references/sources.md)). Sandbox and credential setup is outside the scope of this document.
 
 The mechanisms in this document:
 
-- **Skills**: overlay patterns that extend base agent capabilities with project-specific rules (prompt layer)
-- **Hooks**: scripts that fire around tool calls (hook layer)
+- **Skills**: overlay patterns that extend base agent capabilities with project-specific rules (prompt enforcement point)
+- **Hooks**: scripts that fire around tool calls (hook enforcement point)
 - **Constitutional rules**: the hard rules, each with a named enforcement point
 - **Zero-defect tolerance**: the discipline that keeps feedback unambiguous
 - **Skill chain and phase tracking**: optional workflow ceremony, scaled to risk
@@ -52,7 +52,7 @@ The mechanisms in this document:
 
 ### Problem
 
-Claude Code provides base capabilities through skills like `brainstorming` and `test-driven-development`. Production projects need project-specific constraints layered on top of these generic capabilities. Writing all constraints inline in prompts is verbose and inconsistent.
+Skill frameworks such as [superpowers](https://github.com/obra/superpowers) provide base capabilities through skills like `brainstorming` and `test-driven-development`; Claude Code itself provides the skill mechanism, not those skills. Production projects need project-specific constraints layered on top of these generic capabilities. Writing all constraints inline in prompts is verbose and inconsistent.
 
 ### Solution
 
@@ -75,7 +75,7 @@ A skill is a markdown file that declares:
 - **Integration points**: what other skills compose with this
 - **Checklist**: steps the agent follows when using the skill
 
-A skill is prompt-layer material. It raises the probability that the agent follows a rule; it does not
+A skill is prompt-level material. It raises the probability that the agent follows a rule; it does not
 guarantee it. A rule that must hold on every change needs a hook or CI check behind it, and the skill states
 which one. Keep skills short: a skill that restates rules already enforced elsewhere adds context cost without
 adding enforcement.
@@ -100,6 +100,8 @@ Copying the same rules into every prompt. This creates drift: prompts get update
 
 - [Pattern 0.4 — Agent instruction file as project constitution](L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution) — instruction file as rule source
 - [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — enforcement point per rule
+
+**Evidence:** Thin — overlay design from superpowers and rig use (first-party, n=1); inspect third-party skills before adopting (IS-13)
 
 ---
 
@@ -176,6 +178,8 @@ in bulk. The opposite failure is shipping without verification evidence or revie
 
 The [rig](https://github.com/franklywatson/claude-rig) repo implements the chain as skills, with a phase tracker; see its `src/skills/` directory.
 
+**Evidence:** Thin — the chain is a design from trading-bot and rig use; no comparison against unchained work (first-party, n=1)
+
 ---
 
 ## Pattern 2.3 — Hook Automation
@@ -186,7 +190,7 @@ Agents drop rules when context shifts or prompts get complex. Instructions writt
 
 ### Solution
 
-Hooks are scripts the harness runs before or after a tool call. They apply policy through the tool layer, independent of prompt content. Claude Code documents the hook events and their exit-code contract ([SG-11](references/sources.md)).
+Hooks are scripts the harness runs before or after a tool call. They apply policy at the tool-call boundary, independent of prompt content. Claude Code documents the hook events and their exit-code contract ([SG-11](references/sources.md)).
 
 **Contract:** a hook receives the tool name and arguments, and returns allow, advise or block. Two timing
 classes differ in what they can do:
@@ -230,14 +234,19 @@ hook fires
 ### In Practice
 
 A PreToolUse hook that blocks an Edit to a protected path (Claude Code binding, shell hook reading JSON on
-stdin and exiting with code 2 to block):
+stdin and exiting with code 2 to block). Claude Code passes absolute paths, so the patterns match `*/` prefixes:
 
 ```bash
 #!/usr/bin/env bash
-# PreToolUse hook for the Edit and Write tools.
-path=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["tool_input"]["file_path"])')
+# PreToolUse hook for the Edit and Write tools. Fails closed: input it cannot parse blocks the call.
+set -euo pipefail
+if ! path=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["tool_input"]["file_path"])' 2>/dev/null) \
+    || [ -z "$path" ]; then
+  echo "Blocked: could not read tool_input.file_path." >&2
+  exit 2
+fi
 case "$path" in
-  .github/workflows/*|.claude/settings*.json)
+  */.github/workflows/*|*/.claude/settings*.json)
     echo "Blocked: $path is protected policy. Ask a human to change it." >&2
     exit 2 ;;
 esac
@@ -248,9 +257,13 @@ A PostToolUse hook is a record, not a gate:
 
 ```bash
 #!/usr/bin/env bash
-# PostToolUse hook: append an audit line after every Edit or Write.
-python3 -c 'import json,sys,time; d=json.load(sys.stdin); print(json.dumps({"t":time.time(),"tool":d["tool_name"],"input":d["tool_input"]}))' \
-  >> .audit/tool-calls.jsonl
+# PostToolUse hook: append an audit line (time, tool name, path) after every Edit or Write.
+# The log lives outside the working tree so it is never committed and the agent's edits do not touch it.
+set -euo pipefail
+audit_dir="${HOME}/.local/state/agent-audit"
+mkdir -p "$audit_dir"
+python3 -c 'import json,sys,time; d=json.load(sys.stdin); print(json.dumps({"t":time.time(),"tool":d["tool_name"],"path":d["tool_input"].get("file_path")}))' \
+  >> "$audit_dir/tool-calls.jsonl"
 exit 0
 ```
 
@@ -264,7 +277,7 @@ exit 0
 
 ### Cross-References
 
-- [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — which layer holds which rule
+- [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — which enforcement point holds which rule
 - [Pattern 2.6 — Enforcement Pipeline Composition](#pattern-26--enforcement-pipeline-composition) — composing checks
 - [L3: Optimization](L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits) — hooks used as ergonomic routing nudges
 - [examples/guardrails](../examples/guardrails/) — hook-adjacent middleware example
@@ -272,6 +285,8 @@ exit 0
 ### Reference Implementation
 
 The [rig](https://github.com/franklywatson/claude-rig) repo implements composable hooks in `src/enforcement/`.
+
+**Evidence:** Strong — several organisations hold must-hold rules in deterministic checks rather than prose; a hook is deterministic but runs inside the agent's environment (OM-7, OM-12, OM-18, SG-11, SG-16, SC-8)
 
 ---
 
@@ -285,7 +300,7 @@ Projects have rules that define their approach. When these rules are scattered a
 
 Constitutional rules are the hard rules declared in the instruction file (CLAUDE.md or AGENTS.md). **Each rule
 names its enforcement point**, and a rule is only as absolute as its weakest enforcement point. The points,
-from [the layers above](#overview): prompt, hook, CI, sandbox, downstream.
+from [the table above](#overview): prompt, hook, CI, sandbox, downstream.
 
 **Example rules and their enforcement points:**
 
@@ -334,7 +349,9 @@ tells a reviewer where to look.
 
 ### Reference Implementation
 
-The [rig](https://github.com/franklywatson/claude-rig) repo implements a constitutional check in `src/enforcement/checks/constitutional.ts`; it detects mock patterns in edited files by regex, so it is a hook-layer check and inherits the limits listed in [Pattern 2.3](#pattern-23--hook-automation).
+The [rig](https://github.com/franklywatson/claude-rig) repo implements a constitutional check in `src/enforcement/checks/constitutional.ts`; it detects mock patterns in edited files by regex, so it is a hook-level check and inherits the limits listed in [Pattern 2.3](#pattern-23--hook-automation).
+
+**Evidence:** Partial — enforcing hard rules in deterministic checks has independent support (see Pattern 2.3); whether a declared rule list improves behaviour is contested; the rule list itself is a project choice (SC-4, SC-5, SC-11)
 
 ---
 
@@ -404,6 +421,8 @@ Classifying errors as "relevant" or "irrelevant" without evidence. Unless you ca
 
 The [rig](https://github.com/franklywatson/claude-rig) repo parses test-runner output for failures and warnings in `src/enforcement/checks/zero-defect.ts`.
 
+**Evidence:** Partial — agents declare success on failing tests; the rest is a mechanism argument that agents cannot tell tolerated from real failures (IS-14, IS-15)
+
 ---
 
 ## Pattern 2.6 — Enforcement Pipeline Composition
@@ -461,6 +480,8 @@ For the implementation, see the reference below.
 
 The [rig](https://github.com/franklywatson/claude-rig) repo implements the pipeline in `src/enforcement/` with an orchestrator, `handlePostToolUse`, that resolves severity. Its code is not reproduced here.
 
+**Evidence:** Thin — composition design from rig (first-party, n=1); the hook exit-code contract it builds on is documented (SG-11)
+
 ---
 
 ## Pattern 2.7 — Phase Transition Validation
@@ -515,6 +536,8 @@ For the implementation, see the reference below.
 
 The [rig](https://github.com/franklywatson/claude-rig) repo implements a phase tracker in `src/skills/phase-tracker.ts` with transition validation, query methods and reset. Its code is not reproduced here.
 
+**Evidence:** Thin — state-machine design from rig (first-party, n=1); no study of phase enforcement
+
 ---
 
 ## Pattern 2.8 — Compound Engineering
@@ -567,8 +590,8 @@ The [compound-engineering](https://github.com/EveryInc/compound-engineering-plug
 | L0 | Clean structure, current docs | [Pattern 0.8 — Aggressive Cleanup](L0-foundation.md#pattern-08--aggressive-cleanup) removes noise each session |
 | L1 | Test coverage, verification infrastructure | Stack tests accumulate; each new test catches regressions permanently |
 | L2 | Constitutional rules, skills, learnings | Each review that catches a novel violation adds a rule with an enforcement point |
-| L3 | Codebase index, routing rules | Session caching carries detection forward |
-| L4 | Metrics, drift corrections | Measurement creates a tightening feedback loop |
+| L3 | Routing table and tool detection | See [Pattern 3.3](L3-optimization.md#pattern-33--environment-aware-routing-and-session-lifecycle) |
+| L4 | Metrics, evidence | Measurement creates a tightening feedback loop |
 
 ### Anti-Pattern
 
@@ -587,11 +610,13 @@ The [compound-engineering](https://github.com/EveryInc/compound-engineering-plug
 
 The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin provides `/ce:compound`. The [rig](https://github.com/franklywatson/claude-rig) framework implements the brainstorm, plan, work and review portion of the loop.
 
+**Evidence:** Thin — vendor plugin claim, including the 80/20 split; a flywheel must remove as well as add (IS-13)
+
 ---
 
 ## Summary
 
-Put each rule at the lowest layer that can hold it. Prose carries guidance. Hooks apply deterministic policy
+Put each rule at the weakest enforcement point that can hold it. Prose carries guidance. Hooks apply deterministic policy
 inside the harness: PreToolUse can prevent a structured violation, PostToolUse detects after the fact. CI holds
 invariants on the merge path. The sandbox, credential scope and downstream authorisation hold what must never
 happen. Skills overlay project rules on base capabilities; the skill chain and phase tracker are optional and
