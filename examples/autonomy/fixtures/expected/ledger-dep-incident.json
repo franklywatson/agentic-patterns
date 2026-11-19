@@ -49,7 +49,7 @@
       "pass": false
     },
     {
-      "id": "cost-per-merged-outcome",
+      "id": "cost-per-merged-change",
       "required": "reported",
       "actual": 0.95,
       "pass": true

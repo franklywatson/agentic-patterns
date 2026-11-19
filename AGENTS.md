@@ -100,7 +100,8 @@ Pattern numbers are stable identifiers and are not contiguous.
 
 **L3 Optimization (optional):**
 
-- [docs/L3-optimization.md](docs/L3-optimization.md) — Token efficiency, tool routing, context isolation, model, effort and cost per task
+- [docs/L3-optimization.md](docs/L3-optimization.md) — Token efficiency, tool routing, context isolation, model,
+  effort and cost per task
 - [examples/guardrails/README.md](examples/guardrails/README.md) — Token-optimization middleware (TypeScript)
 
 **L4 Standards and Measurement:**

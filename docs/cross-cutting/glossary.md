@@ -5,8 +5,6 @@ Terms used across the library, in alphabetical order. Each entry links to the do
 The [scales table](../../README.md#how-the-scales-fit-together) separates layer, enforcement point, review tier and
 grant.
 
-**Agent Skills** — An open format for packaged agent instructions in a `SKILL.md` file, read by several harnesses. Skills are prompt-level and guarantee nothing ([Pattern 0.11](../L0-foundation.md#pattern-011--portable-agent-instructions)).
-
 **Anti-Masking Scan** — A text scan of a repair diff for code that hides an error instead of fixing it, such as a
 new catch, a retry or a longer timeout. A flagged change is reclassified as a mitigation. See
 [Pattern 1.9](../L1-patterns/1.9-repair-loop-frozen-oracle.md).
@@ -25,7 +23,9 @@ unattended. See [Pattern A.6](../earned-autonomy.md#pattern-a6--enforcement-thro
 cross-service contract, B3 money, auth, PII or audit. An unknown change is B3. See
 [Pattern 1.8](../L1-patterns/1.8-reversibility-blast-radius.md).
 
-**Brief** — The written task a subagent receives: goal, constraints, files to read first, exact values, definition of done and report path, passed by file path ([Pattern 2.14](../L2-behavioral-guardrails.md#pattern-214--delegating-to-subagents)).
+**Brief** — The written task a subagent receives: goal, constraints, files to read first, exact values, definition
+of done and report path, passed as a file path. See
+[Pattern 2.14](../L2-behavioral-guardrails.md#pattern-214--delegating-to-subagents).
 
 **Cap** — The lowest curve position among the four dimensions that limit unattended work: platform, security and
 governance, production ownership and measuring value. The census of one repository computes it, and no grant may
@@ -78,7 +78,9 @@ Deterministic checks score pass^k with no partial credit; judged tasks use a rub
 **Context Isolation** — Delegating exploration to a subagent that returns a short map, so search output stays out
 of the main session. See [Pattern 3.2](../L3-optimization.md#pattern-32--context-isolation-scout).
 
-**Cost per Merged Change** — Spend on agent runs divided by changes that merged, the cost metric that counts rework; tokens per session do not ([Pattern 3.5](../L3-optimization.md#pattern-35--model-effort-and-cost-per-task)).
+**Cost per Merged Change** — A workflow's agent spend over a period divided by its merged changes; failed and
+retried runs count. A5 reports it. See
+[Pattern 4.4](../L4-standards-measurement.md#pattern-44--agentic-development-metrics).
 
 **Curve (C1-C5)** — A five-step scale applied to each of seven dimensions of one repository: C1 Individual, C2 Grounded,
 C3 Verified delegation, C4 Governed autonomy, C5 Self-correcting. A repository's place on one dimension is its position.
@@ -95,7 +97,8 @@ translating them for the target project. See
 (overdue stop test, passed review date, expired access, stale or missing census profile), the harness gate and any
 demotion override. See [Pattern A.3](../earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate).
 
-**Effort Level** — The harness setting for how much reasoning a model spends per step. Choose it per task type and verify the choice on the task bank ([Pattern 3.5](../L3-optimization.md#pattern-35--model-effort-and-cost-per-task)).
+**Effort Level** — The harness setting for how much reasoning a model spends per step, set per task type and
+checked on the task bank. See [Pattern 3.5](../L3-optimization.md#pattern-35--model-effort-and-cost-per-task).
 
 **Enforcement Point** — Where a rule holds: prompt, hook, CI, sandbox or downstream authorization. Enforcement
 points stack. Prose is guidance, command hooks are deterministic policy inside the harness, and containment and
@@ -149,7 +152,9 @@ runs after it and can only report. Hooks are not a security boundary. See
 line numbers, so a recurrence after a repair is detected. See
 [Pattern 1.7](../L1-patterns/1.7-incident-to-stack-test.md).
 
-**Independent Reviewer** — A reviewer that sees the diff and the brief but not the implementer's reasoning, with a fresh one each round ([Pattern 2.14](../L2-behavioral-guardrails.md#pattern-214--delegating-to-subagents)).
+**Independent Reviewer** — A reviewer that sees the diff and the brief but not the implementer's reasoning, new
+each round. Its findings never count as approval. See
+[Pattern 2.14](../L2-behavioral-guardrails.md#pattern-214--delegating-to-subagents).
 
 **Invariant** — A rule that holds regardless of the model, enforced by a command hook, deny rule, sandbox setting or
 required CI check. Re-baselining does not remove it. See
@@ -222,11 +227,15 @@ model](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model).
 lowest grant that may merge it with no person. See
 [Pattern 1.8](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model).
 
-**Run Record** — The per-run record of workflow, grant, session, identity, model, tool calls and denials, files changed, cost and who merged ([Pattern 4.10](../L4-standards-measurement.md#pattern-410--observability-of-agent-runs)).
+**Run Record** — The fields kept per agent run (workflow, grant, session, identity, model, tool calls and denials,
+files changed, cost, outcome and merger), each in a store the agent cannot edit. See
+[Pattern 4.10](../L4-standards-measurement.md#pattern-410--observability-of-agent-runs).
 
 **Skill** — A prompt-level instruction file the agent loads when relevant. A skill shapes behavior and guarantees
 nothing. A skill overlay adds project rules to a base skill. See
-[Pattern 2.1](../L2-behavioral-guardrails.md#pattern-21--skill-overlay-architecture).
+[Pattern 2.1](../L2-behavioral-guardrails.md#pattern-21--skill-overlay-architecture). Several harnesses read the
+open Agent Skills `SKILL.md` format, from different directories
+([Pattern 0.11](../L0-foundation.md#pattern-011--portable-agent-instructions)).
 
 **Skill Chain** — An optional sequence of skills (brain+, plan+, tdd+, verify+, review+) whose ceremony scales with
 the change's risk. See [Pattern 2.1](../L2-behavioral-guardrails.md#pattern-21--skill-overlay-architecture).

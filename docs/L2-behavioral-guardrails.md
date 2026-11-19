@@ -522,11 +522,13 @@ model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) lists for its g
 
 ### Bindings
 
-**Claude Code** does not issue identities. A launcher script or CI job mints the short-lived token, passes it to
-the session at start, and keeps long-lived keys out (`sandbox.credentials` in [Pattern
-2.9](#pattern-29--contain-before-you-relax)). Put the `Co-Authored-By:` trailer rule ([Pattern
-4.7](L4-standards-measurement.md#pattern-47--author-of-record)) in the instruction file. The model may omit it, and no
-job in this library checks for it, so a commit without it under a person identity passes `autonomy check` as human.
+**Claude Code** does not issue identities. Hook input names a subagent by `agent_id` and `agent_type`
+([hooks](https://code.claude.com/docs/en/hooks)); the example autonomy hook does not record them. A launcher script
+or CI job mints the short-lived token, passes it to the session at start, and keeps long-lived keys out
+(`sandbox.credentials` in [Pattern 2.9](#pattern-29--contain-before-you-relax)). Put the `Co-Authored-By:` trailer
+rule ([Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record)) in the instruction file. The model
+may omit it, and no job in this library checks for it, so a commit without it under a person identity passes
+`autonomy check` as human.
 
 A Claude Code cloud scheduled task acts through its owner's connected GitHub identity and connectors: its commits
 and pull requests carry the owner's GitHub user, on `claude/`-prefixed branches
@@ -702,48 +704,44 @@ of the required reviewers; this library does not (SG-9, SG-26, OM-18, PO-20, PL-
 
 ## Pattern 2.14 — Delegating to Subagents
 
-For whoever runs an agent that hands work to subagents: a written brief, a boundary and a check for each one, so
-parallel work stays consistent and no subagent's report reaches a pull request unverified.
-
 ### Problem
 
-A subagent starts with a fresh context, the delegation prompt and, unless it is Explore, Plan or set to
-`omitClaudeMd`, the CLAUDE.md files ([subagents](https://code.claude.com/docs/en/sub-agents)). Given vague tasks, Anthropic's research
-subagents duplicated work, left gaps and misread the task ([AN-60](references/sources.md)). A study of over 1,600
-multi-agent traces finds failures of design, coordination and verification, with verifiers that check only whether
-code compiles ([OM-60](references/sources.md)). Parallel writers make conflicting implicit decisions
-([OM-61](references/sources.md)); agents report failing tests as passing ([IS-15](references/sources.md)).
+A subagent starts with a fresh context, the delegation prompt and the CLAUDE.md files; Explore, Plan and an
+`omitClaudeMd` definition skip the project ones ([AN-78](references/sources.md)). Given vague tasks, Anthropic's
+research subagents duplicated work, left gaps and misread the task ([AN-60](references/sources.md)). A study of over
+1,600 multi-agent traces finds failures of design, coordination and verification, and many verifiers that make only
+superficial checks, such as whether the code compiles ([OM-60](references/sources.md)). Cognition reports that
+parallel writers make conflicting implicit decisions ([OM-61](references/sources.md)); agents report failing tests
+as passing ([IS-15](references/sources.md)).
 
 ### Solution
-
-The parent briefs, dispatches and verifies.
 
 1. **A brief in a file.** Goal, constraints, files and docs to read first, values to use verbatim, the definition of
    done as commands, and the report format and path. Pass the path, so a reviewer or retry reads the same brief.
    Anthropic's lead agent gives each subagent an objective, an output format, tool guidance and boundaries (AN-60).
 2. **One writer per file set.** Each parallel implementer gets its own worktree ([Pattern
-   0.6](L0-foundation.md#pattern-06--git-worktree-based-development)) and files no other subagent touches; two
-   writers on one file overwrite each other ([agent teams](https://code.claude.com/docs/en/agent-teams)). Work with
+   0.6](L0-foundation.md#pattern-06--git-worktree-based-development)) and files no other subagent touches. Work with
    many dependencies stays sequential (AN-60, OM-61).
 3. **An independent reviewer.** It gets the diff, the brief and earlier findings with their resolutions, never the
    implementer's reasoning: a fresh reviewer helps because it has not seen that reasoning
    ([AN-3](references/sources.md)). A new reviewer each round is this library's choice, so none defends its last
-   verdict. After three rounds, rethink the approach, as Anthropic's review loop does ([AN-29](references/sources.md)).
+   verdict. After three rounds, rethink the approach, as Anthropic's review loop does
+   ([AN-29](references/sources.md)). Run the reviewer on a large model class at high effort: its misses fail no
+   check ([Pattern 3.5](L3-optimization.md#pattern-35--model-effort-and-cost-per-task)). Its findings never count as
+   approval ([Pattern 2.13](#pattern-213--risk-tiered-review)).
 4. **Verify, do not relay.** The parent checks each claim it passes on against code and command output ([Pattern
-   4.1](L4-standards-measurement.md#pattern-41--evidence-based-claims)). Example: a reader subagent reported that
-   CLAUDE.md rules do not reach some subagents; the subagents page says only Explore, Plan and definitions with
-   `omitClaudeMd` skip them. Relayed unchecked, that is a false product fact in a doc.
+   4.1](L4-standards-measurement.md#pattern-41--evidence-based-claims)). A subagent's report is input, not
+   instructions ([threat model](cross-cutting/threat-model.md)).
 5. **No hypothesis to confirm.** Ask "why does the session exit after one message?", not "confirm the timeout
-   causes it". Models shift answers toward a user's stated view ([AN-61](references/sources.md)); to test a theory,
-   ask a subagent to disprove it.
-6. **The parent's grant, cap and review tier.** A subagent never acts above the dispatching workflow's grant or the
-   cap ([The Grants](earned-autonomy.md#the-grants)), and its commits carry the author of record and agent trailer
-   ([Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record)). Low and medium tier get one review
-   subagent; high tier gets an independent review subagent plus a person who reads the diff and the findings. Review
-   subagents never approve; the approvals in [Pattern 2.13](#pattern-213--risk-tiered-review) still apply.
-7. **A budget and stop conditions.** Turns, review rounds and spend, and when to stop: done, budget spent, the same
-   failure twice, or a question only a person can answer. A stopped subagent reports what is open instead of
-   widening its scope ([Pattern 1.11](L1-patterns/1.11-repair-budget-circuit-breaker-stop.md)).
+   causes it". Assistants shift answers toward a user's stated view ([AN-61](references/sources.md)); to test a
+   theory, ask a subagent to disprove it.
+6. **The parent's grant and cap.** A subagent acts under the dispatching workflow's grant, never above the cap
+   ([The Grants](earned-autonomy.md#the-grants)), and its commits carry the author of record and agent trailer
+   ([Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record)). This library's design; nothing tests
+   or enforces it today (Bindings).
+7. **A budget and stop conditions.** Turns, review rounds and spend; stop on done, budget spent, the same failure
+   twice or a question only a person can answer, and report what is open ([Pattern
+   1.11](L1-patterns/1.11-repair-budget-circuit-breaker-stop.md)).
 
 ### In Practice
 
@@ -760,27 +758,29 @@ Report: .briefs/reports/rate-limiter-2.md, under 30 lines: files changed, comman
 
 **Claude Code.** A definition in `.claude/agents/` sets `tools` (a reviewer with `Read, Grep, Glob` cannot edit),
 `isolation: worktree` (branched by default from the default branch, not the parent's `HEAD`) and `maxTurns`
-([subagents](https://code.claude.com/docs/en/sub-agents)). A fork inherits the parent conversation, so it is never
-the reviewer. A subagent runs in `bypassPermissions` only when the parent does, but a definition can set
-`acceptEdits` under a parent in default mode, so review definitions as medium-tier files. Settings hooks fire on
-subagent tool calls ([hooks](https://code.claude.com/docs/en/hooks)), and the example autonomy hook reads the
-workflow from `AUTONOMY_WORKFLOW`, so it holds a subagent to the parent's grant ([Pattern
-A.6](earned-autonomy.md#pattern-a6--enforcement-through-hooks)). `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` turns off
-nesting. Claude Code issues subagents no identity ([Pattern 2.11](#pattern-211--agent-identity-and-delegation)).
-The brief, file ownership, verification and the no-hypothesis rule are prompt only; nothing enforces them.
+([AN-78](references/sources.md)). A subagent runs in `bypassPermissions` only when the parent does, but a definition
+can set `acceptEdits` under a parent in default mode. `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` turns off nesting.
+Claude Code issues subagents no credentials of their own; hook input names one by `agent_id` and `agent_type`
+([Pattern 2.11](#pattern-211--agent-identity-and-delegation)).
+
+Settings hooks fire on subagent tool calls ([hooks](https://code.claude.com/docs/en/hooks)), so the example hook
+applies the parent's `AUTONOMY_WORKFLOW` grant to them ([Pattern
+A.6](earned-autonomy.md#pattern-a6--enforcement-through-hooks)), untested: the eval suite checks only that spawning
+is allowed, and the hook reads branch and diff from `CLAUDE_PROJECT_DIR`, not an `isolation: worktree` checkout. The
+subagent definition (`tools`, `permissionMode`), a hook eval scenario run from a subagent's worktree or a required
+CI check could enforce rule 6. The brief, file ownership, verification and the no-hypothesis rule are prompt only.
 
 **No harness: CI only.** One job and branch per implementer; the review job gets the diff and brief, not their logs.
 
 ### Anti-Pattern
 
 - The parent's conversation, or a summary of it, pasted as the brief.
-- Parallel writers sharing files or one checkout.
 - A reviewer forked from the implementer, or kept across rounds.
 - "All tests pass" copied from a subagent report into a pull request.
 
 **Evidence:** Partial — consistent vendor guidance, one failure taxonomy of multi-agent traces and practitioner
 reports; nothing measures briefs by path against pasted prompts, and a fresh reviewer per round is this library's
-design (AN-60, AN-3, AN-29, AN-61, OM-60, OM-61, IS-15)
+design (AN-60, AN-3, AN-29, AN-61, AN-78, OM-60, OM-61, IS-15)
 
 ---
 
