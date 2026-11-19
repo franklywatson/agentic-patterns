@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -12,25 +13,41 @@ from autonomy.util import age_days, git, inside_dir, parse_time, read_json_if_ex
 # Locked files: never changed by an agent commit, no relief.
 LOCKED_FILES = [
     re.compile(r"^\.autonomy"),
-    re.compile(r"(^|/)codeowners$"),
-    re.compile(r"^\.claude/settings[^/]*\.json$"),
+    re.compile(r"(^|/)codeowners\Z"),
+    re.compile(r"^\.claude/settings[^/]*\.json\Z"),
     re.compile(r"^\.claude/hooks/"),
-    re.compile(r"^\.harness\.yaml$"),
+    re.compile(r"^\.harness\.yaml\Z"),
 ]
 # Workflow files: changed by an agent commit only when a later non-agent commit acknowledges it.
-WORKFLOW_FILES = [re.compile(r"^\.github/workflows/")]
+WORKFLOW_FILES = [re.compile(r"^\.github/workflows/"), re.compile(r"^\.github/actions/")]
 
 ACK_LINE = re.compile(r"governance-approved:[ \t]*([0-9a-f]{7,40})", re.I | re.A)
 
 
+def fold_text(text: str) -> str:
+    """NFKC, lower case, and `ß` written as `ss`: the case folding a case-insensitive file system applies."""
+    return unicodedata.normalize("NFKC", unicodedata.normalize("NFKC", text).lower().replace("ß", "ss"))
+
+
+def fold_path(path: str) -> str:
+    """The form a path is compared in: folded (see fold_text), with trailing dots and spaces removed from each name.
+    A case-insensitive file system opens `.claude/settings.json` for `.claude/ſettings.json` (long s),
+    `CODEOWNERſ`, `.harneß.yaml` or a Kelvin sign, and Windows drops trailing dots and spaces from a name."""
+    names = []
+    for name in fold_text(path).split("/"):
+        trimmed = name.rstrip(". ")
+        names.append(name if trimmed == "" or re.fullmatch(r"\.+", name) else trimmed)
+    return "/".join(names)
+
+
 def is_locked_file(path: str) -> bool:
-    lower = path.lower()
-    return any(p.search(lower) for p in LOCKED_FILES)
+    folded = fold_path(path)
+    return any(p.search(folded) for p in LOCKED_FILES)
 
 
 def is_workflow_file(path: str) -> bool:
-    lower = path.lower()
-    return not is_locked_file(path) and any(p.search(lower) for p in WORKFLOW_FILES)
+    folded = fold_path(path)
+    return not is_locked_file(path) and any(p.search(folded) for p in WORKFLOW_FILES)
 
 
 def is_governance_file(path: str) -> bool:

@@ -22,10 +22,15 @@ Real:
 - The app runs in Docker with PostgreSQL and Redis. Reproduction and regression tests call it over HTTP.
 - The reproduction is red on the base commit and green on the fix, observed in test output.
 - Patches must be plain unified diffs. A strict validator refuses context diffs (`***`), `Index:`, `diff --git`,
-  renames, copies, mode lines (including symlinks), binary patches and any absolute, `..` or backslash path.
+  renames, copies, mode lines (including symlinks), binary patches, quoted names, control characters (NUL
+  included) in a name or a hunk line, and any absolute, `..` or backslash path.
   `git apply`, which refuses paths outside the work tree, then applies the patch in a throwaway repository
   inside a temporary workspace. The diff that the gate sees is observed with `diff -ruN` between the base and
   candidate directories (nothing excluded), not read from the patch text. Hashes are computed from files on disk.
+- The gate reads file names from the `---`/`+++` headers, `Binary files ... differ` lines and, in a git diff,
+  `diff --git`, `rename from`/`rename to` and `GIT binary patch` blocks, with C quoting. A name that contains
+  the separator (" and ", a space, a tab) is accepted only when exactly one reading names the same path on both
+  sides; any other line or name it cannot read unambiguously classifies as unknown (R4/B3), so a person decides.
 - The oracle never comes from the candidate. The loop runs the frozen reproduction and the regression suite
   from the base workspace against the candidate's deployment, with `--noconftest` and importlib mode (pytest)
   or explicit test paths and restricted roots (Jest). The compose file is always the pristine template.
@@ -51,7 +56,8 @@ and `grant-exceeds-cap`, because the cap check needs a census profile that the e
 To validate the register, copy `.autonomy.yaml` into an empty directory and add a test-fixture
 `.autonomy/profile.json` (in a real repository the census writes it) with a current `generated` time, every
 dimension at C3 and `"cap": 3`. Then run the autonomy tooling there:
-`node dist/src/cli.js check --dir <that directory> --no-commits`. With that profile the check reports
+`node dist/src/cli.js check --dir <that directory> --no-commits`, from `examples/autonomy/typescript` after
+`npm install && npm run build`. With that profile the check reports
 `workflow repair-loop: granted 3, effective 3` and `autonomy check: ok`.
 
 Out of scope: unattended repair of R3 (data-forward) or R4 (irreversible or external) changes. The gate sends
@@ -104,11 +110,16 @@ The merge for an `auto` result follows the gate rule table in [Pattern
 The gate code refuses unattended merge below A4 and above R2 or B0, whatever the policy says.
 
 Classification is deterministic and fails closed: a file with no path rule, and an empty diff, take the
-highest class (R4/B3). Instruction and tool-configuration files (`CLAUDE.md`, `AGENTS.md`, `.claude/**/*.md`,
-`.claude/agents|commands|skills/**`, `.mcp.json`) classify as medium tier (R0 at B1), so the gate never merges them
-unattended. A file also takes the class of its first case-insensitive rule match when that is higher, because
-`claude.md` and `CLAUDE.md` are the same file on a case-insensitive file system. The rules are data in `shared/config/reversibility.json`; the policy,
-budgets and confirmation rule are in `shared/config/repair-policy.json`.
+highest class (R4/B3), and so does a file the diff names ambiguously. Instruction and tool-configuration files at
+any depth (`CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `GEMINI.md`, anything under a `.claude/` folder, `.mcp.json`)
+classify as medium tier (R0 at B1), so the gate never merges them unattended; `.claude/settings*.json` and
+`.claude/hooks/**` at any depth classify R4/B3. A file also takes the class of its first case-insensitive rule match
+when that is higher, because `claude.md` and `CLAUDE.md` are the same file on a case-insensitive file system; a case
+variant with no case-sensitive match (`.Claude/skills/x.sh`) takes the unknown class. Glob wildcards never match a
+line terminator. The rules are data in `shared/config/reversibility.json`; the policy, budgets and confirmation rule
+are in `shared/config/repair-policy.json`. The content rules (schema or data writes, external effects, money, auth
+and personal data) are a text heuristic like the anti-masking scan: a call spelled another way
+(`child_process`, `http.request`, `urllib`, a name built from strings) does not match them.
 
 The anti-masking scan applies the Pattern 1.6 forbidden patterns to production diffs: swallowed
 exceptions, new retries, widened timeouts and lowered thresholds. It is a text scan, one input to the gate: it

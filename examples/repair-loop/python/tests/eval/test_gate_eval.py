@@ -62,12 +62,15 @@ class Scenario:
     reason: str
     merge: str | None = None
     patch: str | None = None
+    diff: list | None = None
     files: list = field(default_factory=list)
     bundle: dict = field(default_factory=dict)
 
     def build(self) -> EvidenceBundle:
         if self.patch is not None:
             text = patch_text(self.patch)
+        elif self.diff is not None:
+            text = "\n".join(self.diff) + "\n"
         else:
             text = "".join(
                 make_diff(pick(f["path"], ""), pick(f.get("added"), []), pick(f.get("removed"), []), f.get("status", "modified"))

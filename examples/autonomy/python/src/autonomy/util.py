@@ -77,23 +77,29 @@ def inside_dir(directory: str | Path, rel: str) -> bool:
     return target == root or root in target.parents
 
 
+# A glob wildcard never matches a line terminator, in either language.
+_ANY = "[^\n\r\u2028\u2029]"
+_SEGMENT = "[^/\n\r\u2028\u2029]"
+
+
 def glob_to_regex(glob: str, any_slash: bool) -> re.Pattern[str]:
+    """Translate a glob to a regex. `*` stays inside one path segment unless `any_slash`."""
     out = ""
     i = 0
     while i < len(glob):
         ch = glob[i]
         if ch == "*":
             if i + 1 < len(glob) and glob[i + 1] == "*":
-                out += ".*"
+                out += _ANY + "*"
                 i += 1
             else:
-                out += ".*" if any_slash else "[^/]*"
+                out += _ANY + "*" if any_slash else _SEGMENT + "*"
         elif ch == "?":
-            out += "." if any_slash else "[^/]"
+            out += _ANY if any_slash else _SEGMENT
         else:
             out += re.escape(ch)
         i += 1
-    return re.compile(f"^{out}$", re.DOTALL)
+    return re.compile(f"^{out}\\Z")
 
 
 def match_path(glob: str, path: str) -> bool:

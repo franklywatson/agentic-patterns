@@ -1,0 +1,7 @@
+version: 1
+workflows:
+  - id: w
+    owner: t
+    sponsor: "@a"
+    identity: github-app:bot
+    risk: { reversible: true, verification: partial, blast_radius: repo, trifecta: { untrusted_input: false, sensitive_data: false, external_action: false } }

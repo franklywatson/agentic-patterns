@@ -1,5 +1,5 @@
 ---
-last-validated-model: claude-sonnet-5-5
+last-validated-model: claude-opus-5-5
 reviewed: 2026-11-19
 ---
 
@@ -86,10 +86,10 @@ Four suggested paths (B and C are one). Pick the path whose first step closes yo
 
 ### Path A: Foundation-First (Default When Unsure)
 
-Start with L0: structure and AGENTS.md cost little and later layers depend on them (this project's own experience;
+Start with containment, then L0: structure and AGENTS.md cost little and later layers depend on them (this project's own experience;
 no study compares layers). Then build upward.
 
-1. **Contain** — Put the session in a locked sandbox and keep credentials out before anything else, because interactive sessions on the version the [Pattern 2.9 minimum-version row](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) names start in auto mode with the sandbox off, while `claude -p` and the Agent SDK start in `default` ([permission modes](https://code.claude.com/docs/en/permission-modes)).
+1. **Contain** — Put the session in a locked sandbox and keep credentials out of it before anything else ([Pattern 2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)): interactive sessions start in auto mode with the sandbox off ([permission modes](https://code.claude.com/docs/en/permission-modes)).
 2. **L0 Foundation** — Restructure by domain, write AGENTS.md, establish doc freshness and cleanup practices. See [L0-foundation.md](../L0-foundation.md).
 3. **L1 Closed Loop Design and Verification** — Add stack tests for your most critical user journeys. See [L1-feedback-loops.md](../L1-feedback-loops.md) and the working examples in [examples/stack-test/](../../examples/stack-test/).
 4. **L2 Behavioral Guardrails** — Add skills and hooks for your project's most common errors. See [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md).
@@ -113,7 +113,7 @@ start at L2.
 If agents will run without a person watching each step, or already hold shell access, keys and network on
 developer machines, start with containment. Do not loosen approvals first.
 
-0. **Many machines** — Deliver the Pattern 2.9 keys and `requiredMinimumVersion` through managed settings (MDM or `managed-settings.json`) to every machine, and set `strictKnownMarketplaces`, `allowManagedMcpServersOnly` and `allowManagedHooksOnly` ([Pattern 2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)). Then, per repository, commit a register, a baseline and the census and check jobs.
+0. **Many machines** — Deliver the Pattern 2.9 keys and `requiredMinimumVersion` through [managed settings](https://code.claude.com/docs/en/managed-settings) (MDM, `managed-settings.json` or server-managed) to every machine, and set `strictKnownMarketplaces`, `allowManagedMcpServersOnly` and `allowManagedHooksOnly` ([Pattern 2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)). Then, per repository, commit a register, a baseline and the census and check jobs.
 1. **Contain** — Put the agent in a locked, fail-closed boundary and move credentials outside it. See [Pattern
    2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) and the [containment
    example](../../examples/containment/).

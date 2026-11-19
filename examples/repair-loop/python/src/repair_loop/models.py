@@ -33,6 +33,8 @@ class DiffFile:
     status: Literal["added", "modified", "deleted"]
     added: list[str] = field(default_factory=list)
     removed: list[str] = field(default_factory=list)
+    # Set when the diff named this file in a way that could not be read unambiguously: it classifies as unknown.
+    unparsed: bool = False
 
 
 @dataclass(frozen=True)

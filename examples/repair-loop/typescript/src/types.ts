@@ -24,6 +24,8 @@ export interface DiffFile {
   status: 'added' | 'modified' | 'deleted';
   added: string[];
   removed: string[];
+  /** Set when the diff named this file in a way that could not be read unambiguously: it classifies as unknown. */
+  unparsed?: true;
 }
 
 export interface Classification {

@@ -92,9 +92,10 @@ An interactive developer session is a workflow too.
 
 A4 applies only where verification is mechanical and the action is reversible. The [risk
 model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) states which classes merge with no person at A4 and
-A5 and how they pass a required review. Only the repair gate classifies a change; for any other A4 workflow, a
-`permitted_actions.paths` list of low-tier paths is what keeps its unattended merges low-tier. The register stores a
-grant as a number (`granted_level: 4` is A4).
+A5 and how they pass a required review. Only the repair gate classifies a change; `permitted_actions.paths` does
+not keep an A4 merge low-tier, because the hook checks the session's working tree, not the pull request. For any
+other A4 workflow, a person or a required CI check compares the pull request's files with the low-tier paths. The
+register stores a grant as a number (`granted_level: 4` is A4).
 
 ### Why Stack Tests Earn Autonomy
 
@@ -133,7 +134,8 @@ One committed, schema-validated file per repository, `.autonomy.yaml`, lists eve
 
 Each entry records the owner, an accountable sponsor, the grant, a non-personal identity, permitted and forbidden
 actions, a risk class, limits, the stop mechanism with the date it was last tested, and a review date. A5 adds a
-baseline, a target and a stop rule.
+baseline, a target and a stop rule. [Pattern A.6](#pattern-a6--enforcement-through-hooks) says which fields the hook
+enforces; the rest are records.
 
 ### In Practice
 
@@ -141,7 +143,7 @@ baseline, a target and a stop rule.
 # .autonomy.yaml
 version: 1
 defaults: { interactive_level: 2, stop_test_max_age_days: 30 }
-profile: .autonomy/profile.json   # written by `autonomy census`; never hand-edited
+profile: .autonomy/profile.json   # written by `autonomy census`; never hand-edited; must stay inside .autonomy/
 
 workflows:
   - id: dep-bump
@@ -151,9 +153,10 @@ workflows:
     identity: github-app:deps-bot   # non-personal, short-lived token
     access_expires: 2027-02-01
     permitted_actions:
-      tools: ["Read", "Edit", "Bash(npm install*)", "Bash(npm test*)"]
+      tools: ["Read", "Edit", "Bash(npm install*)", "Bash(npm test*)", "Bash(git *)", "Bash(gh pr *)"]
       paths: ["package.json", "package-lock.json"]
       git: [branch, commit, open_pr, auto_merge]
+      network: ["registry.npmjs.org"]
     forbidden_actions: [deploy, read_secrets, force_push, edit_ci, edit_autonomy]
     risk:
       reversible: true              # a revert undoes the action
@@ -227,7 +230,7 @@ record is the task-bank score that Pattern 4.6 defines: the share of tasks that 
 ### Problem
 
 If grants rise on a feeling and fall only after an incident, autonomy ratchets up and nobody can say why. A per-agent
-trust tier that promotes on a short run of successes can be promoted by chance. A workflow that is never reviewed
+trust level that promotes on a short run of successes can be promoted by chance. A workflow that is never reviewed
 stays granted because nobody asked.
 
 ### Solution
@@ -292,26 +295,9 @@ census counts `.autonomy/reviews.jsonl` and `.autonomy/retirements.jsonl` as the
 It fails when a grant exceeds the cap, the register fails its schema, the census profile is stale or missing, or an
 agent commit changed a locked or workflow file (Pattern A.6); the failure codes are in [the example
 README](../examples/autonomy/README.md#effective-grant). The commit check needs the base commit (`fetch-depth: 0`);
-on a depth-1 checkout `check` exits 2. In a workflow that runs on `pull_request`, with the repository variable
-`AP_SHA` set to the commit of this library you read:
-
-```yaml
-autonomy-check:
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v4
-      with: { fetch-depth: 0 }
-    - uses: actions/setup-node@v4
-      with: { node-version: '22' }
-    - run: |
-        git clone https://github.com/franklywatson/agentic-patterns "$RUNNER_TEMP/ap"
-        git -C "$RUNNER_TEMP/ap" checkout "${{ vars.AP_SHA }}"
-        cd "$RUNNER_TEMP/ap/examples/autonomy/typescript" && npm ci && npm run build
-    - run: node "$RUNNER_TEMP/ap/examples/autonomy/typescript/dist/src/cli.js" census --dir .
-    - run: >
-        node "$RUNNER_TEMP/ap/examples/autonomy/typescript/dist/src/cli.js" check --dir .
-        --git-range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
-```
+on a depth-1 checkout `check` exits 2. The [CI job](../examples/autonomy/README.md#run-against-your-own-repository)
+builds the CLI from the commit of this library you read, set in the repository variable `AGENTIC_PATTERNS_SHA`, and
+runs `census` and `check --git-range` on each pull request.
 
 ### Anti-Pattern
 
@@ -356,9 +342,11 @@ README](../examples/autonomy/README.md#census). The CLAUDE.md probes follow an `
 200-line limit of [Pattern 0.4](L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution).
 GitHub keeps rulesets in repository settings, so commit each ruleset's JSON (from [`gh api
 repos/{owner}/{repo}/rulesets/{id}`](https://docs.github.com/en/rest/repos/rules#get-a-repository-ruleset)) under
-`.github/rulesets/`. The governance C3 probe needs an active ruleset that targets the default branch with one
-required approval, or with code-owner review ([risk model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model))
-and a CODEOWNERS rule that names an owner. `sandbox-locked` reads only the project `.claude/settings.json`, not the
+`.github/rulesets/`. The governance C3 probe needs an active ruleset that targets the default branch, with no bypass
+actors or excluded branches, and one required approval or code-owner review ([risk
+model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model)), plus CODEOWNERS rules that name an owner for
+`.github/`, `.claude/`, `.autonomy*` and CODEOWNERS. It checks the committed files' shape, not that GitHub enforces
+them. `sandbox-locked` reads only the project `.claude/settings.json`, not the
 managed or user settings that [Pattern 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) enforces.
 
 ### Anti-Pattern
@@ -388,7 +376,8 @@ workflow's tokens are revoked and that the workflow can be restored.
 [`autonomy drill`](../examples/autonomy/README.md#stop-drill) starts a canary that writes a heartbeat file, runs the
 workflow's `stop.command`, and passes when the canary exits and the heartbeat stops within the bound (default 2
 seconds). On success it writes today's date to `stop.last_tested` in `.autonomy.yaml` and prints it; on failure it
-writes a demotion override of A3. It does not check token revocation or restore; add both to your own drill, because
+writes a demotion override of A3 to `.autonomy/state.json`. Both are locked files, so a person commits the result; a
+commit by a bot or CI identity fails `autonomy check`. It does not check token revocation or restore; add both to your own drill, because
 a stopped agent with a live token is still a risk.
 
 `stop.authority` in the register names who may invoke the stop; it must include someone reachable outside working
@@ -417,11 +406,16 @@ cannot start, crashes or times out blocks the call instead of letting it through
 
 - **SessionStart** resolves the workflow (`AUTONOMY_WORKFLOW`, default `interactive`), computes its effective grant
   from the register, the profile and the state file, and adds it to the session context with any reduction's reason.
-- **PreToolUse** denies a tool call outside `permitted_actions`, inside `forbidden_actions`, or writing a locked file,
-  a workflow file or anything under `.autonomy/`. At A1 a Bash call must be plain read-only commands from an
-  allow-list, with no quotes, `$`, braces, globs or redirects; A2 and below block `git push` and `gh pr` writes such
-  as `gh pr create`; A3 and below block merging; A4 merges only with `auto_merge` and within limits. The [hook
-  table](../examples/autonomy/README.md#hook) lists every rule and deny code. Each decision goes to
+- **PreToolUse** enforces the `permitted_actions.tools` allow-list, `permitted_actions.paths` for file writes, the
+  grant's level rules, writes to locked files, workflow files and `.autonomy/`, and egress outside
+  `permitted_actions.network` by `curl`, `wget`, `ssh`, `scp`, `sftp`, `nc`, `ncat`, `telnet`, `ftp` (matched by command name, so `/usr/bin/curl`
+  counts), `git clone`, and `git fetch`, `pull`, `push`, `ls-remote`, `remote add` or `submodule add` with a URL,
+  WebFetch and WebSearch. A register that fails the schema denies every call, and a Bash command over 64 KB or a tool
+  path over 4 KB is denied before any rule runs. A merge needs `auto_merge` in `permitted_actions.git` and a diff within `limits.max_diff_lines`. The
+  other `git` values are records the hook does not check, and a custom `forbidden_actions` word blocks only a Bash
+  command that contains it as a word. At A1 a Bash call must be plain read-only commands from an allow-list; A2 and
+  below block `git push` and `gh pr` writes; A3 allows those and editing tests by design, and blocks merging. The
+  [hook table](../examples/autonomy/README.md#hook) lists every rule and deny code. Each decision goes to
   `.autonomy/audit/<session>.jsonl`, with no outcome field.
 - **The eval suite** ([Pattern 4.6](L4-standards-measurement.md#pattern-46--context-eval)) replays its scenarios
   through the hook and scores a scenario only when all five runs match, so a refactor cannot widen grants silently.
@@ -432,12 +426,11 @@ cannot start, crashes or times out blocks the call instead of letting it through
 
 **Locked files and workflow files.** `autonomy check` fails any agent commit that changes a locked file: `.autonomy*`
 (the register and `.autonomy/`, including the demotion override), CODEOWNERS, `.claude/settings*.json`,
-`.claude/hooks/*` and `.harness.yaml`. A workflow file (`.github/workflows/*`) passes only with a later non-agent
-`Governance-Approved: <sha>` line ([matching rules](../examples/autonomy/README.md#governance-files)). Locked files
-cover permission and hook surfaces. Instruction and tool-configuration files (`CLAUDE.md`, `AGENTS.md`,
-`.claude/**/*.md`, `.claude/agents|commands|skills/**`, `.mcp.json`) are behavior surfaces: edited in ordinary pull
-requests, medium tier in the [risk model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model), never merged
-unattended.
+`.claude/hooks/*` and `.harness.yaml`. A workflow file (`.github/workflows/*` or `.github/actions/**`) passes only
+with a later non-agent `Governance-Approved: <sha>` line ([matching
+rules](../examples/autonomy/README.md#governance-files)). Locked files cover permission and hook surfaces; the hook's
+own code is not on the list, so name it in CODEOWNERS. Behavior surfaces are medium tier in the [risk
+model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) and not locked.
 
 A command hook is deterministic policy inside the harness, not a security boundary, and its Bash rules match command
 strings: they are a nudge. The boundary is the `permitted_actions.tools` allowlist, code-owner review on locked and
@@ -454,15 +447,17 @@ high-tier paths, `autonomy check` as a required check, and the containment and c
 
 ## Applied to This Repository
 
-This repository's [register](../.autonomy.yaml) lists two workflows, both granted A1, with the maintainer as owner,
-sponsor and identity: Claude Code subagents that edit docs and examples in worktrees, commit, push branches and open
-pull requests, and the interactive workflow. The `autonomy-check` job in [docs.yml](../.github/workflows/docs.yml)
-runs `autonomy census` and `autonomy check`; it is advisory because `main` has no branch protection. Measuring value
-has no ledger or baseline (`outcome-tracking` fails), so the cap is C1. Both workflows act above that cap: the
-interactive edits need A2 (cap C2), and the subagents' pushes and pull requests are A3, which needs C3, including a
-non-author approval one maintainer cannot give. No hook is bound here, so nothing stops either workflow, and
-`autonomy check` passes because it compares the recorded grants with the cap, not actions with the grant. At A2 the
-maintainer would push the subagents' branches and open the pull requests.
+This repository's [register](../.autonomy.yaml) lists one workflow, `refresh-phase-agents`, granted A1 with the
+maintainer as owner, sponsor and identity: Claude Code subagents that edit docs and examples in worktrees, commit,
+push branches and open pull requests. `defaults.interactive_level: 1` sets the interactive workflow to A1. The
+`autonomy-check` job in [docs.yml](../.github/workflows/docs.yml) runs `autonomy census` and `autonomy check`; it is
+advisory because `main` has no branch protection. Measuring value has no ledger or baseline (`outcome-tracking`
+fails), so the cap is C1.
+
+Both workflows act above that cap. The interactive edits need A2 (cap C2). The subagents' pushes and pull requests
+are A3, which needs C3 and a non-author approval that one maintainer cannot give. No hook is bound here, so nothing
+stops either workflow. `autonomy check` passes because it compares recorded grants with the cap, not actions with
+grants. At A2 the maintainer would push the subagents' branches and open the pull requests.
 
 ## Related Documents
 

@@ -130,3 +130,41 @@ describe('applyPatch and observedDiff (real patch and diff tools)', () => {
     expect(files).toEqual([{ path: 'app/src/a.ts', status: 'modified', added: ['two'], removed: ['one'] }]);
   });
 });
+
+describe('names with " and ", spaces, tabs and NUL bytes (r10 C2)', () => {
+  const nulPatch = (path: string) => `--- /dev/null\n+++ b/${path}\n@@ -0,0 +1,2 @@\n+evil\u0000bytes\n+line2\n`;
+
+  test('a patch with a NUL byte in a hunk line is refused, so it cannot create a binary file', () => {
+    expect(() => validatePatch(nulPatch('tests/a and X/app/src/routes/y.bin'))).toThrow('control character');
+    expect(() => validatePatch(nulPatch('app/src/routes/y.bin'))).toThrow('control character');
+  });
+
+  test.each([
+    ['a control character in a header name', '--- a/app/src/a\u0001.ts\n+++ b/app/src/a\u0001.ts\n@@ -1 +1 @@\n-one\n+two\n'],
+    ['a quoted header name', '--- "a/app/src/a.ts"\n+++ "b/app/src/a.ts"\n@@ -1 +1 @@\n-one\n+two\n'],
+  ])('refuses %s', (_name, text) => {
+    expect(() => validatePatch(text)).toThrow('unsafe path');
+  });
+
+  test('a binary file under tests/ whose name contains " and " is read at its real path', () => {
+    const { base, candidate } = sandbox();
+    mkdirSync(join(base.dir, 'tests'), { recursive: true });
+    require('node:fs').cpSync(base.dir, candidate.dir, { recursive: true });
+    const name = join('tests', 'a and X', 'app', 'src', 'routes');
+    mkdirSync(join(candidate.dir, name), { recursive: true });
+    writeFileSync(join(candidate.dir, name, 'y.bin'), Buffer.from('evil\u0000bytes\n'));
+    const observed = observedDiff(base, candidate);
+    expect(observed).toContain('Binary files');
+    expect(parseDiff(observed).map((f) => [f.path, f.unparsed ?? false])).toEqual([['tests/a and X/app/src/routes/y.bin', false]]);
+  });
+
+  test('a file name with a tab or a newline is not guessed: it is marked unparsed', () => {
+    const { base, candidate } = sandbox();
+    require('node:fs').cpSync(base.dir, candidate.dir, { recursive: true });
+    writeFileSync(join(candidate.dir, 'app', 'src', 'tab\tname.ts'), 'x\n');
+    writeFileSync(join(candidate.dir, 'app', 'src', 'nl\nname.ts'), 'x\n');
+    const files = parseDiff(observedDiff(base, candidate));
+    expect(files.some((f) => f.unparsed)).toBe(true);
+    expect(files.filter((f) => !f.unparsed).map((f) => f.path)).not.toContain('app/src/tab');
+  });
+});

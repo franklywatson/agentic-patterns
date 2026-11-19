@@ -79,7 +79,7 @@ accessed on 17 November 2026 unless the entry says otherwise.
 | ID | Source | Tier and read status | Link |
 |----|--------|----------------------|------|
 | PL-3 | Capabilities: Continuous integration. DORA; living page, no date shown. | Independent research. Read: Section. | <https://dora.dev/capabilities/continuous-integration/> |
-| PL-5 | AI Agent Authentication and Authorization, draft-klrc-aiagent-auth-03. IETF individual draft, 6 Jul 2026 (no longer active, replaced by draft-ietf-wimse-aims, PL-6; its text expires 7 Jan 2027). | Standards draft. Read: Section. | <https://www.ietf.org/archive/id/draft-klrc-aiagent-auth-03.txt> |
+| PL-5 | AI Agent Authentication and Authorization, draft-klrc-aiagent-auth-03. IETF individual draft, 6 Jul 2026 (inactive; its successor is draft-ietf-wimse-aims, PL-6; its text expires 7 Jan 2027). | Standards draft. Read: Section. | <https://www.ietf.org/archive/id/draft-klrc-aiagent-auth-03.txt> |
 | PL-6 | AI Identity Management System, draft-ietf-wimse-aims. IETF WIMSE working group; active working-group draft, last updated 2 Nov 2026. | Standards draft. Read: Abstract. | <https://datatracker.ietf.org/doc/draft-ietf-wimse-aims/> |
 | PL-7 | OAuth 2.0 Token Exchange, RFC 8693. IETF, Jan 2020. | Standards body. Read: Section (1.1). | <https://www.rfc-editor.org/rfc/rfc8693> |
 | PL-8 | MCP Authorization, revision 2026-07-28. Model Context Protocol (accessed 19 Nov 2026). "MCP servers MUST NOT accept or transit any other tokens." | Standards body (open specification). Read: Section (token handling). | <https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization> |
@@ -121,7 +121,7 @@ accessed on 17 November 2026 unless the entry says otherwise.
 | SG-3 | Defeating Prompt Injections by Design (CaMeL). Debenedetti et al. (Google DeepMind, ETH Zurich), arXiv v2 24 Jun 2025. | Preprint. Read: Abstract. | <https://arxiv.org/abs/2503.18813> |
 | SG-6 | Levels of Autonomy for AI Agents. Feng, McDonald, Zhang, arXiv v2 28 Jul 2025. | Preprint. Read: Abstract. | <https://arxiv.org/abs/2506.12469> |
 | SG-7 | Google's Approach for Secure AI Agents: An Introduction. Google, May 2025. | Vendor. Read: Section (principles and layers). | <https://storage.googleapis.com/gweb-research2023-media/pubtools/1018686.pdf> |
-| SG-9 | How we built Claude Code auto mode. Anthropic, 25 Mar 2026. | Vendor (self-reported telemetry). Read: Section. | <https://www.anthropic.com/engineering/claude-code-auto-mode> |
+| SG-9 | How we built Claude Code auto mode. Anthropic, 25 Mar 2026. | Vendor (self-reported telemetry). Read: Section. | <https://www.anthropic.com/research/claude-code-auto-mode> |
 | SG-10 | Beyond permission prompts: making Claude Code more secure and autonomous. Anthropic, 20 Oct 2025. Same source as PL-15. | Vendor (self-reported). Read: Section. | <https://www.anthropic.com/engineering/claude-code-sandboxing> |
 | SG-11 | Hooks guide. Anthropic; living page, no date shown. | Vendor. Read: Section. | <https://code.claude.com/docs/en/hooks-guide.md> |
 | SG-12 | Server-managed settings. Anthropic; living page, no date shown. | Vendor. Read: Section. | <https://code.claude.com/docs/en/server-managed-settings.md> |

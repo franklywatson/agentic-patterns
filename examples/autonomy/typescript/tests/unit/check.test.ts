@@ -182,11 +182,30 @@ test("governance patterns are case-insensitive and cover hook configuration", ()
   assert.equal(isGovernanceFile(".claude/commands/review.md"), false);
 });
 
-test("a profile path that escapes the repository is an error", () => {
-  const dir = copyFixture("registers", "valid");
-  const path = join(dir, ".autonomy.yaml");
-  writeFileSync(path, readFileSync(path, "utf8").replace("profile: .autonomy/profile.json", "profile: ../../elsewhere/profile.json"));
-  assert.throws(() => runCheck({ dir, now }), /escapes the repository/);
+test("a profile path outside .autonomy/ is a schema error, so the cap file stays a locked file", () => {
+  for (const profile of ["../../elsewhere/profile.json", "docs/profile.json", ".autonomy/../docs/profile.json", ".autonomy/..", "/etc/profile.json"]) {
+    const dir = copyFixture("registers", "valid");
+    const path = join(dir, ".autonomy.yaml");
+    writeFileSync(path, readFileSync(path, "utf8").replace("profile: .autonomy/profile.json", `profile: "${profile}"`));
+    assert.deepEqual(runCheck({ dir, now }).failures, [{ code: "schema", path: "/profile", keyword: "pattern" }], profile);
+  }
+});
+
+// Shared with the Python suite: fixtures/parity/governance-paths.json.
+test("governance paths are compared after Unicode folding and trailing dot and space removal", () => {
+  for (const c of readFixtureJson("parity", "governance-paths.json").cases) {
+    const got = isLockedFile(c.path) ? "locked" : isWorkflowFile(c.path) ? "workflow" : "none";
+    assert.equal(got, c.class, `${JSON.stringify(c.path)}: ${c.why}`);
+  }
+});
+
+test("an agent commit to a folded governance name or a composite action fails the check", () => {
+  const result = runCheck({ dir: fixture("registers", "valid"), now, commits: [agentCommit([".claude/\u017fettings.json", ".harne\u00df.yaml", ".github/actions/setup/action.yml"])] });
+  assert.deepEqual(result.failures.map((f) => [f.code, f.file]), [
+    ["governance-file-changed-by-agent", ".claude/\u017fettings.json"],
+    ["governance-file-changed-by-agent", ".harne\u00df.yaml"],
+    ["workflow-change-unacknowledged", ".github/actions/setup/action.yml"],
+  ]);
 });
 
 test("an impossible calendar date is a schema error, not a crash", () => {

@@ -574,7 +574,7 @@
         ]
       },
       "files": {
-        "CODEOWNERS": "/src/ @org/team-platform # high tier\n"
+        "CODEOWNERS": "/.github/ @org/team-platform # high tier\n/.claude/ @org/team-platform\n/.autonomy* @org/team-platform\n/CODEOWNERS @org/team-platform\n"
       },
       "met": true
     },
@@ -681,6 +681,471 @@
       "ruleset": "[1]",
       "files": {},
       "met": false
+    },
+    {
+      "name": "bypass-actor-admin",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ],
+        "bypass_actors": [
+          {
+            "actor_id": 5,
+            "actor_type": "RepositoryRole",
+            "bypass_mode": "always"
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "bypass-actor-app-pull-request-only",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ],
+        "bypass_actors": [
+          {
+            "actor_id": 9,
+            "actor_type": "Integration",
+            "bypass_mode": "pull_request"
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "bypass-actors-null",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ],
+        "bypass_actors": null
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "bypass-actors-empty",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ],
+        "bypass_actors": []
+      },
+      "files": {},
+      "met": true
+    },
+    {
+      "name": "exclude-glob",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": [
+              "refs/heads/*"
+            ]
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "exclude-another-branch",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": [
+              "refs/heads/release"
+            ]
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "exclude-null",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": null
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "exclude-absent",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ]
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": true
+    },
+    {
+      "name": "include-a-non-default-branch-only",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "refs/heads/develop"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {},
+      "met": false
+    },
+    {
+      "name": "codeowners-one-folder",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {
+        "CODEOWNERS": "/src/ @org/team-platform\n"
+      },
+      "met": false
+    },
+    {
+      "name": "codeowners-one-file",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {
+        "CODEOWNERS": "docs/legal/NOTICE.txt @org/team-platform\n"
+      },
+      "met": false
+    },
+    {
+      "name": "codeowners-high-tier-without-claude",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {
+        "CODEOWNERS": "/.github/ @x\n/.autonomy* @x\n/CODEOWNERS @x\n"
+      },
+      "met": false
+    },
+    {
+      "name": "codeowners-later-rule-unowns-github",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {
+        "CODEOWNERS": "* @x\n/.github/\n"
+      },
+      "met": false
+    },
+    {
+      "name": "codeowners-github-star-misses-nested-workflows",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {
+        "CODEOWNERS": "/.github/* @x\n/.claude/ @x\n/.autonomy* @x\n/CODEOWNERS @x\n"
+      },
+      "met": false
+    },
+    {
+      "name": "codeowners-in-github-owns-itself",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 0,
+              "require_code_owner_review": true
+            }
+          }
+        ]
+      },
+      "files": {
+        ".github/CODEOWNERS": "/.github/ @x\n/.claude/ @x\n/.autonomy* @x\n"
+      },
+      "met": true
+    },
+    {
+      "name": "codeowners-one-file-with-repo-wide-review",
+      "ruleset": {
+        "name": "main",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [
+              "~DEFAULT_BRANCH"
+            ],
+            "exclude": []
+          }
+        },
+        "rules": [
+          {
+            "type": "pull_request",
+            "parameters": {
+              "required_approving_review_count": 1,
+              "require_code_owner_review": false
+            }
+          }
+        ]
+      },
+      "files": {
+        "CODEOWNERS": "docs/legal/NOTICE.txt @org/team-platform\n"
+      },
+      "met": true
     }
   ]
 }

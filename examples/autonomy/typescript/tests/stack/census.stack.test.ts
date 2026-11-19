@@ -209,3 +209,16 @@ test("the census text output names the probes that block each dimension's next p
     `worksheet: ${join(dir, ".autonomy", "worksheet.json")}`,
   ]);
 });
+
+// Shared with the Python suite: fixtures/census/odd-inputs.json.
+for (const c of readFixtureJson("census", "odd-inputs.json").cases) {
+  test(`census reads ${c.name} the same way in both languages`, () => {
+    const dir = gitFixtureRepo("adopter");
+    for (const [path, content] of Object.entries(c.files as Record<string, { text?: string; hex?: string }>)) {
+      writeFileSync(join(dir, path), content.hex !== undefined ? Buffer.from(content.hex, "hex") : (content.text as string));
+    }
+    assert.equal(cli(["census", "--dir", dir, "--now", NOW]).status, 0);
+    const dims = JSON.parse(readFileSync(join(dir, ".autonomy", "profile.json"), "utf8")).dimensions;
+    assert.deepEqual(Object.fromEntries(Object.entries(dims).map(([k, v]) => [k, (v as { level: unknown }).level])), c.levels);
+  });
+}

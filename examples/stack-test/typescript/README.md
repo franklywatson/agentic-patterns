@@ -35,7 +35,7 @@ Browser-level tests drive the stack through a real browser — the same interfac
 |---------|----------------|---------------------------|
 | Backend logic | Verified directly | Verified through UI rendering |
 | Frontend rendering | Not tested | Verified via DOM assertions |
-| JavaScript execution | Not tested | Verified via console error checks |
+| JavaScript execution | Not tested | Not exercised here (the pages have no JavaScript); console error checks catch it in an app that has some |
 | CSS/asset loading | Not tested | Verified via network request monitoring |
 | Form validation (server) | Verified via HTTP responses | Verified via UI error messages |
 | Form validation (client) | Not tested | Verified via DOM interaction |

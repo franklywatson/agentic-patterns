@@ -38,20 +38,21 @@ required on `main`.
 High tier in the [risk model](docs/L1-patterns/1.8-reversibility-blast-radius.md#risk-model). Locked files, which
 `autonomy check` always blocks for agent commits: `.autonomy*` (including the `.autonomy/` state and the demotion
 override), `CODEOWNERS`, `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`. They cover permission and
-hook surfaces. Workflow files, `.github/workflows/*`, are allowed with a later non-agent `Governance-Approved: <sha>`
-line ([rules](examples/autonomy/README.md#governance-files)); `examples/autonomy/hooks/` is also high tier. An agent
-commit has a `Co-Authored-By:` trailer naming Claude or Anthropic, a `[bot]` identity, or the name part of a workflow
-`identity` in the register (`person:` identities are excluded).
+hook surfaces. Workflow files, `.github/workflows/*` and `.github/actions/**`, are allowed with a later non-agent
+`Governance-Approved: <sha>` line ([rules](examples/autonomy/README.md#governance-files));
+`examples/autonomy/hooks/` is also high tier. An agent commit has a `Co-Authored-By:` trailer naming Claude or
+Anthropic, a `[bot]` identity, or the name part of a workflow `identity` in the register (`person:` identities are
+excluded); a commit without the trailer under a person identity is not detected.
 
-**Medium-tier paths** cover behavior surfaces and never merge unattended: `CLAUDE.md`, `AGENTS.md`,
-`.claude/**/*.md`, `.claude/agents|commands|skills/**` and `.mcp.json`. Agents edit them in ordinary pull requests.
+**Medium-tier paths** cover behavior surfaces and never merge unattended: `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `GEMINI.md` and `.mcp.json` at any depth, and anything under a `.claude/` folder except `.claude/settings*.json` and `.claude/hooks/**`. Agents edit them in ordinary pull requests.
+Enforced by: the reviewer; no CI job compares a pull request's files with this list.
 
 The `Autonomy Check` job fails a pull request that breaks these rules; it is advisory until the check is required on
 `main`. The path filter in `docs.yml` starts the workflow only for Markdown and Python files anywhere, `scripts/`,
 `package.json`, the lint config, `docs.yml`, `.autonomy.yaml` and `examples/autonomy/`. A pull request that touches
-only another locked file (`CODEOWNERS`, `.autonomy/`, `.claude/settings*.json`, `.claude/hooks/*`) or another
-workflow gets no Autonomy Check run. Enforced by: that job where it runs, and the reviewer, who alone covers
-`examples/autonomy/hooks/`.
+only another locked file (`CODEOWNERS`, `.autonomy/`, `.claude/settings*.json`, `.claude/hooks/*`, `.harness.yaml`)
+or only another workflow file does not start the workflow, so it gets no Autonomy Check run. Enforced by: that job
+where it runs, and the reviewer, who alone covers `examples/autonomy/hooks/`.
 
 ## Index
 

@@ -135,3 +135,48 @@ def test_a_change_under_repair_is_visible_too(tmp_path):
         assert [f.path for f in parse_diff(text)] == [".repair/x.json"]
     finally:
         remove_workspaces(base)
+
+
+def nul_patch(path):
+    return f"--- /dev/null\n+++ b/{path}\n@@ -0,0 +1,2 @@\n+evil\0bytes\n+line2\n"
+
+
+def test_a_patch_with_a_nul_byte_in_a_hunk_line_is_refused_so_it_cannot_create_a_binary_file():
+    for path in ("tests/a and X/app/src/routes/y.bin", "app/src/routes/y.bin"):
+        with pytest.raises(ValueError, match="control character"):
+            validate_patch(nul_patch(path))
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "--- a/app/src/a\x01.py\n+++ b/app/src/a\x01.py\n@@ -1 +1 @@\n-one\n+two\n",
+        '--- "a/app/src/a.py"\n+++ "b/app/src/a.py"\n@@ -1 +1 @@\n-one\n+two\n',
+    ],
+    ids=["a control character in a header name", "a quoted header name"],
+)
+def test_validate_patch_refuses_odd_header_names(text):
+    with pytest.raises(ValueError, match="unsafe path"):
+        validate_patch(text)
+
+
+def test_a_binary_file_under_tests_whose_name_contains_and_is_read_at_its_real_path(sandbox):
+    root, base, candidate = sandbox
+    (Path(base.dir) / "tests").mkdir()
+    shutil.copytree(base.dir, candidate.dir)
+    folder = Path(candidate.dir) / "tests" / "a and X" / "app" / "src" / "routes"
+    folder.mkdir(parents=True)
+    (folder / "y.bin").write_bytes(b"evil\0bytes\n")
+    observed = observed_diff(base, candidate)
+    assert "Binary files" in observed
+    assert [(f.path, f.unparsed) for f in parse_diff(observed)] == [("tests/a and X/app/src/routes/y.bin", False)]
+
+
+def test_a_file_name_with_a_tab_or_a_newline_is_not_guessed_it_is_marked_unparsed(sandbox):
+    root, base, candidate = sandbox
+    shutil.copytree(base.dir, candidate.dir)
+    (Path(candidate.dir) / "app" / "src" / "tab\tname.py").write_text("x\n")
+    (Path(candidate.dir) / "app" / "src" / "nl\nname.py").write_text("x\n")
+    files = parse_diff(observed_diff(base, candidate))
+    assert any(f.unparsed for f in files)
+    assert "app/src/tab" not in [f.path for f in files if not f.unparsed]

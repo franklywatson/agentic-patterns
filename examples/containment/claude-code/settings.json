@@ -14,8 +14,7 @@
     "failIfUnavailable": true,
     "allowUnsandboxedCommands": false,
     "filesystem": {
-      "denyRead": ["~/.ssh", "~/.aws", "~/.config/gcloud", "~/.azure", "~/.kube"],
-      "denyWrite": ["./.git/hooks"]
+      "denyRead": ["~/.ssh", "~/.aws", "~/.config/gcloud", "~/.azure", "~/.kube"]
     },
     "network": {
       "allowedDomains": ["github.com", "registry.npmjs.org"]

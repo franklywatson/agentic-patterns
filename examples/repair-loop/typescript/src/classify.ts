@@ -16,11 +16,12 @@ export const exceeds = (
   B_ORDER.indexOf(value.blast) > B_ORDER.indexOf(ceiling.blast);
 
 /**
- * Classify a diff deterministically. Each file takes the class of its first matching path
- * rule; a file with no rule takes the "unknown" class (the highest). A case variant names the
- * same file on a case-insensitive file system, so a file also takes the class of its first
- * case-insensitive match when that is higher. Content rules raise the class when a production
- * file's changed lines match. An empty diff is unknown.
+ * Classify a diff deterministically. A file the diff names ambiguously (marked `unparsed`) takes the
+ * unknown class. Each other file takes the class of its first matching path rule; a file with no
+ * rule takes the "unknown" class (the highest). A case variant names the same file on a
+ * case-insensitive file system, so a file also takes the class of its first case-insensitive match
+ * when that is higher. Content rules raise the class when a production file's changed lines match.
+ * An empty diff is unknown.
  */
 export function classify(files: DiffFile[], rules: ReversibilityRules): Classification {
   if (files.length === 0) {
@@ -30,7 +31,13 @@ export function classify(files: DiffFile[], rules: ReversibilityRules): Classifi
   let blast: Blast = 'B0';
   const reasons: string[] = [];
   for (const diffFile of files) {
-    const file = { ...diffFile, path: normalizePath(diffFile.path) };
+    const file = { ...diffFile, path: diffFile.unparsed ? diffFile.path : normalizePath(diffFile.path) };
+    if (diffFile.unparsed) {
+      reversibility = maxR(reversibility, rules.unknown.reversibility);
+      blast = maxB(blast, rules.unknown.blast);
+      reasons.push(`${JSON.stringify(file.path)}: cannot be read as one file path, unknown -> ${rules.unknown.reversibility}/${rules.unknown.blast}`);
+      continue;
+    }
     const rule = isUnsafePath(file.path) ? undefined : rules.paths.find((p) => globMatch(p.glob, file.path));
     const folded = rule && rules.paths.find((p) => globMatch(p.glob, file.path, true));
     if (rule) {

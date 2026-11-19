@@ -93,11 +93,11 @@ Adding one regex to `rules.json` would make the policy catch `sed --in-place`. T
 | Enforcement point | Setting |
 |-------------------|---------|
 | Policy | `permissions.deny` with `Read(./.env)`, `Read(./.env.*)` and `Bash(sed -i *)`; `permissions.blockWritesOutsideWorkingDirectories` |
-| Boundary | `sandbox.enabled`, `sandbox.failIfUnavailable`, `sandbox.allowUnsandboxedCommands: false`, `sandbox.filesystem.denyWrite: ["./.git/hooks"]` |
+| Boundary | `sandbox.enabled`, `sandbox.failIfUnavailable`, `sandbox.allowUnsandboxedCommands: false` |
 | Credentials | `sandbox.filesystem.denyRead`, `sandbox.credentials.files`, `sandbox.credentials.envVars`; `permissions.blockReadsOutsideWorkingDirectories` |
 | Egress | `sandbox.network.allowedDomains` |
 
-`sandbox.filesystem.denyRead` covers shell commands only. `permissions.blockReadsOutsideWorkingDirectories` makes the `Read`, `Grep`, `Glob` and `LSP` tools refuse paths outside the working directories, so the file tools cannot open `~/.ssh` or `~/.aws/credentials`; Pattern 2.9's "Reads bounded" property needs both.
+`sandbox.filesystem.denyRead` covers shell commands only. `permissions.blockReadsOutsideWorkingDirectories` makes the `Read`, `Grep`, `Glob` and `LSP` tools refuse paths outside the working directories, so the file tools cannot open `~/.ssh` or `~/.aws/credentials`; Pattern 2.9's "Reads bounded" property needs both. `permissions.blockWritesOutsideWorkingDirectories` also removes the `EnterWorktree` and `ExitWorktree` tools ([settings reference](https://code.claude.com/docs/en/settings-reference#permissions-blockwritesoutsideworkingdirectories)).
 
 The allowlist holds only `github.com` and `registry.npmjs.org`. Add the package registries, container registries and API hosts your project uses, or installs and image pulls fail inside the sandbox.
 
@@ -109,7 +109,12 @@ Where to put the keys:
 - **What goes there.** Put `sandbox.enabled`, `sandbox.failIfUnavailable` and `sandbox.allowUnsandboxedCommands: false` in managed settings so a developer cannot switch the sandbox off, with `requiredMinimumVersion` set to the version in the Minimum version row of [Pattern 2.9](../../docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax); that key is read from managed settings only. Without managed settings, use user settings (`~/.claude/settings.json`), which sit outside the project tree.
 - **Restricting keys.** [`sandbox.network.allowManagedDomainsOnly`](https://code.claude.com/docs/en/settings-reference#sandbox-network-allowmanageddomainsonly) and [`allowManagedPermissionRulesOnly`](https://code.claude.com/docs/en/settings-reference#allowmanagedpermissionrulesonly) make Claude Code honor only the domains and permission rules set in managed settings.
 
-The settings file is a reference. No test loads it or runs Claude Code with it.
+The sandbox already denies writes to `hooks` and `config` inside the working directory's `.git` ([protected
+paths](https://code.claude.com/docs/en/sandboxing#protected-paths)). A `./` sandbox path resolves "to the project root
+for project settings, or to `~/.claude` for user settings" ([sandbox path
+prefixes](https://code.claude.com/docs/en/settings-reference#sandbox-path-prefixes)), so user and managed settings
+need `~/` or absolute paths. The settings file is a reference. No test loads it or
+runs Claude Code with it.
 
 ## Limits
 

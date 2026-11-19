@@ -2,17 +2,22 @@
 
 Terms used across the library, in alphabetical order. Each entry links to the doc that defines it.
 
-Four scales are easy to confuse. A layer (L0 to L4) is a group of patterns. An enforcement point (prompt, hook,
-CI, sandbox, downstream) is where a rule holds. A review tier (low, medium, high) sets the approvals a change
-needs. The curve positions (C1 to C5) and grants (A1 to A5) say how far a workflow may run without a person.
+The [scales table](../../README.md#how-the-scales-fit-together) separates layer, enforcement point, review tier and
+grant.
 
 **Anti-Masking Scan** — A text scan of a repair diff for code that hides an error instead of fixing it, such as a
 new catch, a retry or a longer timeout. A flagged change is reclassified as a mitigation. See
 [Pattern 1.9](../L1-patterns/1.9-repair-loop-frozen-oracle.md).
 
+**Attended** — A person watches each step of the session and applies or approves what the agent does. See
+[Path E](adoption-guide.md#path-e-one-person-attended-sessions).
+
 **Author of Record** — The person who asked an agent for a change. They read it and answer for it, and they cannot
 approve it; a different person approves. See
 [Pattern 4.7](../L4-standards-measurement.md#pattern-47--author-of-record).
+
+**Behavior Surface** — An instruction or tool-configuration file (`CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `GEMINI.md` and `.mcp.json` at any depth, and anything under a `.claude/` folder except `.claude/settings*.json` and `.claude/hooks/**`): medium tier, edited in ordinary pull requests, never merged
+unattended. See [Pattern A.6](../earned-autonomy.md#pattern-a6--enforcement-through-hooks).
 
 **Blast-Radius Class** — How far a change reaches, classified from its diff: B0 one journey, B1 one service, B2 a
 cross-service contract, B3 money, auth, PII or audit. An unknown change is B3. See
@@ -116,7 +121,7 @@ second-order (the effect read through a different endpoint) and third-order (cro
 admin or observability APIs, such as audit logs). See
 [Pattern 1.2](../L1-patterns/1.2-full-loop-assertions.md).
 
-**Grant (A1-A5)** — What one named workflow may do without a person, from A1 (suggests; a human applies the change)
+**Grant (A1-A5)** — What one named workflow may do and what a person still does, from A1 (suggests; a human applies the change)
 to A5 (unattended and managed against a baseline and a stop rule). A grant cannot exceed the cap. See
 [The Grants](../earned-autonomy.md#the-grants).
 
@@ -153,9 +158,7 @@ between them. See [Pattern 2.10](../L2-behavioral-guardrails.md#pattern-210--lea
 
 **Locked File** — A permission or hook file that `autonomy check` always blocks from agent commits: `.autonomy*`
 (state and demotion override included), CODEOWNERS, `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`.
-Behavior files (`CLAUDE.md`, `AGENTS.md`, `.claude/**/*.md`, `.claude/agents|commands|skills/**`, `.mcp.json`) are
-not locked; they are medium-tier paths that a person merges. See
-[Pattern A.6](../earned-autonomy.md#pattern-a6--enforcement-through-hooks).
+Behavior surfaces are not locked. See [Pattern A.6](../earned-autonomy.md#pattern-a6--enforcement-through-hooks).
 
 **Mechanical Verification** — A check whose pass or fail a machine decides, with no judgment by the agent or a
 reviewer. Grant A4 requires it. See [Why Stack Tests Earn Autonomy](../earned-autonomy.md#why-stack-tests-earn-autonomy).
@@ -174,6 +177,9 @@ README and the file structure alone. See
 **Pass^k** — A scenario passes only when all k runs pass; the suite score is the share of scenarios that pass. It
 rewards consistency, unlike best-of-k. See
 [Pattern 4.6](../L4-standards-measurement.md#pattern-46--context-eval).
+
+**Probe** — One file check the census runs for a dimension and position, such as `agent-config` for platform at C2.
+A passed probe shows presence and recency, not quality. See [Pattern A.4](../earned-autonomy.md#pattern-a4--census).
 
 **Production Gate** — Deterministic code outside the agent that takes an evidence bundle and change classes and
 returns `auto`, `human` or `block`. The agent can act up to the gate and cannot pass it. See
@@ -199,7 +205,8 @@ class it sets the review tier, which decides the review; the grant decides who a
 [risk model](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model).
 
 **Review Tier** — Low, medium or high, set by a change's reversibility and blast-radius classes. It decides the
-approvals a change needs. "Tier" means only the review tier.
+approvals a change needs. In this library's patterns, "tier" means only the review tier. See the [risk
+model](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model).
 
 **Risk Model** — The table that maps a change's reversibility and blast-radius classes to a review tier and to the
 lowest grant that may merge it with no person. See
@@ -237,7 +244,7 @@ above. At A3 a person still merges. See [The Grants](../earned-autonomy.md#the-g
 **Workflow** — One named entry in the register: a trigger, the actions it may take, its owner and its grant. See
 [Pattern A.1](../earned-autonomy.md#pattern-a1--autonomy-register).
 
-**Workflow File** — A file under `.github/workflows/`. An agent commit may change it only with a later non-agent
+**Workflow File** — A file under `.github/workflows/` or `.github/actions/`. An agent commit may change it only with a later non-agent
 `Governance-Approved: <sha>` line. See [Pattern A.6](../earned-autonomy.md#pattern-a6--enforcement-through-hooks).
 
 **Zero-Defect Tolerance** — Every error and warning is addressed, because an agent cannot tell a relevant failure

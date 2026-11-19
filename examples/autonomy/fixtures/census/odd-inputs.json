@@ -1,0 +1,93 @@
+{
+  "description": "Unusual inputs the census must read the same way in TypeScript and Python, shared by both stack tests. Each case writes `files` (UTF-8 `text`, or raw bytes as `hex`) into a copy of fixtures/repos/adopter, runs census, and expects these dimension levels.",
+  "cases": [
+    {
+      "name": "settings-a-json-array",
+      "files": {
+        ".claude/settings.json": {
+          "text": "[1, 2]\n"
+        }
+      },
+      "levels": {
+        "platform": 2,
+        "shared_context": 2,
+        "operating_model": 4,
+        "governance": 2,
+        "ownership": 3,
+        "skill": "unknown",
+        "measuring": 3
+      }
+    },
+    {
+      "name": "settings-json-null",
+      "files": {
+        ".claude/settings.json": {
+          "text": "null\n"
+        }
+      },
+      "levels": {
+        "platform": 2,
+        "shared_context": 2,
+        "operating_model": 4,
+        "governance": 2,
+        "ownership": 3,
+        "skill": "unknown",
+        "measuring": 3
+      }
+    },
+    {
+      "name": "claude-md-not-utf-8",
+      "files": {
+        "CLAUDE.md": {
+          "hex": "23204164c3a9fffe0a0a52756e20606e706d2074657374602e0a"
+        }
+      },
+      "levels": {
+        "platform": 3,
+        "shared_context": 3,
+        "operating_model": 4,
+        "governance": 1,
+        "ownership": 2,
+        "skill": "unknown",
+        "measuring": 3
+      }
+    },
+    {
+      "name": "baseline-integer-too-large-for-a-double",
+      "files": {
+        ".autonomy/baseline.json": {
+          "text": "{\"captured\": \"2026-11-10\", \"flow\": {\"merged_prs\": 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000}, \"stability\": {\"change_failure_rate\": 0.08}}\n"
+        }
+      },
+      "levels": {
+        "platform": 3,
+        "shared_context": 3,
+        "operating_model": 4,
+        "governance": 3,
+        "ownership": 3,
+        "skill": "unknown",
+        "measuring": 2
+      }
+    },
+    {
+      "name": "agents-import-followed-by-a-letter",
+      "files": {
+        "AGENTS.md": {
+          "text": "# Rules\n\nconstitutional rules\n"
+        },
+        "CLAUDE.md": {
+          "text": "# Project\n\n@AGENTS.mdé\n"
+        }
+      },
+      "levels": {
+        "platform": 2,
+        "shared_context": 3,
+        "operating_model": 4,
+        "governance": 3,
+        "ownership": 2,
+        "skill": "unknown",
+        "measuring": 3
+      }
+    }
+  ]
+}

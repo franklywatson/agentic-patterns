@@ -29,12 +29,16 @@ export interface Effective {
 
 const isObject = (v: unknown): v is Json => typeof v === "object" && v !== null && !Array.isArray(v);
 
+/** A level is an integer from 1 to 5 (`3.0` counts as 3); anything else is null. */
+export function asLevel(value: unknown): number | null {
+  return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 5 ? value : null;
+}
+
 /** Level of one capping dimension: an absent, unknown or invalid entry counts as 1. */
 export function dimensionLevel(profile: Json | null, dimension: string): number {
   const dimensions = isObject(profile) && isObject(profile.dimensions) ? profile.dimensions : {};
   const entry = dimensions[dimension];
-  if (!isObject(entry)) return 1;
-  return Number.isInteger(entry.level) && entry.level >= 1 && entry.level <= 5 ? entry.level : 1;
+  return isObject(entry) ? (asLevel(entry.level) ?? 1) : 1;
 }
 
 /**
@@ -58,10 +62,10 @@ export function profileStatus(profile: Json | null, now: number): "ok" | "missin
   return ageDays(now, parseTime(profile.generated)) > PROFILE_MAX_AGE_DAYS ? "stale" : "ok";
 }
 
-function freshnessReasons(wf: Json, defaults: Json, now: number): string[] {
+function freshnessReasons(wf: Json, granted: number, defaults: Json, now: number): string[] {
   const reasons: string[] = [];
   const maxAge = defaults?.stop_test_max_age_days ?? 30;
-  if (wf.granted_level >= 4) {
+  if (granted >= 4) {
     const tested = wf.stop?.last_tested;
     if (tested === undefined || ageDays(now, parseTime(tested)) > maxAge) reasons.push("stop-test-overdue");
   }
@@ -70,12 +74,16 @@ function freshnessReasons(wf: Json, defaults: Json, now: number): string[] {
   return reasons;
 }
 
+/**
+ * The level a workflow runs at: the lowest of its grant, the cap, freshness, harness and demotion limits. A
+ * grant that is not a level counts as 1; a demotion override that is present but not a level counts as 1.
+ */
 export function effectiveLevel(wf: Json, profile: Json | null, state: Json | null, defaults: Json, now: number): Effective {
-  const granted: number = wf.granted_level;
+  const granted = asLevel(wf.granted_level) ?? 1;
   const cap = capOf(profile, now);
   const reasons: string[] = [];
   const stale = profileStatus(profile, now);
-  const fresh = freshnessReasons(wf, defaults, now);
+  const fresh = freshnessReasons(wf, granted, defaults, now);
   if (stale !== "ok") fresh.push(`profile-${stale}`);
   const freshness = fresh.length > 0 ? FRESHNESS_LEVEL : 5;
   const workflows = isObject(state) && isObject(state.workflows) ? state.workflows : {};
@@ -83,7 +91,7 @@ export function effectiveLevel(wf: Json, profile: Json | null, state: Json | nul
   const harnessChanged =
     typeof entry.harness_hash === "string" && entry.harness_hash !== entry.task_bank_passed_hash;
   const harness = harnessChanged ? HARNESS_LEVEL : 5;
-  const override: number = Number.isInteger(entry.demotion_override) ? entry.demotion_override : 5;
+  const override = entry.demotion_override === undefined ? 5 : (asLevel(entry.demotion_override) ?? 1);
   const effective = Math.min(granted, cap, freshness, harness, override);
   if (cap < granted) reasons.push(`cap:${cap}`);
   if (freshness < granted) for (const r of fresh) reasons.push(`freshness:${r}`);

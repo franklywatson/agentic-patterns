@@ -66,5 +66,53 @@
       "path": "/workflows/0/review_date",
       "keyword": "format"
     }
+  ],
+  "grant-a-fraction": [
+    {
+      "path": "/workflows/0/granted_level",
+      "keyword": "type"
+    }
+  ],
+  "grant-a-string": [
+    {
+      "path": "/workflows/0/granted_level",
+      "keyword": "type"
+    }
+  ],
+  "grant-a-word": [
+    {
+      "path": "/workflows/0/granted_level",
+      "keyword": "type"
+    }
+  ],
+  "grant-missing": [
+    {
+      "path": "/workflows/0/granted_level",
+      "keyword": "required"
+    }
+  ],
+  "grant-null": [
+    {
+      "path": "/workflows/0/granted_level",
+      "keyword": "type"
+    }
+  ],
+  "interactive-level-null": [
+    {
+      "path": "/defaults/interactive_level",
+      "keyword": "type"
+    }
+  ],
+  "profile-climbs-out-of-autonomy": [
+    {
+      "path": "/profile",
+      "keyword": "pattern"
+    }
+  ],
+  "profile-outside-autonomy": [
+    {
+      "path": "/profile",
+      "keyword": "pattern"
+    }
   ]
 }

@@ -77,6 +77,10 @@ export function readJsonIfExists(path: string): Json | null {
   return existsSync(path) ? readJson(path) : null;
 }
 
+// A glob wildcard never matches a line terminator, in either language.
+const ANY = "[^\\n\\r\\u2028\\u2029]";
+const SEGMENT = "[^/\\n\\r\\u2028\\u2029]";
+
 /** Translate a glob to a RegExp. `*` stays inside one path segment unless `anySlash`. */
 export function globToRegExp(glob: string, anySlash: boolean): RegExp {
   let out = "";
@@ -84,13 +88,13 @@ export function globToRegExp(glob: string, anySlash: boolean): RegExp {
     const ch = glob[i];
     if (ch === "*") {
       if (glob[i + 1] === "*") {
-        out += ".*";
+        out += `${ANY}*`;
         i++;
       } else {
-        out += anySlash ? ".*" : "[^/]*";
+        out += anySlash ? `${ANY}*` : `${SEGMENT}*`;
       }
     } else if (ch === "?") {
-      out += anySlash ? "." : "[^/]";
+      out += anySlash ? ANY : SEGMENT;
     } else {
       out += ch.replace(/[.+^${}()|[\]\\]/g, "\\$&");
     }

@@ -23,6 +23,8 @@ interface Scenario {
   id: string;
   category: string;
   patch?: string;
+  /** Raw diff lines, the same text in both languages (for example `diff -ruN` output). */
+  diff?: string[];
   files?: FileSpec[];
   bundle?: Partial<EvidenceBundle>;
   expected: Decision;
@@ -45,6 +47,8 @@ const pick = <T>(value: PerLanguage<T> | undefined, fallback: T): T =>
 function build(s: Scenario): EvidenceBundle {
   const text = s.patch !== undefined
     ? patchText(s.patch)
+    : s.diff !== undefined
+    ? `${s.diff.join('\n')}\n`
     : (s.files ?? []).map((f) => makeDiff(pick(f.path, ''), pick(f.added, []), pick(f.removed, []), f.status ?? 'modified')).join('');
   return bundleFromDiff(text, s.bundle ?? {});
 }

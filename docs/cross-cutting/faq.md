@@ -54,8 +54,8 @@ work for one person.
   ([permissions](https://code.claude.com/docs/en/permissions)). Check the result in `/status`.
 
 The example keys are in the [containment binding](../../examples/containment/README.md#claude-code-binding) and
-[examples/containment/claude-code/settings.json](../../examples/containment/claude-code/settings.json). That file does
-not protect itself. For user settings, merge these keys as well:
+[examples/containment/claude-code/settings.json](../../examples/containment/claude-code/settings.json). Its paths work in
+user settings. That file does not protect itself. For user settings, merge these keys as well:
 
 ```json
 {
@@ -91,10 +91,11 @@ read-only, no-network container stops the bypass commands.
 ## Monorepo or multi-repo for agents?
 
 If you keep a monorepo, put the rules for the whole tree in one AGENTS.md at the root, imported by the root CLAUDE.md
-([Claude Code memory](https://code.claude.com/docs/en/memory)). With a root CLAUDE.md, Claude Code reads
-no AGENTS.md by default, a subdirectory's included, unless the "Project instructions" setting is
-`claude-md-and-agents-md`. Put per-package rules in a subdirectory CLAUDE.md, which loads when Claude reads, writes
-or edits a file there, or in `.claude/rules/` files with `paths:`, which load when matching files are used.
+([Claude Code memory](https://code.claude.com/docs/en/memory)). By default, a root CLAUDE.md stops Claude Code
+from reading any AGENTS.md, including one in a subdirectory; the **Project instructions** setting
+[`claude-md-and-agents-md`](https://code.claude.com/docs/en/memory#choose-which-instruction-files-load) reads both.
+Put per-package rules in a subdirectory CLAUDE.md, which loads when Claude reads, writes or edits a file there, or
+in `.claude/rules/` files with `paths:`, which load when matching files are used.
 
 Make the test job a required check without a path filter ([how to](adoption-guide.md#make-the-test-job-a-required-check)).
 The example census reads `.github/workflows/`, CODEOWNERS and `.claude/settings.json` under the directory you pass, so

@@ -322,9 +322,9 @@ above.
 
 ### Problem
 
-Agents run on the developer's machine with the developer's shell, keys and network. Interactive Claude Code
-sessions on the version the minimum-version row below names start in auto mode, where a classifier approves most
-actions, with the sandbox off; `claude -p` and the Agent SDK start in default ([permission
+Agents run on the developer's machine with the developer's shell, keys and network. From Claude Code
+v2.1.283, interactive sessions start in auto mode, where a classifier approves most actions, with the sandbox off;
+`claude -p` and the Agent SDK start in default (manual) mode ([permission
 modes](https://code.claude.com/docs/en/permission-modes), [sandboxing](https://code.claude.com/docs/en/sandboxing)).
 The vendor states that auto mode "does not guarantee safety".
 
@@ -374,12 +374,12 @@ property with keys from the [settings reference](https://code.claude.com/docs/en
 
 | Property | Setting |
 |----------|---------|
-| Writes confined | `sandbox.enabled`, `sandbox.filesystem.denyWrite`; `permissions.blockWritesOutsideWorkingDirectories` for the file tools |
+| Writes confined | `sandbox.enabled`, which also denies writes to `.git/hooks` and `.git/config`; `permissions.blockWritesOutsideWorkingDirectories` for the file tools |
 | Reads bounded | `sandbox.filesystem.denyRead` for shell commands; `permissions.blockReadsOutsideWorkingDirectories` for the file tools, which `denyRead` does not cover, and for sandboxed commands; `permissions.deny` rules such as `Read(./.env)` |
 | Network allowlisted | `sandbox.network.allowedDomains` (shell commands only; restrict WebFetch with permission rules) |
 | Secrets outside | `sandbox.credentials.files` and `sandbox.credentials.envVars` with mode `deny`; mode `mask` lets a command use a credential on an allowed host without the session seeing the value (needs `network.tlsTerminate`; honored only from user or managed settings or `--settings`) |
 | Failure closes | `sandbox.failIfUnavailable: true`, `sandbox.allowUnsandboxedCommands: false` |
-| Agent cannot edit it | Managed settings, which take precedence over user, project and command-line settings ([SG-12](references/sources.md)) |
+| Agent cannot edit it | [Managed settings](https://code.claude.com/docs/en/managed-settings) (MDM, file or server), which take precedence over user, project and command-line settings (SG-12) |
 | Minimum version | v2.1.257 for the reads key, v2.1.283 from which interactive sessions start in auto mode, v2.1.295 for hook `onFailure` (v2.1.328 on `mcp_tool` hooks; [Pattern 2.3](#pattern-23--hook-automation)), v2.1.314 for the writes key, v2.1.319 for `denyInsteadOfPrompting`; set `requiredMinimumVersion` (managed only) to the highest of these you use, so an older client refuses to start |
 
 Without managed settings, use user settings ([FAQ](cross-cutting/faq.md#i-work-alone-where-does-the-sandbox-settings-file-go)).
@@ -525,8 +525,8 @@ model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) lists for its g
 **Claude Code** does not issue identities. A launcher script or CI job mints the short-lived token, passes it to
 the session at start, and keeps long-lived keys out (`sandbox.credentials` in [Pattern
 2.9](#pattern-29--contain-before-you-relax)). Put the `Co-Authored-By:` trailer rule ([Pattern
-4.7](L4-standards-measurement.md#pattern-47--author-of-record)) in the instruction file and
-check it in CI, because the model may omit it.
+4.7](L4-standards-measurement.md#pattern-47--author-of-record)) in the instruction file. The model may omit it, and no
+job in this library checks for it, so a commit without it under a person identity passes `autonomy check` as human.
 
 A Claude Code cloud scheduled task acts through its owner's connected GitHub identity and connectors: its commits
 and pull requests carry the owner's GitHub user, on `claude/`-prefixed branches
@@ -631,8 +631,8 @@ their own change adds nothing: GitHub does not count the requester's approval of
 
 Tier changes and actions by reversibility and blast radius, and spend human attention where mistakes are costly.
 The [risk model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) gives each class its review tier, and
-the [approvals table](../README.md#how-the-scales-fit-together) states what each tier needs. Low tier is R0-R1 at
-B0 and R2 at B0; R2 at B0 merges with no person only at A5, on named paths.
+the [approvals table](../README.md#how-the-scales-fit-together) states what each tier needs. Low tier is R0-R2 at
+B0. An R2 change merges with no person only at A5, on named paths.
 
 Below A4, which includes every workflow in a repository capped below C4, a person merges at every tier, and every
 tier needs an approval from someone other than the requester. One person working alone meets none of them: the
@@ -680,11 +680,9 @@ deploys and migrations, and after 3 blocks in a row or 20 in total it pauses and
 ([permission modes](https://code.claude.com/docs/en/permission-modes)).
 
 **No harness: CI only.** A ruleset sees paths, not classes; the GitHub ruleset is in the [risk
-model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model). The autonomy hook does not classify changes outside
-the repair loop: an A4 workflow's `permitted_actions.paths` must list low-tier paths only, because the hook's
-`merge-limits` rule blocks an unattended merge that touches another path, and with no `paths` it sets no path limit
-([hook](../examples/autonomy/README.md#hook)). The repair gate classifies repair changes. Keep the agent's identity
-out of CODEOWNERS and every reviewer team.
+model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model). The repair gate classifies repair changes; nothing
+else does. No CI check in this library compares a pull request's files with the low-tier paths, so for an A4
+workflow add one as a required check.
 
 ### Anti-Pattern
 

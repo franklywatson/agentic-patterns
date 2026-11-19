@@ -10,9 +10,8 @@ file, tests that state each module's contract, and a habit of deleting what no l
 gets lost, edits the wrong module or follows stale instructions.
 
 **Structure includes the boundary.** Decide on day one where the agent runs, what it can write and which credentials
-it can reach. Interactive Claude Code sessions on the version the Pattern 2.9 minimum-version row names start in auto
-mode with the sandbox off; `claude -p` and the Agent SDK start in default ([permission
-modes](https://code.claude.com/docs/en/permission-modes), [Pattern
+it can reach. Interactive Claude Code sessions start in auto mode with the sandbox off; `claude -p` and the Agent SDK
+start in default (manual) mode ([permission modes](https://code.claude.com/docs/en/permission-modes), [Pattern
 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
 
 ## Pattern 0.1 — Deep Modules
@@ -92,10 +91,10 @@ patterns it must follow. Scattered across READMEs, CONTRIBUTING files and wikis,
 has broken them.
 
 **Solution**: One instruction file is the single source of truth: a contract, not a tutorial. Use AGENTS.md as the
-shared file, which several coding agents read. Claude Code reads AGENTS.md only when the repository has no CLAUDE.md,
-`.claude/CLAUDE.md` or `CLAUDE.local.md`; any of them suppresses AGENTS.md, so a CLAUDE.md beside AGENTS.md imports it
-with a one-line `@AGENTS.md` ([SC-8](references/sources.md), [Claude Code
-memory](https://code.claude.com/docs/en/memory#agents-md)). Keep the file short, owned, tested and re-baselined:
+shared file, which several coding agents read. By default, Claude Code reads AGENTS.md only when there is no
+CLAUDE.md, `.claude/CLAUDE.md` or `CLAUDE.local.md` in the working directory or above it, and the **Project
+instructions** setting changes that; a CLAUDE.md beside AGENTS.md imports it with a one-line `@AGENTS.md`
+([SC-8](references/sources.md), [Claude Code memory](https://code.claude.com/docs/en/memory#agents-md)). Keep the file short, owned, tested and re-baselined:
 
 - **Short**: link to docs for anything long. CI warns above 200 lines, the vendor's target for a CLAUDE.md file
   ([SC-8](references/sources.md)); instruction-following accuracy falls as instructions grow

@@ -20,7 +20,7 @@ the material the patterns draw on beyond those citations, for readers who want t
 - IS-6: [METR's 2025 randomized trial](https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/)
   of 16 experienced developers: they believed AI sped them up while measured time rose ([Pattern
   4.1](../L4-standards-measurement.md#pattern-41--evidence-based-claims)). METR's [February 2026
-  update](https://metr.org/blog/2026-02-24-uplift-update/) says the early-2025 speed result no longer holds, calls
+  update](https://metr.org/blog/2026-02-24-uplift-update/) marks the early-2025 speed result as out of date, calls
   its new estimate unreliable because of selection effects, and does not re-test the perception gap.
 - [Writing effective tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents) (Anthropic,
   Sep 2025): evaluate tools with realistic tasks; build few, well-scoped tools that return concise output.

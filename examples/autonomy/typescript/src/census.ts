@@ -21,6 +21,7 @@ interface Ctx {
   instructions: string;
   workflows: string;
   codeowners: string;
+  codeownersPath: string | null;
   defaultBranches: string[];
   register: Json | null;
   ledgerNames: string[];
@@ -100,11 +101,12 @@ function build(dir: string, now: number): Ctx {
       const t = lastChanged(dir, path);
       return t !== null && ageDays(now, t) <= days;
     },
-    settings: json(".claude/settings.json"),
+    settings: ((s: Json) => (isObject(s) ? s : {}))(json(".claude/settings.json")),
     instructionFiles,
     instructions: instructionFiles.map(text).join("\n"),
     workflows: workflowFiles.map(text).join("\n"),
     codeowners,
+    codeownersPath: codeownersPath ?? null,
     defaultBranches: defaultBranchesOf(dir),
     register,
     ledgerNames: existsSync(ledgerDir) ? readdirSync(ledgerDir).filter((n) => n.endsWith(".jsonl")) : [],
@@ -135,23 +137,72 @@ function codeownersSets(c: Ctx): Set<string> {
   return new Set(codeownersRules(c).map((r) => [...r.owners].sort().join(" ")));
 }
 
+/**
+ * True when a CODEOWNERS pattern matches a file path. Gitignore rules as GitHub applies them: a leading or inner
+ * `/` anchors the pattern at the root, a trailing `/` matches only a folder's contents, `*` and `?` stay inside
+ * one name, `**` crosses folders, and a pattern that names a folder also matches its contents, except one ending
+ * in `/*`, which GitHub applies to that folder's own files only.
+ */
+export function codeownersMatch(pattern: string, path: string): boolean {
+  const dirOnly = pattern.endsWith("/");
+  const body = pattern.replace(/^\//, "").replace(/\/$/, "");
+  if (body === "") return false;
+  const anchored = pattern.startsWith("/") || body.includes("/");
+  let re = "";
+  for (let i = 0; i < body.length; i++) {
+    const ch = body[i];
+    if (body.startsWith("**/", i)) {
+      re += "(?:[^/]+/)*";
+      i += 2;
+    } else if (body.startsWith("/**", i) && i + 3 === body.length) {
+      re += "/.*";
+      i += 2;
+    } else if (ch === "*") {
+      re += "[^/]*";
+    } else if (ch === "?") {
+      re += "[^/]";
+    } else {
+      re += ch.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+    }
+  }
+  const tail = dirOnly ? "/.*" : body.endsWith("/*") ? "" : "(?:/.*)?";
+  return new RegExp(`^${anchored ? "" : "(?:[^/]+/)*"}${re}${tail}$`).test(path);
+}
+
+/** Paths a high-tier change touches: CI, Claude Code configuration, the register and CODEOWNERS itself. */
+const HIGH_TIER_SAMPLES = [".github/workflows/ci.yml", ".github/actions/setup/action.yml", ".claude/settings.json", ".claude/hooks/guard.sh", ".autonomy.yaml", ".autonomy/profile.json"];
+
+/** Every high-tier sample path, and the CODEOWNERS file itself, has an owner: the last matching rule names one. */
+function codeownersCoverHighTier(c: Ctx): boolean {
+  const lines = c.codeowners.split("\n").map((l) => l.replace(/(^|\s)#.*$/, "").trim().split(/\s+/)).filter((p) => p[0] !== "");
+  const owned = (path: string) => {
+    const rule = [...lines].reverse().find((p) => codeownersMatch(p[0], path));
+    return rule !== undefined && rule.slice(1).some((o) => OWNER.test(o));
+  };
+  return c.codeownersPath !== null && [...HIGH_TIER_SAMPLES, c.codeownersPath].every(owned);
+}
+
 /** A ref_name pattern list names the default branch: `~DEFAULT_BRANCH`, `refs/heads/<name>` or `<name>`. */
 function namesDefault(c: Ctx, list: unknown): boolean {
   return Array.isArray(list) && list.some((p) => p === "~DEFAULT_BRANCH" || c.defaultBranches.some((b) => p === b || p === `refs/heads/${b}`));
 }
 
+/** An absent value or an empty list; anything else (a non-empty list, null, an object) is not empty. */
+const emptyOrAbsent = (v: unknown) => v === undefined || (Array.isArray(v) && v.length === 0);
+
 /**
- * A committed ruleset that is enforced (`enforcement: "active"`) on the default branch requires a non-author
- * approval: on every pull request (an integer `required_approving_review_count` of at least 1), or on pull
- * requests that change a file with a code owner (`require_code_owner_review: true` and a CODEOWNERS rule that
- * names an owner).
+ * A committed ruleset that is enforced (`enforcement: "active"`) on the default branch, with no bypass actors and
+ * no excluded branches, requires a non-author approval: on every pull request (an integer
+ * `required_approving_review_count` of at least 1), or on pull requests that change a file with a code owner
+ * (`require_code_owner_review: true` and a CODEOWNERS whose rules give an owner to every high-tier path). The probe
+ * reads the committed file's shape; it does not show that GitHub enforces the ruleset.
  */
 function rulesetApproves(c: Ctx): boolean {
   const ruleApproves = (r: Json): boolean => {
     if (!isObject(r) || r.type !== "pull_request" || !isObject(r.parameters)) return false;
     const count = r.parameters.required_approving_review_count;
     if (Number.isInteger(count) && count >= 1) return true;
-    return r.parameters.require_code_owner_review === true && codeownersSets(c).size > 0;
+    return r.parameters.require_code_owner_review === true && codeownersCoverHighTier(c);
   };
   return c.files
     .filter((f) => /^\.github\/rulesets\/.+\.json$/.test(f))
@@ -163,8 +214,9 @@ function rulesetApproves(c: Ctx): boolean {
         return false;
       }
       if (!isObject(rs) || rs.enforcement !== "active" || (rs.target !== undefined && rs.target !== "branch")) return false;
+      if (!emptyOrAbsent(rs.bypass_actors)) return false;
       const ref = isObject(rs.conditions) ? rs.conditions.ref_name : undefined;
-      if (!isObject(ref) || !namesDefault(c, ref.include) || namesDefault(c, ref.exclude)) return false;
+      if (!isObject(ref) || !namesDefault(c, ref.include) || !emptyOrAbsent(ref.exclude)) return false;
       return Array.isArray(rs.rules) && rs.rules.some(ruleApproves);
     });
 }

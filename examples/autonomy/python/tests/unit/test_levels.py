@@ -2,6 +2,7 @@ import pytest
 
 from autonomy.levels import cap_of, dimension_level, effective_level, profile_status
 from autonomy.util import parse_time
+from tests.conftest import fixture_json
 
 NOW = parse_time("2026-11-18T00:00:00Z")
 
@@ -164,3 +165,14 @@ def test_a_level_outside_1_to_5_counts_as_1():
 @pytest.mark.parametrize("state", [[], "x", 5, {"workflows": []}, {"workflows": {"w": "x"}}])
 def test_a_state_file_that_is_not_an_object_applies_no_override_and_does_not_raise(state):
     assert effective_level(wf(), FULL, state, {}, NOW).effective == 4
+
+
+# Shared with the TypeScript suite: fixtures/parity/levels.json.
+LEVEL_CASES = fixture_json("parity", "levels.json")
+
+
+@pytest.mark.parametrize("case", LEVEL_CASES["cases"], ids=lambda c: c["name"])
+def test_level_edge_cases_give_the_same_grant_cap_and_effective_level_in_both_languages(case):
+    e = effective_level(case["workflow"], case["profile"], case["state"], {}, parse_time(LEVEL_CASES["now"]))
+    assert {"granted": e.granted, "cap": e.cap, "effective": e.effective} == case["expect"]
+    assert type(e.granted) is int and type(e.effective) is int

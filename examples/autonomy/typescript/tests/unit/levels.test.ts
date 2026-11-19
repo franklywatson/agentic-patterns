@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { capOf, dimensionLevel, effectiveLevel, profileStatus } from "../../src/levels.js";
 import { parseTime } from "../../src/util.js";
+import { readFixtureJson } from "../helpers.js";
 
 const NOW = parseTime("2026-11-18T00:00:00Z");
 const dims = (levels: Record<string, number | "unknown">) => ({
@@ -151,5 +152,14 @@ test("a level outside 1 to 5 counts as 1", () => {
 test("a state file that is not an object applies no override and does not throw", () => {
   for (const state of [[], "x", 5, { workflows: [] }, { workflows: { w: "x" } }]) {
     assert.equal(effectiveLevel(wf(), full, state, {}, NOW).effective, 4);
+  }
+});
+
+// Shared with the Python suite: fixtures/parity/levels.json.
+test("level edge cases give the same grant, cap and effective level in both languages", () => {
+  const suite = readFixtureJson("parity", "levels.json");
+  for (const c of suite.cases) {
+    const e = effectiveLevel(c.workflow, c.profile, c.state, {}, parseTime(suite.now));
+    assert.deepEqual({ granted: e.granted, cap: e.cap, effective: e.effective }, c.expect, c.name);
   }
 });

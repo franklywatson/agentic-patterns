@@ -207,12 +207,28 @@ def test_governance_patterns_are_case_insensitive_and_cover_hook_configuration()
     assert is_governance_file(".claude/commands/review.md") is False
 
 
-def test_a_profile_path_that_escapes_the_repository_is_an_error(copy_fixture):
+@pytest.mark.parametrize("profile", ["../../elsewhere/profile.json", "docs/profile.json", ".autonomy/../docs/profile.json", ".autonomy/..", "/etc/profile.json"])
+def test_a_profile_path_outside_autonomy_is_a_schema_error_so_the_cap_file_stays_a_locked_file(copy_fixture, profile):
     directory = copy_fixture("registers", "valid")
     path = directory / ".autonomy.yaml"
-    path.write_text(path.read_text().replace("profile: .autonomy/profile.json", "profile: ../../elsewhere/profile.json"))
-    with pytest.raises(ValueError, match="escapes the repository"):
-        run_check(directory, NOW_MS)
+    path.write_text(path.read_text().replace("profile: .autonomy/profile.json", f'profile: "{profile}"'))
+    assert run_check(directory, NOW_MS)["failures"] == [{"code": "schema", "path": "/profile", "keyword": "pattern"}]
+
+
+# Shared with the TypeScript suite: fixtures/parity/governance-paths.json.
+@pytest.mark.parametrize("case", fixture_json("parity", "governance-paths.json")["cases"], ids=lambda c: f"{c['path']!a}")
+def test_governance_paths_are_compared_after_unicode_folding_and_trailing_dot_and_space_removal(case):
+    got = "locked" if is_locked_file(case["path"]) else "workflow" if is_workflow_file(case["path"]) else "none"
+    assert got == case["class"], case["why"]
+
+
+def test_an_agent_commit_to_a_folded_governance_name_or_a_composite_action_fails_the_check():
+    result = run_check(fixture("registers", "valid"), NOW_MS, commits=[agent_commit([".claude/\u017fettings.json", ".harne\u00df.yaml", ".github/actions/setup/action.yml"])])
+    assert [(f["code"], f["file"]) for f in result["failures"]] == [
+        ("governance-file-changed-by-agent", ".claude/\u017fettings.json"),
+        ("governance-file-changed-by-agent", ".harne\u00df.yaml"),
+        ("workflow-change-unacknowledged", ".github/actions/setup/action.yml"),
+    ]
 
 
 def test_an_impossible_calendar_date_is_a_schema_error_not_a_crash(copy_fixture):

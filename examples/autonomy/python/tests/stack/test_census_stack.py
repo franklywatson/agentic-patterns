@@ -202,3 +202,20 @@ def test_the_census_text_output_names_the_probes_that_block_each_dimensions_next
         "measuring: 1 (next: outcome-tracking)",
         f"worksheet: {directory.resolve() / '.autonomy' / 'worksheet.json'}",
     ]
+
+
+# Shared with the TypeScript suite: fixtures/census/odd-inputs.json.
+ODD_INPUTS = {c["name"]: c for c in fixture_json("census", "odd-inputs.json")["cases"]}
+
+
+@pytest.mark.parametrize("name", ODD_INPUTS)
+def test_census_reads_unusual_inputs_the_same_way_in_both_languages(cli, git_fixture_repo, name):
+    case = ODD_INPUTS[name]
+    directory = git_fixture_repo("adopter")
+    for path, content in case["files"].items():
+        if "hex" in content:
+            (directory / path).write_bytes(bytes.fromhex(content["hex"]))
+        else:
+            (directory / path).write_text(content["text"], encoding="utf-8")
+    dims = census(cli, directory)["dimensions"]
+    assert {k: v["level"] for k, v in dims.items()} == case["levels"]

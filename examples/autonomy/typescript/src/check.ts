@@ -47,16 +47,50 @@ export interface Commit {
 // Locked files: never changed by an agent commit, no relief.
 const LOCKED_FILES = [/^\.autonomy/, /(^|\/)codeowners$/, /^\.claude\/settings[^/]*\.json$/, /^\.claude\/hooks\//, /^\.harness\.yaml$/];
 // Workflow files: changed by an agent commit only when a later non-agent commit acknowledges it.
-const WORKFLOW_FILES = [/^\.github\/workflows\//];
+const WORKFLOW_FILES = [/^\.github\/workflows\//, /^\.github\/actions\//];
+
+/** NFKC, lower case, and `ß` written as `ss`: the case folding a case-insensitive file system applies. */
+export function foldText(text: string): string {
+  return text.normalize("NFKC").toLowerCase().replace(/ß/g, "ss").normalize("NFKC");
+}
+
+/**
+ * The form a path is compared in: folded (see foldText), with trailing dots and spaces removed from each name.
+ * A case-insensitive file system opens `.claude/settings.json` for `.claude/ſettings.json` (long s),
+ * `CODEOWNERſ`, `.harneß.yaml` or a Kelvin sign, and Windows drops trailing dots and spaces from a name.
+ */
+export function foldPath(path: string): string {
+  return foldText(path)
+    .split("/")
+    .map((name) => {
+      const trimmed = trimEndChars(name, ". ");
+      return trimmed === "" || /^\.+$/.test(name) ? name : trimmed;
+    })
+    .join("/");
+}
+
+/** Remove trailing characters in `chars` with a loop: a regex like `/[. ]+$/` takes quadratic time on a long run. */
+export function trimEndChars(text: string, chars: string): string {
+  let end = text.length;
+  while (end > 0 && chars.includes(text[end - 1])) end--;
+  return text.slice(0, end);
+}
+
+/** Remove leading and trailing characters in `chars`, in linear time. */
+export function trimChars(text: string, chars: string): string {
+  let start = 0;
+  while (start < text.length && chars.includes(text[start])) start++;
+  return trimEndChars(text.slice(start), chars);
+}
 
 export function isLockedFile(path: string): boolean {
-  const lower = path.toLowerCase();
-  return LOCKED_FILES.some((re) => re.test(lower));
+  const folded = foldPath(path);
+  return LOCKED_FILES.some((re) => re.test(folded));
 }
 
 export function isWorkflowFile(path: string): boolean {
-  const lower = path.toLowerCase();
-  return !isLockedFile(path) && WORKFLOW_FILES.some((re) => re.test(lower));
+  const folded = foldPath(path);
+  return !isLockedFile(path) && WORKFLOW_FILES.some((re) => re.test(folded));
 }
 
 export function isGovernanceFile(path: string): boolean {

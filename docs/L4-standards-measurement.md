@@ -109,8 +109,8 @@ request that edits a skill or the instruction file attaches the task-bank run.
   is the evidence
 - [Pattern 4.4 — Agentic Development Metrics](#pattern-44--agentic-development-metrics): artifact-based metrics
 
-**Evidence:** Partial — one 2025 trial measured the belief gap (IS-6); eval-gated configuration releases rest on
-vendor guidance (MV-8, PO-25)
+**Evidence:** Partial — one 2025 trial measured the belief gap (IS-6); a vendor staff survey shows the limits of
+self-report (MV-8); eval-gated configuration releases rest on vendor guidance (PO-25)
 
 ---
 
@@ -184,10 +184,11 @@ more.
 
 Cycle time runs from a pull request's creation to its merge; a revert is a merged commit whose message starts with
 `Revert`; an escaped defect is a bug filed against a merged change. The census checks only that `flow` and
-`stability` are non-empty objects and that `captured` is at most 90 days old, so recompute the file every 90 days:
+`stability` each hold at least one finite number and that `captured` is a
+date within the last 90 days and not later than the census run, so recompute the file every 90 days:
 
 ```bash
-since=2026-08-21   # 90 days before the capture date
+since=$(date -u -d '90 days ago' +%F)   # GNU date; on macOS: date -u -v-90d +%F
 gh pr list --state merged --limit 1000 --search "merged:>=$since" --json createdAt,mergedAt \
   | jq '[.[] | ((.mergedAt|fromdate) - (.createdAt|fromdate)) / 3600] | sort
         | {merged_prs: length, median_cycle_time_hours: .[length / 2 | floor]}'

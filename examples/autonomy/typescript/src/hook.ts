@@ -1,9 +1,9 @@
 import { appendFileSync, existsSync, mkdirSync, realpathSync, writeFileSync } from "node:fs";
-import { join, relative, resolve, isAbsolute } from "node:path";
-import { isGovernanceFile } from "./check.js";
+import { basename, dirname, join, relative, resolve } from "node:path";
+import { foldText, isGovernanceFile, trimChars, trimEndChars } from "./check.js";
 import { allWorkflows, effectiveLevel } from "./levels.js";
 import type { Effective } from "./levels.js";
-import { loadRegisterFile } from "./register.js";
+import { loadRegisterFile, validateRegister } from "./register.js";
 import { git, insideDir, matchCommand, matchPath, readJsonIfExists, toPosix } from "./util.js";
 import type { Json } from "./util.js";
 
@@ -19,6 +19,8 @@ export interface HookContext {
   untrustedSeen: boolean;
   currentBranch: string | null;
   diff: Diff | null;
+  /** The register failed schema validation: every call is denied. */
+  registerInvalid?: boolean;
 }
 
 export interface Decision {
@@ -38,8 +40,12 @@ const SECRET_PATH = /(^|\/)\.env(\.|$)|\.ssh\/|\.aws\/|\.npmrc|(^|\/)secrets?(\/
 const deny = (code: string, reason: string): Decision => ({ allow: false, code, reason });
 const ok: Decision = { allow: true };
 
+/** Characters trimmed from a segment before the deny rules read it: the same set in TypeScript and Python. */
+const BLANK = "\t\n\v\f\r \x1c\x1d\x1e\x1f\x85\xa0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff";
+const trimBlank = (s: string) => trimChars(s, BLANK);
+
 export function splitSegments(command: string): string[] {
-  return command.split(/&&|\|\||;|\||\n|&/).map((s) => s.trim()).filter(Boolean);
+  return command.split(/&&|\|\||;|\||\n|&/).map(trimBlank).filter(Boolean);
 }
 
 function hostsIn(segment: string): string[] {
@@ -53,17 +59,50 @@ function hostAllowed(host: string, allow: string[]): boolean {
   return allow.some((a) => a === "*" || host === a || host.endsWith(`.${a}`));
 }
 
-const isEgress = (seg: string) => /^(curl|wget|ssh|scp|nc|ncat|telnet|ftp)\b/.test(seg);
+/** A Bash command longer than this many UTF-8 bytes is denied before any pattern runs on it. */
+export const MAX_COMMAND_BYTES = 65536;
+const commandTooLong = (command: string) => Buffer.byteLength(command, "utf8") > MAX_COMMAND_BYTES;
+/** A tool path longer than this many UTF-8 bytes (PATH_MAX on Linux) is denied before it is resolved. */
+export const MAX_PATH_BYTES = 4096;
+
+const URL_ARG = /(?:^|\s)['"]?(?:[A-Za-z][\w+.-]*:\/\/|[\w.-]+@[\w.-]+:)/;
+const isEgress = (seg: string) =>
+  /^(curl|wget|ssh|scp|sftp|nc|ncat|telnet|ftp)\b/.test(seg) ||
+  /^git\s+clone\b/.test(seg) ||
+  (/^git\s+(fetch|pull|push|ls-remote|remote\s+add|submodule\s+add)\b/.test(seg) && URL_ARG.test(seg));
 const isPush = (seg: string) => /^git\s+(-\S+\s+)*push\b/.test(seg);
-const isMerge = (seg: string) => /^gh\s+pr\s+merge\b/.test(seg) || (/^gh\s+api\b/.test(seg) && /\/merge\b/.test(seg));
+const isApi = (seg: string) => /^gh\s+api\b/.test(seg);
+const API_METHOD = /(?:^|\s)(?:-X|--method)(?:\s*=\s*|\s+|(?=[A-Za-z'"]))['"]?([A-Za-z]+)/;
+const API_BODY = /(?:^|\s)(?:-[fF]|--field|--raw-field|--input)(?:[\s=]|(?=\S)|$)/;
+/** `gh api` writes when its method is not GET or HEAD, or, with no method, when it sends fields or a body. */
+function apiWrites(seg: string): boolean {
+  const method = API_METHOD.exec(seg);
+  return method ? !/^(get|head)$/i.test(method[1]) : API_BODY.test(seg);
+}
+const isGraphql = (seg: string) => isApi(seg) && /(?:^|\s)['"]?graphql\b/.test(seg);
+/** A GraphQL query read from a file or stdin cannot be inspected. */
+const graphqlUnseen = (seg: string) => /=@|--input\b/.test(seg);
+const GRAPHQL_MERGE = /merge(PullRequest|Branch)|enablePullRequestAutoMerge|enqueuePullRequest/i;
+const isMerge = (seg: string) =>
+  /^gh\s+pr\s+merge\b/.test(seg) ||
+  (isApi(seg) && /\/merges?\b/.test(seg)) ||
+  (isGraphql(seg) && (GRAPHQL_MERGE.test(seg) || graphqlUnseen(seg)));
 const isMergeLabel = (seg: string) => /^gh\s+(pr|issue)\s+(edit|create)\b/.test(seg) && /--(add-)?label[= ]\S*merge/i.test(seg);
 const isForce = (seg: string) => /(\s-f\b|--force(-with-lease)?\b|\s\+\S)/.test(seg);
+/** A `gh api` call that moves a branch or commits to one: `git/refs` or `contents/` with a write method. */
+const isApiRefWrite = (seg: string) => isApi(seg) && /\/(git\/refs|contents)\b/.test(seg) && apiWrites(seg);
+function apiRefProtected(seg: string): boolean {
+  if (/heads\/(main|master)\b/.test(seg)) return true;
+  if (!/\/contents\b/.test(seg)) return false;
+  const branch = /(?:^|\s)(?:-[fF]\s*|--(?:raw-)?field[\s=]+)['"]?branch=['"]?([^\s'"]+)/.exec(seg);
+  return branch === null || PROTECTED.has(branch[1]);
+}
 
 function externalAction(seg: string): boolean {
-  if (isPush(seg) || isMerge(seg) || /^(scp|ssh)\b/.test(seg)) return true;
+  if (isPush(seg) || isMerge(seg) || /^(scp|ssh|sftp)\b/.test(seg)) return true;
   if (/^(curl|wget)\b/.test(seg) && /(-X\s*(POST|PUT|DELETE|PATCH)|\s-d\b|--data|--upload-file|\s-F\b)/i.test(seg)) return true;
   if (/^gh\s+(issue|pr)\s+comment\b/.test(seg)) return true;
-  if (/^gh\s+api\b/.test(seg) && /(-X\s*(POST|PUT|DELETE|PATCH)|--method\s+(POST|PUT|DELETE|PATCH)|\s-f\b|\s-F\b)/.test(seg)) return true;
+  if (isApi(seg) && apiWrites(seg)) return true;
   return /\bdeploy\b/i.test(seg);
 }
 
@@ -76,9 +115,22 @@ function untrustedRead(seg: string): boolean {
   );
 }
 
-function pushTarget(seg: string): string[] {
-  const args = seg.replace(/^git\s+(-\S+\s+)*push\b/, "").trim().split(/\s+/).filter((a) => a && !a.startsWith("-"));
-  return args.slice(1).map((ref) => ref.replace(/^\+/, "").split(":").pop() as string);
+/** The branch a refspec updates: the part after the last `:`, without quotes, `+` or `refs/heads/`. */
+const pushDestination = (ref: string) => (ref.replace(/["'\\]/g, "").replace(/^\+/, "").split(":").pop() as string).replace(/^refs\/heads\//, "");
+
+/** Positional words after `git push`: the remote, then the refspecs. */
+function pushArgs(seg: string): string[] {
+  return seg.replace(/^git\s+(-\S+\s+)*push\b/, "").trim().split(/\s+/).filter((a) => a && !a.startsWith("-"));
+}
+
+/** True when a push names, or may update, a protected branch. */
+function pushesProtected(seg: string, currentBranch: string | null): boolean {
+  if (/(?:^|\s)--(all|mirror|branches)\b/.test(seg)) return true;
+  const args = pushArgs(seg);
+  const targets = args.slice(1).map(pushDestination);
+  const refs = targets.length > 0 ? targets : currentBranch === null ? ["main"] : [currentBranch];
+  const headOnProtected = currentBranch !== null && PROTECTED.has(currentBranch);
+  return [...refs, ...args.map(pushDestination)].some((r) => PROTECTED.has(r) || (r === "HEAD" && headOnProtected));
 }
 
 function permittedTool(entries: string[], tool: string, subject: string | null, bashSegments: string[] | null): boolean {
@@ -91,15 +143,26 @@ function permittedTool(entries: string[], tool: string, subject: string | null, 
   });
 }
 
+/** Resolve symlinks in the longest existing ancestor of a path and keep the rest, as Python's realpath does. */
+function realOf(abs: string): string {
+  const rest: string[] = [];
+  let head = abs;
+  for (;;) {
+    try {
+      return join(realpathSync(head), ...rest);
+    } catch {
+      const parent = dirname(head);
+      if (parent === head) return abs;
+      rest.unshift(basename(head));
+      head = parent;
+    }
+  }
+}
+
 /** Normalise a tool path against the project directory, resolving `..` and symlinks. */
 function normPaths(ctx: HookContext, p: string): { rel: string; real: string } {
   const abs = resolve(ctx.projectDir, p);
-  let real = abs;
-  try {
-    real = realpathSync(abs);
-  } catch {
-    // the path does not exist yet; the logical path is all there is
-  }
+  const real = realOf(abs);
   let root = ctx.projectDir;
   try {
     root = realpathSync(ctx.projectDir);
@@ -118,15 +181,28 @@ function governancePath(ctx: HookContext, p: string): boolean {
 
 const WRAPPER_OPTIONS = /^git\s+(?:(?:(?:-C|-c|--git-dir|--work-tree|--namespace)(?:\s+|=)\S+|--no-pager|--paginate|--no-optional-locks|-P)\s+)+/;
 
-/** Remove leading assignments, wrappers (env, sudo, time, ...) and git global options. */
+/** Reduce the first word to the command bash runs: quotes and backslashes removed, then the part after the last `/`. */
+function commandName(segment: string): string {
+  const first = /^\S+/.exec(segment)?.[0] ?? "";
+  const name = first.replace(/["'\\]/g, "");
+  const base = name.slice(name.lastIndexOf("/") + 1);
+  return base === "" ? segment : base + segment.slice(first.length);
+}
+
+/**
+ * Remove leading assignments, wrappers (env, sudo, time, xargs, ...), git global options and `gh` repository
+ * flags, and reduce the command word to its name: `/usr/bin/curl`, `"curl"`, `c''url` and `\\curl` all become `curl`.
+ */
 export function stripWrappers(segment: string): string {
-  let s = segment.trim();
+  let s = trimBlank(segment);
   for (;;) {
     const before = s;
     s = s.replace(/^[A-Za-z_][A-Za-z0-9_]*=\S*\s+/, "");
-    s = s.replace(/^(env|command|sudo|time|nohup|nice|exec)\s+(-\S+\s+)*/, "");
+    s = commandName(s);
+    s = s.replace(/^(env|command|sudo|time|nohup|nice|exec|xargs)\s+(-\S+\s+)*/, "");
     s = s.replace(/^timeout\s+(-\S+\s+)*\d+[smhd]?\s+/, "");
     s = s.replace(WRAPPER_OPTIONS, "git ");
+    if (/^gh\s/.test(s)) s = s.replace(/\s(?:-R|--repo)(?:=|\s+)\S+/g, "");
     if (s === before) return s;
   }
 }
@@ -167,7 +243,8 @@ function readOnlyWords(words: string[]): boolean {
  * the shell can rebuild a write flag from them after the check (`-del$'e'te`, `{-delete,-print}`).
  */
 export function plainReadOnly(command: string): boolean {
-  const segments = command.split("|").map((s) => s.trim());
+  // Only space, tab and newline are trimmed here: a command word with any other character is not on the list.
+  const segments = command.split("|").map((s) => trimChars(s, " \t\n"));
   return segments.every((segment) => {
     const words = segment.split(/[ \t]+/);
     return segment !== "" && words.every((w) => PLAIN_WORD.test(w)) && readOnlyWords(words);
@@ -178,26 +255,48 @@ function toolFile(input: Json): string | null {
   return input.file_path ?? input.notebook_path ?? null;
 }
 
-const GOV_WORDS = /\.autonomy|codeowners|\.github\/workflows|\.claude\/(settings|hooks)|\.harness/i;
+const GOV_WORDS = /\.autonomy|codeowners|\.github\/(workflows|actions)|\.claude\/(settings|hooks)|\.harness/i;
 const WRITE_HINT = new RegExp(
   [
     ">", "\\btee\\b", "\\bsed\\s+-i", "--in-place", "\\bmv\\b", "\\bcp\\b", "\\brm\\b", "\\bln\\b", "\\brsync\\b", "\\btouch\\b",
-    "\\btruncate\\b", "\\bdd\\b", "\\binstall\\b", "\\bchmod\\b", "\\bunzip\\b", "--output",
-    "\\btar\\s+(?:\\S+\\s+)*?(?:-?[A-Za-z]*x[A-Za-z]*|--extract|--get)(?:\\s|$)",
-    "\\bfind\\b.*\\s-(?:delete|exec|execdir|ok|okdir|fprint0?|fprintf|fls)\\b",
-    "\\bsort\\b.*\\s-[^-\\s]*o", "git\\s+(checkout|restore|apply|mv|rm)\\b",
+    "\\btruncate\\b", "\\bdd\\b", "\\binstall\\b", "\\bchmod\\b", "\\bunzip\\b", "--output", "git\\s+(checkout|restore|apply|mv|rm)\\b",
   ].join("|"),
 );
 
-/** True when a command names a locked or workflow path and a write verb, before or after removing quotes. */
-function governanceShellWrite(command: string): boolean {
-  const unquoted = command.replace(/["'\\]/g, "");
-  return [command, unquoted].some((c) => GOV_WORDS.test(c)) && [command, unquoted].some((c) => WRITE_HINT.test(c));
+/** Commands whose write flag can come anywhere after them: the command word, and the flag word. */
+const LATER_FLAG_WRITES: Array<[RegExp, RegExp]> = [
+  [/\btar$/, /^(?:-?[A-Za-z]*x[A-Za-z]*|--extract|--get)$/],
+  [/\bfind\b/, /^-(?:delete|exec|execdir|ok|okdir|fprint0?|fprintf|fls)\b/],
+  [/\bsort\b/, /^-[^-]*o/],
+];
+
+/** True when `tar`, `find` or `sort` is followed, anywhere later, by one of its write flags. One pass, linear. */
+function laterFlagWrite(text: string): boolean {
+  const words = text.split(/[ \t\n\r\f\v]+/).filter(Boolean);
+  const flagLater = LATER_FLAG_WRITES.map(() => false);
+  for (let i = words.length - 1; i >= 0; i--) {
+    for (const [k, [cmd, flag]] of LATER_FLAG_WRITES.entries()) {
+      if (flagLater[k] && cmd.test(words[i])) return true;
+      if (flag.test(words[i])) flagLater[k] = true;
+    }
+  }
+  return false;
 }
 
-const PR_WRITE = /^gh\s+pr\s+(create|edit|close|reopen|ready|review|comment|lock|unlock|update-branch|revert)\b/;
-const API_WRITE = /(-X\s*(POST|PUT|DELETE|PATCH)|--method\s+(POST|PUT|DELETE|PATCH)|\s-f\b|\s-F\b)/;
-const isPrWrite = (seg: string) => PR_WRITE.test(seg) || (/^gh\s+api\b/.test(seg) && /\bpulls\b/.test(seg) && API_WRITE.test(seg));
+/**
+ * True when a command names a locked or workflow path and a write verb, before or after removing quotes. Names
+ * are also compared folded (see foldText) with dots and spaces before a `/` removed, the forms a
+ * case-insensitive file system or Windows resolves to the same file.
+ */
+function governanceShellWrite(command: string): boolean {
+  const unquoted = command.replace(/["'\\]/g, "");
+  const folded = [command, unquoted].map((c) => foldText(c).split("/").map((part, i, all) => (i < all.length - 1 ? trimEndChars(part, ". ") : part)).join("/"));
+  return [command, unquoted, ...folded].some((c) => GOV_WORDS.test(c)) && [command, unquoted].some((c) => WRITE_HINT.test(c) || laterFlagWrite(c));
+}
+
+const PR_WRITE = /^gh\s+pr\s+(create|new|edit|close|reopen|ready|review|comment|lock|unlock|update-branch|revert)\b/;
+const isPrWrite = (seg: string) =>
+  PR_WRITE.test(seg) || (isApi(seg) && /\bpulls\b/.test(seg) && apiWrites(seg)) || (isGraphql(seg) && (/\bmutation\b/.test(seg) || graphqlUnseen(seg)));
 
 function decideBash(ctx: HookContext, command: string): Decision {
   const wf = ctx.workflow as Json;
@@ -205,6 +304,9 @@ function decideBash(ctx: HookContext, command: string): Decision {
   const segments = splitSegments(command);
   const perm = wf.permitted_actions ?? {};
   const forbidden: string[] = wf.forbidden_actions ?? [];
+  if (commandTooLong(command)) {
+    return deny("command-too-long", `command is longer than ${MAX_COMMAND_BYTES} bytes`);
+  }
   if (governanceShellWrite(command)) {
     return deny("governance-write", "shell command writes to a governance file");
   }
@@ -231,12 +333,11 @@ function decideBash(ctx: HookContext, command: string): Decision {
     if (isPush(seg)) {
       if (isForce(seg)) return deny("force-push", "force push is never permitted");
       if (level <= 2) return deny("git-push-blocked", "git push is blocked below level 3");
-      const targets = pushTarget(seg);
-      const refs = targets.length > 0 ? targets : ctx.currentBranch === null ? ["main"] : [ctx.currentBranch];
-      const headOnProtected = ctx.currentBranch !== null && PROTECTED.has(ctx.currentBranch);
-      if (refs.some((r) => PROTECTED.has(r) || (r === "HEAD" && headOnProtected))) {
-        return deny("protected-branch-push", "push to a protected branch is blocked");
-      }
+      if (pushesProtected(seg, ctx.currentBranch)) return deny("protected-branch-push", "push to a protected branch is blocked");
+    }
+    if (isApiRefWrite(seg)) {
+      if (apiRefProtected(seg)) return deny("protected-branch-push", "an API write to a protected branch is blocked");
+      if (level <= 2) return deny("git-push-blocked", "updating a branch through the API is blocked below level 3");
     }
     if (isMerge(seg) || isMergeLabel(seg)) {
       if (level <= 3) return deny("merge-blocked", "merging and merge-triggering labels are blocked below level 4");
@@ -286,6 +387,8 @@ export function decide(ctx: HookContext, call: { tool_name: string; tool_input: 
   const tool = call.tool_name;
   const input = call.tool_input ?? {};
   const file = toolFile(input);
+  if (ctx.registerInvalid === true) return deny("register-invalid", "the register fails schema validation; every tool call is denied");
+  if (file !== null && Buffer.byteLength(String(file), "utf8") > MAX_PATH_BYTES) return deny("path-too-long", `path is longer than ${MAX_PATH_BYTES} bytes`);
   if (file !== null && WRITE_TOOLS.has(tool) && governancePath(ctx, file)) {
     return deny("governance-write", `agents may not write ${relPath(ctx, file)}`);
   }
@@ -347,12 +450,18 @@ export interface Resolved {
   workflow: Json | null;
   eff: Effective | null;
   note: string;
+  registerInvalid?: boolean;
 }
 
 export function resolveWorkflow(projectDir: string, workflowId: string, now: number): Resolved {
   const registerPath = join(projectDir, ".autonomy.yaml");
   if (!existsSync(registerPath)) return { workflow: null, eff: null, note: "no .autonomy.yaml; read-only tools only" };
   const register = loadRegisterFile(registerPath);
+  const errors = validateRegister(register);
+  if (errors.length > 0) {
+    const where = errors.map((e) => `${e.path || "/"} ${e.keyword}`).join(", ");
+    return { workflow: null, eff: null, registerInvalid: true, note: `.autonomy.yaml fails schema validation (${where}); every tool call is denied` };
+  }
   const wf = allWorkflows(register).find((w) => w.id === workflowId);
   if (wf === undefined) return { workflow: null, eff: null, note: `workflow ${workflowId} is not in the register; read-only tools only` };
   const profileRel: string = register.profile ?? ".autonomy/profile.json";
@@ -406,7 +515,8 @@ export function runHook(event: string, stdin: string, env: Record<string, string
   const session: string = input.session_id ?? "unknown";
   const spath = sessionPath(projectDir, session);
   const untrustedSeen = readJsonIfExists(spath)?.untrusted_input_seen === true;
-  const isMergeCall = input.tool_name === "Bash" && /gh\s+pr\s+merge|gh\s+api\b.*\/merge/.test(String(input.tool_input?.command ?? ""));
+  const command = String(input.tool_input?.command ?? "");
+  const isMergeCall = input.tool_name === "Bash" && !commandTooLong(command) && splitSegments(command).some((s) => isMerge(stripWrappers(s)));
   const ctx: HookContext = {
     projectDir,
     workflow: resolved.workflow,
@@ -414,6 +524,7 @@ export function runHook(event: string, stdin: string, env: Record<string, string
     untrustedSeen,
     currentBranch: currentBranch(projectDir),
     diff: isMergeCall ? diffAgainstBase(projectDir, env.AUTONOMY_BASE ?? "origin/main") : null,
+    registerInvalid: resolved.registerInvalid === true,
   };
   const decision = decide(ctx, { tool_name: input.tool_name, tool_input: input.tool_input });
   const auditDir = join(projectDir, ".autonomy", "audit");

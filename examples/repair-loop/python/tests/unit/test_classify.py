@@ -114,3 +114,78 @@ def test_normalize_path_collapses_redundant_segments_of_a_safe_path():
 def test_normalize_path_returns_an_unsafe_path_unchanged_so_it_stays_visible():
     assert normalize_path("tests/../app/x.py") == "tests/../app/x.py"
     assert normalize_path("/etc/x") == "/etc/x"
+
+
+# parse_diff reads names from headers, git lines and binary lines (r10 C2); same cases as classify.test.ts.
+def paths(lines):
+    return [f"unparsed: {f.path}" if f.unparsed else f"{f.status} {f.path}" for f in parse_diff("\n".join(lines) + "\n")]
+
+
+def test_a_binary_files_line_splits_on_the_and_that_names_one_path_on_both_sides():
+    assert paths(["Binary files base/tests/a and X/app/y.bin and cand/tests/a and X/app/y.bin differ"]) == ["modified tests/a and X/app/y.bin"]
+    assert paths(["Binary files /dev/null and b/app/a and b.bin differ"]) == ["modified app/a and b.bin"]
+
+
+def test_a_binary_files_line_with_no_single_reading_is_unparsed():
+    line = "Binary files base/app/a and cand/b and base/app/c differ"
+    assert paths([line]) == [f"unparsed: {line}"]
+    two_readings = "Binary files /dev/null and b/x and /dev/null differ"
+    assert paths([two_readings]) == [f"unparsed: {two_readings}"]
+
+
+def test_a_header_with_a_tab_inside_the_name_is_unparsed_a_quoted_header_is_read_with_c_escapes():
+    assert paths(["--- base/app/a\tb.ts\t2026-01-01", "+++ cand/app/a\tb.ts\t2026-01-01", "@@ -0,0 +1 @@", "+x"]) == ["unparsed: +++ cand/app/a\tb.ts\t2026-01-01"]
+    assert paths(["--- /dev/null", '+++ "b/app/caf\\303\\251\\tx.ts"', "@@ -0,0 +1 @@", "+x"]) == ["added app/café\tx.ts"]
+    assert paths(["--- /dev/null", '+++ "b/app/bad\\q.ts"', "@@ -0,0 +1 @@", "+x"]) == ['unparsed: +++ "b/app/bad\\q.ts"']
+
+
+def test_a_git_rename_lists_both_paths_from_the_rename_lines():
+    assert paths(["diff --git a/tests/x.ts b/app/x.ts", "similarity index 100%", "rename from tests/x.ts", "rename to app/x.ts"]) == ["modified app/x.ts", "deleted tests/x.ts"]
+    lines = ["diff --git a/tests/x.ts b/app/x.ts", "rename from tests/x.ts", "rename to app/x.ts", "--- a/tests/x.ts", "+++ b/app/x.ts", "@@ -1 +1 @@", "-a", "+b"]
+    assert paths(lines) == ["modified app/x.ts", "deleted tests/x.ts"]
+
+
+def test_a_git_diff_header_with_spaces_is_read_when_both_sides_agree_a_git_binary_patch_block_is_skipped():
+    lines = [
+        "diff --git a/app/a b.bin b/app/a b.bin", "new file mode 100644", "index 0000000..1111111", "GIT binary patch", "literal 4",
+        "LcmZQzWMT#Y01f~L", "", "literal 0", "HcmV?d00001", "", "diff --git a/app/c.ts b/app/c.ts", "--- a/app/c.ts", "+++ b/app/c.ts",
+        "@@ -1 +1 @@", "-a", "+b",
+    ]
+    assert paths(lines) == ["modified app/a b.bin", "modified app/c.ts"]
+
+
+def test_a_line_diff_r_prints_for_a_type_change_is_unparsed():
+    line = "File base/app/x is a regular file while file cand/app/x is a directory"
+    assert paths([line]) == [f"unparsed: {line}"]
+
+
+def test_an_unparsed_entry_classifies_as_unknown():
+    c = cls("Binary files base/app/a and cand/b and base/app/c differ\n")
+    assert (c.reversibility, c.blast) == ("R4", "B3")
+    assert "cannot be read as one file path" in "\n".join(c.reasons)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "CLAUDE.md", "app/CLAUDE.md", "CLAUDE.local.md", "app/claude.LOCAL.md", "AGENTS.md", "docs/agents.md", "GEMINI.md", "app/Gemini.md",
+        ".claude/rules/x.md", "app/.claude/skills/x/SKILL.md", "app/.claude/skills/x/run.sh", ".claude/agents/r.md", ".claude/commands/c.md",
+        ".mcp.json", "app/.mcp.json",
+    ],
+)
+def test_instruction_and_tool_config_surfaces_at_any_depth_and_in_any_case_are_medium_tier(path):
+    c = cls(make_diff(path, ["text"]))
+    assert (c.reversibility, c.blast) == ("R0", "B1")
+
+
+@pytest.mark.parametrize("path", [".claude/settings.json", ".claude/settings.local.json", "app/.claude/settings.json", ".claude/hooks/guard.sh", "app/.claude/hooks/x.sh"])
+def test_claude_settings_and_hooks_at_any_depth_are_high_tier(path):
+    c = cls(make_diff(path, ["{}"]))
+    assert (c.reversibility, c.blast) == ("R4", "B3")
+
+
+def test_a_glob_wildcard_does_not_match_a_line_terminator_in_either_language():
+    for path in ["app/src/routes/\rx.py", "app/src/routes/x .py", "app/src/routes/a\nb.py"]:
+        assert glob_match("app/src/routes/**", path) is False
+        assert glob_match("app/src/routes/*", path) is False
+    assert glob_match("app/src/routes/**", "app/src/routes/a/b.py") is True

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import replace
 
@@ -26,8 +27,8 @@ def exceeds(value: Classification, ceiling: dict[str, str]) -> bool:
 
 
 def classify(files: list[DiffFile], rules: ReversibilityRules) -> Classification:
-    """Each file takes the class of its first matching path rule, or the unknown class (the
-    highest). A case variant names the same file on a case-insensitive file system, so a file
+    """A file the diff names ambiguously (marked `unparsed`) takes the unknown class. Each other file
+    takes the class of its first matching path rule, or the unknown class (the highest). A case variant names the same file on a case-insensitive file system, so a file
     also takes the class of its first case-insensitive match when that is higher. Content rules
     raise the class when a production file's changed lines match. An empty diff is unknown."""
     if not files:
@@ -38,6 +39,14 @@ def classify(files: list[DiffFile], rules: ReversibilityRules) -> Classification
     reversibility, blast = "R0", "B0"
     reasons: list[str] = []
     for diff_file in files:
+        if diff_file.unparsed:
+            reversibility = max_r(reversibility, rules.unknown["reversibility"])
+            blast = max_b(blast, rules.unknown["blast"])
+            reasons.append(
+                f"{json.dumps(diff_file.path, ensure_ascii=False)}: cannot be read as one file path, "
+                f"unknown -> {rules.unknown['reversibility']}/{rules.unknown['blast']}"
+            )
+            continue
         file = replace(diff_file, path=normalize_path(diff_file.path))
         rule = None if is_unsafe_path(file.path) else next((p for p in rules.paths if glob_match(p["glob"], file.path)), None)
         folded = rule and next((p for p in rules.paths if glob_match(p["glob"], file.path, True)), None)

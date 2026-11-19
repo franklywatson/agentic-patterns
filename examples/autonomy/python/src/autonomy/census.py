@@ -23,8 +23,8 @@ from autonomy.util import (
 
 FRESH_DAYS = 90
 WORKSHEET_MAX_AGE_DAYS = 90
-AGENTS_IMPORT = re.compile(r"(^|\s)@AGENTS\.md\b", re.M)
-CHECK_CMD = re.compile(r"\b(npm (run )?(test|check)|pnpm (run )?(test|check)|pytest|make (test|check))\b")
+AGENTS_IMPORT = re.compile(r"(^|\s)@AGENTS\.md\b", re.M | re.A)
+CHECK_CMD = re.compile(r"\b(npm (run )?(test|check)|pnpm (run )?(test|check)|pytest|make (test|check))\b", re.A)
 
 
 class Ctx:
@@ -32,7 +32,8 @@ class Ctx:
         self.dir = directory
         self.now = now
         self.files = list_files(directory)
-        self.settings = self._json(".claude/settings.json")
+        settings = self._json(".claude/settings.json")
+        self.settings = settings if isinstance(settings, dict) else {}
         # CLAUDE.md, plus AGENTS.md when CLAUDE.md imports it with `@AGENTS.md` or CLAUDE.md is absent: the files
         # Claude Code loads. Existing files only.
         files = ["CLAUDE.md"]
@@ -43,8 +44,8 @@ class Ctx:
         workflow_files = [f for f in self.files if re.fullmatch(r"\.github/workflows/.+\.ya?ml", f)]
         self.workflows = "\n".join(self.text(f) for f in workflow_files)
         # GitHub reads only the first CODEOWNERS it finds, in this order.
-        codeowners_path = next((p for p in (".github/CODEOWNERS", "CODEOWNERS", "docs/CODEOWNERS") if self.exists(p)), None)
-        self.codeowners = "" if codeowners_path is None else self.text(codeowners_path)
+        self.codeowners_path = next((p for p in (".github/CODEOWNERS", "CODEOWNERS", "docs/CODEOWNERS") if self.exists(p)), None)
+        self.codeowners = "" if self.codeowners_path is None else self.text(self.codeowners_path)
         # The branch origin/HEAD names, or main and master when the clone has no origin/HEAD.
         head = (git(directory, ["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"]) or "").strip()
         self.default_branches = [head[head.index("/") + 1 :]] if head else ["main", "master"]
@@ -70,7 +71,7 @@ class Ctx:
 
     def text(self, path: str) -> str:
         full = self.dir / path
-        return full.read_text() if full.is_file() else ""
+        return full.read_text(encoding="utf-8", errors="replace") if full.is_file() else ""
 
     def exists(self, path: str) -> bool:
         return (self.dir / path).exists()
@@ -124,6 +125,57 @@ def _codeowners_sets(c: Ctx) -> set[str]:
     return {" ".join(sorted(owners)) for _, owners in _codeowners_rules(c)}
 
 
+def codeowners_match(pattern: str, path: str) -> bool:
+    """True when a CODEOWNERS pattern matches a file path. Gitignore rules as GitHub applies them: a leading or inner
+    `/` anchors the pattern at the root, a trailing `/` matches only a folder's contents, `*` and `?` stay inside
+    one name, `**` crosses folders, and a pattern that names a folder also matches its contents, except one ending
+    in `/*`, which GitHub applies to that folder's own files only."""
+    dir_only = pattern.endswith("/")
+    body = re.sub(r"/$", "", re.sub(r"^/", "", pattern))
+    if body == "":
+        return False
+    anchored = pattern.startswith("/") or "/" in body
+    out = ""
+    i = 0
+    while i < len(body):
+        ch = body[i]
+        if body.startswith("**/", i):
+            out += "(?:[^/]+/)*"
+            i += 2
+        elif body.startswith("/**", i) and i + 3 == len(body):
+            out += "/.*"
+            i += 2
+        elif ch == "*":
+            out += "[^/]*"
+        elif ch == "?":
+            out += "[^/]"
+        else:
+            out += re.escape(ch)
+        i += 1
+    tail = "/.*" if dir_only else "" if body.endswith("/*") else "(?:/.*)?"
+    return re.fullmatch(("" if anchored else "(?:[^/]+/)*") + out + tail, path, re.S) is not None
+
+
+# Paths a high-tier change touches: CI, Claude Code configuration, the register and CODEOWNERS itself.
+HIGH_TIER_SAMPLES = (".github/workflows/ci.yml", ".github/actions/setup/action.yml", ".claude/settings.json", ".claude/hooks/guard.sh", ".autonomy.yaml", ".autonomy/profile.json")
+
+
+def _codeowners_cover_high_tier(c: Ctx) -> bool:
+    """Every high-tier sample path, and the CODEOWNERS file itself, has an owner: the last matching rule names one."""
+    lines = [parts for parts in (re.sub(r"(^|\s)#.*$", "", line).strip().split() for line in c.codeowners.split("\n")) if parts]
+
+    def owned(path: str) -> bool:
+        rule = next((parts for parts in reversed(lines) if codeowners_match(parts[0], path)), None)
+        return rule is not None and any(OWNER.fullmatch(o) for o in rule[1:])
+
+    return c.codeowners_path is not None and all(owned(p) for p in (*HIGH_TIER_SAMPLES, c.codeowners_path))
+
+
+def _empty_or_absent(obj: dict, key: str) -> bool:
+    """The key is absent or holds an empty list; anything else (a non-empty list, null, an object) is not empty."""
+    return key not in obj or (isinstance(obj[key], list) and obj[key] == [])
+
+
 def _names_default(c: Ctx, patterns: Any) -> bool:
     """A ref_name pattern list names the default branch: `~DEFAULT_BRANCH`, `refs/heads/<name>` or `<name>`."""
     return isinstance(patterns, list) and any(
@@ -138,16 +190,17 @@ def _rule_approves(c: Ctx, rule: Any) -> bool:
     count = parameters.get("required_approving_review_count")
     if isinstance(count, float) and count.is_integer():
         count = int(count)  # JSON 1.0 is the integer 1, as in TypeScript
-    if isinstance(count, int) and not isinstance(count, bool) and count >= 1:
+    if isinstance(count, int) and not isinstance(count, bool) and _finite(count) and count >= 1:
         return True
-    return parameters.get("require_code_owner_review") is True and len(_codeowners_sets(c)) > 0
+    return parameters.get("require_code_owner_review") is True and _codeowners_cover_high_tier(c)
 
 
 def _ruleset_approves(c: Ctx) -> bool:
-    """A committed ruleset that is enforced (`enforcement: "active"`) on the default branch requires a non-author
-    approval: on every pull request (an integer `required_approving_review_count` of at least 1), or on pull
-    requests that change a file with a code owner (`require_code_owner_review: true` and a CODEOWNERS rule that
-    names an owner)."""
+    """A committed ruleset that is enforced (`enforcement: "active"`) on the default branch, with no bypass actors and
+    no excluded branches, requires a non-author approval: on every pull request (an integer
+    `required_approving_review_count` of at least 1), or on pull requests that change a file with a code owner
+    (`require_code_owner_review: true` and a CODEOWNERS whose rules give an owner to every high-tier path). The probe
+    reads the committed file's shape; it does not show that GitHub enforces the ruleset."""
     for f in c.files:
         if not re.fullmatch(r"\.github/rulesets/.+\.json", f):
             continue
@@ -157,8 +210,10 @@ def _ruleset_approves(c: Ctx) -> bool:
             continue
         if not isinstance(rs, dict) or rs.get("enforcement") != "active" or rs.get("target", "branch") != "branch":
             continue
+        if not _empty_or_absent(rs, "bypass_actors"):
+            continue
         ref = rs["conditions"].get("ref_name") if isinstance(rs.get("conditions"), dict) else None
-        if not isinstance(ref, dict) or not _names_default(c, ref.get("include")) or _names_default(c, ref.get("exclude")):
+        if not isinstance(ref, dict) or not _names_default(c, ref.get("include")) or not _empty_or_absent(ref, "exclude"):
             continue
         if isinstance(rs.get("rules"), list) and any(_rule_approves(c, r) for r in rs["rules"]):
             return True
@@ -177,10 +232,16 @@ def _pins_valid(c: Ctx) -> bool:
     return len(pins) > 0 and all(re.fullmatch(r"[0-9a-f]{64}", p.get("sha256") or "") for p in pins)
 
 
+def _finite(v: int | float) -> bool:
+    """Finite as a JSON number in TypeScript: an integer too large for a double is Infinity there."""
+    try:
+        return math.isfinite(float(v))
+    except OverflowError:
+        return False
+
+
 def _has_finite_number(value: Any) -> bool:
-    return isinstance(value, dict) and any(
-        isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) for v in value.values()
-    )
+    return isinstance(value, dict) and any(isinstance(v, (int, float)) and not isinstance(v, bool) and _finite(v) for v in value.values())
 
 
 def _recent(c: Ctx, value: Any, days: int) -> bool:
