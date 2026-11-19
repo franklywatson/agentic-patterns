@@ -9,7 +9,7 @@
 
 Three categories of improvement to the agentic-patterns repo, driven by the completion of [claude-stack-utils](https://github.com/franklywatson/claude-stack-utils) — a working implementation of the L2 and L3 patterns:
 
-1. **Cross-reference working systems** — link to claude-stack-utils, gstack, and superpowers as reference implementations from the relevant pattern docs
+1. **Cross-reference working systems** — link to claude-stack-utils and superpowers as reference implementations from the relevant pattern docs
 2. **Fill pattern gaps** — add enforcement pipeline composition, phase transition validation, session lifecycle, and CI guardrails as new patterns where the existing docs describe concepts but not mechanisms
 3. **Upgrade examples/guardrails** — bring the example closer to the working system, adding enforcement pipeline, config loading, and session start
 
@@ -21,7 +21,6 @@ claude-stack-utils was built directly from the agentic-patterns L2 and L3 patter
 
 - 26 source files, 108 symbols, 240+ tests
 - Working implementations of: tool router, enforcement pipeline, skill chain, scout agent, CLI installer, CI guardrails
-- 7 phase retrospectives comparing against gstack
 
 This creates a bidirectional opportunity:
 
@@ -45,7 +44,6 @@ A table of working systems that implement patterns from this repo:
 | System | What it implements | Language | Status |
 |--------|-------------------|----------|--------|
 | [claude-stack-utils](https://github.com/franklywatson/claude-stack-utils) | L2 enforcement pipeline, L3 tool routing + scout agent, skill chain with phase transitions, CLI installer | TypeScript | Production (240+ tests) |
-| [gstack](https://github.com/garrytan/gstack) | L2 skill framework with resolver pipeline, preamble system, Review Army multi-agent pattern | TypeScript | Production |
 | [superpowers](https://github.com/obra/superpowers) | L2 base skills (brainstorming, TDD, verification, review) that claude-stack-utils wraps | Markdown/JS | Production |
 
 Each entry links to the repo and identifies which pattern levels it covers. This makes the repo more credible — the patterns aren't theoretical, they're in daily use.

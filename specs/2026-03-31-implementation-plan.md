@@ -36,7 +36,7 @@ Add a disclaimer near the top (after the intro paragraph, before Pattern 4.1):
 
 - Opening reframed as "toolkit" not "prescription"
 - Added "shoulders of giants" attribution (Ousterhout, Pocock, testing discipline)
-- Added "Reference Implementations" table (claude-stack-utils, gstack, superpowers)
+- Added "Reference Implementations" table (claude-stack-utils, superpowers)
 - Lineage story documented
 - Example differences now visible in "What's in This Repo" section (TS has Playwright, Python doesn't)
 - Adoption path language softened ("suggested approaches, not a rigid plan")
