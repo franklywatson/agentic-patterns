@@ -24,6 +24,8 @@ Apply the same standards to test infrastructure as to application code:
 - [Pattern 1.6 — Test Integrity Rules](1.6-test-integrity.md) — Integrity applies to test infrastructure, not just test assertions
 - [L2: Pattern 2.5 — Zero-Defect Tolerance](../L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance) — Flaky infrastructure violates zero-defect
 
+**Evidence:** Thin — reasoned from trading-bot maintenance cost (first-party, n=1)
+
 ---
 
 [Back to L1 Overview](../L1-feedback-loops.md) | [Previous: Pattern 1.6](1.6-test-integrity.md)

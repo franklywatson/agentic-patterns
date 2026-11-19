@@ -1,5 +1,7 @@
 # Reference Telegram Trading Bot Project — Agentic Patterns in Production
 
+This case study is first-party, n=1: one project by the author of these patterns, with no independent replication.
+
 **Project:** Telegram trading bot — Trading automation platform (DEX swaps, bridges, limit orders, DCA strategies, stop-loss, trailing stops)
 
 **Tech Stack:** Node.js, PostgreSQL/TimescaleDB, Redis, Docker, Ethereum testnets

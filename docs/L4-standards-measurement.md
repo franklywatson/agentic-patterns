@@ -99,6 +99,8 @@ Claim: The error existed before this commit. Changes in abc123 don't touch the r
 - [Pattern 0.8 — Aggressive Cleanup](L0-foundation.md#pattern-08--aggressive-cleanup): Remove dead code that wastes verification tokens
 - [Pattern 0.7 — Documentation as System Map](L0-foundation.md#pattern-07--documentation-as-system-map): Automated checks replace manual verification
 
+**Evidence:** Strong — developers believed AI sped them up 20% after a measured 19% slowdown, so self-report cannot stand in for output ([IS-6, MV-7, MV-8, MC-22](references/sources.md))
+
 ---
 
 ## Pattern 4.4 — Agentic Development Metrics
@@ -185,6 +187,8 @@ Metrics that don't drive action are waste. For each metric, define:
 - [L3: Optimization](L3-optimization.md): Token efficiency gains are measurable
 - **Pattern 4.1 — Evidence-Based Claims**: The evidence standard applies to metrics claims themselves
 
+**Evidence:** Strong — for avoiding activity and throughput metrics; the example thresholds are house values (MV-1, MV-2, MV-5, AN-26, AN-48)
+
 ---
 
 ## Pattern 4.5 — CI Guardrails
@@ -234,6 +238,8 @@ Putting thresholds in CI workflow files rather than project config. When thresho
 
 - [Pattern 0.7 — Documentation as System Map](L0-foundation.md#pattern-07--documentation-as-system-map) — CI automates drift checks
 - [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — CI output is the evidence
+
+**Evidence:** Partial — automated checks on every change are an independent practice; the scripts and thresholds are first-party, n=1 (PL-3)
 
 ---
 
@@ -439,6 +445,8 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements context e
 - [Pattern 2.6 — Enforcement Pipeline](L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition) — Pipeline behavior can be eval'd through scenarios
 - [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — Context eval produces evidence for decision-layer effectiveness claims
 - [Pattern 4.5 — CI Guardrails](#pattern-45--ci-guardrails) — Context eval runs in CI as a non-negotiable quality gate
+
+**Evidence:** Partial — task banks, repeated trials and reading transcripts are documented practice from two vendors; no independent outcome evidence that scored routing improves results (MV-9, MV-10)
 
 ---
 
