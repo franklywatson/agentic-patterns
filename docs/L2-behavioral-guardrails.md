@@ -98,7 +98,7 @@ Copying the same rules into every prompt. This creates drift: prompts get update
 
 ### Cross-References
 
-- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claudemd-as-project-constitution) — instruction file as rule source
+- [Pattern 0.4 — Agent instruction file as project constitution](L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution) — instruction file as rule source
 - [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — enforcement point per rule
 
 ---
@@ -329,7 +329,7 @@ tells a reviewer where to look.
 
 ### Cross-References
 
-- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claudemd-as-project-constitution) — instruction file format
+- [Pattern 0.4 — Agent instruction file as project constitution](L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution) — instruction file format
 - [Pattern 1.5 — Real Dependencies](L1-patterns/1.5-no-mock-philosophy.md) — the rule behind the first example
 
 ### Reference Implementation

@@ -217,10 +217,10 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm run lint:md                       # markdownlint-cli2, config in .markdownlint-cli2.jsonc
       - run: python3 scripts/check-doc-links.py .  # links and anchors, exits 1 on any broken one
-      - run: test "$(wc -l < CLAUDE.md)" -le 150   # CLAUDE.md line limit
+      - run: test "$(wc -l < AGENTS.md)" -le 200 || echo "::warning::AGENTS.md is over 200 lines"  # warning only
 ```
 
-Each check exists in this repository: `npm run lint:md` is defined in `package.json`, `scripts/check-doc-links.py` is the link and anchor checker, and the line-limit check is an inline shell step in the `claude-md-line-limit` job of `.github/workflows/docs.yml` (the `wc -l` line above is its one-line equivalent). The same workflow also runs a doc-reachability job (all docs referenced from CLAUDE.md) and a writing-conventions job (filler words) as inline shell steps.
+Each check exists in this repository: `npm run lint:md` is defined in `package.json`, `scripts/check-doc-links.py` is the link and anchor checker, and the line-count check is an inline shell step in the `instruction-file-length` job of `.github/workflows/docs.yml` (the `wc -l` line above is its one-line equivalent). It warns above about 200 lines for AGENTS.md and CLAUDE.md and never fails the build. The same workflow also runs a doc-reachability job (all docs referenced from AGENTS.md) and a writing-conventions job (filler words) as inline shell steps.
 
 ### Reference Implementation
 

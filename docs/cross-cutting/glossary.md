@@ -146,8 +146,8 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Master Index
 
 **Level**: L0 - Foundation
-**Definition**: CLAUDE.md serves as the single source of truth and discovery mechanism; all project documents must be reachable from it via link chains.
-**See**: [Pattern 0.4 - CLAUDE.md as Project Constitution](../L0-foundation.md#pattern-04--claudemd-as-project-constitution)
+**Definition**: AGENTS.md (imported by CLAUDE.md) serves as the single source of truth and discovery mechanism; all project documents must be reachable from it via link chains.
+**See**: [Pattern 0.4 - Agent instruction file as project constitution](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution)
 
 ---
 

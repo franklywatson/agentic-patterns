@@ -25,6 +25,8 @@ Peter Steinberger, creator of OpenClaw, has described a similar approach — man
 
 Other frameworks approach similar problems from different angles. [superpowers](https://github.com/obra/superpowers) provides base skills for brainstorming, planning, TDD, and code review. [rig](https://github.com/franklywatson/claude-rig) is a configurable guardrails framework built on the L2-L4 patterns from this repo — automating enforcement pipelines, tool routing, token-optimized scout agents, context eval, and session management. Install with `rig init`. These systems informed this work — the best available ideas at the time, applied in practice.
 
+Disclosure: the author of this library also built rig, from these patterns. rig demonstrates the patterns. It does not independently validate them.
+
 The lineage: patterns were extracted from the reference project, organized into this library, then used to build rig — to serve as a working reference implementation and configurable toolkit for general use.
 
 ### Reference Implementations
@@ -42,7 +44,7 @@ Patterns are organized into five levels, each building on the previous. The leve
 
 ### Level Overviews
 
-**[L0: Foundation](docs/L0-foundation.md)** — Structure your codebase so an AI with zero prior context can navigate, understand, and contribute. Deep modules, progressive disclosure, conceptual file organization, CLAUDE.md as project constitution, unit tests as contract, documentation as system map, and aggressive cleanup. The "can a new starter figure this out?" test.
+**[L0: Foundation](docs/L0-foundation.md)** — Structure your codebase so an AI with zero prior context can navigate, understand, and contribute. Deep modules, progressive disclosure, conceptual file organization, an agent instruction file (AGENTS.md) as project constitution, unit tests as contract, documentation as system map, and aggressive cleanup. The "can a new starter figure this out?" test.
 
 **[L1: Closed Loop Design and Verification](docs/L1-feedback-loops.md)** — The level where agents stop guessing and start designing. Context harvesting gathers targeted evidence before implementation. Design rinsing extends this beyond the current project — extracting distilled architectural understanding from external sources (codebases, transcripts, articles) and translating it into design decisions for the target project. Stack tests validate design intent end-to-end through the full application stack — real dependencies (no mocks in stack tests), no partial integration, no ambiguous results. Mocks are appropriate in unit tests for isolation. Full-loop assertion layering catches regressions at primary, secondary, and tertiary levels.
 
@@ -69,7 +71,7 @@ Patterns are organized into five levels, each building on the previous. The leve
 
 ```
 docs/               # Pattern documentation (L0-L4) and guides
-examples/           # Working code examples (TypeScript + Python)
+examples/           # Working code examples (TypeScript + Python for core patterns; the optional L3 example is TypeScript only)
   stack-test/
     typescript/     # Jest-based stack tests + Playwright browser tests
                     #   Demonstrates: API-level AND browser-driven verification
@@ -77,7 +79,7 @@ examples/           # Working code examples (TypeScript + Python)
     python/         # pytest-based stack tests (API-level only)
                     #   Demonstrates: API-level verification, Python conventions
                     #   Stack: Python + PostgreSQL + Redis in Docker
-  guardrails/       # L3 token optimization middleware (TypeScript)
+  guardrails/       # Optional L3 token optimization middleware (TypeScript only)
                     #   Intent classification, smart routing, environment detection
   project-structure/ # Before/after directory layouts
 docs/cross-cutting/ # Anti-patterns, adoption guide, FAQ, glossary

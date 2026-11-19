@@ -414,7 +414,7 @@ This is a **subjective trade-off, not a hard rule**. The point is that agentic d
 ### Cross-References
 
 - [Pattern 0.2 — Progressive Disclosure](L0-foundation.md#pattern-02--progressive-disclosure) — Context bloat undermines progressive disclosure
-- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claudemd-as-project-constitution) — Each repo needs its own entry point
+- [Pattern 0.4 — Agent instruction file as project constitution](L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution) — Each repo needs its own entry point
 - [Pattern 3.4 — The Scout Pattern](#pattern-34--context-engineering--the-scout-pattern) — Structured exploration across repos
 
 ---
