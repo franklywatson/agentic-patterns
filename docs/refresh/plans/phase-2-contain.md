@@ -90,8 +90,6 @@ Link it from CLAUDE.md.
   - orphaned agent
 - **`docs/cross-cutting/glossary.md`.** Add containment, lethal trifecta / Rule of Two, least
   agency, author of record, agent register, tested stop, approval fatigue and cognitive debt.
-- **`docs/references/reference-my-claw-case-study.md`.** Add a caution note on the "autonomous (no
-  oversight)" tier and on promotion after a run of successes.
 
 ### T5. Working example
 

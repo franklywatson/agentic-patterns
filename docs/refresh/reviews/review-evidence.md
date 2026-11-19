@@ -5,6 +5,7 @@
 > Edited again on 2026-11-19: Anthropic source IDs renamed from the A27 form to the AN-27 form, and citations of the
 > companion's own positions, stances and recommendations replaced with the Anthropic or baseline sources
 > beneath them. Every ID resolves in [../sources.md](../sources.md).
+> Edited again on 2026-11-19: references to a removed case study deleted by maintainer decision.
 
 Reviewer lens: evidence auditor and sceptic. The repo's own constitution (CLAUDE.md:36-38, CLAUDE.md:103-104)
 requires that "every claim must be specific and verifiable" and "evidence-based claims only". This review holds
@@ -108,8 +109,6 @@ only, little or no measured support.
 - `1.1-stack-tests.md:67-69` rates unit tests "Mock Policy: Everything", "Confidence: Low", "Diagnosticity: Low
   (false positives from mocks)". That contradicts L0 Pattern 0.5 (`L0-foundation.md:196-228`), where unit tests
   are "the contract" that "never lies", and 1.5:13, where mocks are "appropriate and encouraged".
-- `reference-my-claw-case-study.md:191`: "Unit tests use no mocks". The case study is cited as following the
-  repo's patterns, and the repo says the opposite.
 - `reference-telegram-trading-bot-case-study.md:21`: mandate #1 says "Never mock logger, never mock ethers" with
   no test-tier scope, while :241 scopes it to stack tests. The repo's constitutional rule 1 is the scoped form.
 - `1.5-no-mock-philosophy.md:5` ("Mocks lie") and :155 ("PostgreSQL in Docker adds ~2 seconds") have no source
@@ -121,12 +120,6 @@ only, little or no measured support.
 - **Label:** real dependencies at the stack tier = Partial (follows from mechanism, unmeasured). The "no mocks"
   framing as a whole = Thin. Make the four documents agree.
 
-### P0.6 my-claw "auto-skip if no .env" breaks Pattern 1.6
-
-- `reference-my-claw-case-study.md:191`: integration tests "auto-skip if no .env". A test that silently skips
-  is the escape hatch that `1.6-test-integrity.md` and CLAUDE.md rule 5 forbid. A case study offered as
-  evidence for the pattern shows a violation of it.
-
 ---
 
 ## P1: the evidence base is first-party and circular
@@ -135,13 +128,12 @@ only, little or no measured support.
 
 - Zero peer-reviewed or independent studies. The repo cites no DORA, METR, SPACE, RAMP or OWASP work. The
   baseline's independent anchors (finding 8) are absent.
-- Evidence sources: two first-party case studies (the trading bot and my-claw), practitioner blogs and podcasts
-  (Steinberger, Pocock, Waselnuk), YouTube videos (WISC, my-claw sources) and tool READMEs (rtk, jcodemunch, TOON).
+- Evidence sources: a first-party case study (the trading bot), practitioner blogs and podcasts
+  (Steinberger, Pocock, Waselnuk), YouTube videos (WISC) and tool READMEs (rtk, jcodemunch, TOON).
 - **Circularity.** `README.md:30-32` says the patterns were extracted into this repo and then used to build rig.
-  `L4-standards-measurement.md:5` then cites rig as having "implemented and validated" Pattern 4.6. my-claw's
-  Phase 3 rinsed *this repo* (`reference-my-claw-case-study.md:72-96`) and is then cited as evidence for it
-  (`L1-feedback-loops.md:134`, `L2-behavioral-guardrails.md:497`). Both downstream implementations are
-  self-citations. They prove the patterns can be implemented, not that they work.
+  `L4-standards-measurement.md:5` then cites rig as having "implemented and validated" Pattern 4.6. A former
+  case study (removed 2026-11-19) rinsed *this repo* and was cited as evidence for it. Downstream
+  implementations are self-citations. They prove the patterns can be implemented, not that they work.
 - The trading-bot case study is an n=1 account written by the same author, of a private repo the reader cannot
   inspect. Examples: the 92% "coverage" (:39, :62, :449) has no definition; the commit classification method
   (:459-472) is not stated.
@@ -150,11 +142,6 @@ only, little or no measured support.
 
 ### P1.2 Internal inconsistencies in the case studies
 
-- my-claw test counts disagree across the doc. :80 says "12 stack tests (ST1-ST12)" but :181 says "ST1-ST11".
-  :80 says "11 Docker stack tests (ST-D1-ST-D11)" but :184 says "ST-D1-ST-D10". :80 says "5 tool stack tests"
-  but :189 says "ST-T1-ST-T6".
-- my-claw :90 says "Plans are archived when complete ..., following the principle of deleting stale docs rather
-  than archiving them". That sentence contradicts itself.
 - Trading bot :474-478 calls a figure the "feature-to-test ratio" of 0.54x (159/297 is actually *test-to-feature*),
   then calls December's 2.71x "test-heavy". The label is inverted.
 - Trading bot :497 says the "Bugfix rate is high but expected ... bugs are caught early". That is a causal claim
@@ -283,8 +270,8 @@ Each needs a manual check.
 
 1. Fix the TOON arithmetic and remove the unsourced token-savings figures, or attribute and label them (P0.1-P0.3).
 2. Replace the `@` imports in CLAUDE.md with plain links, and re-word rule 6 as evidence-labelled (P0.4).
-3. Make the mock rules agree across 1.1, 1.5, L0.5 and both case studies (P0.5, P0.6).
-4. Add evidence footers (Strong/Partial/Thin) with research IDs, and label the case studies "first-party, n=1".
-   State the rig and my-claw circularity (P1).
+3. Make the mock rules agree across 1.1, 1.5, L0.5 and the case study (P0.5).
+4. Add evidence footers (Strong/Partial/Thin) with research IDs, and label the case study "first-party, n=1".
+   State the rig circularity (P1).
 5. Fix the case-study inconsistencies and the PostToolUse/`return` errors (P1.2).
 6. Fix the links and anchors, refresh product facts, and bump the "Last updated" date (P3).

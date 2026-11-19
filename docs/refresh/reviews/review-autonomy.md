@@ -5,6 +5,7 @@
 > Edited again on 2026-11-19: Anthropic source IDs renamed from the A27 form to the AN-27 form, and citations of the
 > companion's own positions, stances and recommendations replaced with the Anthropic or baseline sources
 > beneath them. Every ID resolves in [../sources.md](../sources.md).
+> Edited again on 2026-11-19: references to a removed case study deleted by maintainer decision.
 
 Reviewer lens: "software that ladders itself up to autonomy". Sources compared:
 
@@ -36,7 +37,7 @@ Self-correcting) to avoid colliding with the repo's L0-L4.
    concern that this pattern library deliberately doesn't prescribe") and has almost nothing on agent
    containment, identity, audit or supply chain. Its strongest dimensions (shared context, operating model)
    are exactly the ones that *do not* set the cap.
-4. **The only real autonomy mechanism in the repo is buried in a case study.** my-claw's trust tiers
+4. **The only real autonomy mechanism in the repo was buried in a former case study (removed 2026-11-19).** Its trust tiers
    (advisory / supervised / autonomous, auto-promotion after consecutive successes, auto-demotion after
    failures, persisted in `trust_scores`) is the seed of an autonomy ladder, but it is (a) per agent, not
    per workflow; (b) promoted on a success count of unspecified provenance; (c) tops out at "autonomous
@@ -255,7 +256,7 @@ Schema rules enforced by `autonomy check` (A.3):
 
 ### A.2 Evidence ledger
 
-**Problem.** my-claw promotes after "consecutive successes", but who records success? If the agent does,
+**Problem.** The common per-agent trust-tier design promotes after "consecutive successes", but who records success? If the agent does,
 the evidence is self-report, which finding 5 says is unreliable even for humans.
 
 **Solution.** An append-only ledger per workflow, written only by CI and by scheduled jobs that observe
@@ -413,9 +414,9 @@ against the baseline, demotion history, and the stop rule evaluated. The owner r
 demote / retire. Retirement deletes the workflow entry and revokes identity (consistent with 0.7/0.8:
 version control is the archive). The baseline notes no canonical framework exists for this; label it thin.
 
-### 3.1 Critique of my-claw's trust tiers as the seed
+### 3.1 Critique of the common per-agent trust-tier design as the seed
 
-| my-claw today | Change |
+| Per-agent trust tiers (common design) | Change |
 |---|---|
 | Tiers per agent | Grants per workflow; one agent may run several workflows at different levels |
 | Promote on consecutive successes | Promote on ledger evidence with lower confidence bounds, recorded by CI, plus human sign-off |
@@ -424,9 +425,6 @@ version control is the archive). The baseline notes no canonical framework exist
 | Success definition implicit | Success = required checks pass, no revert/rework/escaped defect within 14 days |
 | Tier state in SQLite `trust_scores` | Grant in reviewed config; runtime overrides in bot-written state; evidence in append-only ledger |
 | No link to model changes | `harness_hash` change caps at A3 until the task bank passes |
-
-The case study should describe trust tiers as a runtime analogue of A.3 and link to it, so readers can
-see the pattern rather than a project detail.
 
 ---
 
@@ -481,4 +479,3 @@ which is the research's "verification earns delegation" (baseline finding 2; AN-
 5. Replace the pyramid as the primary diagram with the dimension grid plus cap line; keep the pyramid as
    "layer dependencies".
 6. Rename L0-L4 "levels" to "layers" throughout to avoid confusion with curve levels and autonomy grants.
-7. Rework the my-claw trust-tier section to reference A.3 and note the differences in section 3.1.
