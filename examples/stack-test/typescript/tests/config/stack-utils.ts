@@ -10,9 +10,8 @@
 
 import { execSync, spawn } from 'child_process';
 import { randomBytes } from 'crypto';
-import { createClient } from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 import { readFileSync, unlinkSync, writeFileSync, existsSync } from 'fs';
-import { lookpath } from 'lookpath';
 
 export interface StackConfig {
   composeFile: string;
@@ -26,9 +25,10 @@ export interface StackConfig {
 
 export class StackTestUtils {
   private composeFile: string | null = null;
+  private projectName = '';
   private ports!: StackConfig['ports'];
   private baseUrl!: string;
-  private httpClient: ReturnType<typeof createClient>;
+  private httpClient!: AxiosInstance;
 
   /**
    * Initialize the stack with a unique compose file
@@ -41,6 +41,8 @@ export class StackTestUtils {
 
     // Generate unique compose file
     const testId = `${process.pid}-${randomBytes(4).toString('hex')}`;
+    // Unique compose project name: networks and volumes are scoped per test run.
+    this.projectName = `stack-test-${testId}`;
     this.composeFile = `docker-compose-stack-test-${testId}-${Date.now()}.yml`;
 
     // Read template and substitute values
@@ -57,12 +59,12 @@ export class StackTestUtils {
 
     // Start the stack
     console.log(`Starting stack with compose file: ${this.composeFile}`);
-    execSync(`docker compose -f "${this.composeFile}" up -d`, {
+    execSync(`docker compose -p "${this.projectName}" -f "${this.composeFile}" up -d --build`, {
       stdio: 'inherit',
     });
 
     // Configure HTTP client
-    this.httpClient = createClient({
+    this.httpClient = axios.create({
       baseURL: this.baseUrl,
       validateStatus: () => true, // Don't throw on any status
       timeout: 30000,
@@ -82,7 +84,7 @@ export class StackTestUtils {
     if (this.composeFile && existsSync(this.composeFile)) {
       console.log(`Cleaning up stack: ${this.composeFile}`);
       try {
-        execSync(`docker compose -f "${this.composeFile}" down -v --remove-orphans`, {
+        execSync(`docker compose -p "${this.projectName}" -f "${this.composeFile}" down -v --remove-orphans`, {
           stdio: 'inherit',
         });
       } catch (error) {
@@ -95,7 +97,12 @@ export class StackTestUtils {
   /**
    * Make HTTP requests to the app
    */
-  async makeRequest(method: string, path: string, data?: unknown) {
+  async makeRequest(
+    method: string,
+    path: string,
+    data?: unknown,
+    headers?: Record<string, string>,
+  ) {
     if (!this.httpClient) {
       throw new Error('Stack not initialized. Call initialize() first.');
     }
@@ -103,6 +110,7 @@ export class StackTestUtils {
       method,
       url: path,
       data,
+      headers,
     });
   }
 
@@ -182,7 +190,7 @@ export class StackTestUtils {
     if (!this.composeFile) {
       throw new Error('Stack not initialized');
     }
-    return execSync(`docker compose -f "${this.composeFile}" logs ${service}`, {
+    return execSync(`docker compose -p "${this.projectName}" -f "${this.composeFile}" logs ${service}`, {
       encoding: 'utf-8',
     });
   }

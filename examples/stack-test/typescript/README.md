@@ -56,6 +56,9 @@ A healthy test suite uses both: API tests for fast feedback on backend changes, 
 ├── jest.config.js            # Jest config: 300s timeout, runInBand
 ├── playwright.config.ts      # Playwright config: Chromium, sequential
 ├── docker-compose.test.yml   # Template stack: app, postgres, redis
+├── app/                      # Express + PostgreSQL + Redis app under test
+│   ├── Dockerfile
+│   └── src/                  # index, health, api, pages, infra
 ├── tests/
 │   ├── config/
 │   │   └── stack-utils.ts    # StackTestUtils class (API test helpers)
@@ -69,34 +72,44 @@ A healthy test suite uses both: API tests for fast feedback on backend changes, 
 
 ## How to Run
 
+Run all commands from `examples/stack-test/typescript/`.
+
 ```bash
-# Install dependencies (includes Playwright browser download)
+# Install dependencies and the Playwright browser
 npm install
 npx playwright install chromium
 
-# Run API-level stack tests (Jest)
+# API-level stack tests (Jest). Each test file starts its own stack
+# (unique compose project, container names and ports) and removes it afterwards.
 npm run test:stack
+```
 
-# Run browser-level stack tests (Playwright)
-# Requires the Docker stack to be running first
-npm run test:browser
+Expected result: `Test Suites: 2 passed, 2 total` and `Tests: 9 passed, 9 total`. Jest prints an `ExperimentalWarning: VM Modules` line because the package uses ES modules (`NODE_OPTIONS=--experimental-vm-modules`).
 
-# Run with a custom base URL (dynamic port allocation)
-BASE_URL=http://localhost:12345 npm run test:browser
+Browser-level tests share one running stack. Start it, run Playwright, then remove it:
 
-# Run both test suites
-npm run test:all
+```bash
+export APP_PORT=13000 POSTGRES_PORT=15432 REDIS_PORT=16379
+docker compose -p ts-browser-stack -f docker-compose.test.yml up -d --build --wait
+BASE_URL=http://localhost:13000 npm run test:browser
+docker compose -p ts-browser-stack -f docker-compose.test.yml down -v --remove-orphans
+```
 
-# Run a specific browser test file
+Expected result: `8 passed`. Without the `APP_PORT`/`POSTGRES_PORT`/`REDIS_PORT` overrides the stack binds ports 3000, 5432 and 6379, and `BASE_URL` defaults to `http://localhost:3000`.
+
+```bash
+# Run a specific browser test file (stack must be running)
 npx playwright test --config=playwright.config.ts tests/stack/browser/01-app-startup.browser.stack.test.ts
 
-# Run Playwright tests with UI mode (interactive debugging)
+# Playwright UI mode (interactive debugging)
 npx playwright test --config=playwright.config.ts --ui
 ```
 
+`npm run test:all` runs `test:stack` and then `test:browser`; the browser step needs the stack from the commands above (default ports) to be running.
+
 ## Requirements
 
-- Docker and Docker Compose installed
+- Docker and Docker Compose v2 installed
 - Node.js 20+
 - Ports 10000-65535 available
 - Chromium browser (installed via `npx playwright install chromium`)
@@ -140,31 +153,31 @@ Browser tests add assertion layers that API tests cannot provide:
 - **DOM state verification**: Elements are visible, enabled, and contain expected content
 - **Cross-page consistency**: Data created on one page appears correctly on another
 
-## Mock App
+## The App Under Test
 
-The tests reference a `./mock-app` directory that should contain a minimal Node.js app. For this example, the tests assume an app with:
+`app/` is a minimal Express 5 + TypeScript application backed by real PostgreSQL 16 and Redis 7. It implements exactly what the tests exercise. Docker Compose builds it from `app/Dockerfile`.
 
 **API endpoints:**
 
-- `GET /health` — health check
-- `GET /health/db` — database connectivity
-- `GET /health/cache` — redis connectivity
-- `POST /users` — create user
-- `GET /users/:id` — get user
-- `GET /users` — list users
-- `GET /users/me` — get current user (authenticated)
-- `POST /auth/login` — authenticate
-- `PATCH /users/:id` — update user (authenticated)
-- `GET /admin/audit/users` — audit log
-- `GET /admin/notifications` — notification/email log
+- `GET /health` — JSON (`status`, `timestamp`) for API clients, HTML for browsers (content negotiation on `Accept`). `GET /health?mode=test` adds a `services` block with PostgreSQL and Redis connectivity, version and latency
+- `GET /health/db` — PostgreSQL connectivity and version
+- `GET /health/cache` — Redis connectivity and version
+- `POST /users` — create user (PostgreSQL; writes an audit entry and a notification record; 409 on duplicate email)
+- `GET /users`, `GET /users/:id` — list and fetch users
+- `POST /auth/login` — verify password, issue a JWT, store the session in Redis
+- `GET /users/me` — current user; requires `Authorization: Bearer <token>` and a live Redis session (401 otherwise)
+- `GET /admin/audit/users` — audit log (`USER_CREATED`, `USER_LOGIN`)
+- `GET /admin/notifications` — notification records (`welcome-email`)
 
-**Web pages:**
+**Web pages** (server-rendered HTML, plain forms, no JavaScript):
 
-- `/health` — health status page (renders status indicator)
-- `/products` — product listing (data-testid="product-card")
-- `/cart` — shopping cart (data-testid="cart-item")
-- `/checkout` — checkout form (data-testid="checkout-*")
-- `/order-confirmation` — order confirmation (data-testid="order-*")
-- `/orders` — order history (data-testid="order-row")
+- `/` — home, `/health` — status page
+- `/products` — product listing (`data-testid="product-card"`), seeded with "Test Widget" and "Test Gadget"
+- `/cart` — cart contents (cart held in Redis; `data-testid="cart-item"`)
+- `/checkout` — checkout form (`data-testid="checkout-*"`); server-side validation of required fields
+- `/order-confirmation` — most recent order (`data-testid="order-*"`)
+- `/orders` — order history (`data-testid="order-row"`)
 
-In real usage, point the compose file at your actual application.
+The app has a single shared cart and a single "most recent order" for all visitors. Playwright opens a new browser context per test, so per-visitor cookies would hide the cart from the next test step. Run the browser suite against a fresh stack; a second run on the same stack starts with the first run's orders in `/orders` but an empty cart.
+
+To test your own application instead, point the `app` service in `docker-compose.test.yml` at it and keep the endpoints and `data-testid` attributes your tests use.
