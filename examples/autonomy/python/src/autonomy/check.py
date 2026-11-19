@@ -8,19 +8,37 @@ from autonomy.levels import all_workflows, cap_of, effective_level, profile_stat
 from autonomy.register import load_register_file, validate_register
 from autonomy.util import age_days, git, inside_dir, parse_time, read_json_if_exists
 
-GOVERNANCE = [
+# Tier 1: never changed by an agent commit, no relief.
+TIER1 = [
     re.compile(r"^\.autonomy"),
     re.compile(r"(^|/)codeowners$"),
-    re.compile(r"^\.github/workflows/"),
     re.compile(r"^\.claude/settings[^/]*\.json$"),
     re.compile(r"^\.claude/hooks/"),
     re.compile(r"^\.harness\.yaml$"),
 ]
+# Tier 2: changed by an agent commit only when a later non-agent commit acknowledges it.
+TIER2 = [re.compile(r"^\.github/workflows/")]
+
+ACK_LINE = re.compile(r"^governance-approved:[ \t]*([0-9a-f]{7,40})[ \t]*\r?$", re.I | re.M)
+
+
+def is_tier1_file(path: str) -> bool:
+    lower = path.lower()
+    return any(p.search(lower) for p in TIER1)
+
+
+def is_tier2_file(path: str) -> bool:
+    lower = path.lower()
+    return not is_tier1_file(path) and any(p.search(lower) for p in TIER2)
 
 
 def is_governance_file(path: str) -> bool:
-    lower = path.lower()
-    return any(p.search(lower) for p in GOVERNANCE)
+    return is_tier1_file(path) or is_tier2_file(path)
+
+
+def approved_prefixes(body: str | None) -> list[str]:
+    """Hex prefixes named by `Governance-Approved: <sha>` lines in a commit message body."""
+    return [m.group(1).lower() for m in ACK_LINE.finditer(body or "")]
 
 
 def agent_tokens(register: dict) -> list[str]:
@@ -55,13 +73,14 @@ def commits_from_git(directory: str | Path, range_: str) -> list[dict]:
         head, files_text = chunk.split("\x1d")
         sha, author, email, *body = head.split("\x1f")
         commits.append({"sha": sha, "author": author, "email": email, "body": "\x1f".join(body), "files": [f for f in files_text.split("\n") if f]})
+    commits.reverse()
     return commits
 
 
 def run_check(directory: str | Path, now: int, register_path: str | Path | None = None, commits: list[dict] | None = None) -> dict[str, Any]:
     root = Path(directory).resolve()
     path = Path(register_path) if register_path else root / ".autonomy.yaml"
-    result: dict[str, Any] = {"ok": True, "cap": None, "profile_age_days": None, "workflows": [], "failures": []}
+    result: dict[str, Any] = {"ok": True, "cap": None, "profile_age_days": None, "workflows": [], "acknowledged": [], "failures": []}
     register = load_register_file(path)
     errors = validate_register(register)
     for e in errors:
@@ -89,11 +108,27 @@ def run_check(directory: str | Path, now: int, register_path: str | Path | None 
         if eff.granted > eff.cap:
             result["failures"].append({"code": "grant-exceeds-cap", "workflow": wf["id"], "granted": eff.granted, "cap": eff.cap})
     tokens = agent_tokens(register)
-    for commit in commits or []:
+    ordered = commits or []
+    for index, commit in enumerate(ordered):
         if not is_agent_commit(commit, tokens):
             continue
-        for file in [f for f in commit["files"] if is_governance_file(f)]:
-            result["failures"].append({"code": "governance-file-changed-by-agent", "commit": commit["sha"], "file": file})
+        sha = commit["sha"].lower()
+        acknowledger = next(
+            (
+                later
+                for later in ordered[index + 1 :]
+                if not is_agent_commit(later, tokens) and any(sha.startswith(p) for p in approved_prefixes(later.get("body")))
+            ),
+            None,
+        )
+        for file in commit["files"]:
+            if is_tier1_file(file):
+                result["failures"].append({"code": "governance-file-changed-by-agent", "commit": commit["sha"], "file": file})
+            elif is_tier2_file(file):
+                if acknowledger:
+                    result["acknowledged"].append({"commit": commit["sha"], "file": file, "by": acknowledger["sha"]})
+                else:
+                    result["failures"].append({"code": "workflow-change-unacknowledged", "commit": commit["sha"], "file": file})
     result["ok"] = not result["failures"]
     return result
 
@@ -106,6 +141,8 @@ def format_check(result: dict) -> str:
     for w in result["workflows"]:
         why = f"  ({', '.join(w['reasons'])})" if w["reasons"] else ""
         lines.append(f"workflow {w['id']}: granted {w['granted']}, effective {w['effective']}{why}")
+    for a in result["acknowledged"]:
+        lines.append(f"governance: {a['commit'][:7]} changed {a['file']} (acknowledged by {a['by'][:7]})")
     for f in result["failures"]:
         lines.append(f"FAIL {json.dumps(f, separators=(',', ':'))}")
     lines.append("autonomy check: ok" if result["ok"] else "autonomy check: FAILED")

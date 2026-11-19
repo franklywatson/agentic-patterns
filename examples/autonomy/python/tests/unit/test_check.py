@@ -2,7 +2,16 @@ import subprocess
 
 import pytest
 
-from autonomy.check import commits_from_git, is_agent_commit, is_governance_file, run_check
+from autonomy.check import (
+    approved_prefixes,
+    commits_from_git,
+    format_check,
+    is_agent_commit,
+    is_governance_file,
+    is_tier1_file,
+    is_tier2_file,
+    run_check,
+)
 from autonomy.util import parse_time
 from tests.conftest import NOW, fixture, fixture_json
 
@@ -71,7 +80,10 @@ def test_an_agent_commit_that_changes_autonomy_yaml_fails_the_check():
 def test_an_agent_commit_that_changes_codeowners_or_a_workflow_file_fails_the_check():
     commit = agent_commit(["docs/CODEOWNERS", ".github/workflows/ci.yml", "src/a.ts"])
     result = run_check(fixture("registers", "valid"), NOW_MS, commits=[commit])
-    assert [f["file"] for f in result["failures"]] == ["docs/CODEOWNERS", ".github/workflows/ci.yml"]
+    assert [(f["code"], f["file"]) for f in result["failures"]] == [
+        ("governance-file-changed-by-agent", "docs/CODEOWNERS"),
+        ("workflow-change-unacknowledged", ".github/workflows/ci.yml"),
+    ]
 
 
 def test_a_human_commit_that_changes_governance_files_passes_the_check():
@@ -145,7 +157,7 @@ def test_a_rename_out_of_a_governed_path_still_lists_the_old_path(copy_fixture):
     commits = commits_from_git(directory, "HEAD~1..HEAD")
     assert sorted(commits[0]["files"]) == [".github/workflows/ci.yml", "elsewhere/ci.yml"]
     result = run_check(directory, NOW_MS, commits=commits)
-    assert result["failures"] == [{"code": "governance-file-changed-by-agent", "commit": commits[0]["sha"], "file": ".github/workflows/ci.yml"}]
+    assert result["failures"] == [{"code": "workflow-change-unacknowledged", "commit": commits[0]["sha"], "file": ".github/workflows/ci.yml"}]
 
 
 def test_commits_from_git_rejects_ranges_that_are_not_revisions():
@@ -175,3 +187,87 @@ def test_an_impossible_calendar_date_is_a_schema_error_not_a_crash(copy_fixture)
     path.write_text(path.read_text().replace("review_date: 2027-02-01", "review_date: 2027-02-31"))
     result = run_check(directory, NOW_MS)
     assert result["failures"] == [{"code": "schema", "path": "/workflows/0/review_date", "keyword": "format"}]
+
+
+def commits_fixture(name):
+    return fixture_json("commits", f"{name}.json")
+
+
+def check_commits(name):
+    return run_check(fixture("registers", "valid"), NOW_MS, commits=commits_fixture(name))
+
+
+A1 = "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678"
+A2 = "b2c3d4e5f60718293a4b5c6d7e8f901234567890"
+H1 = "c3d4e5f60718293a4b5c6d7e8f90123456789012"
+
+
+def unacknowledged(commit, file):
+    return {"code": "workflow-change-unacknowledged", "commit": commit, "file": file}
+
+
+def test_a_tier_1_file_still_fails_when_a_later_human_commit_carries_an_acknowledgement_line():
+    result = check_commits("governance-tier1-with-ack")
+    assert result["failures"] == [{"code": "governance-file-changed-by-agent", "commit": A1, "file": ".autonomy.yaml"}]
+    assert result["acknowledged"] == []
+
+
+def test_an_unacknowledged_agent_change_to_a_workflow_fails_with_workflow_change_unacknowledged():
+    assert check_commits("governance-tier2-unacknowledged")["failures"] == [unacknowledged(A1, ".github/workflows/ci.yml")]
+
+
+def test_a_workflow_change_acknowledged_by_a_later_human_commit_passes_and_is_reported():
+    result = check_commits("governance-tier2-acknowledged")
+    assert result["ok"] is True
+    assert result["acknowledged"] == [{"commit": A1, "file": ".github/workflows/ci.yml", "by": H1}]
+    assert "governance: a1b2c3d changed .github/workflows/ci.yml (acknowledged by c3d4e5f)" in format_check(result).split("\n")
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "governance-tier2-ack-by-agent",
+        "governance-tier2-ack-before",
+        "governance-tier2-ack-short-prefix",
+        "governance-tier2-ack-wrong-sha",
+    ],
+)
+def test_an_acknowledgement_that_does_not_qualify_does_not_count(name):
+    result = check_commits(name)
+    assert result["failures"] == [unacknowledged(A1, ".github/workflows/ci.yml")]
+    assert result["acknowledged"] == []
+
+
+def test_a_case_variant_workflow_path_is_tier_2():
+    assert is_tier2_file(".GitHub/Workflows/x.yml") is True
+    assert is_tier1_file(".GitHub/Workflows/x.yml") is False
+    assert check_commits("governance-tier2-case-variant")["failures"] == [unacknowledged(A1, ".GitHub/Workflows/x.yml")]
+
+
+def test_with_two_agent_commits_only_the_acknowledged_one_passes():
+    result = check_commits("governance-tier2-two-agents-one-acked")
+    assert result["failures"] == [unacknowledged(A2, ".github/workflows/release.yml")]
+    assert result["acknowledged"] == [{"commit": A1, "file": ".github/workflows/ci.yml", "by": H1}]
+
+
+def test_acknowledgement_lines_are_parsed_strictly():
+    assert approved_prefixes("x\nGovernance-Approved: a1b2c3d\ngovernance-approved:A1B2C3D4") == ["a1b2c3d", "a1b2c3d4"]
+    assert approved_prefixes("Governance-Approved: a1b2c3\nGovernance-Approved: a1b2c3dzz\n see Governance-Approved: a1b2c3d") == []
+
+
+def test_commits_from_git_lists_commits_oldest_first_so_a_later_acknowledgement_is_found(copy_fixture):
+    directory = copy_fixture("registers", "valid")
+    (directory / ".github" / "workflows").mkdir(parents=True)
+    _git(directory, "Alice", "init", "-q")
+    _git(directory, "Alice", "add", "-A")
+    _git(directory, "Alice", "commit", "-q", "-m", "base")
+    (directory / ".github" / "workflows" / "ci.yml").write_text("name: ci\non: push\njobs: {}\n")
+    _git(directory, "deps-bot[bot]", "add", "-A")
+    _git(directory, "deps-bot[bot]", "commit", "-q", "-m", "add ci")
+    sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=directory, check=True, capture_output=True, text=True).stdout.strip()
+    _git(directory, "Alice", "commit", "-q", "--allow-empty", "-m", f"approve\n\nGovernance-Approved: {sha[:7]}")
+    commits = commits_from_git(directory, "HEAD~2..HEAD")
+    assert commits[0]["sha"] == sha
+    result = run_check(directory, NOW_MS, commits=commits)
+    assert result["ok"] is True
+    assert len(result["acknowledged"]) == 1

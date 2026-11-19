@@ -234,8 +234,13 @@ This inverts the ratchet in [Pattern 1.1](L1-patterns/1.1-stack-tests.md): auton
 
 - Any `granted_level` exceeds the computed cap. There is no exception field.
 - Any schema rule in Pattern A.1 fails.
-- `.autonomy.yaml`, `.autonomy/**`, CODEOWNERS, branch-protection workflows or hook configuration changed in a commit by an agent identity.
+- A tier 1 governance file changed in a commit by an agent identity: `.autonomy*`, CODEOWNERS, `.claude/settings*.json`, `.claude/hooks/*` or `.harness.yaml`. No acknowledgement relaxes this (`governance-file-changed-by-agent`).
+- A tier 2 file, `.github/workflows/*`, changed in a commit by an agent identity with no acknowledgement (`workflow-change-unacknowledged`).
 - The census profile is older than 30 days.
+
+**Two tiers of governance files.** Tier 1 files define what an agent may do or remove the hook, so an agent commit never changes them. Tier 2 files, the workflows, are ordinary CI work that a person may want an agent to do. An agent commit may change them when a later commit in the same range, made by a non-agent identity, names it in a message line `Governance-Approved: <sha>`. The `<sha>` is a hex prefix of at least 7 characters of the agent commit's sha, one line per agent commit, and an empty commit (`git commit --allow-empty`) is enough. An agent commit cannot acknowledge itself or another agent commit, an acknowledgement before the agent commit does not count, and a shorter prefix or a different sha never matches. With `--git-range` the commits are read oldest first; with `--commits` the list order is the order. Each acknowledged change prints `governance: <sha7> changed <file> (acknowledged by <sha7>)` and does not fail the check.
+
+The acknowledgement is a trailer-based record. It is not a cryptographic control: anyone who can write a commit message can write the line. The boundary that holds is CODEOWNERS with required review by a non-author. The two tiers keep the check from blocking harmless workflow changes while the record shows who approved each one.
 
 ### Anti-Pattern
 

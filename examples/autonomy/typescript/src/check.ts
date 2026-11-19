@@ -17,11 +17,18 @@ export interface Failure {
   file?: string;
 }
 
+export interface Acknowledged {
+  commit: string;
+  file: string;
+  by: string;
+}
+
 export interface CheckResult {
   ok: boolean;
   cap: number | null;
   profile_age_days: number | null;
   workflows: Array<{ id: string; granted: number; effective: number; reasons: string[] }>;
+  acknowledged: Acknowledged[];
   failures: Failure[];
 }
 
@@ -33,18 +40,30 @@ export interface Commit {
   files: string[];
 }
 
-const GOVERNANCE = [
-  /^\.autonomy/,
-  /(^|\/)codeowners$/,
-  /^\.github\/workflows\//,
-  /^\.claude\/settings[^/]*\.json$/,
-  /^\.claude\/hooks\//,
-  /^\.harness\.yaml$/,
-];
+// Tier 1: never changed by an agent commit, no relief.
+const TIER1 = [/^\.autonomy/, /(^|\/)codeowners$/, /^\.claude\/settings[^/]*\.json$/, /^\.claude\/hooks\//, /^\.harness\.yaml$/];
+// Tier 2: changed by an agent commit only when a later non-agent commit acknowledges it.
+const TIER2 = [/^\.github\/workflows\//];
+
+export function isTier1File(path: string): boolean {
+  const lower = path.toLowerCase();
+  return TIER1.some((re) => re.test(lower));
+}
+
+export function isTier2File(path: string): boolean {
+  const lower = path.toLowerCase();
+  return !isTier1File(path) && TIER2.some((re) => re.test(lower));
+}
 
 export function isGovernanceFile(path: string): boolean {
-  const lower = path.toLowerCase();
-  return GOVERNANCE.some((re) => re.test(lower));
+  return isTier1File(path) || isTier2File(path);
+}
+
+const ACK_LINE = /^governance-approved:[ \t]*([0-9a-f]{7,40})[ \t]*\r?$/gim;
+
+/** Hex prefixes named by `Governance-Approved: <sha>` lines in a commit message body. */
+export function approvedPrefixes(body: string | undefined): string[] {
+  return [...(body ?? "").matchAll(ACK_LINE)].map((m) => m[1].toLowerCase());
 }
 
 export function agentTokens(register: Json): string[] {
@@ -73,7 +92,7 @@ export function commitsFromGit(dir: string, range: string): Commit[] {
     const [sha, author, email, ...body] = head.split("\x1f");
     commits.push({ sha, author, email, body: body.join("\x1f"), files: filesText.split("\n").filter(Boolean) });
   }
-  return commits;
+  return commits.reverse();
 }
 
 export interface CheckOptions {
@@ -86,7 +105,7 @@ export interface CheckOptions {
 export function runCheck(opts: CheckOptions): CheckResult {
   const dir = resolve(opts.dir);
   const registerPath = opts.registerPath ?? join(dir, ".autonomy.yaml");
-  const result: CheckResult = { ok: true, cap: null, profile_age_days: null, workflows: [], failures: [] };
+  const result: CheckResult = { ok: true, cap: null, profile_age_days: null, workflows: [], acknowledged: [], failures: [] };
   const register = loadRegisterFile(registerPath);
   const schemaErrors = validateRegister(register);
   for (const e of schemaErrors) result.failures.push({ code: "schema", path: e.path, keyword: e.keyword });
@@ -114,12 +133,22 @@ export function runCheck(opts: CheckOptions): CheckResult {
     }
   }
   const tokens = agentTokens(register);
-  for (const commit of opts.commits ?? []) {
-    if (!isAgentCommit(commit, tokens)) continue;
-    for (const file of commit.files.filter(isGovernanceFile)) {
-      result.failures.push({ code: "governance-file-changed-by-agent", commit: commit.sha, file });
+  const commits = opts.commits ?? [];
+  commits.forEach((commit, index) => {
+    if (!isAgentCommit(commit, tokens)) return;
+    const sha = commit.sha.toLowerCase();
+    const acknowledger = commits
+      .slice(index + 1)
+      .find((later) => !isAgentCommit(later, tokens) && approvedPrefixes(later.body).some((p) => sha.startsWith(p)));
+    for (const file of commit.files) {
+      if (isTier1File(file)) {
+        result.failures.push({ code: "governance-file-changed-by-agent", commit: commit.sha, file });
+      } else if (isTier2File(file)) {
+        if (acknowledger) result.acknowledged.push({ commit: commit.sha, file, by: acknowledger.sha });
+        else result.failures.push({ code: "workflow-change-unacknowledged", commit: commit.sha, file });
+      }
     }
-  }
+  });
   result.ok = result.failures.length === 0;
   return result;
 }
@@ -129,6 +158,9 @@ export function formatCheck(result: CheckResult): string {
   for (const w of result.workflows) {
     const why = w.reasons.length > 0 ? `  (${w.reasons.join(", ")})` : "";
     lines.push(`workflow ${w.id}: granted ${w.granted}, effective ${w.effective}${why}`);
+  }
+  for (const a of result.acknowledged) {
+    lines.push(`governance: ${a.commit.slice(0, 7)} changed ${a.file} (acknowledged by ${a.by.slice(0, 7)})`);
   }
   for (const f of result.failures) lines.push(`FAIL ${JSON.stringify(f)}`);
   lines.push(result.ok ? "autonomy check: ok" : "autonomy check: FAILED");

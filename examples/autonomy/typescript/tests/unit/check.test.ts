@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { commitsFromGit, isAgentCommit, isGovernanceFile, runCheck } from "../../src/check.js";
+import { approvedPrefixes, commitsFromGit, formatCheck, isAgentCommit, isGovernanceFile, isTier1File, isTier2File, runCheck } from "../../src/check.js";
 import type { Commit } from "../../src/check.js";
 import { parseTime } from "../../src/util.js";
 import { NOW, copyFixture, fixture, readFixtureJson } from "../helpers.js";
@@ -66,7 +66,10 @@ test("an agent commit that changes .autonomy.yaml fails the check", () => {
 
 test("an agent commit that changes CODEOWNERS or a workflow file fails the check", () => {
   const result = runCheck({ dir: fixture("registers", "valid"), now, commits: [agentCommit(["docs/CODEOWNERS", ".github/workflows/ci.yml", "src/a.ts"])] });
-  assert.deepEqual(result.failures.map((f) => f.file), ["docs/CODEOWNERS", ".github/workflows/ci.yml"]);
+  assert.deepEqual(result.failures.map((f) => [f.code, f.file]), [
+    ["governance-file-changed-by-agent", "docs/CODEOWNERS"],
+    ["workflow-change-unacknowledged", ".github/workflows/ci.yml"],
+  ]);
 });
 
 test("a human commit that changes governance files passes the check", () => {
@@ -132,7 +135,7 @@ test("a rename out of a governed path still lists the old path", () => {
   const commits = commitsFromGit(dir, "HEAD~1..HEAD");
   assert.deepEqual([...commits[0].files].sort(), [".github/workflows/ci.yml", "elsewhere/ci.yml"]);
   const result = runCheck({ dir, now, commits });
-  assert.deepEqual(result.failures, [{ code: "governance-file-changed-by-agent", commit: commits[0].sha, file: ".github/workflows/ci.yml" }]);
+  assert.deepEqual(result.failures, [{ code: "workflow-change-unacknowledged", commit: commits[0].sha, file: ".github/workflows/ci.yml" }]);
 });
 
 test("commitsFromGit rejects ranges that are not revisions", () => {
@@ -160,4 +163,80 @@ test("an impossible calendar date is a schema error, not a crash", () => {
   writeFileSync(path, readFileSync(path, "utf8").replace("review_date: 2027-02-01", "review_date: 2027-02-31"));
   const result = runCheck({ dir, now });
   assert.deepEqual(result.failures, [{ code: "schema", path: "/workflows/0/review_date", keyword: "format" }]);
+});
+
+const commitsFixture = (name: string): Commit[] => readFixtureJson("commits", `${name}.json`);
+const checkCommits = (name: string) => runCheck({ dir: fixture("registers", "valid"), now, commits: commitsFixture(name) });
+const A1 = "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678";
+const A2 = "b2c3d4e5f60718293a4b5c6d7e8f901234567890";
+const H1 = "c3d4e5f60718293a4b5c6d7e8f90123456789012";
+const unacknowledged = (commit: string, file: string) => ({ code: "workflow-change-unacknowledged", commit, file });
+
+test("a tier 1 file still fails when a later human commit carries an acknowledgement line", () => {
+  const result = checkCommits("governance-tier1-with-ack");
+  assert.deepEqual(result.failures, [{ code: "governance-file-changed-by-agent", commit: A1, file: ".autonomy.yaml" }]);
+  assert.deepEqual(result.acknowledged, []);
+});
+
+test("an unacknowledged agent change to a workflow fails with workflow-change-unacknowledged", () => {
+  assert.deepEqual(checkCommits("governance-tier2-unacknowledged").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
+});
+
+test("a workflow change acknowledged by a later human commit passes and is reported", () => {
+  const result = checkCommits("governance-tier2-acknowledged");
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.acknowledged, [{ commit: A1, file: ".github/workflows/ci.yml", by: H1 }]);
+  assert.match(formatCheck(result), /^governance: a1b2c3d changed \.github\/workflows\/ci\.yml \(acknowledged by c3d4e5f\)$/m);
+});
+
+test("an acknowledgement by an agent commit does not count", () => {
+  assert.deepEqual(checkCommits("governance-tier2-ack-by-agent").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
+});
+
+test("an acknowledgement that comes before the agent commit does not count", () => {
+  assert.deepEqual(checkCommits("governance-tier2-ack-before").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
+});
+
+test("an acknowledgement with a 6 character prefix does not count", () => {
+  assert.deepEqual(checkCommits("governance-tier2-ack-short-prefix").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
+});
+
+test("an acknowledgement for a different sha does not count", () => {
+  assert.deepEqual(checkCommits("governance-tier2-ack-wrong-sha").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
+});
+
+test("a case-variant workflow path is tier 2", () => {
+  assert.equal(isTier2File(".GitHub/Workflows/x.yml"), true);
+  assert.equal(isTier1File(".GitHub/Workflows/x.yml"), false);
+  assert.deepEqual(checkCommits("governance-tier2-case-variant").failures, [unacknowledged(A1, ".GitHub/Workflows/x.yml")]);
+});
+
+test("with two agent commits, only the acknowledged one passes", () => {
+  const result = checkCommits("governance-tier2-two-agents-one-acked");
+  assert.deepEqual(result.failures, [unacknowledged(A2, ".github/workflows/release.yml")]);
+  assert.deepEqual(result.acknowledged, [{ commit: A1, file: ".github/workflows/ci.yml", by: H1 }]);
+});
+
+test("acknowledgement lines are parsed strictly", () => {
+  assert.deepEqual(approvedPrefixes("x\nGovernance-Approved: a1b2c3d\ngovernance-approved:A1B2C3D4"), ["a1b2c3d", "a1b2c3d4"]);
+  assert.deepEqual(approvedPrefixes("Governance-Approved: a1b2c3\nGovernance-Approved: a1b2c3dzz\n see Governance-Approved: a1b2c3d"), []);
+});
+
+test("commitsFromGit lists commits oldest first so a later acknowledgement is found", () => {
+  const dir = copyFixture("registers", "valid");
+  mkdirSync(join(dir, ".github", "workflows"), { recursive: true });
+  const git = (name: string, ...args: string[]) => execFileSync("git", ["-c", `user.name=${name}`, "-c", "user.email=a@example.invalid", ...args], { cwd: dir, stdio: "ignore" });
+  git("Alice", "init", "-q");
+  git("Alice", "add", "-A");
+  git("Alice", "commit", "-q", "-m", "base");
+  writeFileSync(join(dir, ".github", "workflows", "ci.yml"), "name: ci\non: push\njobs: {}\n");
+  git("deps-bot[bot]", "add", "-A");
+  git("deps-bot[bot]", "commit", "-q", "-m", "add ci");
+  const sha = execFileSync("git", ["rev-parse", "HEAD"], { cwd: dir, encoding: "utf8" }).trim();
+  git("Alice", "commit", "-q", "--allow-empty", "-m", `approve\n\nGovernance-Approved: ${sha.slice(0, 7)}`);
+  const commits = commitsFromGit(dir, "HEAD~2..HEAD");
+  assert.equal(commits[0].sha, sha);
+  const result = runCheck({ dir, now, commits });
+  assert.equal(result.ok, true);
+  assert.equal(result.acknowledged.length, 1);
 });
