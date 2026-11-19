@@ -10,7 +10,7 @@
  * - Proper cleanup
  */
 
-import { StackTestUtils } from '../config/stack-utils.js';
+import { StackTestUtils } from '../config/stack-utils';
 
 describe('Stack Test: App Startup', () => {
   let utils: StackTestUtils;

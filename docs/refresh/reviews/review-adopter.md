@@ -5,6 +5,7 @@
 > Edited again on 2026-11-19: Anthropic source IDs renamed from the A27 form to the AN-27 form, and citations of the
 > companion's own positions, stances and recommendations replaced with the Anthropic or baseline sources
 > beneath them. Every ID resolves in [../sources.md](../sources.md).
+> Edited again on 2026-11-19: references to a removed case study deleted by maintainer decision.
 
 Reviewer lens: a staff engineer at a 200-person org in Nov 2026, running Claude 5-generation models, deciding whether to adopt this repo. Compared against `research/industry-baseline.txt` (the baseline) and `research/anthropic-companion.txt` (the companion).
 
@@ -70,8 +71,7 @@ The script found 27 real broken in-repo anchors, excluding `@filename.md` placeh
 - **Pyramid L0-L4 vs. maturity stages in 4.4** (Foundational → Orchestrated → Self-optimizing → Autonomous). These are two different ladders mapped loosely onto each other. "Self-optimizing = L3 token efficiency" is a category error: token efficiency is not self-correction. The baseline's L5 "Self-correcting" means *pruning, retiring, re-baselining*.
 - **L4 scope note: "Patterns 4.1-4.5 were not implemented in the reference project."** The top of the pyramid is therefore unvalidated by the case it was extracted from. That is honest, but the README presents L4 as equal to the others. Meanwhile 4.1 Evidence-Based Claims *was* practised (verify+ is described in the case study), so the note contradicts the case study.
 - **Level vs. dimension.** The baseline finds that strict sequential ladders mislead ("a single rung cannot help you place multi-agent skill"; CNCF "independent aspects"). The README hedges ("start where your gaps are"), but the pyramid diagram and "each building on the previous" assert a sequence.
-- **Mocks.** The repo carefully allows mocks in unit tests. The my-claw case study then says "Unit tests use no mocks", and the L2.4 example rules list "logger, payment processor libraries … database drivers" as unmockable without scoping. Adopters will be confused.
-- **my-claw numbers disagree within one doc:** ST1-ST12 vs ST1-ST11, and ST-D1-D11 vs ST-D1-D10.
+- **Mocks.** The repo carefully allows mocks in unit tests. A former case study (removed 2026-11-19) said "Unit tests use no mocks", and the L2.4 example rules list "logger, payment processor libraries … database drivers" as unmockable without scoping. Adopters will be confused.
 - **150-line constitution vs the 218-line praised exemplar** (see 1a).
 - **"Zero-defect tolerance" is constitutional, but the repo's own CI only warns** on orphans and filler words. The filler-word check also omits "just", which appears 29 times as a whole word in the docs and README; some uses are legitimate, but the rule names it.
 - **"All examples must run as-is" (CLAUDE.md) is false:**
@@ -153,5 +153,4 @@ The script found 27 real broken in-repo anchors, excluding `@filename.md` placeh
 - The nonexistent `scripts/` references in 4.5.
 - The jcodemunch URL.
 - The wrong cross-refs (L4.1 "L2.3", anti-patterns 3.2).
-- The my-claw count mismatches.
 - The CLAUDE.md "Last updated" date and version.

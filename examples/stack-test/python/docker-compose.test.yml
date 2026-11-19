@@ -1,15 +1,10 @@
-version: '3.8'
-
 services:
   app:
-    image: python:3.12-slim
-    container_name: ${CONTAINER_NAME:-stack-test-app}
-    working_dir: /app
+    build: ./app
     ports:
-      - "${APP_PORT:-8000}:8000"
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
     environment:
       - PYTHONUNBUFFERED=1
-      - PORT=8000
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=testdb
@@ -17,9 +12,6 @@ services:
       - DB_PASSWORD=testpass
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: bash -c "pip install -e . && uvicorn app.main:app --host 0.0.0.0 --port 8000"
-    volumes:
-      - ./mock-app:/app:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -34,9 +26,8 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: ${CONTAINER_NAME_POSTGRES:-stack-test-postgres}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     environment:
       - POSTGRES_DB=testdb
       - POSTGRES_USER=testuser
@@ -51,9 +42,8 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: ${CONTAINER_NAME_REDIS:-stack-test-redis}
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
     healthcheck:

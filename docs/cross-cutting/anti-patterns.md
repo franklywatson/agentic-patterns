@@ -75,7 +75,7 @@ After: src/
 
 **Why This Happens**: Every important insight feels like it belongs in the file agents read first. But each line of constitution displaces context the agent needs for its actual task. Critical rules get buried in prose. The agent spends tokens reading the map instead of navigating the territory.
 
-**Pattern**: Apply [Pattern 0.4 - CLAUDE.md as Project Constitution](../L0-foundation.md#pattern-04--claude-md-as-project-constitution):
+**Pattern**: Apply [Pattern 0.4 - CLAUDE.md as Project Constitution](../L0-foundation.md#pattern-04--claudemd-as-project-constitution):
 
 - Hard limit: **150 lines maximum**
 - Link to external docs for detailed explanations
@@ -111,10 +111,10 @@ Plus: docs/patterns/*.md (moved from inline)
 
 **Why This Happens**: Documentation grows organically - someone writes a useful doc and commits it, but never links it from the master index. Over time, docs duplicate each other as different authors explain the same thing. Agents can only discover what's linked; everything else is invisible.
 
-**Pattern**: Apply [Pattern 0.4 - CLAUDE.md as Project Constitution](../L0-foundation.md#pattern-04--claude-md-as-project-constitution):
+**Pattern**: Apply [Pattern 0.4 - CLAUDE.md as Project Constitution](../L0-foundation.md#pattern-04--claudemd-as-project-constitution):
 
 - CLAUDE.md is the master index - every doc must be reachable from it
-- Use `@filename.md` syntax to link docs
+- Use plain relative markdown links (`[title](path.md)`), not `@` imports, which load the linked doc into every session
 - Run link validation to find orphans
 - Consolidate overlapping docs into single sources
 
@@ -425,9 +425,9 @@ hook.on('PreToolUse', (tool, args) => {
 
 ### Use Structured Search When Available
 
-**Symptom**: Raw grep/rg is used for code search when the repository is indexed. Megabytes of unstructured text output where structured search would return 5 typed results.
+**Symptom**: Raw grep/rg is used for code search when the repository is indexed. Megabytes of unstructured text output where structured search would return a short list of typed results.
 
-**Why This Happens**: grep is familiar and always available. Reaching for it is muscle memory. But when the repository is indexed by a tool like jcodemunch, raw grep costs 80% more tokens for the same information - and misses symbols that match text patterns inexactly.
+**Why This Happens**: grep is familiar and always available. Reaching for it is muscle memory. But when the repository is indexed by a tool like jcodemunch, raw grep returns more tokens for the same information - and misses symbols that match text patterns inexactly.
 
 **Pattern**: Apply [Pattern 3.1 - Smart Routing](../L3-optimization.md#pattern-31--smart-routing--tool-selection):
 
@@ -439,10 +439,10 @@ hook.on('PreToolUse', (tool, args) => {
 Example refactor:
 
 ```bash
-# Raw grep (200 lines of unstructured text)
+# Raw grep (illustrative: hundreds of lines of unstructured text)
 grep -r "export.*function" src/
 
-# Structured search (5 typed symbols with file locations and summaries)
+# Structured search (illustrative: a few typed symbols with file locations and summaries)
 search_symbols(query="function", kind="function")
 ```
 
@@ -454,7 +454,7 @@ search_symbols(query="function", kind="function")
 
 **Why This Happens**: Reading the whole file feels thorough. But context window space is finite - every irrelevant line displaces something useful. With large codebases, this scales into a real constraint on what the agent can reason about simultaneously.
 
-**Pattern**: Apply [Pattern 3.2 - Intent Classification](../L3-optimization.md#pattern-32--intent-classification):
+**Pattern**: Apply [Pattern 3.5 - Structured Output over Raw Text](../L3-optimization.md#pattern-35--structured-output-over-raw-text):
 
 - Use targeted reads with line ranges
 - Use `get_symbol` to extract specific functions

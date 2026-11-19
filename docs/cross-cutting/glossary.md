@@ -56,7 +56,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 **Level**: L3 - Optimization
 **Definition**: Practice of investing tokens upfront in structured exploration (Scout pattern) to reduce wasted context from blind searches.
-**See**: [Pattern 3.4 - Context Engineering](../L3-optimization.md#pattern-34--context-engineering-the-scout-pattern)
+**See**: [Pattern 3.4 - Context Engineering](../L3-optimization.md#pattern-34--context-engineering--the-scout-pattern)
 
 ---
 
@@ -147,7 +147,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 **Level**: L0 - Foundation
 **Definition**: CLAUDE.md serves as the single source of truth and discovery mechanism; all project documents must be reachable from it via link chains.
-**See**: [Pattern 0.4 - CLAUDE.md as Project Constitution](../L0-foundation.md#pattern-04--claude-md-as-project-constitution)
+**See**: [Pattern 0.4 - CLAUDE.md as Project Constitution](../L0-foundation.md#pattern-04--claudemd-as-project-constitution)
 
 ---
 
@@ -191,7 +191,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 **Level**: L3 - Optimization
 **Definition**: Data structure mapping common commands to their optimal implementations based on intent detection and available tools.
-**See**: [Pattern 3.1 - Smart Routing](../L3-optimization.md#pattern-31--smart-routing-tool-selection)
+**See**: [Pattern 3.1 - Smart Routing](../L3-optimization.md#pattern-31--smart-routing--tool-selection)
 
 ---
 
@@ -201,7 +201,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 **Level**: L3 - Optimization
 **Definition**: Lightweight agent that maps codebase structure (file tree, key exports, dependencies) before implementation, reducing blind searches and token waste.
-**See**: [Pattern 3.4 - Context Engineering](../L3-optimization.md#pattern-34--context-engineering-the-scout-pattern)
+**See**: [Pattern 3.4 - Context Engineering](../L3-optimization.md#pattern-34--context-engineering--the-scout-pattern)
 
 ### Session Lifecycle
 
@@ -231,7 +231,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 **Level**: L3 - Optimization
 **Definition**: Directing commands to the most efficient tool based on intent detection (e.g., Grep tool instead of raw grep, jcodemunch instead of find).
-**See**: [Pattern 3.1 - Smart Routing](../L3-optimization.md#pattern-31--smart-routing-tool-selection)
+**See**: [Pattern 3.1 - Smart Routing](../L3-optimization.md#pattern-31--smart-routing--tool-selection)
 
 ### Spec Drift
 
@@ -264,7 +264,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Token Efficiency
 
 **Level**: L3 - Optimization
-**Definition**: 60-90% reduction in token consumption achieved through smart routing, structured output, and context engineering patterns.
+**Definition**: Lower token consumption per task, pursued through smart routing, structured output, and context engineering patterns. Measure it on your own sessions, in tokens.
 **See**: [L3 Optimization Overview](../L3-optimization.md)
 
 ### Transient Volume

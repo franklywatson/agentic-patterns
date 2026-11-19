@@ -183,11 +183,13 @@ Tree diagram showing major directories and their purposes.
 3. Zero-defect tolerance
 
 ## Level Documentation
-- @docs/L0-foundation.md
-- @docs/L1-feedback-loops.md
+- [docs/L0-foundation.md](docs/L0-foundation.md)
+- [docs/L1-feedback-loops.md](docs/L1-feedback-loops.md)
 ```
 
-Every referenced doc must be reachable from CLAUDE.md — it serves as the master index. An agent discovers any project document by starting here and following `@filename.md` links.
+Every referenced doc must be reachable from CLAUDE.md — it serves as the master index. An agent discovers any project document by starting here and following the relative markdown links.
+
+Claude Code expands `@path` imports into context when CLAUDE.md loads, so an index of `@` imports loads every listed doc into every session. Use plain markdown links for an index, and `@` only for content that must always load.
 
 **Anti-Pattern**: Writing tutorials or extensive guides in CLAUDE.md. Every line beyond 150 displaces context the agent needs for the actual task. Link to docs instead.
 
@@ -231,7 +233,7 @@ During a refactoring session:
 
 **Anti-Pattern**: Relying on documentation as the primary contract. Documentation drifts. Tests execute. Treating unit tests as subordinate to stack tests — both layers provide distinct, necessary signals. Writing tests for coverage metrics rather than diagnostic value.
 
-**Cross-References**: [L1: Stack Tests](L1-feedback-loops.md#pattern-11--stack-tests) — the system-level complement to unit tests. [Pattern 0.4](#pattern-04--claude-md-as-project-constitution) — CLAUDE.md as the human-readable contract layer. [L2: Zero-Defect Tolerance](L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance) — every test failure matters, unit or stack.
+**Cross-References**: [L1: Stack Tests](L1-feedback-loops.md#pattern-11--stack-tests) — the system-level complement to unit tests. [Pattern 0.4](#pattern-04--claudemd-as-project-constitution) — CLAUDE.md as the human-readable contract layer. [L2: Zero-Defect Tolerance](L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance) — every test failure matters, unit or stack.
 
 ---
 
@@ -274,7 +276,7 @@ Convention: `.worktrees/<branch-name>/` directory.
 
 **Solution**: **Treat documentation as the system map — the navigational layer that maps structure, intent, and conventions.** When code changes, update the corresponding documentation in the SAME task—not deferred to "later." Every change that affects behavior must include a corresponding documentation update.
 
-The CLAUDE.md master index pattern (from [Pattern 0.4](#pattern-04--claude-md-as-project-constitution)) is the enforcement mechanism: documentation not linked from CLAUDE.md is orphaned and therefore dead. Link validation is part of keeping the map current.
+The CLAUDE.md master index pattern (from [Pattern 0.4](#pattern-04--claudemd-as-project-constitution)) is the enforcement mechanism: documentation not linked from CLAUDE.md is orphaned and therefore dead. Link validation is part of keeping the map current.
 
 **Key principles:**
 
@@ -319,7 +321,7 @@ Task: Refactor authentication flow
 
 **Anti-Pattern**: "Good enough" documentation ("the agent can figure it out"). Deferred updates (code changes + doc ticket for "later"). Orphaned content not linked from CLAUDE.md. Unverified examples. Zombie docs kept around — version control is the archive.
 
-**Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) — file structure is the physical map; docs are the conceptual map. Together they provide complete navigability. [Pattern 0.4](#pattern-04--claude-md-as-project-constitution) establishes the master index mechanism. [Pattern 4.2 — Spec Drift Detection](L4-standards-measurement.md#pattern-42--spec-drift-detection) provides automated checks for doc freshness. [Pattern 4.3 — New Starter Standard](L4-standards-measurement.md#pattern-43--new-starter-standard) is the ultimate test for entry point clarity.
+**Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) — file structure is the physical map; docs are the conceptual map. Together they provide complete navigability. [Pattern 0.4](#pattern-04--claudemd-as-project-constitution) establishes the master index mechanism. [Pattern 4.2 — Spec Drift Detection](L4-standards-measurement.md#pattern-42--spec-drift-detection) provides automated checks for doc freshness. [Pattern 4.3 — New Starter Standard](L4-standards-measurement.md#pattern-43--new-starter-standard) is the ultimate test for entry point clarity.
 
 ---
 
@@ -423,7 +425,7 @@ Cleanup:
 
 **Anti-Pattern**: "They should just read the code." Code shows what exists, not why. AI agents need intent and structure, not just implementation.
 
-**Cross-References**: [Pattern 0.4](#pattern-04--claude-md-as-project-constitution) specifies CLAUDE.md format. [L4: New Starter Audit](L4-standards-measurement.md#pattern-43--new-starter-standard) covers maintaining this over time.
+**Cross-References**: [Pattern 0.4](#pattern-04--claudemd-as-project-constitution) specifies CLAUDE.md format. [L4: New Starter Audit](L4-standards-measurement.md#pattern-43--new-starter-standard) covers maintaining this over time.
 
 ---
 
@@ -438,7 +440,7 @@ Cleanup:
 
 - John Ousterhout, *A Philosophy of Software Design* — Deep modules concept
 - Matt Pocock, "Your codebase is NOT ready for AI" — Graybox modules, progressive disclosure
-- @docs/references/further-reading.md
+- [Further Reading](references/further-reading.md)
 
 ---
 

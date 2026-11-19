@@ -65,8 +65,8 @@ In `docs/L4-standards-measurement.md` Pattern 4.4:
   IDs)`. Use the table in the evidence review (P1.3) as the starting set.
 - Label the case studies "first-party, n=1".
 - Add a disclosure in the README:
-  - rig and my-claw were built from these patterns, so they demonstrate the patterns without
-    independently validating them.
+  - rig was built from these patterns, so it demonstrates the patterns without independently
+    validating them.
   - State the author's relationship to rig (D5).
 - Cite the independent sources the research gives where they strengthen existing claims (evidence
   review P2.4). For example, L2's thesis can cite OM-7, OM-18, SG-11 and SC-8, and 4.1 can cite
@@ -88,8 +88,8 @@ Apply the lists in synthesis section 7.
 
 **Cut:**
 
-- Move TOON (3.7) and Session Lifecycle (3.8) to rig's docs (D3), or delete them. Leave a one-line
-  pointer.
+- 3.7 TOON: cut in Phase 0.
+- Move Session Lifecycle (3.8) to rig's docs (D3), or delete it. Leave a one-line pointer.
 - Remove the rig-internal TypeScript from 2.6 and 2.7, keeping the concept and a link.
 
 **Merge:**
@@ -127,7 +127,20 @@ Apply the lists in synthesis section 7.
 
 ### T8. Old planning folders (D6)
 
-Delete `specs/` and `docs/plans/` if D6 is decided as (a). Otherwise link both from the master index.
+Done in Phase 0 by decision D6 (a): `specs/` and `docs/plans/` were deleted (2026-11-19).
+
+### T9. Pattern 1.4 names compose project scoping
+
+Update `docs/L1-patterns/1.4-container-isolation.md` to name compose project scoping
+(`docker compose -p <unique project>`) as the isolation mechanism the examples in
+`examples/stack-test/` use. The examples set no fixed `container_name`.
+
+### T10. Guardrails example is TypeScript-only
+
+`examples/guardrails/` has no Python version. This is a known exception to the CLAUDE.md rule
+"TypeScript and Python versions for each pattern". Resolve it in Phase 1 together with D3
+(prune, merge and demote): either demote the example with its patterns, add a Python version, or
+amend the rule.
 
 ## Acceptance checks
 

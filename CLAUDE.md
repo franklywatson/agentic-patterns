@@ -28,7 +28,7 @@ agentic-patterns/
 └── docs/diagrams/               # Excalidraw diagrams for L1-L4
 ```
 
-See @README.md for detailed project overview.
+See [README.md](README.md) for detailed project overview.
 
 ## Writing Rules for This Repository
 
@@ -67,37 +67,42 @@ See @README.md for detailed project overview.
 
 **Foundation:**
 
-- @docs/L0-foundation.md — Deep modules, progressive disclosure, CLAUDE.md patterns
+- [docs/L0-foundation.md](docs/L0-foundation.md) — Deep modules, progressive disclosure, CLAUDE.md patterns
 
 **Closed Loop Design and Verification:**
 
-- @docs/L1-feedback-loops.md — REPL fractal loop concept, context harvesting, pattern index
-- @docs/L1-patterns/1.1-stack-tests.md through 1.6 + testing-infrastructure.md — Individual L1 patterns
+- [docs/L1-feedback-loops.md](docs/L1-feedback-loops.md) — REPL fractal loop concept, context harvesting, pattern index
+- [docs/L1-patterns/1.1-stack-tests.md](docs/L1-patterns/1.1-stack-tests.md) — Stack tests
+- [docs/L1-patterns/1.2-full-loop-assertions.md](docs/L1-patterns/1.2-full-loop-assertions.md) — Full-loop assertion layering
+- [docs/L1-patterns/1.3-sequential-design.md](docs/L1-patterns/1.3-sequential-design.md) — Sequential / additive test design
+- [docs/L1-patterns/1.4-container-isolation.md](docs/L1-patterns/1.4-container-isolation.md) — Container isolation
+- [docs/L1-patterns/1.5-no-mock-philosophy.md](docs/L1-patterns/1.5-no-mock-philosophy.md) — Real dependencies in stack/E2E tests
+- [docs/L1-patterns/1.6-test-integrity.md](docs/L1-patterns/1.6-test-integrity.md) — Test integrity rules
+- [docs/L1-patterns/testing-infrastructure.md](docs/L1-patterns/testing-infrastructure.md) — Testing infrastructure is production code
 
 **Behavioral Guardrails:**
 
-- @docs/L2-behavioral-guardrails.md — Skills, hooks, constitutional rules
+- [docs/L2-behavioral-guardrails.md](docs/L2-behavioral-guardrails.md) — Skills, hooks, constitutional rules
 
 **Optimization:**
 
-- @docs/L3-optimization.md — Token efficiency, smart routing, guardrail middleware
+- [docs/L3-optimization.md](docs/L3-optimization.md) — Token efficiency, smart routing, guardrail middleware
 
 **Standards & Measurement:**
 
-- @docs/L4-standards-measurement.md — Evidence-based claims, drift detection, metrics
+- [docs/L4-standards-measurement.md](docs/L4-standards-measurement.md) — Evidence-based claims, drift detection, metrics
 
 ## Cross-Cutting Guides
 
-- @docs/cross-cutting/anti-patterns.md — Pattern diagnostic catalog
-- @docs/cross-cutting/adoption-guide.md — Suggested adoption paths for agentic practices
-- @docs/cross-cutting/faq.md — Deployment, operations, and SDLC concerns beyond the patterns
-- @docs/cross-cutting/glossary.md — Shared terminology
+- [docs/cross-cutting/anti-patterns.md](docs/cross-cutting/anti-patterns.md) — Pattern diagnostic catalog
+- [docs/cross-cutting/adoption-guide.md](docs/cross-cutting/adoption-guide.md) — Suggested adoption paths for agentic practices
+- [docs/cross-cutting/faq.md](docs/cross-cutting/faq.md) — Deployment, operations, and SDLC concerns beyond the patterns
+- [docs/cross-cutting/glossary.md](docs/cross-cutting/glossary.md) — Shared terminology
 
 ## References
 
-- @docs/references/reference-telegram-trading-bot-case-study.md — Production reference implementation
-- @docs/references/reference-my-claw-case-study.md — Design rinsing reference implementation
-- @docs/references/further-reading.md — External resources
+- [docs/references/reference-telegram-trading-bot-case-study.md](docs/references/reference-telegram-trading-bot-case-study.md) — Production reference implementation
+- [docs/references/further-reading.md](docs/references/further-reading.md) — External resources
 
 ## Active Work
 
@@ -116,4 +121,4 @@ See @README.md for detailed project overview.
 ---
 
 **Last updated**: 2026-11-19
-**Status**: v0.2.0 — added design rinsing, my-claw case study
+**Status**: v0.2.0 — added design rinsing

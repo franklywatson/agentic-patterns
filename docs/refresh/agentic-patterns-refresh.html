@@ -233,7 +233,7 @@ footer .wrap{display:grid;gap:8px}
 
 <section class="block" id="ladder"><div class="wrap">
 <div class="eyebrow">4 · Goal A</div><h2>Software that ladders itself up to autonomy</h2>
-<p class="sectlede">The repo already has most of the A3 machinery: blocking hooks, constitutional rules, the enforcement pipeline, CI guardrails and context eval as a task bank. What it lacks is a binding between that machinery and an explicit, revocable grant. The A-series supplies it. my-claw's trust tiers are the seed; the comparison table below shows what changes. <span class="lens">autonomy</span></p>
+<p class="sectlede">The repo already has most of the A3 machinery: blocking hooks, constitutional rules, the enforcement pipeline, CI guardrails and context eval as a task bank. What it lacks is a binding between that machinery and an explicit, revocable grant. The A-series supplies it. The common per-agent trust-tier design (promotion on consecutive successes) is the seed; the comparison table below shows what changes. <span class="lens">autonomy</span></p>
 <div class="pats">
 <div class="pat"><div class="ph"><h3><span class="k">A.1</span>Autonomy register</h3><span class="ev p">Partial</span></div><p>A committed, schema-validated <code>.autonomy.yaml</code> lists every agent workflow. Interactive sessions count as a workflow. Each entry records owner, sponsor, grant, identity, permitted and forbidden actions, risk class, limits, stop mechanism with its last-tested date, review date and stop rule. It is protected by CODEOWNERS and is never writable by an agent.</p></div>
 <div class="pat"><div class="ph"><h3><span class="k">A.2</span>Evidence ledger</h3><span class="ev p">Partial</span></div><p>An append-only record per run, written only by CI and by jobs that observe source control afterwards, never by the agent. It captures check results, reverts, rework within 14 days and escaped defects. A <code>harness_hash</code> covers model, CLAUDE.md, skills and hooks; changing it is a release.</p></div>
@@ -265,7 +265,7 @@ footer .wrap{display:grid;gap:8px}
 <tr><th>A5</th><td>≥ 90 days at A4; baseline, target and stop rule set; cost per merged outcome reported; one review cycle completed with a recorded decision; cap ≥ C5</td></tr>
 <tr><th>Demote</th><td>Any one of: an S2+ escaped defect or linked incident; revert rate above 6% (hysteresis against the 3% promotion threshold); task bank below floor; harness changed without an eval; stop drill overdue; owner, sponsor or access expired; a limit breached or a forbidden action attempted</td></tr>
 </tbody></table></div>
-<div class="tablewrap"><table><thead><tr><th>my-claw trust tiers today</th><th>Change</th></tr></thead><tbody>
+<div class="tablewrap"><table><thead><tr><th>Per-agent trust tiers (common design)</th><th>Change</th></tr></thead><tbody>
 <tr><td>Tiers per agent</td><td>Grants per workflow; one agent may run several workflows at different grants</td></tr>
 <tr><td>Promotion on consecutive successes, source unspecified</td><td>Promotion on CI-written ledger evidence with confidence bounds, plus human sign-off</td></tr>
 <tr><td>"Autonomous (no oversight)"</td><td>"Unattended (observed)": owner, limits, audit record and tested stop remain</td></tr>
@@ -344,11 +344,11 @@ footer .wrap{display:grid;gap:8px}
 <div class="pat"><div class="ph"><h3><span class="k">New</span>Prune and re-baseline context</h3><span class="ev p">Partial</span></div><p>Give every context artefact (instruction file, skill, hook, rule) an owner, a reviewed date and an expiry. Keep a fixed task bank of 10–30 tasks against a pinned model. On each model upgrade, or quarterly, delete first: run the bank without the artefact, and add it back only if a task regresses, recording which task justified it. Classify each rule as guidance, which is prunable prose, or invariant, which lives in a hook, deny rule or CI. Track how recently each artefact changed, not whether it exists.</p></div>
 <div class="prune">
 <div class="panel"><h3><span class="dot d-cut"></span>Cut, or move to rig's docs</h3><ul>
-<li>3.7 TOON (correct its numbers wherever it survives)</li>
+<li>3.7 TOON (done in Phase 0)</li>
 <li>3.8 Session lifecycle</li>
 <li>3.3 environment-aware routing code</li>
 <li>2.6 and 2.7 snippets that document rig internals</li>
-<li><code>specs/</code> and <code>docs/plans/</code>: completed plans, unlinked from CLAUDE.md</li>
+<li><code>specs/</code> and <code>docs/plans/</code>: completed plans, unlinked from CLAUDE.md (done in Phase 0)</li>
 <li>Trading-bot commit-mix analysis presented as evidence</li>
 </ul></div>
 <div class="panel"><h3><span class="dot d-merge"></span>Merge</h3><ul>
@@ -385,9 +385,9 @@ footer .wrap{display:grid;gap:8px}
 <tr><td>The <code>sed -i</code> string match is bypassed by <code>/usr/bin/sed</code>, <code>perl -pi</code> and <code>$(…)</code>. The router allows every <code>docker</code> command, which is root-equivalent on the host.</td><td>L2, L3, <code>examples/guardrails</code></td><td>Presented as a control</td><td><span class="lens">governance</span></td></tr>
 <tr><td>The trading-bot study says PostToolUse hooks "redirect" commands. They fire after the command has run.</td><td>trading-bot case study</td><td>Accuracy</td><td><span class="lens">evidence</span><span class="lens">governance</span></td></tr>
 <tr><td>CLAUDE.md's <code>@docs/…</code> imports load the whole library into context, so the 150-line rule does not limit what loads</td><td><code>CLAUDE.md</code></td><td>Rule 6 intent</td><td><span class="lens">evidence</span></td></tr>
-<tr><td>Mock rules contradict each other: 1.1 says stack-test failures "always indicate real bugs"; my-claw says unit tests use no mocks and has integration tests that auto-skip without <code>.env</code></td><td>1.1, 1.5, L0.5, my-claw study</td><td>Rules 1 and 5</td><td><span class="lens">evidence</span></td></tr>
+<tr><td>Mock rules contradict each other: 1.1 says stack-test failures "always indicate real bugs"; a former case study (removed 2026-11-19) said unit tests use no mocks and had integration tests that auto-skip without <code>.env</code></td><td>1.1, 1.5, L0.5, a former case study</td><td>Rules 1 and 5</td><td><span class="lens">evidence</span></td></tr>
 <tr><td>Broken internal anchors (13 by one reviewer's check, 27 by another's using GitHub slug rules); CI strips anchors before checking links. L4.5 refers to a <code>scripts/</code> directory that does not exist.</td><td>Across docs, <code>L4:394-399</code></td><td>Spec drift</td><td><span class="lens">adopter</span><span class="lens">evidence</span></td></tr>
-<tr><td>jcodemunch is linked to two different owners; my-claw gives two different test counts; the master index omits <code>specs/</code> and <code>docs/plans/</code></td><td>L3, further-reading, my-claw study, CLAUDE.md</td><td>Master index, accuracy</td><td><span class="lens">evidence</span><span class="lens">governance</span><span class="lens">autonomy</span></td></tr>
+<tr><td>jcodemunch is linked to two different owners; the master index omits <code>specs/</code> and <code>docs/plans/</code> (resolved by D6: both deleted)</td><td>L3, further-reading, CLAUDE.md</td><td>Master index, accuracy</td><td><span class="lens">evidence</span><span class="lens">governance</span><span class="lens">autonomy</span></td></tr>
 <tr><td>Design rinsing feeds untrusted external content into a session with write, shell and network access, with no prompt-injection warning</td><td><code>L1:70-134</code></td><td>Safety</td><td><span class="lens">governance</span></td></tr>
 </tbody></table></div>
 <p class="sectlede" style="font-size:.88rem">Already done in this session: gstack references removed and two pre-existing markdown-lint errors in L4 fixed, in draft <a href="https://github.com/franklywatson/agentic-patterns/pull/4">PR #4</a>.</p>

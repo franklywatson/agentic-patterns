@@ -35,9 +35,10 @@ export default defineConfig({
     timeout: 10_000,
   },
 
-  // One retry for flaky browser interactions (e.g., slow page renders).
-  // Keep retries low — genuine failures should surface, not be masked.
-  retries: 1,
+  // No retries: the checkout journey spans tests and shares server-side state
+  // (global cart and last order), so a retried step would mask corruption.
+  retries: 0,
+  fullyParallel: false,
 
   // Chromium only. Stack tests verify behavior, not cross-browser rendering.
   projects: [

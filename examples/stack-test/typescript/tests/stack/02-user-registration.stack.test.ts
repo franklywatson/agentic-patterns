@@ -15,7 +15,7 @@
  * query databases or internal services directly.
  */
 
-import { StackTestUtils } from '../config/stack-utils.js';
+import { StackTestUtils } from '../config/stack-utils';
 
 describe('Stack Test: User signs up and accesses their account', () => {
   let utils: StackTestUtils;
@@ -111,7 +111,7 @@ describe('Stack Test: User signs up and accesses their account', () => {
     // The token works for authenticated requests against a different endpoint.
     // This proves the session was created, stored, and is retrievable —
     // not just that the login endpoint returned a token string.
-    const profileResponse = await utils.makeRequest('GET', '/users/me', {
+    const profileResponse = await utils.makeRequest('GET', '/users/me', undefined, {
       Authorization: `Bearer ${authToken}`,
     });
 
@@ -170,8 +170,8 @@ describe('Stack Test: User signs up and accesses their account', () => {
     // This proves the uniqueness check runs before persistence.
     const auditResponse = await utils.makeRequest('GET', '/admin/audit/users');
     const failedAttempts = auditResponse.data.entries.filter(
-      (e: { action: string; email?: string }) =>
-        e.action === 'USER_CREATED' && e.email === 'different',
+      (e: { action: string; metadata: { username?: string } }) =>
+        e.action === 'USER_CREATED' && e.metadata.username === 'different',
     );
     expect(failedAttempts).toEqual([]);
   });
@@ -201,7 +201,7 @@ describe('Stack Test: User signs up and accesses their account', () => {
 
     // Verify the login event was also recorded (from step 2)
     const loginEvent = adminResponse.data.entries.find(
-      (e: { action: string; entityType: string }) =>
+      (e: { action: string; entityId: string }) =>
         e.action === 'USER_LOGIN' && e.entityId === createdUserId,
     );
     expect(loginEvent).toBeDefined();

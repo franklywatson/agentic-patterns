@@ -8,9 +8,9 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "node --test dist/**/*.test.js",
-    "lint": "eslint src",
-    "clean": "rm -rf dist"
+    "test": "node --test \"dist/**/*.test.js\"",
+    "clean": "rm -rf dist",
+    "pretest": "npm run build"
   },
   "keywords": [
     "guardrails",
@@ -22,7 +22,7 @@
   "author": "",
   "license": "MIT",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=21"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

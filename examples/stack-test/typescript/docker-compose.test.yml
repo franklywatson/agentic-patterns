@@ -1,12 +1,8 @@
-version: '3.8'
-
 services:
   app:
-    image: node:20-alpine
-    container_name: ${CONTAINER_NAME:-stack-test-app}
-    working_dir: /app
+    build: ./app
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
     environment:
       - NODE_ENV=test
       - PORT=3000
@@ -17,9 +13,6 @@ services:
       - DB_PASSWORD=testpass
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: sh -c "npm install && npm start"
-    volumes:
-      - ./mock-app:/app:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -34,9 +27,8 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: ${CONTAINER_NAME_POSTGRES:-stack-test-postgres}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     environment:
       - POSTGRES_DB=testdb
       - POSTGRES_USER=testuser
@@ -51,9 +43,8 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: ${CONTAINER_NAME_REDIS:-stack-test-redis}
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
     healthcheck:

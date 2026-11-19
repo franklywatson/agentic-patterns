@@ -96,30 +96,3 @@ export function formatResolution(resolution: Resolution, command: string): strin
 export function requiresAction(resolution: Resolution): boolean {
   return resolution.action !== 'allow';
 }
-
-/**
- * Compute token savings estimate for a resolution.
- * Returns percentage (0-100) or null if not applicable.
- */
-export function estimateTokenSavings(resolution: Resolution): number | null {
-  if (resolution.action === 'allow' || resolution.action === 'block') {
-    return null;
-  }
-
-  // Estimate savings based on the tool being suggested
-  const tool = resolution.tool.toLowerCase();
-  if (tool.includes('jcodemunch') || tool.includes('search_symbols')) {
-    return 85; // Structured symbol search vs raw grep
-  }
-  if (tool.includes('grep') && tool.includes('rtk')) {
-    return 60; // Filtered grep output
-  }
-  if (tool.includes('read') && !tool.includes('cat')) {
-    return 75; // Clean read vs cat with artifacts
-  }
-  if (tool.includes('glob') || tool.includes('find')) {
-    return 77; // Targeted discovery vs recursive find
-  }
-
-  return null;
-}

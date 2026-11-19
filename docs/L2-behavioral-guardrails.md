@@ -48,7 +48,7 @@ A skill is a markdown file that declares:
 - **Integration points**: what other skills compose with this
 - **Checklist**: steps the agent follows when using the skill
 
-Skills are the mechanism by which a project's constitution (@L0-foundation.md#pattern-04-claude-md-as-project-constitution) becomes executable. CLAUDE.md declares the rules; skills enforce them.
+Skills are the mechanism by which a project's constitution ([Pattern 0.4](L0-foundation.md#pattern-04--claudemd-as-project-constitution)) becomes executable. CLAUDE.md declares the rules; skills enforce them.
 
 ### In Practice
 
@@ -67,7 +67,7 @@ Copying the same rules into every prompt. This creates drift—prompts get updat
 
 ### Cross-References
 
-- @L0-foundation.md#pattern-04-claude-md-as-project-constitution — CLAUDE.md as rule source
+- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claudemd-as-project-constitution) — CLAUDE.md as rule source
 
 ---
 
@@ -97,7 +97,7 @@ The chain enforces a complete development lifecycle. Each skill validates its in
 
 1. **brain+**: Design with stack testing in mind. What needs Docker? What are the full-loop assertions?
 2. **plan+**: Create implementation plan with explicit testing strategy. Which tests cover which requirements?
-3. **tdd+**: RED-GREEN-REFACTOR with full-loop assertions. (@L1-feedback-loops.md#pattern-12-full-loop-assertion-layering)
+3. **tdd+**: RED-GREEN-REFACTOR with full-loop assertions. ([Pattern 1.2](L1-patterns/1.2-full-loop-assertions.md))
 4. **verify+**: Evidence-based claims. Run commands, show output, then claim done.
 5. **review+**: Checklist-based compliance review. Tests pass, docs updated, constitutional rules followed.
 
@@ -111,7 +111,7 @@ A typical workflow session:
 4. Agent activates `verify+` skill, runs tests and shows output before claiming success
 5. Agent activates `review+` skill, confirms all checklist items complete
 
-The `review+` skill also integrates `test-integrity` for test file review, ensuring tests follow @L1-feedback-loops.md#pattern-16-test-integrity-rules.
+The `review+` skill also integrates `test-integrity` for test file review, ensuring tests follow [Pattern 1.6 — Test Integrity Rules](L1-patterns/1.6-test-integrity.md).
 
 **Superpowers framework integration:** The [obra/superpowers](https://github.com/obra/superpowers) library provides the base skills that the chain builds on:
 
@@ -133,9 +133,9 @@ Jumping directly to implementation without planning or testing. This produces co
 
 ### Cross-References
 
-- @L1-feedback-loops.md#pattern-11-stack-tests — Stack testing foundation
-- @L1-feedback-loops.md#pattern-12-full-loop-assertion-layering — Assertion requirements
-- @docs/cross-cutting/glossary.md — Skill chain terminology
+- [Pattern 1.1 — Stack Tests](L1-patterns/1.1-stack-tests.md) — Stack testing foundation
+- [Pattern 1.2 — Full-Loop Assertion Layering](L1-patterns/1.2-full-loop-assertions.md) — Assertion requirements
+- [Glossary](cross-cutting/glossary.md) — Skill chain terminology
 
 ### Reference Implementation
 
@@ -210,6 +210,8 @@ hook.on('PreToolUse', (tool, args) => {
 });
 ```
 
+**Limits of string matching.** Matching `sed -i` in the command string is an ergonomic nudge that steers the agent to the Edit tool. It is not a security control. `command.includes('sed -i')` catches `/usr/bin/sed -i`, but not `sed -E -i`, `sed --in-place`, `perl -pi`, `python -c` file writes, or a command assembled at runtime (`$(echo sed) -i ...`, `S=sed; $S -i ...`); it also matches harmless text such as `echo sed -i`. Enforce destructive-operation limits with a containment boundary (sandbox, credential scope); see [the containment prerequisite track](refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people).
+
 A context-aware hook:
 
 ```typescript
@@ -217,9 +219,10 @@ hook.on('PreToolUse', (tool, args) => {
   if (tool === 'Bash' && args.command.startsWith('docker logs')) {
     const recentLogs = findRecentTestLogs(5 * 60 * 1000); // 5 minutes
     if (recentLogs.length > 0) {
-      console.warn(`Recent test logs available: ${recentLogs.join(', ')}`);
-      console.warn('Use test logs instead of docker logs');
-      return; // block the docker logs command
+      throw new Error(
+        `Recent test logs available: ${recentLogs.join(', ')}. ` +
+        'Read those files instead of running docker logs.'
+      ); // throwing blocks the docker logs command
     }
   }
 });
@@ -231,8 +234,8 @@ Writing hooks that are too permissive or too restrictive. Permissive hooks fail 
 
 ### Cross-References
 
-- @L3-optimization.md#pattern-31-smart-routing--tool-selection — Command routing patterns
-- @docs/examples/guardrails/ — Hook implementation examples
+- [Pattern 3.1 — Smart Routing / Tool Selection](L3-optimization.md#pattern-31--smart-routing--tool-selection) — Command routing patterns
+- [examples/guardrails](../examples/guardrails/) — Hook implementation examples
 
 ### Reference Implementation
 
@@ -256,7 +259,7 @@ Constitutional rules are hard constraints declared in CLAUDE.md that never relax
 - **Full accounting for every state change** — every inventory change, every order, every transaction fee must be logged and queryable.
 - **Evidence-based claims only** — show command output before claiming done. "Tests pass" is not evidence; show the test output.
 - **Docker-first development** — no local OS execution. Everything runs in containers.
-- **No conditional test assertions** — tests must be able to fail. (@L1-feedback-loops.md#pattern-16-test-integrity-rules)
+- **No conditional test assertions** — tests must be able to fail. ([Pattern 1.6](L1-patterns/1.6-test-integrity.md))
 
 **The rules flow:**
 
@@ -283,8 +286,8 @@ Writing "soft" rules with exceptions. Constitutional rules must have no escape h
 
 ### Cross-References
 
-- @L0-foundation.md#pattern-04-claude-md-as-project-constitution — CLAUDE.md format
-- @L1-patterns/1.5-no-mock-philosophy.md — Real dependencies in E2E/integration and stack tests
+- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claudemd-as-project-constitution) — CLAUDE.md format
+- [Pattern 1.5 — Real Dependencies](L1-patterns/1.5-no-mock-philosophy.md) — Real dependencies in E2E/integration and stack tests
 
 ### Reference Implementation
 
@@ -347,8 +350,8 @@ Classifying errors as "relevant" or "irrelevant" without evidence. Unless you ca
 
 ### Cross-References
 
-- @L1-feedback-loops.md#pattern-13-sequential--additive-test-design — Sequential test ordering
-- @L4-standards-measurement.md#pattern-41--evidence-based-claims — Evidence standards
+- [Pattern 1.3 — Sequential / Additive Test Design](L1-patterns/1.3-sequential-design.md) — Sequential test ordering
+- [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) — Evidence standards
 
 ### Reference Implementation
 
@@ -504,8 +507,6 @@ brainstorm → plan → work → review → compound → repeat
 
 The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin implements this pattern with `/ce:compound` — a skill that captures solved problems into structured documentation (`docs/solutions/`) with YAML frontmatter for searchability. Each documented solution reduces the cost of the next occurrence from research to lookup.
 
-The my-claw project's design rinsing lineage ([my-claw case study](references/reference-my-claw-case-study.md)) demonstrates compounding across sessions: each rinsing phase extracted patterns that the next phase built on, producing more value because it started from a richer foundation.
-
 **Compounding across the pattern pyramid:**
 
 | Level | What Compounds | Mechanism |
@@ -528,7 +529,6 @@ The my-claw project's design rinsing lineage ([my-claw case study](references/re
 - [Pattern 2.2 — The Skill Chain](#pattern-22--the-skill-chain) — The workflow pipeline that compound engineering extends
 - [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — Rules that grow through compounding
 - [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) — Compounding requires evidence, not assumptions
-- [Reference my-claw Case Study](references/reference-my-claw-case-study.md) — Design rinsing lineage demonstrates compounding across three phases
 
 ### Reference Implementation
 

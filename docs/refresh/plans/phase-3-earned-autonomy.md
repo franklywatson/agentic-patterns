@@ -101,11 +101,6 @@ triggers the documented stop mechanism, asserts the canary halted within a bound
 - Add `autonomy check` to this repo's CI as a required check.
 - Record the profile result in `docs/refresh/README.md`.
 
-### T7. Case study update
-
-Rewrite the trust-tier section of `docs/references/reference-my-claw-case-study.md` as a runtime
-analogue of A.3. Use the comparison table in synthesis section 4.
-
 ## Acceptance checks
 
 - Both language implementations pass their unit and stack tests, with the output in the PR.

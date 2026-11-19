@@ -1,6 +1,6 @@
 # Phase 0: Correct Defects
 
-- **Status:** Not started
+- **Status:** Complete on branch `refresh/phase-0-correct`; PR pending merge
 - **Depends on:** none
 - **Gated by decisions:** none
 - **Suggested branch:** `refresh/phase-0-correct`
@@ -25,14 +25,8 @@ editing.
 
 ### T1. Correct the TOON example and savings table
 
-- **File:** `docs/L3-optimization.md`, Pattern 3.7.
-- Recount the JSON and TOON strings in the worked example. The review measured 117 and 79
-  characters, about 32%.
-- Fix the "46 characters" example, which is 38.
-- Either remove the "typical savings" table or label it as an estimate. Note that it counts
-  characters, not tokens.
-- Make the record separator consistent between prose and example (pipes vs newlines).
-- If decision D3 later moves TOON out of the repo, this fix still applies to wherever it moves.
+Superseded: the fixes to the Pattern 3.7 example and savings table were applied, then Task 8 cut
+Pattern 3.7 entirely (2026-11-19). Nothing remains to do under T1.
 
 ### T2. Remove or attribute unsourced figures
 
@@ -75,10 +69,7 @@ editing.
   once isolation (1.4) holds". The doc's own brittleness section contradicts the absolute.
 - **The 1.1 comparison table.** It rates unit tests "Low" confidence, which conflicts with L0.5.
   Reword it to the scope each test type proves.
-- **The my-claw case study's "unit tests use no mocks".** Reconcile it with 1.5, or say plainly that
-  this is my-claw's choice and not the pattern.
-- **The my-claw integration tests that auto-skip without `.env`.** This is a silent pass under 1.6.
-  Note it as a deviation in the case study.
+- Superseded: the case study was removed by maintainer decision (2026-11-19).
 
 ### T6. Links, anchors and the master index
 
@@ -93,7 +84,7 @@ editing.
 - jcodemunch is linked to two different GitHub owners (L3, `further-reading.md`,
   trading-bot study). Verify the correct repository and use one URL. If it cannot be verified,
   remove the link.
-- The my-claw case study gives two different test counts. Pick the correct one or remove both.
+- Superseded: the case study was removed by maintainer decision (2026-11-19).
 - Fix the wrong cross-references:
   - L4.1 cites "L2.3 Full-Loop" for what is Pattern 1.2.
   - The anti-patterns catalogue cites 3.2 for "read only what you need".
@@ -111,6 +102,15 @@ editing.
   untrusted input, so rinse in a read-only session without network egress beyond the source.
 - Link forward to the Phase 2 least-agency pattern once it exists. Until then, link to the
   synthesis.
+
+### Task 8 (added 2026-11-19)
+
+By maintainer decision after this plan was written:
+
+- Remove the former design-rinsing case study, its diagrams and every reference to it, including in
+  `docs/refresh/`.
+- Cut TOON (L3 Pattern 3.7): the section is replaced by a removal note under the same heading.
+- Delete `docs/plans/` and `specs/` (decision D6, option a).
 
 ## Acceptance checks
 

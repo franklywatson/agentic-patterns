@@ -48,6 +48,8 @@
 
   "ignores": [
     "**/node_modules/**",
-    "**/.git/**"
+    "**/.git/**",
+    ".superpowers/**",
+    ".worktrees/**"
   ]
 }

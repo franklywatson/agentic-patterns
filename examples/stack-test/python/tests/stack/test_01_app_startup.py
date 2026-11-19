@@ -12,8 +12,6 @@ Demonstrates:
 
 import pytest
 
-from tests.conftest import StackTestManager
-
 
 class TestAppStartup:
     """Verify the application stack starts correctly."""
@@ -78,3 +76,20 @@ class TestAppStartup:
         assert services["app"] == "healthy"
         assert services["database"] == "healthy"
         assert services["cache"] == "healthy"
+
+    @pytest.mark.stack
+    def test_health_test_mode_reports_service_diagnostics(self, http_client, wait_for_ready):
+        """Pattern 1.1: /health?mode=test decorates the response with per-service detail."""
+        wait_for_ready()
+
+        response = http_client.get("/health", params={"mode": "test"})
+
+        assert response.status_code == 200
+
+        details = response.json()["services"]
+        assert details["postgres"]["connected"] is True
+        assert details["postgres"]["latency_ms"] >= 0
+        assert details["postgres"]["version"]
+        assert details["redis"]["connected"] is True
+        assert details["redis"]["latency_ms"] >= 0
+        assert details["redis"]["version"]

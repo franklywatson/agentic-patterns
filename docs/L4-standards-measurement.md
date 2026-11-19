@@ -95,7 +95,7 @@ Claim: The error existed before this commit. Changes in abc123 don't touch the r
 
 ### Cross-References
 
-- **L2.3 — Full-Loop Coverage:** Evidence is part of tertiary assertions
+- [Pattern 1.2 — Full-Loop Assertion Layering](L1-patterns/1.2-full-loop-assertions.md): Evidence is part of tertiary assertions
 - [Pattern 0.8 — Aggressive Cleanup](L0-foundation.md#pattern-08--aggressive-cleanup): Remove dead code that wastes verification tokens
 - **Pattern 4.2 — Spec Drift Detection:** Automated checks replace manual verification
 
@@ -260,7 +260,7 @@ This is the practical application of [Pattern 0.9](L0-foundation.md#pattern-09--
 
 ### Cross-References
 
-- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claude-md-as-project-constitution): The foundation of discoverability
+- [Pattern 0.4 — CLAUDE.md as Project Constitution](L0-foundation.md#pattern-04--claudemd-as-project-constitution): The foundation of discoverability
 - [Pattern 0.7 — Documentation as System Map](L0-foundation.md#pattern-07--documentation-as-system-map): Entry points ARE the map
 - **Pattern 4.2 — Spec Drift Detection:** Audits catch entry point drift
 
@@ -398,12 +398,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm run lint:md
-      - run: ./scripts/check-claude-md-lines.sh  # Verify CLAUDE.md under 150 lines
-      - run: ./scripts/check-doc-links.sh         # Internal link integrity
-      - run: ./scripts/check-doc-reachability.sh  # All docs reachable from CLAUDE.md
-      - run: ./scripts/check-writing-conventions.sh # No filler words
+      - run: npm run lint:md                       # markdownlint-cli2, config in .markdownlint-cli2.jsonc
+      - run: python3 scripts/check-doc-links.py .  # links and anchors, exits 1 on any broken one
+      - run: test "$(wc -l < CLAUDE.md)" -le 150   # CLAUDE.md line limit
 ```
+
+Each check exists in this repository: `npm run lint:md` is defined in `package.json`, `scripts/check-doc-links.py` is the link and anchor checker, and the line-limit check is an inline shell step in the `claude-md-line-limit` job of `.github/workflows/docs.yml` (the `wc -l` line above is its one-line equivalent). The same workflow also runs a doc-reachability job (all docs referenced from CLAUDE.md) and a writing-conventions job (filler words) as inline shell steps.
 
 ### Reference Implementation
 

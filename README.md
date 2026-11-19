@@ -33,7 +33,6 @@ The lineage: patterns were extracted from the reference project, organized into 
 |--------|-------------------|----------|
 | [rig](https://github.com/franklywatson/claude-rig) | Guardrails framework: L2 enforcement pipeline, L3 tool routing + token-optimized scout agent, L4 context eval, skill chain with phase transitions, CI guardrails. Configurable via `.harness.yaml`. | TypeScript |
 | [superpowers](https://github.com/obra/superpowers) | L2 base skills (brainstorming, TDD, verification, review), automated worktree management | Markdown/JS |
-| [my-claw](docs/references/reference-my-claw-case-study.md) | L1 design rinsing reference: autonomous multi-agent system whose architecture evolved through three phases of cross-domain design rinsing — YouTube demo to architecture, academic talk + codebases to agent design, agentic-patterns + compound engineering to development approach | Python |
 
 ## The Pattern Pyramid
 
@@ -49,7 +48,7 @@ Patterns are organized into five levels, each building on the previous. The leve
 
 **[L2: Behavioral Guardrails](docs/L2-behavioral-guardrails.md)** — Rules written in prose are suggestions. Skills and hooks are enforcement. Overlay skills on top of base agent capabilities, chain them into a complete development lifecycle, and automate discipline through the tool layer.
 
-**[L3: Optimization](docs/L3-optimization.md)** — Agent efficiency is quality, not just speed. Smart routing redirects shell commands to specialized tools (60-80% token reduction). Intent classification, environment-aware routing, and the Scout Pattern (from the WISC context engineering framework: Write, Isolate, Select, Compress) turn exploration into structured context.
+**[L3: Optimization](docs/L3-optimization.md)** — Agent efficiency is quality, not just speed. Smart routing redirects shell commands to specialized tools. Intent classification, environment-aware routing, and the Scout Pattern (from the WISC context engineering framework: Write, Isolate, Select, Compress) turn exploration into structured context.
 
 **[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, spec drift detection, the new starter audit, development metrics, CI guardrails, and context eval for routing effectiveness. The maturity layer that verifies L0-L3 are holding and measures their impact over time.
 
@@ -82,7 +81,7 @@ examples/           # Working code examples (TypeScript + Python)
                     #   Intent classification, smart routing, environment detection
   project-structure/ # Before/after directory layouts
 docs/cross-cutting/ # Anti-patterns, adoption guide, FAQ, glossary
-docs/references/    # Case studies (trading bot + my-claw) and further reading
+docs/references/    # Case study (trading bot) and further reading
 ```
 
 The TypeScript and Python stack-test examples cover the same core pattern (Docker-based stack tests with full-loop assertions) but differ in scope: the TypeScript example extends to browser-based testing with Playwright, while the Python example demonstrates API-level testing with pytest conventions. Both are self-contained and runnable independently.
@@ -99,7 +98,6 @@ This is a living pattern library. Contributions welcome:
 ## Background and Further Reading
 
 - [Reference Telegram Trading Bot Case Study](docs/references/reference-telegram-trading-bot-case-study.md) — the production system these patterns were extracted from
-- [Reference my-claw Case Study](docs/references/reference-my-claw-case-study.md) — design rinsing in practice: autonomous multi-agent system architecture evolved through cross-domain extraction across three phases
 - [FAQ](docs/cross-cutting/faq.md) — deployment, operations, and other SDLC concerns beyond the patterns
 - [Further Reading](docs/references/further-reading.md) — articles, videos, and tools that informed this work
 - [Glossary](docs/cross-cutting/glossary.md) — terminology reference

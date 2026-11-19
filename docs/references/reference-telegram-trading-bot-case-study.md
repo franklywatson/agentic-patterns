@@ -355,19 +355,19 @@ When `tdd+` is invoked, it knows to reject mocked loggers and mocked ethers beca
 
 ### Intent-Based Command Routing
 
-The project implements L3's smart routing pattern ([Pattern 3.1](../L3-optimization.md#pattern-31--smart-routing-tool-selection)) through a combination of skills and hooks. Raw shell commands — `grep`, `cat`, `find` — are intercepted by PostToolUse hooks that classify intent ([Pattern 3.2](../L3-optimization.md#pattern-32--intent-classification)) and redirect to structured tools. `grep -r "export.*function" .` becomes a symbol search; `cat file.ts` becomes a targeted read; `find . -name "*.ts"` becomes a glob query. Environment-aware routing ([Pattern 3.3](../L3-optimization.md#pattern-33--environment-aware-routing)) detects whether jcodemunch indexes are available and degrades gracefully to raw tools when they aren't.
+The project implements L3's smart routing pattern ([Pattern 3.1](../L3-optimization.md#pattern-31--smart-routing--tool-selection)) through a combination of skills and hooks. Raw shell commands — `grep`, `cat`, `find` — are handled by hooks that classify intent ([Pattern 3.2](../L3-optimization.md#pattern-32--intent-classification)) and redirect to structured tools. Redirection requires a hook that runs before the command (PreToolUse); a hook that runs after the command cannot redirect it. `grep -r "export.*function" .` becomes a symbol search; `cat file.ts` becomes a targeted read; `find . -name "*.ts"` becomes a glob query. Environment-aware routing ([Pattern 3.3](../L3-optimization.md#pattern-33--environment-aware-routing)) detects whether jcodemunch indexes are available and degrades gracefully to raw tools when they aren't.
 
 ### RTK Integration
 
-The [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk) CLI proxy filters noisy git output — `git status`, `git diff`, `git log` — stripping line noise and returning structured results. This is the simplest L3 win: install RTK, configure it as a hook, and git commands become ~60% cheaper in token usage with no behavior change.
+The [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk) CLI proxy filters noisy git output — `git status`, `git diff`, `git log` — stripping line noise and returning structured results. This is the simplest L3 win: install RTK, configure it as a hook, and git commands return filtered output with no behavior change.
 
 ### jcodemunch for Structured Code Search
 
-When the repository is indexed by [jcodemunch](https://github.com/nicolo-ribaudo/jcodemunch), agent searches bypass raw grep entirely. `search_symbols` returns typed results with file locations and summaries — the same information as `grep -r` output but at ~15% of the token cost. The scout pattern ([Pattern 3.4](../L3-optimization.md#pattern-34--context-engineering-the-scout-pattern)) applies here: a sub-agent maps the codebase structure first, then the implementer works with a concise index instead of re-deriving file locations each session.
+When the repository is indexed by [jcodemunch](https://github.com/jgravelle/jcodemunch-mcp), agent searches bypass raw grep entirely. `search_symbols` returns typed results with file locations and summaries — the same information as `grep -r` output in fewer tokens. The scout pattern ([Pattern 3.4](../L3-optimization.md#pattern-34--context-engineering--the-scout-pattern)) applies here: a sub-agent maps the codebase structure first, then the implementer works with a concise index instead of re-deriving file locations each session.
 
 ### TOON Serialization for MCP Responses
 
-The project's MCP server uses [TOON (Token-Oriented Object Notation)](https://github.com/toon-format/toon) to serialize tabular responses ([Pattern 3.7](../L3-optimization.md#pattern-37--toon-serialization-for-mcp-response-optimization)). Order lists, portfolio holdings, and market data — uniform object arrays returned to agents from internal tools — are compressed to ~35-40% of their JSON size by declaring field names once in a header row. The agent receives the same data; it just costs fewer tokens to consume.
+In this project, the MCP server used [TOON (Token-Oriented Object Notation)](https://github.com/toon-format/toon) to serialize tabular responses. This is a description of what the project did, not a library recommendation. Order lists, portfolio holdings, and market data — uniform object arrays returned to agents from internal tools — are encoded more compactly than JSON by declaring field names once in a header row. The agent receives the same data in a more compact encoding.
 
 ### Structured Output Over Raw Text
 
@@ -432,7 +432,7 @@ Skills establish patterns that optimization (L3) can automate. Intent classifica
 
 ### How L3 Amplifies L0-L2
 
-Token optimization isn't just cheaper — it makes agents more effective. Structured search means faster discovery. Smart routing means fewer dead-end explorations. TOON serialization means more context available for actual reasoning. L3 amplifies the value of every pattern below it by making agent sessions tighter and more focused.
+In this project, L3 added structured search, smart routing and compact MCP serialization on top of the L0-L2 patterns. The project did not measure the effect of these changes, so this case study makes no claim about their benefit.
 
 ---
 

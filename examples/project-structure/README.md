@@ -207,6 +207,6 @@ ecommerce_bot/
 
 ## See Also
 
-- @docs/L0-foundation.md — Deep modules, progressive disclosure, conceptual organization
-- @docs/L1-feedback-loops.md — Stack tests at module boundaries
-- @docs/L2-behavioral-guardrails.md — Skills that enforce structural conventions
+- [L0 Foundation](../../docs/L0-foundation.md) — Deep modules, progressive disclosure, conceptual organization
+- [L1 Closed Loop Design](../../docs/L1-feedback-loops.md) — Stack tests at module boundaries
+- [L2 Behavioral Guardrails](../../docs/L2-behavioral-guardrails.md) — Skills that enforce structural conventions

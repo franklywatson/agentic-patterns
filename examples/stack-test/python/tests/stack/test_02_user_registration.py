@@ -18,9 +18,13 @@ query databases or internal services directly.
 import pytest
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def created_user_id(http_client, wait_for_ready) -> str:
-    """Create a user and return the ID. Shared across tests for sequential flow."""
+    """Create the journey's user once per session and return the ID.
+
+    Session scope is required: the email is unique, so a second creation
+    would return 409.
+    """
     wait_for_ready()
 
     user_data = {
@@ -211,11 +215,11 @@ class TestUserSignUpJourney:
         failed_attempts = [
             e for e in audit["entries"]
             if e.get("action") == "USER_CREATED"
-            and e.get("email") == "another-duplicate"
+            and e["metadata"]["username"] == "another-duplicate"
         ]
         assert failed_attempts == []
 
-    def test_audit_trail_is_complete(self, http_client, created_user_id):
+    def test_audit_trail_is_complete(self, http_client, created_user_id, auth_token):
         """
         Third-order: audit log contains complete trail with timestamps and metadata.
         Both USER_CREATED and USER_LOGIN events are present, in correct order.
@@ -247,7 +251,7 @@ class TestUserSignUpJourney:
         ]
         assert len(login_events) > 0, "User login event not found in audit log"
         login = login_events[0]
-        assert "timestamp" in login["timestamp"]
+        assert login["timestamp"]
 
         # Login happened AFTER registration
         from datetime import datetime

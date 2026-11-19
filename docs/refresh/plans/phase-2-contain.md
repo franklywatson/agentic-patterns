@@ -90,8 +90,11 @@ Link it from CLAUDE.md.
   - orphaned agent
 - **`docs/cross-cutting/glossary.md`.** Add containment, lethal trifecta / Rule of Two, least
   agency, author of record, agent register, tested stop, approval fatigue and cognitive debt.
-- **`docs/references/reference-my-claw-case-study.md`.** Add a caution note on the "autonomous (no
-  oversight)" tier and on promotion after a run of successes.
+
+- **Section 6 links.** Four links point at `refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people`
+  as a stopgap: `docs/L1-feedback-loops.md`, `docs/L2-behavioral-guardrails.md`,
+  `docs/L3-optimization.md` and `examples/guardrails/README.md`. Repoint each at Pattern 2.10
+  once it exists.
 
 ### T5. Working example
 

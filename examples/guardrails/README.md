@@ -60,6 +60,27 @@ if (resolution.action === 'advise') {
 }
 ```
 
+## Build and Test
+
+Requires Node.js 21 or later (the test script passes a quoted glob to `node --test`).
+
+```bash
+npm install
+npm test        # runs `npm run build` (tsc) first, then node:test on dist/**/*.test.js
+```
+
+Tests live in `src/__tests__/`. They cover intent classification, environment-aware resolution, the docker default-allow rule, and the known string-matching bypasses. Environment detection (`detectEnvironment`) shells out to `which rtk` and has no injectable seam, so the tests exercise `resolve()` with hand-built `Environment` values instead.
+
+### String matching is a nudge, not a control
+
+The classifier (`src/core/intent.ts`) and the router (`src/config/routing.config.ts`) use different patterns for `sed -i`:
+
+- The classifier is anchored to the start of each segment (`^\s*sed\s+(-i|--in-place)\b`). It misses `/usr/bin/sed -i` and `sed -E -i`.
+- The router rule is unanchored (`\bsed\s+(-i|--in-place)\b`). It catches `/usr/bin/sed -i` but also blocks harmless text such as `echo sed -i` (false positive). It misses `sed -E -i`.
+- Neither matches `perl -pi`, `python -c` file writes, or commands assembled at runtime (`$(echo sed) -i ...`).
+
+Use a containment boundary for limits that must hold.
+
 ## Intent Types
 
 | Intent | Description | Default Resolution |
@@ -70,6 +91,10 @@ if (resolution.action === 'advise') {
 | `file_modify` | Destructive edits (`sed -i`, `awk > file`) | **BLOCK** |
 | `docker` | Container operations | Allow (pass-through) |
 | `pass_through` | Unknown/benign commands | Allow |
+
+### Docker is default-allow
+
+The router allows every `docker` and `docker-compose` command (`src/config/routing.config.ts`, intent `docker`). It does not inspect subcommands or flags, so `docker run -v /:/host` and `docker exec` pass. Access to the Docker socket is root-equivalent on the host. Treat this rule as a statement that no dedicated tool exists for Docker commands, not as a security control. Restrict Docker access with a containment boundary (sandbox, credential scope); see [the containment prerequisite track](../../docs/refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people).
 
 ## Routing Rules
 
@@ -86,8 +111,8 @@ Example rule for `grep`:
   match: /\b(grep[rx]?|rg)\b/,
   intent: 'text_search',
   resolutions: {
-    rtk: { action: 'advise', tool: 'rtk grep', reason: '60% token savings' },
-    jcodemunch: { action: 'advise', tool: 'search_text', reason: '80% token savings' },
+    rtk: { action: 'advise', tool: 'rtk grep', reason: 'structured output' },
+    jcodemunch: { action: 'advise', tool: 'search_text', reason: 'indexed search' },
     general: { action: 'advise', tool: 'Grep tool', reason: 'structured output' },
     fallback: { action: 'allow' },
   },
@@ -136,18 +161,10 @@ async function beforeBash(command: string): Promise<boolean> {
 
 ## Token Savings
 
-Based on real-world usage:
-
-| Tool | Token Savings |
-|------|---------------|
-| jcodemunch `search_symbols` vs `grep -r` | ~85% |
-| Grep tool vs bash `grep` | ~80% |
-| Read tool vs `cat` | ~75% |
-| Glob vs `find` | ~77% |
-| RTK vs raw git/npm commands | ~40-60% |
+Savings depend on the repository, the query, and the tools installed. Measure them in tokens on your own sessions before relying on any figure.
 
 ## Further Reading
 
 - [L3 Optimization Documentation](../../docs/L3-optimization.md)
 - [RTK](https://github.com/rtk-ai/rtk) — Token-optimized CLI proxy
-- [jcodemunch](https://github.com/jeromedecock/jcodemunch) — Codebase indexing
+- [jcodemunch](https://github.com/jgravelle/jcodemunch-mcp) — Codebase indexing

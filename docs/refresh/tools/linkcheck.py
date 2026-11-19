@@ -18,6 +18,7 @@ bad=0
 for f in files:
     txt=open(f).read()
     txt=re.sub(r'```.*?```','',txt,flags=re.S)
+    txt=re.sub(r'`[^`\n]*`','',txt)
     for m in re.finditer(r'\]\(([^)\s]+)\)',txt):
         l=m.group(1)
         if l.startswith('http') or l.startswith('mailto'): continue
