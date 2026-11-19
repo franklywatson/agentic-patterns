@@ -30,8 +30,6 @@ Route shell commands to the native or structured tool that does the same job, an
 
 Classify each segment of a compound command (split on `&&`, `||`, `;`, `|`). Check destructive patterns first, so `sed -i` is never classified as a text search.
 
-No token-savings figures are given: none has a measured basis in this repository.
-
 ### In Practice
 
 ```typescript
@@ -55,7 +53,7 @@ search_symbols("process", kind="function")
 ]
 ```
 
-String matching is a nudge, not a security control. The anchored `sed` pattern misses `/usr/bin/sed -i` and `sed -E -i`. No pattern catches `perl -pi`, `python -c` file writes or `$(...)` substitution. The `docker` rule allows every Docker command, and Docker socket access is root-equivalent. Use a sandbox or credential scope for limits that must hold.
+String matching is a nudge, not a control. The classifier's anchored pattern, `/^\s*sed\s+(-i|--in-place)\b/` (`examples/guardrails/src/core/intent.ts`), misses `/usr/bin/sed -i` and `sed -E -i`. The example router's unanchored rule, `/\bsed\s+(-i|--in-place)\b/` (`examples/guardrails/src/config/routing.config.ts`), catches the absolute-path form but still misses `sed -E -i`, and it blocks harmless text such as `echo sed -i`. Neither catches `perl -pi`, `python -c` file writes or `$(...)` substitution. The `docker` rule allows every Docker command, and Docker socket access is root-equivalent. Use a sandbox or credential scope for limits that must hold.
 
 The [guardrails example](../examples/guardrails/) implements the classifier and routing table in TypeScript, with tests.
 

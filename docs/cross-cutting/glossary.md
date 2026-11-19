@@ -153,6 +153,12 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 ## N
 
+### Native Structured Tools
+
+**Level**: L3 - Optimization (optional)
+**Definition**: Routing shell commands to the native or structured tool that does the same job (Grep, Read, Glob, symbol search), and blocking in-place edits such as `sed -i`. Tool results are typed records instead of raw text.
+**See**: [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)
+
 ### New Starter Standard
 
 **Level**: L0 - Foundation, L4 - Standards & Measurement
@@ -227,12 +233,6 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **Definition**: Extension of base agent capabilities with project-specific rules, hook activations, and integration points declared in a markdown file.
 **See**: [Pattern 2.1 - Skill Overlay Architecture](../L2-behavioral-guardrails.md#pattern-21--skill-overlay-architecture)
 
-### Smart Routing
-
-**Level**: L3 - Optimization (optional)
-**Definition**: Directing commands to the most efficient tool based on intent detection (e.g., Grep tool instead of raw grep, jcodemunch instead of find).
-**See**: [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)
-
 ### Spec Drift
 
 **Level**: L4 - Standards & Measurement
@@ -244,12 +244,6 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 **Level**: L1 - Closed Loop Design
 **Definition**: Full-system test running complete Docker stack with API-level verification, zero mocks for owned services, and high failure diagnosticity.
 **See**: [Pattern 1.1 - Stack Tests](../L1-feedback-loops.md#pattern-11--stack-tests)
-
-### Structured Output
-
-**Level**: L3 - Optimization (optional)
-**Definition**: Tool results returned as typed, summarized data structures instead of raw text, enabling agents to reason about data rather than parse strings.
-**See**: [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)
 
 ---
 
