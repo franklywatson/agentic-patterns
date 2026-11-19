@@ -1,5 +1,5 @@
 ---
-last-validated-model: claude-opus-5-5
+last-validated-model: claude-sonnet-5-5
 reviewed: 2026-11-19
 ---
 
@@ -41,6 +41,7 @@ Each of these can carry text that instructs the agent (prompt injection) or code
 | PR comments | Review comments and suggested changes from contributors | Treat as input; a person decides what the agent acts on ([2.10](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition), [2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)) |
 | MCP output | Text returned by a tool server | Allowlist servers; treat output as untrusted; no token passthrough ([2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain), [2.11](../L2-behavioral-guardrails.md#pattern-211--agent-identity-and-delegation)) |
 | Dependencies | Packages, skills, plugins, hook packs, command proxies | Allowlist, pin, read before install, review updates as diffs ([2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)) |
+| Production incident records | Request bodies, error text and logs sent by operations into a repair loop | Records carry no personal data and are treated as input, not instructions; the repair session holds no production credentials ([1.7](../L1-patterns/1.7-incident-to-stack-test.md), [2.10](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition)) |
 | Learnings memory | Notes an agent wrote earlier, loaded into later sessions | Draft location, human review before promotion, review date and pruning ([2.8](../L2-behavioral-guardrails.md#pattern-28--compound-engineering)) |
 
 ## Agent capabilities

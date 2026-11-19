@@ -1,6 +1,36 @@
-# Frequently Asked Questions — Beyond the Patterns
+# FAQ
 
-Questions about aspects of the software development lifecycle that the pattern library doesn't cover. These are not universal rules — they describe choices that worked for one team on one project. Other teams with different constraints would reasonably choose differently.
+Short answers to questions teams ask when adopting the library, then the deployment and operations concerns it does
+not prescribe. The deployment answers describe choices made on one project; teams with different constraints would
+choose differently.
+
+---
+
+## Where do we start?
+
+Where your gaps are. The layers are not a maturity scale. Run `autonomy census` if the repository has a register,
+use the checklist in the [Adoption Guide](adoption-guide.md#assessment-where-are-you-now) if it does not, and pick the
+path that matches the gap.
+
+## How long before a workflow reaches A3 or A4?
+
+The library sets no calendar time. A grant is earned on conditions: A3 needs a stack test for the journey, required
+CI checks, an owner, a locked sandbox and a cap of C3 or higher. A4 also needs mechanical verification, a reversible
+action, a cap of C4 or higher and a stop drill within 30 days ([Prerequisites by
+Grant](../earned-autonomy.md#prerequisites-by-grant)). The cap is usually the slow part, because production ownership
+sits at C1 even after adopting every pattern.
+
+## Can an agent repair production on its own?
+
+For owned code with a reproduction, a frozen oracle, a reversible change and a gate, within a repair budget: the
+[repair loop](../L1-feedback-loops.md#closing-the-loop-in-production) defines the steps and
+[examples/repair-loop](../../examples/repair-loop/README.md) runs the gate. It does not lift the cap, and data-forward
+or irreversible changes are not repaired unattended at any grant.
+
+## What can the census not see?
+
+Operating model and individual skill cannot be read from files. The census emits a worksheet for those and counts a
+dimension it cannot evidence as `unknown`, which caps at C2 ([Pattern A.4](../earned-autonomy.md#pattern-a4--census)).
 
 ---
 

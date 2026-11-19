@@ -18,6 +18,7 @@ agentic-patterns/
 │   ├── L2-behavioral-guardrails.md  # Skills, hooks, constitutional rules
 │   ├── L3-optimization.md       # Token efficiency, tool routing
 │   ├── L4-standards-measurement.md # Evidence, metrics, CI guardrails, context eval
+│   ├── diagrams/                # Diagrams for L1-L4
 │   ├── cross-cutting/
 │   │   ├── anti-patterns.md
 │   │   ├── adoption-guide.md
@@ -29,8 +30,7 @@ agentic-patterns/
 │       ├── further-reading.md
 │       ├── sources.md
 │       └── task-bank.md
-├── examples/                    # Working code (TS + Python)
-└── docs/diagrams/               # Diagrams for L1-L4
+└── examples/                    # Working code (TS + Python)
 ```
 
 See [README.md](README.md) for detailed project overview.
@@ -49,7 +49,7 @@ See [README.md](README.md) for detailed project overview.
 - All examples must run as-is.
 - Examples that exist: stack tests (Pattern 1.1, TypeScript and Python), containment (Pattern 2.9, TypeScript and
   Python), repair loop (Patterns 1.7 to 1.11, TypeScript and Python), earned autonomy (Patterns A.1-A.6, TypeScript
-  and Python), guardrail middleware (Pattern 3.1, TypeScript only) and project structure (L0, documentation only).
+  and Python; A.7 is documentation only), guardrail middleware (Pattern 3.1, TypeScript only) and project structure (L0, documentation only).
 - A new example for a core pattern (L0-L2, L4 and the A-series) ships in TypeScript and Python; examples for the
   optional L3 may be single-language.
 
@@ -109,7 +109,10 @@ See [README.md](README.md) for detailed project overview.
 
 **Behavioral Guardrails:**
 
-- [docs/L2-behavioral-guardrails.md](docs/L2-behavioral-guardrails.md) — Skills, hooks, constitutional rules
+- [docs/L2-behavioral-guardrails.md](docs/L2-behavioral-guardrails.md) — Skills, hooks, constitutional rules (2.1-2.8);
+  containment, least agency, identity, supply chain, risk-tiered review (2.9-2.13)
+- [examples/containment/README.md](examples/containment/README.md) — Runnable policy layer against a container boundary
+  (TypeScript and Python)
 
 **Optimization:**
 
@@ -117,7 +120,8 @@ See [README.md](README.md) for detailed project overview.
 
 **Standards & Measurement:**
 
-- [docs/L4-standards-measurement.md](docs/L4-standards-measurement.md) — Evidence-based claims, metrics, CI guardrails, context eval
+- [docs/L4-standards-measurement.md](docs/L4-standards-measurement.md) — Evidence-based claims, metrics, CI guardrails, context eval (4.1-4.6);
+  author of record and agent register, deliberate practice (4.7, 4.9)
 
 ## Earned Autonomy
 

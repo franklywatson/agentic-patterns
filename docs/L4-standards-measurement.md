@@ -5,17 +5,16 @@ reviewed: 2026-11-19
 
 # L4: Standards & Measurement
 
-L4 covers evidence-based claims, development metrics, CI guardrails, and context eval. Where L0 establishes
+L4 covers evidence-based claims, development metrics, CI guardrails, context eval, ownership of agent-written code
+and supervision skill. Where L0 establishes
 foundations and L1-L3 provide execution patterns, L4 checks that those standards hold and measures what they change.
 Drift detection, the new-starter audit and pruning of context artefacts are in L0 ([Pattern
 0.7](L0-foundation.md#pattern-07--documentation-as-system-map), [Pattern
 0.9](L0-foundation.md#pattern-09--ai-as-new-starter-standard) and [Pattern
 0.10](L0-foundation.md#pattern-010--prune-and-re-baseline-context)).
 
-> **Scope note:** Patterns 4.1, 4.4 and 4.5 were not used in the reference project. The rig implements Pattern 4.6
-> (Context Eval) as first-party code, with 6 evaluation suites covering tool routing, enforcement pipelines, Python
-> environment detection, session state, config overrides, and determinism. L4 contains patterns 4.1, 4.4, 4.5 and 4.6.
-> The [rig](https://github.com/franklywatson/claude-rig) repository holds the 4.6 implementation.
+L4 holds Patterns 4.1 (evidence), 4.4 (metrics), 4.5 (CI guardrails), 4.6 (context eval), 4.7 (author of record)
+and 4.9 (deliberate practice). The library's own task bank, runner and CI jobs are the working examples.
 
 ---
 
@@ -269,44 +268,50 @@ Metrics that don't drive action are waste. For each metric, define:
 
 ### Problem
 
-L4 describes standards and measurement but doesn't address CI enforcement. Enforcement in hooks is session-scoped — it only works when the agent is running. CI provides non-negotiable enforcement that runs regardless of whether hooks are active.
+Enforcement in hooks is session-scoped: it only works while the agent is running. CI runs on every push and pull
+request whether or not hooks are active, so it is the enforcement an agent cannot switch off from inside a session.
 
 ### Solution
 
-GitHub Actions workflows for docs quality and test coverage, paired with project config for threshold definitions.
+Run each automated check as its own CI job. Keep thresholds in project config, not in the workflow, so anyone can
+see and adjust them next to the code they govern.
 
 **Key concepts:**
 
-- Coverage gate: test coverage thresholds (e.g., 80% statements, 75% branches) defined in project config, not CI workflow
-- Docs lint: markdownlint-cli2 with permissive rules + link checking
-- Separate workflows: `docs.yml` for documentation, `coverage.yml` for test coverage
-- Thresholds in project config, not CI — anyone can see and adjust them
+- One job per check, so a failure names the check that failed.
+- Warning checks (instruction file length, filler words) report without failing the build; the other jobs fail it.
+- Coverage gate: test coverage thresholds (for example 80% statements, 75% branches) live in the test config, such
+  as `vitest.config.ts`. This repository has no coverage workflow; its tests run in the example projects.
 
 ### In Practice
 
-```yaml
-# .github/workflows/docs.yml
-name: Documentation Quality
-on: [push, pull_request]
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: npm run lint:md                       # markdownlint-cli2, config in .markdownlint-cli2.jsonc
-      - run: python3 scripts/check-doc-links.py .  # links and anchors, exits 1 on any broken one
-      - run: test "$(wc -l < AGENTS.md)" -le 200 || echo "::warning::AGENTS.md is over 200 lines"  # warning only
-```
+This repository's `.github/workflows/docs.yml` ("Documentation Guardrails") runs on pushes to `main` and on pull
+requests that touch Markdown, `scripts/`, Python files, the lint config, `package.json`, the workflow itself,
+`.autonomy.yaml` or `examples/autonomy/`. It has eight jobs:
 
-Each check exists in this repository: `npm run lint:md` is defined in `package.json`, `scripts/check-doc-links.py` is the link and anchor checker, and the line-count check is an inline shell step in the `instruction-file-length` job of `.github/workflows/docs.yml` (the `wc -l` line above is its one-line equivalent). It warns above about 200 lines for AGENTS.md and CLAUDE.md and never fails the build. The same workflow also runs a doc-reachability job (all docs referenced from AGENTS.md) and a writing-conventions job (filler words) as inline shell steps.
+| Job | Check | Failure behaviour |
+|-----|-------|-------------------|
+| Markdown Lint | `npm run lint:md` (markdownlint-cli2, config in `.markdownlint-cli2.jsonc`) | Fails the build |
+| Instruction File Length | `wc -l` on `AGENTS.md` and `CLAUDE.md`; warns above 200 lines | Warning only |
+| Link Integrity | `scripts/check-doc-links.py`: internal links and anchors resolve | Fails the build |
+| Doc Reachability | `scripts/check-doc-reachability.py`: every doc is reachable from `AGENTS.md` by following links | Fails the build |
+| Source IDs | `scripts/sourcecheck.py`: every cited source ID has a row in `docs/references/sources.md` | Fails the build |
+| Doc Freshness | `scripts/check-doc-freshness.py`: warns at 90 days and fails at 180 days since a pattern doc was reviewed; runs the script tests | Warning, then fails the build |
+| Autonomy Check | Builds the autonomy CLI, computes the census profile, checks `.autonomy.yaml` against the cap and, on pull requests, the commits in the range ([Earned Autonomy](earned-autonomy.md)) | Fails the build |
+| Writing Conventions | Greps `docs/` for the filler words "basically" and "simply" outside code blocks | Warning only |
+
+The [task bank](references/task-bank.md) runner of [Pattern 4.6](#pattern-46--context-eval) needs an agent harness
+and is run by hand, with its run log in the repository. It is not one of these jobs. A team that runs its harness
+in CI makes the runner a required check on pull requests that change context.
 
 ### Reference Implementation
 
-The [rig](https://github.com/franklywatson/claude-rig) repo implements this in [`.github/workflows/`](https://github.com/franklywatson/claude-rig/tree/main/.github/workflows) with separate docs and coverage workflows.
+The [rig](https://github.com/franklywatson/claude-rig) repo has separate docs and coverage workflows under
+`.github/workflows/`.
 
 ### Anti-Pattern
 
-Putting thresholds in CI workflow files rather than project config. When thresholds live in `.github/workflows/`, developers must dig through YAML to find them. When they live in `vitest.config.ts` or `.harness.yaml`, they're visible and adjustable alongside the code they govern.
+Putting thresholds in CI workflow files rather than project config. Thresholds in `.github/workflows/` are hard to find; in `vitest.config.ts` they sit beside the code they govern.
 
 ### Cross-References
 
@@ -362,7 +367,7 @@ decision requires exactly 1.
 **The runner.** For each task it copies the repository into a scratch directory without the expected values, plants
 any seed, removes each artefact under test, runs the harness command with a pinned model id, scores the artefact and
 appends one line to a run log. A dry-run mode scores a known-good and a known-bad artefact per task, so a broken
-check is caught before a real run. The runner is a required check on any pull request that changes a skill, a hook,
+check is caught before a real run. Where the harness runs in CI, the runner is a required check on any pull request that changes a skill, a hook,
 the instruction file, the harness configuration or the model version ([Pattern 4.1](#pattern-41--evidence-based-claims),
 [Pattern 4.5](#pattern-45--ci-guardrails)).
 
@@ -677,13 +682,6 @@ L4 holds the practices that check L0-L3 and measure their impact:
 **The review checklist is the enforcement mechanism.** Apply it to every task, every PR, every completion.
 
 When L4 is practiced consistently, the codebase remains agentic-ready: clear, clean, and maintainable for both human and agent collaborators.
-
-## Practitioner Insight
-
-> "Peter strikes me as a software architect who keeps the high-level structure of his project in his head, deeply cares about architecture, tech debt, extensibility, modularity, and so on."
-> — Gergely Orosz, on Peter Steinberger's workflow
-
-Architecture, tech debt, and modularity require continuous attention — especially when agents are doing the implementation. L4 provides the standards and measurement to ensure that attention is systematic, not ad-hoc.
 
 ---
 

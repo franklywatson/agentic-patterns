@@ -1,19 +1,28 @@
 ---
-last-validated-model: claude-opus-5-5
+last-validated-model: claude-sonnet-5-5
 reviewed: 2026-11-19
 ---
 
 # Adoption Guide — Paths to Agentic Development
 
-Suggested approaches for teams adopting agentic development patterns incrementally. Not a rigid plan — a set of paths teams have found useful.
+Suggested approaches for teams adopting agentic development patterns incrementally. The paths are this library's
+design suggestions, not a rigid plan and not a record of what other teams did.
 
-**Core principle:** Each pattern layer delivers value independently. L0 Foundation alone gives agents a navigable structure and a documented entry point (evidence: first-party experience, no controlled comparison). You don't need L4 to benefit from L0. Start where your gaps are, adopt what helps.
+**Core principle:** The layers are not a maturity scale. Start where your gaps are and adopt what helps. L0
+Foundation alone gives agents a navigable structure and a documented entry point (evidence: first-party experience,
+no controlled comparison). Finishing L4 does not make a team ready for unattended work: that depends on the curve and
+the cap described in [How far to let go](#how-far-to-let-go).
 
 ---
 
 ## Assessment: Where Are You Now?
 
-Before choosing a path, assess your current state. Run through this checklist to identify gaps.
+Before choosing a path, assess your current state. For a repository with an `.autonomy.yaml` register, run
+`autonomy census` first: it computes the platform, governance, ownership and measuring positions from the repository's
+own artefacts, marks what it cannot see as `unknown` (counted as C2), and lists what is missing for the next level
+([Pattern A.4](../earned-autonomy.md#pattern-a4--census),
+[runnable example](../../examples/autonomy/README.md)). The checklist below covers what a census cannot read and is
+the starting point when there is no register yet.
 
 ### Entry Points
 
@@ -94,17 +103,18 @@ Document every assumption they had to make. Each assumption is a gap.
 
 ## Adoption Paths
 
-Four paths teams have used. Choose based on your situation.
+Four suggested paths. Choose based on your situation.
 
-### Path A: Foundation-First (Most Teams)
+### Path A: Foundation-First (Default When Unsure)
 
-Start with L0, the highest-impact, lowest-effort starting point. Then build upward.
+Start with L0: structure and AGENTS.md cost little and later layers depend on them (first-party experience; no
+study compares layers). Then build upward.
 
 1. **L0 Foundation** — Restructure by domain, write AGENTS.md, establish doc freshness and cleanup practices. See [L0-foundation.md](../L0-foundation.md).
 2. **L1 Closed Loop Design** — Add stack tests for your most critical user journeys. See [L1-feedback-loops.md](../L1-feedback-loops.md) and the working examples in [examples/stack-test/](../../examples/stack-test/).
 3. **L2 Guardrails** — Add skills and hooks for your project's most common errors. See [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md).
 4. **L3 Optimization (optional)** — Reduce token spend with structured tools and context isolation, when token cost is a measured problem. See [L3-optimization.md](../L3-optimization.md) and the working example in [examples/guardrails/](../../examples/guardrails/).
-5. **L4 Standards & Measurement** — Add metrics, CI guardrails, and context eval when the earlier layers are stable. Drift detection and the new-starter audit are in [Pattern 0.7](../L0-foundation.md#pattern-07--documentation-as-system-map) and [Pattern 0.9](../L0-foundation.md#pattern-09--ai-as-new-starter-standard). See [L4-standards-measurement.md](../L4-standards-measurement.md).
+5. **L4 Standards & Measurement** — Add metrics, CI guardrails, and context eval once the earlier layers are in place. Drift detection and the new-starter audit are in [Pattern 0.7](../L0-foundation.md#pattern-07--documentation-as-system-map) and [Pattern 0.9](../L0-foundation.md#pattern-09--ai-as-new-starter-standard). See [L4-standards-measurement.md](../L4-standards-measurement.md).
 
 ### Path B: Testing-First (Teams with Testing Gaps)
 
@@ -143,6 +153,29 @@ developer machines, start with containment. Do not loosen approvals first.
 
 ---
 
+## How Far to Let Go
+
+Layers say what to build. Two other scales say how far a team may let agents run, and they are separate from L0-L4
+(definitions in [Earned Autonomy](../earned-autonomy.md#the-curve-and-the-cap)).
+
+- **The curve, C1 to C5,** places a team on each of seven dimensions. Four dimensions cap unattended work: platform,
+  security and governance, production ownership and measuring value. The cap is the lowest of those four, and no
+  workflow grant may exceed it.
+- **Grants, A1 to A5,** are what one named workflow may do: suggest, open pull requests, pass checks before a human
+  merges, act on events within limits, and run as a managed investment.
+
+Adopting every pattern as written leaves production ownership at C1, so the library's own ceiling for unattended
+work is C1 (see the [README](../../README.md#how-far-a-team-can-let-go)). A team that wants A3 or A4 closes the
+capping dimension that `autonomy census` reports as lowest, then promotes workflows one grant at a time on evidence
+([Pattern A.3](../earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate)).
+
+Repair of owned code in production is the one unattended-work seam this library defines in detail: [Patterns 1.7
+to 1.12](../L1-feedback-loops.md#closing-the-loop-in-production) with the runnable gate in
+[examples/repair-loop](../../examples/repair-loop/README.md). Adopt it after stack tests exist for the journeys it
+covers and after the containment block above passes. It does not lift the cap.
+
+---
+
 ## What to Read for Each Layer
 
 The pattern docs contain the detailed guidance. This guide links to them rather than duplicating content.
@@ -153,11 +186,12 @@ The pattern docs contain the detailed guidance. This guide links to them rather 
 | L1 | [L1-feedback-loops.md](../L1-feedback-loops.md) — Context harvesting, stack tests, full-loop assertions | [examples/stack-test/typescript/](../../examples/stack-test/typescript/) or [examples/stack-test/python/](../../examples/stack-test/python/) |
 | L2 | [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md) — Skills, hooks, constitutional rules | [superpowers](https://github.com/obra/superpowers) or [rig](https://github.com/franklywatson/claude-rig) |
 | L3 | [L3-optimization.md](../L3-optimization.md) — Native structured tools, context isolation | [examples/guardrails/](../../examples/guardrails/) |
-| L4 | [L4-standards-measurement.md](../L4-standards-measurement.md) — Evidence, metrics, CI guardrails, context eval | — |
+| L4 | [L4-standards-measurement.md](../L4-standards-measurement.md) — Evidence, metrics, CI guardrails, context eval | [examples/autonomy/](../../examples/autonomy/README.md) (register, census, ledger, stop drill) |
+| Repair loop (1.7-1.11) | [1.9 Repair loop](../L1-patterns/1.9-repair-loop-frozen-oracle.md) | [examples/repair-loop/](../../examples/repair-loop/README.md) |
 
 ### Readiness for A3 and A4
 
-A workflow is ready for A3 (gated) when its journey has a stack test, required checks run in CI, a named owner exists and the sandbox is locked. It is ready for A4 (unattended) only when verification is mechanical, the action is reversible, the cap is C4 or higher, and a stop drill has passed within 30 days. See [Earned Autonomy](../earned-autonomy.md).
+A workflow is ready for A3 (gated) when its journey has a stack test, required checks run in CI, a named owner exists, the sandbox is locked and the cap is C3 or higher. It is ready for A4 (unattended) only when verification is mechanical, the action is reversible, the cap is C4 or higher, and a stop drill has passed within 30 days. A3 and A4 both need the cap, so the capping dimensions come first. See [Earned Autonomy](../earned-autonomy.md#prerequisites-by-grant).
 
 ### Reference Implementations
 
@@ -175,10 +209,11 @@ installing ([Pattern 2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plu
 
 1. **Incremental adoption** — Each layer delivers value independently. Don't try to implement everything at once.
 2. **Start with L0 if unsure** — Structure and AGENTS.md cost little and the later layers depend on them (evidence: first-party experience, not a measured ROI).
-3. **Update docs in the same task as code** — Deferred documentation is stale documentation. See [Pattern 0.7 — Documentation as System Map](../L0-foundation.md#pattern-07--documentation-as-system-map).
-4. **Remove dead code as you find it** — Cleanup is continuous, not periodic. See [Pattern 0.8 — Aggressive Cleanup](../L0-foundation.md#pattern-08--aggressive-cleanup).
-5. **Use the New Starter Test regularly** — It catches gaps that code review misses. See [Pattern 0.9 — AI-as-New-Starter Standard](../L0-foundation.md#pattern-09--ai-as-new-starter-standard).
-6. **Re-baseline at each model upgrade** — Run a fixed task bank without each skill, hook and rule, and delete what no
+3. **Measure before you loosen** — Run `autonomy census` and read the cap before raising any grant.
+4. **Update docs in the same task as code** — Deferred documentation is stale documentation. See [Pattern 0.7 — Documentation as System Map](../L0-foundation.md#pattern-07--documentation-as-system-map).
+5. **Remove dead code as you find it** — Cleanup is continuous, not periodic. See [Pattern 0.8 — Aggressive Cleanup](../L0-foundation.md#pattern-08--aggressive-cleanup).
+6. **Use the New Starter Test regularly** — It catches gaps that code review misses. See [Pattern 0.9 — AI-as-New-Starter Standard](../L0-foundation.md#pattern-09--ai-as-new-starter-standard).
+7. **Re-baseline at each model upgrade** — Run a fixed task bank without each skill, hook and rule, and delete what no
    task needs. See [Pattern 0.10 — Prune and Re-baseline
    Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context).
 

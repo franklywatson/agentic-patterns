@@ -202,8 +202,11 @@ the baseline with nothing removed. The runner also appends one JSON line per run
 8. Answer the rubric items for each artefact. They are listed with each result and do not change a pass or fail.
 9. Commit the log row and any deletions together so that `git revert` restores both.
 
-`python3 scripts/task-bank/run.py --dry-run` scores a known-good and a known-bad artefact for each task that does not
-need Docker, and exits 1 if either is scored wrongly. Run it after changing a check or an answer.
+`python3 scripts/task-bank/run.py --dry-run` scores a known-good and a known-bad artefact for the tasks that have
+dry-run data in `answers.json` (T-03 to T-07, T-09 to T-13) and exits 1 if either is scored wrongly. It skips the
+Docker tasks (T-01, T-02, T-08, T-15; add `--docker` to include them where data exists) and T-14, which has no
+dry-run data. Build the autonomy CLI first (step 2 above); T-05 and T-12 run it. Run the dry run after changing a
+check or an answer.
 
 Add a task when a failure in real work was not caught by any task. Retire a task only with a note in the run log that
 says why.

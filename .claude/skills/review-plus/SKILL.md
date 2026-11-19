@@ -3,6 +3,8 @@ name: review+
 description: "Invoke AFTER verify+ passes. Wraps superpowers:requesting-code-review with constitutional compliance checklist, stale test validation, and reviewer agent invocation. Two-stage review: spec compliance + code quality."
 argument-hint: "[plan file path]"
 user-invocable: true
+owner: franklywatson
+reviewed: 2026-11-19
 ---
 
 <!-- rig-generated -->
@@ -15,7 +17,7 @@ Wraps `superpowers:requesting-code-review`. Requires superpowers to be installed
 
 ### Phase A: Gather Review Context
 
-1. Load the plan from `docs/plans/`.
+1. Load the plan from the path given in the argument, or from the current session.
 
 2. Get the list of files changed since the plan was created:
 
@@ -23,10 +25,10 @@ Wraps `superpowers:requesting-code-review`. Requires superpowers to be installed
    git diff --name-only [plan-commit]..HEAD
    ```
 
-3. Invoke the scout agent to get current codebase state for comparison:
+3. Invoke the Explore agent to get current codebase state for comparison:
 
    ```
-   Agent(subagent_type="scout", prompt="Get current state of these files: [changed files list]. For each file, report: symbol count, key exports, test coverage status.")
+   Agent(subagent_type="Explore", prompt="Get current state of these files: [changed files list]. For each file, report: key exports and whether a test file exists.")
    ```
 
 ### Phase B: Spec Compliance Review
@@ -41,13 +43,13 @@ Wraps `superpowers:requesting-code-review`. Requires superpowers to be installed
    - For each changed source file, verify a corresponding test file was also changed
    - Flag any source edits without test updates as stale test violations
 
-3. Check enforcement compliance (see active enforcement rules from session-start output):
-   - [ ] Active enforcement rules followed in all test and source files (real dependencies in stack/E2E tests; mocks appropriate in unit tests)
+3. Check compliance with the Constitutional Rules in AGENTS.md:
+   - [ ] Constitutional Rules followed in all test and source files (real dependencies in stack/E2E tests; mocks appropriate in unit tests)
    - [ ] All claims of success are backed by command output
    - [ ] Full-loop assertions present where applicable
    - [ ] No conditional test assertions (`if (condition) assert(...)`)
    - [ ] No empty test bodies
-   - No `.skip` without documented reason
+   - [ ] No `.skip` without documented reason
 
 ### Phase C: Code Quality Review (delegate to superpowers:requesting-code-review)
 
@@ -71,7 +73,7 @@ Wraps `superpowers:requesting-code-review`. Requires superpowers to be installed
    - [ ] All plan tasks implemented
    - [ ] Implementation matches plan specification
    - [ ] No stale test violations
-   - [ ] Active enforcement rules followed (see session-start output)
+   - [ ] Constitutional Rules in AGENTS.md followed
 
    ### Stage 2: Code Quality
    - [ ] Files are focused and well-structured

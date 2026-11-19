@@ -19,8 +19,7 @@ checks and boundaries ([SG-7, SG-11, SG-16, OM-18](references/sources.md)).
 **A note on skills frameworks:** The skills referenced in this document (brainstorming,
 test-driven-development, verification-before-completion) are drawn from the
 [superpowers](https://github.com/obra/superpowers) framework by Jesse Vincent (obra). The patterns are
-framework-agnostic; equivalent skill sets exist in [gstack](https://github.com/garrytan/gstack),
-[OpenSpec](https://github.com/openspec-dev/openspec) and other frameworks. **Disclosure:** the author of this
+framework-agnostic; other skill frameworks provide equivalent skill sets. **Disclosure:** the author of this
 library also wrote [rig](https://github.com/franklywatson/claude-rig), which this document links to as a
 reference implementation. Hook syntax in this document follows Claude Code; each pattern states the contract
 (what runs, when, with what authority), so other harnesses can bind it.
@@ -88,7 +87,7 @@ guarantee it. A rule that must hold on every change needs a hook or CI check beh
 which one. Keep skills short: a skill that restates rules already enforced elsewhere adds context cost without
 adding enforcement.
 
-The overlay architecture works with any structured skill set (superpowers, OpenSpec, custom frameworks): identify the base skill, then overlay project constraints.
+The overlay architecture works with any structured skill set (superpowers or a custom set): identify the base skill, then overlay project constraints.
 
 ### In Practice
 
@@ -115,16 +114,13 @@ Copying the same rules into every prompt. This creates drift: prompts get update
 
 ## Pattern 2.2 — The Skill Chain
 
-![Skill chain pipeline (optional)](diagrams/2.2-skill-chain-pipeline.png)
-
 **Status: optional.** Scale ceremony to risk. A one-line fix does not need five phases. Verification and
 review stay outcome gates for every change: evidence before claiming done, and review before merge, at a
 depth set by reversibility and blast radius.
 
 ### Problem
 
-A fixed five-phase chain applied to every change adds ceremony to small changes, and people learn to skip
-phases in bulk. The gates that matter (tests run, evidence shown, review done) are outcomes that CI and the
+A fixed five-phase chain applied to every change adds ceremony to small changes. The gates that matter (tests run, evidence shown, review done) are outcomes that CI and the
 merge process can hold directly, whichever phases the agent visited.
 
 ### Solution
@@ -139,7 +135,9 @@ brain+ (design with stack-first considerations)
                               +-> review+ (checklist-based compliance review)
 ```
 
-**Chain phases:**
+**Chain phases.** The names `brain+`, `plan+`, `tdd+`, `verify+` and `review+` are rig's skills, which wrap the
+superpowers skills in the table below. With superpowers alone, use `brainstorming`, `writing-plans`,
+`test-driven-development`, `verification-before-completion` and `requesting-code-review`.
 
 1. **brain+**: Design with stack testing in mind. What needs Docker? What are the full-loop assertions?
 2. **plan+**: Create implementation plan with explicit testing strategy. Which tests cover which requirements?
@@ -182,8 +180,7 @@ install them ([Pattern 2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)):
 
 ### Anti-Pattern
 
-Running the full chain on every change regardless of risk, so that agents and reviewers learn to skip phases
-in bulk. The opposite failure is shipping without verification evidence or review because the change "looked small".
+Running the full chain on every change regardless of risk, which adds steps to small changes without adding a gate. The opposite failure is shipping without verification evidence or review because the change "looked small".
 Treating phase visits as proof of quality is a third: visiting `verify+` does not show that verification evidence
 exists.
 
@@ -348,7 +345,7 @@ exit 0
 
 - Using a hook as the only control for something that must never happen (a destructive command, credential
   access). The sandbox and credential scope hold that rule; the hook is defence in depth.
-- Advisory hooks for rules that must hold. Agents treat repeated warnings as noise; a rule that must hold needs
+- Advisory hooks for rules that must hold. A warning does not stop the call; a rule that must hold needs
   a block (PreToolUse) or a required CI check.
 - Blocking hooks that match too broadly and stop legitimate work. Keep each hook narrow, with documented behavior.
 - Running several checks with no severity resolution, so the agent receives a "block" and an "advise" and has to
@@ -1093,13 +1090,6 @@ scale with risk. Zero-defect tolerance keeps feedback unambiguous, and compound 
 learnings back into context. Containment comes first: start the agent inside a boundary and relax approvals only
 inside it. Each session holds at most two of untrusted input, sensitive access and external action. Agents get their
 own short-lived credentials, skills and servers are vetted dependencies, and human review is tiered by risk.
-
-## Practitioner Insight
-
-> "Spend a lot of time planning out the work the agent will do."
-> — Peter Steinberger, creator of OpenClaw
-
-Planning is worth its cost when the change is large or risky. The plan becomes the contract that verification and review check against; for small reversible changes, a short plan or none is proportionate.
 
 ---
 

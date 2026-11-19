@@ -3,6 +3,8 @@ name: tdd+
 description: "Invoke AFTER plan+ is approved. Wraps superpowers:test-driven-development with full-loop assertions, real-dependency enforcement for stack tests, zero-defect, stale test detection, and scoped test runs. Implements plan tasks with RED-GREEN-REFACTOR discipline."
 argument-hint: "[plan file path or task range]"
 user-invocable: true
+owner: franklywatson
+reviewed: 2026-11-19
 ---
 
 <!-- rig-generated -->
@@ -15,7 +17,7 @@ Wraps `superpowers:test-driven-development`. Requires superpowers to be installe
 
 - Full test suite runs are redirected (use scoped tests only)
 - Stale test warnings fire when source edits lack test updates
-- Active enforcement rules from session context are enforced (see session-start output; real dependencies in stack/E2E tests by default)
+- The Constitutional Rules in AGENTS.md apply (real dependencies in stack/E2E tests; mocks only in unit tests)
 
 ## Procedure
 
@@ -30,7 +32,7 @@ Wraps `superpowers:test-driven-development`. Requires superpowers to be installe
    - Zero-defect: every failure must be fixed before proceeding
    ```
 
-2. Load the plan from `docs/plans/`.
+2. Load the plan from the path given in the argument, or from the current session.
 
 3. Identify the task(s) to implement.
 
@@ -69,7 +71,7 @@ Wraps `superpowers:test-driven-development`. Requires superpowers to be installe
    - [ ] Test was written first and shown to fail
    - [ ] Implementation makes the test pass
    - [ ] Scoped test run passes (not full suite)
-   - [ ] Active enforcement rules followed (see session-start output)
+   - [ ] Constitutional Rules in AGENTS.md followed
    - [ ] Commit made with descriptive message
 
 2. Proceed to next task or exit tdd+ phase when all plan tasks complete.

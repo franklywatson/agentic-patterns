@@ -331,15 +331,20 @@ Containment is a separate decision ([Pattern 2.9](L2-behavioral-guardrails.md#pa
 
 **In Practice**:
 
-This repository runs these checks in `.github/workflows/docs.yml`:
+This repository runs these jobs in `.github/workflows/docs.yml`. Every job fails the build on a violation, except
+where the table says it warns. CI does not run the example test suites; run them locally
+([Pattern 4.5](L4-standards-measurement.md#pattern-45--ci-guardrails)).
 
-| Check | What it verifies | Result on failure |
-|-------|------------------|-------------------|
-| `markdown-lint` (`npm run lint:md`) | Markdown style rules | Fails |
-| `link-integrity` (`python3 scripts/check-doc-links.py .`) | Every relative link and `#anchor` resolves | Fails |
-| `doc-reachability` (`python3 scripts/check-doc-reachability.py .`) | Every file under `docs/` is reachable from AGENTS.md by following links | Warns |
-| `source-ids` (`python3 scripts/sourcecheck.py .`) | Every cited source ID has a row in `docs/references/sources.md` | Fails |
-| `writing-conventions` | No filler words ("basically", "simply") | Warns |
+| Job | What it verifies | Result on violation |
+|-----|------------------|---------------------|
+| Markdown Lint (`npm run lint:md`) | Markdown style rules | Fails |
+| Link Integrity (`python3 scripts/check-doc-links.py .`) | Every relative link and `#anchor` resolves | Fails |
+| Source IDs Resolve (`python3 scripts/sourcecheck.py .`) | Every cited source ID has a row in `docs/references/sources.md` | Fails |
+| Doc Reachability (`python3 scripts/check-doc-reachability.py .`) | Every file under `docs/` is reachable from AGENTS.md by following links; the script exits 1 on an orphan | Fails |
+| Instruction File Length | AGENTS.md and CLAUDE.md are at most about 200 lines | Warns |
+| Writing Conventions | No filler words ("basically", "simply") outside code blocks | Warns |
+| Autonomy Check | `.autonomy.yaml` is within its cap and the pull request commits respect it ([Pattern A.1](earned-autonomy.md#pattern-a1--autonomy-register)) | Fails |
+| Doc Freshness (`python3 scripts/check-doc-freshness.py .`) | Every pattern doc has `reviewed:` and `last-validated-model:`; see [Pattern 0.10](#pattern-010--prune-and-re-baseline-context) | Warns at 90 days, fails at 180 |
 
 Run the link check locally before committing:
 
@@ -385,66 +390,13 @@ When a check or a review finds drift:
 **Detection tools:**
 
 ```bash
-# Unused imports (Python)
-$ ruff check --select F401
-
-# Dead code detection
-$ vulture myproject/
-
-# Find stale TODOs
-$ grep -r "TODO" --include="*.py" | grep "201[0-9]"  # Old TODOs
-
-# Find deprecated markers
-$ grep -r "deprecated" --include="*.py"
+ruff check --select F401 --fix .   # unused imports (Python)
+vulture myproject/                 # dead code (Python)
 ```
 
-**In Practice**:
-
-**During any task:**
-
-1. Use the relevant file
-2. Notice dead code nearby
-3. Remove it as part of the same commit
-4. Verify nothing breaks (run tests)
-5. Note the cleanup in commit message
-
-**Example:**
-
-```
-Task: Fix authentication bug
-
-1. Open auth.py to fix bug
-2. Notice unused function: old_auth_method()
-3. Search codebase: grep -r "old_auth_method" → only definition found
-4. Remove function
-5. Run tests: pytest tests/auth/ → pass
-6. Commit: "Fix auth bug and remove unused old_auth_method"
-```
-
-**Targeted cleanup sessions:**
-
-```bash
-# Find and remove unused imports
-$ ruff check --select F401 --fix .
-
-# Find large comment blocks
-$ find . -name "*.py" -exec wc -l {} \; | sort -n | tail -20
-# Review top 20 files for excessive comments
-
-# Find stale files (not modified in 2+ years)
-$ find . -name "*.py" -mtime +730 -ls
-```
-
-**Commit message pattern:**
-
-```
-[Primary task description]
-
-Cleanup:
-- Remove unused imports in X files
-- Delete dead function: old_auth_method()
-- Remove stale TODO comments from 2023
-```
+**In Practice**: during any task, remove dead code you notice nearby in the same commit, run the tests, and name the
+cleanup in the commit message ("Fix auth bug and remove unused `old_auth_method`"). Before deleting a function,
+search the codebase to confirm only its definition remains.
 
 **Anti-Pattern**: "Just in case" retention. Commented-out code. Defensive cleanup avoidance ("someone might be using this"). Cleanup theater (removing a few imports but leaving major dead code). Deferred cleanup.
 
@@ -528,7 +480,7 @@ skill, a hook, a deny rule, a routing note, a memory file. The steps:
    CI check.
 5. **Measure maintained configuration.** Three numbers per artefact set: when each file last changed, how often each
    skill was invoked in the period, and how many rules have a justifying task. Fail CI on any artefact
-   whose `reviewed:` date is past its limit or whose `expires:` date has passed.
+   whose `reviewed:` date is past its limit or whose `expires:` date has passed (this repository checks pattern docs only).
 
 **In Practice**:
 
@@ -559,17 +511,8 @@ by script. The pattern docs here carry `reviewed:` and `last-validated-model:` o
 AGENTS.md. `last-validated-model:` records the model against which the doc was last read for correctness; the
 script requires the key to be present and does not compare its value with the current model.
 
-A re-baseline run, in order:
-
-1. Pin the model id and record it in the run log.
-2. Run the whole bank with every artefact present. This is the baseline; a task that fails here is a task or model
-   problem, not an artefact problem.
-3. For each artefact, remove it, run the bank, and record which tasks pass.
-4. Delete every artefact whose removal regressed no task. Keep each artefact whose removal regressed a task, and write
-   the task id next to it.
-5. Commit the deletions and the log in one change so that `git revert` restores them.
-
-The run log and procedure for this repository are in [the task bank](references/task-bank.md#run-log).
+The steps of a run (pin the model, baseline, remove one artefact at a time, delete what regressed nothing, commit
+deletions with the log) and this repository's run log are in [the task bank](references/task-bank.md#procedure-for-a-run).
 
 A rule that must always hold is not a candidate for deletion by this procedure. If removing a prose rule regresses
 nothing because a hook already blocks the violation, delete the prose. If removing it regresses nothing because the

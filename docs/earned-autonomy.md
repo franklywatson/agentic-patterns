@@ -14,8 +14,9 @@ Evidence for this guide is uneven. The grants A1 to A3 follow published practice
 ## The Curve and the Cap
 
 The curve C1 to C5 places a team on each of seven dimensions separately. It comes from the research baseline
-(section 3.5), whose sections and sources are listed on [the sources page](references/sources.md#baseline-structure).
-The curve is distinct from the layers L0 to L4 and from the grants A1 to A5.
+(section 3.5), listed on [the sources page](references/sources.md#baseline-structure). The curve is distinct from the
+layers L0 to L4 and from the grants A1 to A5. A grant says what one workflow may do; the curve says how far the team's
+own practice supports it.
 
 ### The curve
 
@@ -67,7 +68,7 @@ A grant belongs to one workflow, not to an agent or a team. One agent may run se
 | A4 | Unattended, reversible | Acts on an event, schedule or backlog within its permitted actions. Has an owner, limits, an audit record and a tested stop. | C4 |
 | A5 | Portfolio-managed | A4 plus a baseline, a target, a review date and a stop rule. The grant moves on evidence. The workflow can be retired. | C5 |
 
-A4 applies only where verification is mechanical and the action is reversible. A5 grants no more power than A4. It is A4 managed as an investment, so the top of the scale is the ability to move grants on evidence, not a larger grant.
+A4 applies only where verification is mechanical and the action is reversible. A5 grants no more power than A4: it is A4 managed as an investment.
 
 ### Why stack tests earn autonomy
 
@@ -276,7 +277,10 @@ This inverts the ratchet in [Pattern 1.1](L1-patterns/1.1-stack-tests.md): auton
 - Any schema rule in Pattern A.1 fails.
 - A tier 1 governance file changed in a commit by an agent identity: `.autonomy*`, CODEOWNERS, `.claude/settings*.json`, `.claude/hooks/*` or `.harness.yaml`. No acknowledgement relaxes this (`governance-file-changed-by-agent`).
 - A tier 2 file, `.github/workflows/*`, changed in a commit by an agent identity with no acknowledgement (`workflow-change-unacknowledged`).
-- The census profile is older than 30 days.
+- The census profile is older than 30 days (`profile-stale`) or missing (`profile-missing`).
+- An agent commit is a merge with more than two parents (`merge-unsupported`) or changes a path that is not valid
+  UTF-8 (`path-undecodable`). Both fail closed because the checker cannot list the change reliably.
+- No commit source was given (`governance-check-skipped`).
 
 The two tiers of governance files, and the acknowledgement that relaxes tier 2, are defined in [Pattern A.6](#pattern-a6--enforcement-through-hooks).
 
@@ -395,11 +399,16 @@ Bind the register to the harness. Three hooks and one eval suite make the effect
 
 ### In Practice
 
-**Two tiers of governance files.** `autonomy check` matches governance files case-insensitively in two tiers. Tier 1 files define what an agent may do or remove the hook, so an agent commit never changes them: `.autonomy*`, CODEOWNERS, `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`. Tier 2 files, `.github/workflows/*`, are ordinary CI work that a person may want an agent to do. An agent commit may change them when a later commit in the same range, made by a non-agent identity, carries a whole line `Governance-Approved: <sha>` in the message body (not the subject line). The `<sha>` is a hex prefix of at least 7 characters that matches exactly one agent commit in the range, one line per agent commit, and an empty commit (`git commit --allow-empty`) is enough. An agent commit cannot acknowledge any commit, an acknowledgement before the agent commit does not count, and a malformed, short, ambiguous or different sha never matches. With `--git-range` the commits are read oldest first; with `--commits` the list order is the order. A commit is an agent commit when its author or committer name or email contains `[bot]` or a workflow identity name, or its message has a `Co-Authored-By:` trailer naming Claude or Anthropic in any case. Merge commits are checked for what the merge changed beyond the automatic merge, and an agent commit with more than two parents fails with `merge-unsupported`. A changed path that is not valid UTF-8 in an agent commit fails with `path-undecodable`. Each acknowledged change prints `governance: <sha7> changed <file> (acknowledged by <sha7>)` and does not fail the check.
+**Two tiers of governance files.** `autonomy check` matches governance files case-insensitively in two tiers.
 
-The acknowledgement is a trailer-based record, not a cryptographic control: anyone who can write a commit message can write the line, and author and committer identity are self-asserted. The boundary that holds is CODEOWNERS and required review by a non-author, which a repository must configure itself. The register and the checker code live under `examples/` in this repository, so reviewers must read changes to them. Tier 2 relief applies only to agent commits made outside the Claude Code hook: the hook below still denies a hooked session's writes to tier 1 and tier 2 files, so the acknowledgement covers agents such as dependency bots or an unhooked session.
+- Tier 1 files define what an agent may do or remove the hook, so an agent commit never changes them: `.autonomy*`, CODEOWNERS, `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`.
+- Tier 2 files, `.github/workflows/*`, are ordinary CI work that a person may want an agent to do. An agent commit may change them when a later commit in the same range, made by a non-agent identity, carries a whole line `Governance-Approved: <sha>` in the message body. The sha is a hex prefix of at least 7 characters that matches exactly one agent commit in the range. An empty commit is enough. An agent commit cannot acknowledge any commit.
 
-The hooks block agent writes to `.autonomy*`, CODEOWNERS, `.github/workflows/*` and hook or harness configuration. An agent cannot promote itself or weaken its own gate.
+The matching rules for agent commits, the acknowledgement and merge commits are in [examples/autonomy/README.md](../examples/autonomy/README.md#governance-files).
+
+The acknowledgement is a trailer-based record, not a cryptographic control: anyone who can write a commit message can write the line, and author and committer identity are self-asserted. The boundary that holds is CODEOWNERS and required review by a non-author, which a repository must configure itself. The register and the checker code live under `examples/` in this repository, so reviewers must read changes to them. Tier 2 relief applies only to agent commits made outside the Claude Code hook: the hook still denies a hooked session's writes to tier 1 and tier 2 files, so the acknowledgement covers agents such as dependency bots or an unhooked session.
+
+The hooks therefore block agent writes to both tiers, so an agent cannot promote itself or weaken its own gate.
 
 A hook is deterministic policy inside the harness. It is not a security boundary: a workflow that can run arbitrary code can in principle route around it. Hooks hold the grant only together with the sandbox and credential scope of [Pattern 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) and the agent identity of [Pattern 2.11](L2-behavioral-guardrails.md#pattern-211--agent-identity-and-delegation).
 
@@ -451,14 +460,13 @@ This repository's register is [.autonomy.yaml](../.autonomy.yaml). It lists one 
 
 The `autonomy-check` job in [.github/workflows/docs.yml](../.github/workflows/docs.yml) builds the TypeScript CLI, runs `autonomy census` and then `autonomy check`. A pull request is checked with `--git-range` over its commits and a push to main with `--no-commits`.
 
-The census profile computes a cap of C1. Platform and shared context are at C2 and ownership is at C2. Operating model, governance and measuring value are at C1. The probes report the missing evidence as `ci-tests-lint` (the CI jobs do not run a test target), `constitutional-rules` (CLAUDE.md only imports AGENTS.md) and `outcome-tracking` (no ledger or baseline). Skill is unknown and counts as C2. Every grant sits at the cap, so none can rise until those three gaps close.
+The census profile computes a cap of C1. Platform, shared context and ownership are at C2. Operating model, governance and measuring value are at C1. The cap is the lowest of platform, governance, ownership and measuring value. The probes report the missing evidence as `ci-tests-lint` (the CI jobs do not run a test target), `constitutional-rules` (CLAUDE.md only imports AGENTS.md) and `outcome-tracking` (no ledger or baseline). Skill is unknown and counts as C2. Every grant sits at the cap, so none can rise until those gaps close.
 
 ## Where the Evidence Stands
 
-- A1 to A3 follow published practice on tiering, review and gated delegation.
 - The one defended example of unattended work is maintenance where verification is mechanical and the action reversible: Spotify's auto-merged maintenance pull requests (MC-21). Neither the research baseline nor the vendor guidance found unattended incident repair.
 - The thresholds, hysteresis, cooldown and drill cadence are illustrative. Tune them from your own ledger.
-- A.3, A.5 and A.7 are Thin. Treat them as designs to test, not settled practice.
+- A.3, A.5 and A.7 are Thin. Treat them as designs to test.
 
 ## Related Documents
 

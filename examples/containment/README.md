@@ -90,11 +90,11 @@ Adding one regex to `rules.json` would make the policy catch `sed --in-place`. T
 | Layer | Setting |
 |-------|---------|
 | Policy | `permissions.deny` with `Read(./.env)`, `Read(./.env.*)` and `Bash(sed -i *)`; `permissions.blockWritesOutsideWorkingDirectories` (needs Claude Code v2.1.314 or later) |
-| Boundary | `sandbox.enabled`, `sandbox.failIfUnavailable`, `sandbox.allowUnsandboxedCommands: false` |
+| Boundary | `sandbox.enabled`, `sandbox.failIfUnavailable`, `sandbox.allowUnsandboxedCommands: false`, `sandbox.filesystem.denyWrite: ["./.git/hooks"]` |
 | Credentials | `sandbox.filesystem.denyRead`, `sandbox.credentials.files`, `sandbox.credentials.envVars` |
 | Egress | `sandbox.network.allowedDomains` |
 
-The `Bash(sed -i *)` deny rule is a string rule with the same limits as the policy layer above. The sandbox settings are the control.
+The `Read(./.env.*)` deny rule also blocks `.env.example`, which the policy layer allows. The `Bash(sed -i *)` deny rule is a string rule with the same limits as the policy layer above. The sandbox settings are the control.
 
 Managed settings: a key set in managed settings, delivered as a `managed-settings.json` file, an MDM policy or server-managed settings, takes precedence over user, project and command-line settings. Put `sandbox.enabled`, `sandbox.failIfUnavailable` and `sandbox.allowUnsandboxedCommands: false` there so a developer cannot switch the sandbox off. The sandboxing page also documents `allowManagedDomainsOnly` under `sandbox.network`, and the settings page documents `allowManagedPermissionRulesOnly`. Both restrict which entries Claude Code honors to those set in managed settings.
 

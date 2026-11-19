@@ -34,7 +34,8 @@ src/
 ```typescript
 import { classifyCommand } from './core/intent.js';
 import { getEnvironment } from './core/environment.js';
-import { findMatchingRule, resolve } from './core/router.js';
+import { resolve } from './core/router.js';
+import { findMatchingRule } from './config/routing.config.js';
 
 // Agent issues a command
 const command = 'grep -r "export.*function" ./src';
@@ -67,7 +68,7 @@ if (resolution.action === 'advise') {
 Requires Node.js 21 or later (the test script passes a quoted glob to `node --test`).
 
 ```bash
-npm install
+npm ci
 npm test        # runs `npm run build` (tsc) first, then node:test on dist/**/*.test.js
 ```
 
@@ -87,7 +88,7 @@ Use a containment boundary for limits that must hold.
 
 | Intent | Description | Default Resolution |
 |--------|-------------|-------------------|
-| `file_read` | Reading file contents (`cat`, `head`) | Advise Read tool |
+| `file_read` | Reading file contents (`cat`, `head`, `tail`) | `cat`: advise Read tool. `head` and `tail` are classified but have no router rule, so they pass through |
 | `text_search` | Searching text (`grep`, `rg`) | Advise Grep/jcodemunch |
 | `file_discovery` | Finding files (`find`, `fd`) | Advise Glob/jcodemunch |
 | `file_modify` | Destructive edits (`sed -i`, `awk > file`) | **BLOCK** |
@@ -118,9 +119,9 @@ Example rule for `grep`:
   match: /\b(grep[rx]?|rg)\b/,
   intent: 'text_search',
   resolutions: {
-    rtk: { action: 'advise', tool: 'rtk grep', reason: 'structured output' },
-    jcodemunch: { action: 'advise', tool: 'search_text', reason: 'indexed search' },
-    general: { action: 'advise', tool: 'Grep tool', reason: 'structured output' },
+    rtk: { action: 'advise', tool: 'rtk grep', reason: 'structured output, filtered results' },
+    jcodemunch: { action: 'advise', tool: 'jcodemunch search_text', reason: 'indexed search, faster' },
+    general: { action: 'advise', tool: 'Grep tool', reason: 'structured results, no artifacts' },
     fallback: { action: 'allow' },
   },
 }

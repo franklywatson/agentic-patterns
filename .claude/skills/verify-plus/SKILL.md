@@ -3,6 +3,8 @@ name: verify+
 description: "Invoke AFTER tdd+ implementation is complete. Wraps superpowers:verification-before-completion with evidence standards, spec drift check, and full-suite test run. This is the ONLY phase where full test suite runs are appropriate."
 argument-hint: "[plan file path]"
 user-invocable: true
+owner: franklywatson
+reviewed: 2026-11-19
 ---
 
 <!-- rig-generated -->
@@ -30,7 +32,7 @@ Wraps `superpowers:verification-before-completion`. Requires superpowers to be i
    - Evidence: show command output before claiming done
    ```
 
-2. Load the plan from `docs/plans/`.
+2. Load the plan from the path given in the argument, or from the current session.
 
 3. List all acceptance criteria from the plan.
 
@@ -75,7 +77,7 @@ Wraps `superpowers:verification-before-completion`. Requires superpowers to be i
    - [No deviations / List deviations with reasons]
 
    ### Enforcement Compliance
-   - [ ] Active enforcement rules followed (see session-start output; real dependencies in stack/E2E tests by default)
+   - [ ] Constitutional Rules in AGENTS.md followed (real dependencies in stack/E2E tests; mocks only in unit tests)
    - [ ] Evidence shown for all claims
    - [ ] All source changes have test coverage
    ```
@@ -87,7 +89,7 @@ Wraps `superpowers:verification-before-completion`. Requires superpowers to be i
 
 After verify+ passes:
 
-- Invoke `/review+` to run the compliance review agent
+- Invoke `/review+` for the compliance review
 
 ## Completion
 

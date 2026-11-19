@@ -5,7 +5,7 @@ incident record, reproduces the failure, applies a candidate patch, verifies it,
 pure-function gate for one of three answers: `auto`, `human` or `block`. A fixed patch stands
 in for the repair agent, so every run is reproducible. No LLM is involved.
 
-The example demonstrates three outcomes on one seeded defect (INC-001):
+The example runs four candidate patches against one seeded defect (INC-001). The gate gives three answers:
 
 | Candidate patch | What it does | Gate answer |
 |-----------------|--------------|-------------|
@@ -177,3 +177,9 @@ network and built image. Workspaces are created under `.workspaces/` and removed
 - [Pattern 1.1](../../docs/L1-patterns/1.1-stack-tests.md): stack tests and the health endpoint modes
 - [Pattern 1.6](../../docs/L1-patterns/1.6-test-integrity.md): the forbidden patterns, applied to tests and, by the scan, to production diffs
 - [Pattern 1.5](../../docs/L1-patterns/1.5-no-mock-philosophy.md): real dependencies in stack tests; mocks only in unit tests
+- [Pattern 1.7](../../docs/L1-patterns/1.7-incident-to-stack-test.md): incident record to reproduction test
+- [Pattern 1.8](../../docs/L1-patterns/1.8-reversibility-blast-radius.md): reversibility and blast-radius classes
+- [Pattern 1.9](../../docs/L1-patterns/1.9-repair-loop-frozen-oracle.md): the repair loop and its frozen oracle
+- [Pattern 1.10](../../docs/L1-patterns/1.10-production-gate-progressive-confirmation.md): the production gate and the confirmation window
+- [Pattern 1.11](../../docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md): repair budget, circuit breaker and stop authority
+- [Pattern 1.12](../../docs/L1-patterns/1.12-self-healing-tests-vs-systems.md): self-healing tests versus self-healing systems

@@ -45,24 +45,23 @@ Every agent interaction with the system — a new feature, a bug fix, an archite
 
 3. **State the goal** — Define the desired end state with precision. For example: "Right now the system only stores the order status when the order is sent. We also need confidence that the order was triggered into the upstream ERP and that system has acknowledged receipt."
 
-4. **Invoke the right skill** — Use `systematic-debugging` for investigations (analyzing failures, tracing root causes) or `plan+` for design proposals (new features, architectural changes). The skill structures the agent's analysis and prevents undisciplined exploration.
+4. **Invoke the right skill** — Use a debugging skill for investigations (analyzing failures, tracing root causes), such as superpowers `systematic-debugging`, or a planning skill for design proposals (new features, architectural changes), such as superpowers `writing-plans`. The skill structures the agent's analysis and prevents undisciplined exploration.
 
 5. **Iterate on the plan** — The design must include unit and stack test changes that provide end-to-end confidence. Review the plan, challenge assumptions, refine scope. The plan is a contract between human intent and agent execution.
 
 6. **Save the refined plan** — Persist the converged plan to the filesystem after Q&A is complete. Future sessions can reference the plan; the agent can verify implementation against it.
 
-7. **Execute** — Use the `executing-tasks` skill to implement the plan as documented. Run tests, fix issues found, verify against the plan's acceptance criteria.
+7. **Execute** — Use an execution skill, such as superpowers `executing-plans`, to implement the plan as documented. Run tests, fix issues found, verify against the plan's acceptance criteria.
 
-The [rig](https://github.com/franklywatson/claude-rig) framework (a hook and skill pack: review it before
-installing, per [Pattern 2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain))
-automates this workflow through its skill chain — enforcing the transition from planning to implementation to
-verification. The `plan+` skill structures the design-first approach; the phase tracker prevents jumping to
-`tdd+` without a prior plan. See [L2: Behavioral Guardrails](L2-behavioral-guardrails.md) for the full skill
-chain architecture.
+This workflow does not depend on a particular skill pack. The [rig](https://github.com/franklywatson/claude-rig)
+pack (review it before installing, per
+[Pattern 2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)) implements it as a
+skill chain, with `plan+` for the design step. See [L2: Behavioral Guardrails](L2-behavioral-guardrails.md) for the
+chain.
 
 ### Why Context Harvesting Precedes Testing
 
-Stack tests validate design intent. But if the design is wrong, perfect tests just confirm the wrong thing with high confidence. The agent needs to understand the system before changing it.
+Stack tests validate design intent. But if the design is wrong, perfect tests confirm the wrong thing with high confidence. The agent needs to understand the system before changing it.
 
 This is why L0 exists as a prerequisite: deep modules make code contracts discoverable, progressive disclosure makes structure navigable, and the agent instruction file makes rules explicit. L1 is where the agent activates those foundations — reading the map before charting the course, then verifying the destination was reached.
 
@@ -151,39 +150,41 @@ Design rinsing operates at the **system-level** of the REPL fractal described ea
 
 ## Pattern Index
 
-The following patterns describe the verification mechanisms that close the loop on design intent. Each pattern has its own document with detailed guidance, code examples, and anti-patterns.
+Patterns 1.1 to 1.6 and the testing infrastructure note close the loop during development. Patterns 1.7 to 1.12 extend it to production incidents. Each pattern has its own document with guidance, code and anti-patterns.
 
-### [Pattern 1.1 — Stack Tests](L1-patterns/1.1-stack-tests.md)
+### Development loop
+
+#### [Pattern 1.1 — Stack Tests](L1-patterns/1.1-stack-tests.md)
 
 Full-system tests running the complete Docker stack with API-level verification, zero mocks for owned services, and high failure diagnosticity. Each test models an atomic user journey — a single, complete interaction from the user's perspective. Includes health endpoint test mode, test fixture bootstrapping, and the "Beyond API Testing" extension to browser-driven verification with Playwright. **Why it matters:** Stack tests close the feedback loop — the agent gets binary confirmation that the system works end-to-end, not that individual functions return correct values.
 
-### [Pattern 1.2 — Full-Loop Assertion Layering](L1-patterns/1.2-full-loop-assertions.md)
+#### [Pattern 1.2 — Full-Loop Assertion Layering](L1-patterns/1.2-full-loop-assertions.md)
 
 Three-level assertion structure (primary, second-order, third-order) that provides diagnostic signal at increasing distance from the primary action. Primary verifies the direct response, second-order verifies side effects through a different API endpoint, third-order verifies cross-functional consistency (audit logs, notifications, cross-endpoint agreement). **Why it matters:** A `200 OK` response proves nothing about side effects. Second-order assertions catch missing persistence; third-order assertions catch broken observability. Each failure mode points to a specific subsystem.
 
-### [Pattern 1.3 — Sequential / Additive Test Design](L1-patterns/1.3-sequential-design.md)
+#### [Pattern 1.3 — Sequential / Additive Test Design](L1-patterns/1.3-sequential-design.md)
 
 Tests ordered by dependency so that if test N fails, the agent knows tests 1 through N-1 passed. The sequence acts as a diagnostic ladder narrowing the search space. Stack tests as vertical slices — each test is one atomic user journey that can be run individually during development or as a full suite before completion. **Why it matters:** Without ordering, a checkout failure could mean broken auth, broken database, or broken checkout logic — ordering tells the agent exactly which subsystem to investigate.
 
-### [Pattern 1.4 — Container Isolation](L1-patterns/1.4-container-isolation.md)
+#### [Pattern 1.4 — Container Isolation](L1-patterns/1.4-container-isolation.md)
 
 Four mechanisms ensuring tests never interfere: compose project scoping (`docker compose -p <unique project>`), dynamic port allocation, transient volumes, and per-run compose files. Aggressive cleanup prevents Docker resource exhaustion during concurrent test execution. **Why it matters:** Hardcoded ports and shared state produce flaky, non-deterministic test failures that waste agent tokens on false investigations. Isolation makes every test run deterministic.
 
-### [Pattern 1.5 — Real Dependencies in E2E/Integration and Stack Tests](L1-patterns/1.5-no-mock-philosophy.md)
+#### [Pattern 1.5 — Real Dependencies in E2E/Integration and Stack Tests](L1-patterns/1.5-no-mock-philosophy.md)
 
 Stack tests and E2E/integration tests use real everything — real PostgreSQL, real Redis, real message queues. If you own it, run it. If you can run it in Docker, run it in Docker. Also covers **focused integration tests** — a niche pattern for exhaustive edge-case coverage of complex external dependencies (payment providers, blockchain RPCs) against their real APIs, without running the full stack. **Why it matters:** Mocks create a fantasy system that passes tests but fails in production. Mocks are appropriate and encouraged in unit tests, which validate module contracts in isolation.
 
-### [Pattern 1.6 — Test Integrity Rules](L1-patterns/1.6-test-integrity.md)
+#### [Pattern 1.6 — Test Integrity Rules](L1-patterns/1.6-test-integrity.md)
 
 Six forbidden patterns that allow tests to silently pass: conditional assertions, catch without rethrow, optional chaining on expect, early returns before assertions, try-catch wrapped expectations, and soft assertions. Every test must either pass or fail explicitly. **Why it matters:** A test that can silently pass is worse than no test — it gives false confidence. Every test must provide unambiguous signal to the agent.
 
-### [Testing Infrastructure Is Production Code](L1-patterns/testing-infrastructure.md)
+#### [Testing Infrastructure Is Production Code](L1-patterns/testing-infrastructure.md)
 
 The tooling that enables stack tests — port allocators, compose file generators, container managers — is application code, not scaffolding. Treat it with the same rigor: unit tests, error handling, edge case coverage, and code review. **Why it matters:** Brittle test infrastructure wastes more agent tokens than any other source — the agent debugs test tooling instead of application logic.
 
 ---
 
-## Closing the loop in production
+### Closing the loop in production
 
 Patterns 1.1 to 1.6 close the loop during development. The same loop can extend into production for one narrow case: an incident in code you own, repaired by a change that is reversible and that a machine can verify. The repair loop must not hide defects, must not grade its own work, and must be stoppable.
 
@@ -197,15 +198,6 @@ The first pattern needs no autonomy. The rest set the limits before any repair r
 - [Pattern 1.12 — Self-Healing Tests vs Self-Healing Systems](L1-patterns/1.12-self-healing-tests-vs-systems.md): tests never heal themselves, and recovery without a repair ticket is a masked defect.
 
 A runnable example of the gate is in [`examples/repair-loop/`](../examples/repair-loop/README.md) (TypeScript and Python). It simulates production confirmation and does not prove it.
-
----
-
-## Practitioner Insight
-
-> "Close the loop: AI agents must be able to verify their own work."
-> — Peter Steinberger, creator of OpenClaw
-
-This is the foundational principle behind stack tests. When an agent can spin up the full system, execute against real dependencies, and validate through the API, it gets clear binary feedback — not ambiguous partial results from mocked components. The agent either passes or fails, and when it fails, the diagnostic signal points directly to what's broken.
 
 ---
 

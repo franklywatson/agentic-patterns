@@ -1,3 +1,7 @@
+---
+reviewed: 2026-11-19
+---
+
 # Reference Telegram Trading Bot Project — Agentic Patterns in Production
 
 This case study is first-party, n=1: one project by the author of these patterns, with no independent replication.
@@ -16,9 +20,9 @@ This case study demonstrates how all five layers of the agentic patterns manifes
 
 ### CLAUDE.md as Constitution
 
-The project's CLAUDE.md is a 218-line contract that establishes the project's constitutional mandates. Unlike sprawling documents that agents cannot retain, it serves as a concise reference point for all development activity.
+The project's CLAUDE.md is a 218-line contract that establishes the project's constitutional mandates. It is above the 200-line threshold that [Pattern 0.4](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution) sets.
 
-**Nine Constitutional Mandates:**
+**Constitutional mandates (as listed in the file):**
 
 1. **No Mock System Components** — Never mock logger, never mock ethers, never assert on log calls
 2. **Docker-First Development** — No local OS execution of app runtime
@@ -54,14 +58,14 @@ The worktree at `.worktrees/tg-dash/` demonstrates feature isolation:
 
 ### Documentation as System Map
 
-The project treats documentation as the system map — the navigational layer that keeps structure, intent, and conventions current. When code changes, docs update in the same task. DOCS commits are 13.5% of the total (172 of 1,276 non-merge commits). A commit count does not show whether the docs were accurate.
+The project treats documentation as the system map — the navigational layer that keeps structure, intent, and conventions current. When code changes, docs update in the same task.
 
 ### Documentation Health Tracking
 
 `docs/README.md` tracks coverage:
 
 ```markdown
-**📅 Last Updated:** 2026-02-19 | **Coverage:** 92%
+**Last Updated:** 2026-02-19 | **Coverage:** 92%
 ```
 
 Coverage tracking ensures documentation freshness is visible and measurable, not assumed.
@@ -76,7 +80,7 @@ The docs structure evolves with the codebase. When `06-chat-system/` was added f
 
 ### Aggressive Cleanup
 
-Dead code, stale comments, and superseded documentation are removed as they are encountered — not deferred to cleanup sprints. REFACTOR commits are 8.5% (108 of 1,276) and appear throughout the project's lifetime rather than in dedicated sprints.
+Dead code, stale comments, and superseded documentation are removed as they are encountered — not deferred to cleanup sprints.
 
 ---
 
@@ -367,13 +371,9 @@ The [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk) CLI proxy filters n
 
 When the repository is indexed by [jcodemunch](https://github.com/jgravelle/jcodemunch-mcp), agent searches bypass raw grep entirely. `search_symbols` returns typed results with file locations and summaries — the same information as `grep -r` output in fewer tokens. The scout pattern ([Pattern 3.2](../L3-optimization.md#pattern-32--context-isolation-scout)) applies here: a sub-agent maps the codebase structure first, then the implementer works with a concise index instead of re-deriving file locations each session.
 
-### TOON Serialization for MCP Responses
-
-In this project, the MCP server used [TOON (Token-Oriented Object Notation)](https://github.com/toon-format/toon) to serialize tabular responses. This is a description of what the project did, not a library recommendation. Order lists, portfolio holdings, and market data — uniform object arrays returned to agents from internal tools — are encoded more compactly than JSON by declaring field names once in a header row. The agent receives the same data in a more compact encoding.
-
 ### Structured Output Over Raw Text
 
-Across the agent-facing tool surface, structured output ([Pattern 3.1](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)) replaces raw text commands wherever possible. The result: agents reason about typed data structures instead of parsing unstructured text — faster, fewer errors, less wasted context.
+Across the agent-facing tool surface, structured output ([Pattern 3.1](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)) replaces raw text commands where a structured tool exists. The project did not measure token or error effects.
 
 ---
 
@@ -440,64 +440,14 @@ In this project, L3 added structured search, smart routing and compact MCP seria
 
 ## Key Takeaways
 
-1. **Constitutional rules must be enforceable** — The project's 9 mandates are codified in skills that activate during development, not just documented and forgotten.
+1. **Constitutional rules must be enforceable** — The project's mandates are codified in skills that activate during development, not only documented.
 
-2. **Testing infrastructure is production code** — StackTestUtils is the foundation that makes agentic development possible, though it has grown beyond ideal module size and would benefit from decomposition.
+2. **Testing infrastructure is production code** — StackTestUtils is the foundation the project's agentic development relies on, though it has grown beyond ideal module size and would benefit from decomposition.
 
 3. **Isolation enables parallelism** — Dynamic port allocation, unique container names, and per-test compose files allow stack tests to run concurrently without collision.
 
-4. **Evidence beats claims** — The `verify+` skill's iron law ("No completion claims without fresh verification evidence") prevents false confidence from propagating.
+4. **Evidence beats claims** — The `verify+` skill's iron law ("No completion claims without fresh verification evidence") is the project's guard against unverified completion claims.
 
 5. **Documentation is the system map** — 92% coverage tracking and continuous reorganization treat docs as living artifacts. Superseded docs are deleted, not archived — version control preserves history.
 
 6. **All layers integrate** — L0 constitutional rules enable L1 stack tests, which provide targets for L2 skills, which L3 amplifies through token optimization, which L4 standards & measurement maintains.
-
----
-
-## Commit History Analysis
-
-These are descriptive statistics for one project; they are not evidence that any pattern caused an outcome. The analysis covers 1,497 commits from 2025-10-31 to 2026-03-10 (~5 months), classified by type.
-
-![Commit Analysis Dashboard](../diagrams/commit-analysis-dashboard.png)
-
-### Commit Type Distribution (non-merge: 1,276 commits)
-
-| Type | Count | Share |
-|------|-------|-------|
-| FEATURE | 297 | 23.3% |
-| CHORE | 219 | 17.2% |
-| BUGFIX | 201 | 15.8% |
-| DOCS | 172 | 13.5% |
-| TEST | 159 | 12.5% |
-| SECURITY | 110 | 8.6% |
-| REFACTOR | 108 | 8.5% |
-| CI | 10 | 0.8% |
-
-### Feature-to-Test Ratio
-
-The overall feature-to-test ratio is 0.54x (one test commit for every two feature commits). This ratio varies significantly by month:
-
-- **December 2025**: 2.71x (test-heavy — infrastructure and test framework buildout)
-- **January 2026**: 1.64x (balanced — steady feature development with testing)
-- **February 2026**: 0.33x (feature-heavy — peak development velocity)
-- **March 2026**: 0.52x (rebalancing — testing catches up after the February surge)
-
-The November-December spike reflects the upfront investment in testing infrastructure (StackTestUtils, container isolation, bootstrap system) that enabled the higher feature velocity in subsequent months.
-
-### Development Velocity
-
-February 2026 was the busiest period: 629 non-merge commits across 17 active days (37.0 commits/day average).
-
-### What the Statistics Show
-
-1. **Testing is a large share of commits** — 12.5% of commits are TEST, comparable to DOCS (13.5%). Test infrastructure received dedicated investment in November-December before the feature acceleration in January-February.
-
-2. **Documentation commits are frequent** — DOCS commits at 13.5% are consistent with the L0 documentation-as-system-map pattern. The count says nothing about doc accuracy.
-
-3. **Refactoring is spread across the project** — 8.5% REFACTOR commits, consistent with the L0 aggressive cleanup pattern.
-
-4. **BUGFIX is 15.8% of commits** — the project's own account attributes early detection to stack tests; the commit count cannot separate that from other causes.
-
-5. **SECURITY is 8.6% of commits** — the application handles real funds and blockchain transactions, so the share reflects the domain.
-
-6. **CHORE is 17.2% of commits** — these cover Docker configuration, dependency management, CI pipeline setup, and environment configuration, which includes the cost of running a full Docker stack for tests.

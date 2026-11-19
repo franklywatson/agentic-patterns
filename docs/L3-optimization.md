@@ -78,9 +78,9 @@ if (/grep|sed|awk/.test(cmd)) return 'text_search';
 Cross-References:
 
 - [L2: Hook Automation](L2-behavioral-guardrails.md#pattern-23--hook-automation) for how pre-execution hooks work
-- [L4: Context Eval](L4-standards-measurement.md#pattern-46--context-eval) for scoring routing decisions against expected outcomes
+- [L4: Context Eval](L4-standards-measurement.md#pattern-46--context-eval) for testing a routing rule as one decision in a task bank
 
-**Evidence:** Thin — token savings come from tool documentation and are unmeasured here; measurement guidance cautions against them (MV-1, MV-20)
+**Evidence:** Thin — claimed token savings come from tool documentation and are unmeasured here; measure them on your own sessions (MV-1, MV-20)
 
 ---
 
@@ -119,17 +119,9 @@ Cross-References:
 
 Routing should depend on which tools exist: an indexed repository can use symbol search, and a machine without the indexer should fall back to the Grep tool. Detect available tools once per session, cache the result, and degrade to the native tool when a specialized one is missing.
 
-This guide does not reproduce the detection and caching code. The reference implementations are in the
-[rig](https://github.com/franklywatson/claude-rig) repository:
-[`src/router`](https://github.com/franklywatson/claude-rig/tree/main/src/router) for environment-aware
-resolution and [`src/session`](https://github.com/franklywatson/claude-rig/tree/main/src/session) for
-session-start detection and caching. rig is by this repository's author. It installs hooks and skills, so
-review it before you install it ([Pattern
-2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)). The same applies to RTK,
-which proxies your shell commands, and to the jcodemunch MCP server, which is licensed for non-commercial use
-and needs a paid licence for commercial use.
+The [guardrails example](../examples/guardrails/) has a minimal version (`src/core/environment.ts`: tool detection with a 30-minute cache). The fuller implementations are in the [rig](https://github.com/franklywatson/claude-rig) repository, which is by this repository's author: [`src/router`](https://github.com/franklywatson/claude-rig/tree/master/src/router) for environment-aware resolution and [`src/session`](https://github.com/franklywatson/claude-rig/tree/master/src/session) for session-start detection. These links track the `master` branch and can drift; pin a commit if you depend on them. rig installs hooks and skills, so review it before you install it ([Pattern 2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)). The same applies to RTK, which proxies your shell commands, and to the jcodemunch MCP server, which is licensed for non-commercial use and needs a paid licence for commercial use.
 
-**Evidence:** Thin — design from rig (first-party, n=1); no study of detection caching
+**Evidence:** Thin — design from rig and the example (first-party, n=1); no study of detection caching
 
 ---
 
