@@ -15,7 +15,7 @@ A minimal, working example of stack tests in TypeScript using Jest and Playwrigh
 
 ## Two Test Modes
 
-This example demonstrates two complementary approaches to stack testing, both running against the same Docker stack with the same no-mock philosophy.
+This example demonstrates two complementary approaches to stack testing, both running against the same Docker stack with real dependencies and no mocks.
 
 ### API-Level Tests (Jest)
 
@@ -27,11 +27,8 @@ API-level tests drive the stack through HTTP calls — the same interface a mobi
 
 Browser-level tests drive the stack through a real browser — the same interface an end user would use. They catch problems API tests cannot: broken JavaScript, missing CSS assets, rendering failures, and client-side logic errors.
 
-This maps to the **"Beyond API Testing"** concept from [L1 Closed Loop Design](../../../docs/L1-patterns/1.1-stack-tests.md#beyond-api-testing):
-
-> Stack tests are not limited to driving backend APIs directly. For web applications, the same pattern applies with a browser automation layer like Playwright: spin up the full stack, then drive user journeys through the actual UI — form submissions, page transitions, rendered output — to verify that the combined frontend and backend work correctly end-to-end. The principle remains the same: real system, real dependencies, no mocks. Only the entry point changes from HTTP API calls to browser interactions.
-
-**When to use:** Web applications with significant frontend logic, critical user flows that span page transitions, visual regression testing.
+See [Pattern 1.1, Beyond API Testing](../../../docs/L1-patterns/1.1-stack-tests.md#beyond-api-testing).
+**When to use:** Web applications with significant frontend logic, critical user flows that span page transitions.
 
 ### How They Complement Each Other
 
@@ -86,7 +83,7 @@ npm run test:stack
 
 Expected result: `Test Suites: 2 passed, 2 total` and `Tests: 9 passed, 9 total`.
 
-Browser-level tests share one running stack. Start it, run Playwright, then remove it:
+Browser-level tests share one running stack, so they use fixed host ports; pick free ones. Start it, run Playwright, then remove it:
 
 ```bash
 export APP_PORT=13000 POSTGRES_PORT=15432 REDIS_PORT=16379
@@ -110,7 +107,7 @@ npx playwright test --config=playwright.config.ts --ui
 ## Requirements
 
 - Docker and Docker Compose v2 installed
-- Node.js 20+
+- Node.js 22+
 - Free ports: 10000-65535 for `npm run test:stack` (allocated dynamically); 13000, 15432 and 16379 for the browser commands above (3000, 5432 and 6379 without the overrides)
 - Chromium browser (installed via `npx playwright install chromium`)
 
@@ -125,7 +122,7 @@ Tests are numbered `01-`, `02-` etc. to enforce ordering. Each test assumes all 
 Each test verifies at multiple levels:
 
 - **Primary**: API response status and body (API tests) or page content (browser tests)
-- **Second-order**: Derived effects verified through DIFFERENT API endpoints or pages than the one that performed the action
+- **Second-order**: Derived effects verified through a different API endpoint or page than the one that performed the action
 - **Third-order**: Cross-functional verification — audit logs, console errors, network request failures, cross-page consistency
 
 ### 3. Container Isolation

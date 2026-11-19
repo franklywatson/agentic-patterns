@@ -1,5 +1,5 @@
 ---
-last-validated-model: claude-sonnet-5-5
+last-validated-model: claude-opus-5-5
 reviewed: 2026-11-19
 ---
 
@@ -15,7 +15,7 @@ Anti-Pattern section; this page only points to them, then holds the two entries 
 | Symptom | Likely missing pattern |
 |---------|------------------------|
 | A source file passes 2000 lines or exports 20+ symbols; edits to one concern break another | [0.1 Deep Modules](../L0-foundation.md#pattern-01--deep-modules) |
-| A directory holds 50+ files with no subdirectories, or long filename prefixes stand in for structure | [0.2 Progressive Disclosure](../L0-foundation.md#pattern-02--progressive-disclosure), [0.3 Conceptual File Organization](../L0-foundation.md#pattern-03--conceptual-file-organization) |
+| A directory holds 50+ files with no subdirectories, or long filename prefixes stand in for structure | [0.2 Progressive Disclosure](../L0-foundation.md#pattern-02--progressive-disclosure) |
 | The instruction file reads like a documentation site, or has no owner or reviewed date | [0.4 Agent instruction file as project constitution](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution) |
 | Tests exist but the code's contract is only in prose that has drifted | [0.5 Unit Tests as Contract](../L0-foundation.md#pattern-05--unit-tests-as-contract) |
 | Feature work happens on the main branch, or parallel agents share one working directory | [0.6 Git Worktree-Based Development](../L0-foundation.md#pattern-06--git-worktree-based-development) |
@@ -31,14 +31,14 @@ Anti-Pattern section; this page only points to them, then holds the two entries 
 |---------|------------------------|
 | Tests start some services, mock others and are neither fast nor conclusive | [1.1 Stack Tests](../L1-patterns/1.1-stack-tests.md) |
 | A failure shows only the primary assertion, with no signal from downstream effects | [1.2 Full-Loop Assertion Layering](../L1-patterns/1.2-full-loop-assertions.md) |
-| Iteration is slow because only the whole suite is run, or a failure does not say which layer broke | [1.3 Sequential / Additive Test Design](../L1-patterns/1.3-sequential-design.md) |
+| Iteration is slow because only the whole suite is run, or a failure does not say which step broke | [1.3 Sequential / Additive Test Design](../L1-patterns/1.3-sequential-design.md) |
 | Hardcoded ports, "port already in use" in CI, state leaking between runs | [1.4 Container Isolation](../L1-patterns/1.4-container-isolation.md) |
-| Mock setup outweighs test code, or tests pass while production fails | [1.5 Real Dependencies](../L1-patterns/1.5-no-mock-philosophy.md) |
+| Mock setup outweighs test code, or tests pass while production fails | [1.5 Real Dependencies](../L1-patterns/1.5-real-dependencies.md) |
 | Assertions sit inside `if`, behind optional chaining or after an early return | [1.6 Test Integrity Rules](../L1-patterns/1.6-test-integrity.md) |
 | A production incident is fixed without a test that reproduces it first | [1.7 Incident-to-Stack-Test](../L1-patterns/1.7-incident-to-stack-test.md) |
 | Every change gets the same review, or risk is judged from the commit message | [1.8 Reversibility and Blast-Radius Classes](../L1-patterns/1.8-reversibility-blast-radius.md) |
 | The agent that fixes a bug also writes or edits the test that proves it | [1.9 Repair Loop with a Frozen Oracle](../L1-patterns/1.9-repair-loop-frozen-oracle.md) |
-| The agent summarises its own canary results, or a gate warns and lets the change through | [1.10 Production Gate and Progressive Confirmation](../L1-patterns/1.10-production-gate-progressive-confirmation.md) |
+| The agent summarizes its own canary results, or a gate warns and lets the change through | [1.10 Production Gate and Progressive Confirmation](../L1-patterns/1.10-production-gate-progressive-confirmation.md) |
 | A repair workflow that keeps reverting is only alerted on, and nobody can stop it | [1.11 Repair Budget, Circuit Breaker and Stop Authority](../L1-patterns/1.11-repair-budget-circuit-breaker-stop.md) |
 | A "self-healing" tool is counted as self-repair, or a mitigation is counted as a fix | [1.12 Self-Healing Tests vs Self-Healing Systems](../L1-patterns/1.12-self-healing-tests-vs-systems.md) |
 
@@ -47,7 +47,7 @@ Anti-Pattern section; this page only points to them, then holds the two entries 
 | Symptom | Likely missing pattern |
 |---------|------------------------|
 | The same rules are copied into many prompts and have drifted | [2.1 Skill Overlay Architecture](../L2-behavioral-guardrails.md#pattern-21--skill-overlay-architecture) |
-| Every change, including a typo fix, runs five phases; or changes ship with no verification or review | [2.2 The Skill Chain](../L2-behavioral-guardrails.md#pattern-22--the-skill-chain) |
+| Every change, including a typo fix, runs five phases; or changes ship with no verification or review | [2.1 Skill Overlay Architecture](../L2-behavioral-guardrails.md#pattern-21--skill-overlay-architecture) (skill chain) |
 | Hooks warn and the call proceeds, a PostToolUse check is described as blocking, or checks return conflicting severities | [2.3 Hook Automation](../L2-behavioral-guardrails.md#pattern-23--hook-automation) |
 | Rules in AGENTS.md say "should" and nothing names what enforces them | [2.4 Constitutional Rules](../L2-behavioral-guardrails.md#pattern-24--constitutional-rules) |
 | Errors are waved off as "pre-existing" or "unrelated" | [2.5 Zero-Defect Tolerance](../L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance) |
@@ -62,12 +62,13 @@ Anti-Pattern section; this page only points to them, then holds the two entries 
 
 | Symptom | Likely missing pattern |
 |---------|------------------------|
-| Raw `grep` or `cat` returns whole files and hundreds of lines when a symbol search or a line range would do | [3.1 Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits) |
+| Raw `grep` or `cat` returns whole files and hundreds of lines when a symbol search or a line range would do, or routing assumes a tool the machine lacks | [3.1 Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits) |
 | Broad searches fill the main session with matches it carries forward | [3.2 Context Isolation](../L3-optimization.md#pattern-32--context-isolation-scout) |
-| An indexer is installed and routing ignores it, or routing assumes a tool the machine lacks | [3.3 Environment-Aware Routing and Session Lifecycle](../L3-optimization.md#pattern-33--environment-aware-routing-and-session-lifecycle) |
-| Changes in one repository break a contract in another | [3.4 Cross-Repo Architecture Alignment](../L3-optimization.md#pattern-34--cross-repo-architecture-alignment) |
 
-### L4 Standards and Measurement, and Earned Autonomy
+Changes in one repository that break a contract in another are an architecture question, not an L3 pattern: see
+[Monorepo or multi-repo for agents?](faq.md#monorepo-or-multi-repo-for-agents).
+
+### L4 Standards & Measurement, and Earned Autonomy
 
 | Symptom | Likely missing pattern |
 |---------|------------------------|
@@ -75,15 +76,14 @@ Anti-Pattern section; this page only points to them, then holds the two entries 
 | Metrics count tokens or commands, or have no threshold, action or owner | [4.4 Agentic Development Metrics](../L4-standards-measurement.md#pattern-44--agentic-development-metrics) |
 | Quality thresholds live in workflow files, or checks run only in a session hook | [4.5 CI Guardrails](../L4-standards-measurement.md#pattern-45--ci-guardrails) |
 | A prompt, skill or model change is accepted because it feels better | [4.6 Context Eval](../L4-standards-measurement.md#pattern-46--context-eval) |
-| An agent, workflow or hook set keeps running after its owner left, or nobody is named for agent-written code | [4.7 Author of Record and Agent Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) |
+| Nobody is named as answering for agent-written code | [4.7 Author of Record](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) |
 | The team ships code nobody can explain or debug without the agent | [4.9 Deliberate Practice](../L4-standards-measurement.md#pattern-49--deliberate-practice) |
-| An agent lists itself, or its workflow edits the list that sets its permissions | [A.1 Autonomy Register](../earned-autonomy.md#pattern-a1--autonomy-register) |
+| An agent workflow keeps running after its owner left, an agent lists itself, or its workflow edits the list that sets its permissions | [A.1 Autonomy Register](../earned-autonomy.md#pattern-a1--autonomy-register) |
 | Success counts come from the workflow's own report | [A.2 Evidence Ledger](../earned-autonomy.md#pattern-a2--evidence-ledger) |
-| An agent or its workflow raises its own permissions after a run of successes | [A.3 Promotion, Demotion and the Cap Gate](../earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate) |
+| An agent or its workflow raises its own permissions after a run of successes, or grants are never reviewed against results | [A.3 Promotion, Demotion and the Cap Gate](../earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate) |
 | Nobody can say which practices exist in the repository and which are only written down | [A.4 Census](../earned-autonomy.md#pattern-a4--census) |
 | An unattended workflow has no stop, or the stop was never used | [A.5 Tested Stop](../earned-autonomy.md#pattern-a5--tested-stop) |
 | The agent's own hooks or harness settings can be edited by the agent | [A.6 Enforcement Through Hooks](../earned-autonomy.md#pattern-a6--enforcement-through-hooks) |
-| Grants are set once and never reviewed against results | [A.7 Portfolio Review](../earned-autonomy.md#pattern-a7--portfolio-review) |
 
 ## Anti-Patterns Linked From Pattern Docs
 
@@ -99,10 +99,10 @@ Nothing measures an artefact's contribution, so it stays by default.
 
 **Fix**: Apply [Pattern 0.10](../L0-foundation.md#pattern-010--prune-and-re-baseline-context):
 
-- Give each artefact an owner, a `reviewed:` date and an expiry
+- Give each artefact an owner and a `reviewed:` date
 - Run the [task bank](../references/task-bank.md) without the artefact at each model upgrade
 - Keep the artefact only if a task regresses, and record that task next to it
-- Move rules that must always hold into a hook, deny rule or CI check
+- Move rules that must always hold into a command hook, deny rule or CI check
 
 ### Line Caps as a Proxy for Signal
 
@@ -118,7 +118,7 @@ every session, but the count says nothing about which lines change what the agen
 
 - Remove a rule, run the task bank, and keep the rule only if a task regresses
 - Do not trim rules to meet a number before testing them
-- Hold the rules that matter in a hook or CI, where file length does not affect them
+- Hold the rules that matter in a command hook or CI, where file length does not affect them
 
 ## Using This Page
 

@@ -74,7 +74,7 @@ Tests are numbered `test_01_`, `test_02_` etc. Pytest runs files in alphabetical
 Each test verifies at multiple levels:
 
 - **Primary**: API response status and body
-- **Second-order**: Derived effects verified through DIFFERENT API endpoints than the one that performed the action (cross-API verification)
+- **Second-order**: Derived effects verified through a different API endpoint than the one that performed the action (cross-API verification)
 - **Third-order**: Cross-functional verification via admin/observability APIs (audit logs, email notifications, cross-endpoint consistency, auth enforcement)
 
 ### 4. Container Isolation

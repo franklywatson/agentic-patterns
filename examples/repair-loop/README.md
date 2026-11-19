@@ -35,7 +35,7 @@ Simulated:
 
 - **Production confirmation.** After the gate returns `auto`, the loop sends 50 requests that replay the
   incident to the candidate stack and counts the incident fingerprint in the app logs. This
-  simulates a canary window. It does not prove behaviour in production.
+  simulates a canary window. It does not prove behavior in production.
 - **The merge.** At grant A3 a person merges. The example treats the pull request in the outbox as merged.
 - **The outbox and register.** Tickets, pages and audit entries are JSON-lines files, not a ticketing system.
 - **The repair agent.** Fixed patches replace it.
@@ -48,7 +48,7 @@ people or accounts. Running `autonomy check` on this directory alone still fails
 and `grant-exceeds-cap`, because the cap check needs a census profile that the example does not ship.
 
 To validate the register, copy `.autonomy.yaml` into an empty directory, add a `.autonomy/profile.json`
-with every dimension at level 3 and `"cap": 3`, then run the autonomy tooling there:
+with every dimension at curve position 3 (C3) and `"cap": 3`, then run the autonomy tooling there:
 `node dist/src/cli.js check --dir <that directory> --no-commits`. With that profile the check reports
 `workflow repair-loop: granted 3, effective 3` and `autonomy check: ok`.
 
@@ -78,7 +78,7 @@ gate sends every such change to a person, and the example never grants A4.
     - `human`: open a ticket. A masking change gets a root-cause ticket.
     - `block`: page the owner.
 9. **Watch for recurrence.** `observeRecurrence` (`observe_recurrence` in Python) takes application logs. If the
-   incident fingerprint reappears inside 14 days of a confirmed repair, it drops the grant one level.
+   incident fingerprint reappears inside 14 days of a confirmed repair, it drops the grant one step (A3 to A2).
    Restoring it needs a named person and five clean repairs. Stack test 05 drives it with the logs of a
    regressed build.
 
@@ -106,7 +106,7 @@ only one. Known bypasses, all of which can reach `auto` on the evidence the gate
 - Retries spelled `attempt` or `while`, and timeout or threshold changes made through expressions,
   multi-line settings or renamed keys.
 
-The confirmation window and the regression suite are the second line of defence for these.
+The confirmation window and the regression suite are the second line of defense for these.
 
 ## Layout
 
@@ -117,7 +117,7 @@ examples/repair-loop/
   shared/
     incidents/INC-001.json   Incident record (fingerprint, journey, PII-free request, observed, expected)
     config/                  reversibility.json and repair-policy.json
-  typescript/                Node 21+, Jest
+  typescript/                Node 22+, Jest
   python/                    Python 3.12+, uv, pytest
 ```
 
@@ -136,6 +136,14 @@ docker-compose.yml    Stack template; ports bind to 127.0.0.1
 
 Patches differ per language because the app does. The incident record and the configuration are shared.
 
+## Health Endpoint Shape
+
+The apps answer `GET /health` with `status` and `version`. With `?mode=test` or `?mode=prod` the response adds
+`services.postgres` and `services.redis`, each with `connected` and `latency_ms`. Both modes return the same
+test-mode shape. This is a demo simplification: Pattern 1.1 forbids it in production, where the response lists
+only `status` (`healthy`, `degraded` or `unhealthy`), one state per dependency and `version`, with no latency
+figures or counts. No loop step reads the endpoint, so the simplification does not change what the example shows.
+
 ## The Seeded Defect
 
 INC-001: `GET /users/undefined` returns 500 because `users.id` is a UUID column and PostgreSQL rejects the
@@ -145,7 +153,7 @@ structured line per unhandled error, which gives the incident its fingerprint:
 
 ## How to Run
 
-Requirements: Docker with Compose, Node 21 or later, Python 3.12 or later with
+Requirements: Docker with Compose, Node 22 or later, Python 3.12 or later with
 [uv](https://docs.astral.sh/uv/), and Git (for `git apply`) on the path.
 
 TypeScript, from `examples/repair-loop/typescript/`:
@@ -174,9 +182,9 @@ network and built image. Workspaces are created under `.workspaces/` and removed
 
 ## Pattern References
 
-- [Pattern 1.1](../../docs/L1-patterns/1.1-stack-tests.md): stack tests and the health endpoint modes
+- [Pattern 1.1](../../docs/L1-patterns/1.1-stack-tests.md): stack tests and the health endpoint test mode
 - [Pattern 1.6](../../docs/L1-patterns/1.6-test-integrity.md): the forbidden patterns, applied to tests and, by the scan, to production diffs
-- [Pattern 1.5](../../docs/L1-patterns/1.5-no-mock-philosophy.md): real dependencies in stack tests; mocks only in unit tests
+- [Pattern 1.5](../../docs/L1-patterns/1.5-real-dependencies.md): real dependencies in stack tests; mocks only in unit tests
 - [Pattern 1.7](../../docs/L1-patterns/1.7-incident-to-stack-test.md): incident record to reproduction test
 - [Pattern 1.8](../../docs/L1-patterns/1.8-reversibility-blast-radius.md): reversibility and blast-radius classes
 - [Pattern 1.9](../../docs/L1-patterns/1.9-repair-loop-frozen-oracle.md): the repair loop and its frozen oracle

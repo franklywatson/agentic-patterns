@@ -13,11 +13,13 @@ reviewed: 2026-11-19
 
 Wraps `superpowers:verification-before-completion`. Requires superpowers to be installed.
 
-**This skill activates verify+ phase in the enforcement layer.** During this phase:
+This skill is prompt-level guidance. It guarantees nothing by itself. If hooks that track phases are installed
+(for example by `rig init`), the skill also switches the hook phase to verify+; without hooks, the agent follows
+the same rules from this text. During this phase:
 
-- Full test suite runs are ALLOWED (this is the verification phase)
-- Zero-defect enforcement is at strict tolerance
-- Evidence must be shown before claiming done
+- Full test suite runs are allowed (this is the verification phase)
+- Every failure, error and warning is fixed before done
+- Evidence is shown before claiming done
 
 ## Procedure
 
@@ -26,9 +28,9 @@ Wraps `superpowers:verification-before-completion`. Requires superpowers to be i
 1. Announce phase entry:
 
    ```
-   Now using verify+ skill. Enforcement layer adjusted:
+   Now using verify+ skill. Rules for this phase:
    - Test scope: full suite runs allowed (this is verification phase)
-   - Zero-defect: strict — every failure must be fixed
+   - Zero-defect: every failure is fixed
    - Evidence: show command output before claiming done
    ```
 
@@ -40,13 +42,8 @@ Wraps `superpowers:verification-before-completion`. Requires superpowers to be i
 
 1. Invoke `superpowers:verification-before-completion` with the plan context.
 
-2. Run the FULL test suite:
-
-   ```
-   npx vitest run
-   ```
-
-   Show the output. Every test must pass. Zero failures. Zero errors.
+2. Run the full test suite with the project's test command (listed in AGENTS.md; for this repository's
+   docs, the checks in `.github/workflows/docs.yml` and `npm run lint:md`). Show the output. Every test must pass. Zero failures. Zero errors.
 
 3. For each acceptance criterion in the plan:
    - Show evidence that it is met (command output, file contents, test results)
@@ -66,7 +63,7 @@ Wraps `superpowers:verification-before-completion`. Requires superpowers to be i
    ## Verification Report
 
    ### Test Suite
-   [Full test output — ALL must pass]
+   [Full test output; all tests pass]
 
    ### Acceptance Criteria
    - [ ] Criterion 1: [evidence]
@@ -76,7 +73,7 @@ Wraps `superpowers:verification-before-completion`. Requires superpowers to be i
    ### Spec Drift
    - [No deviations / List deviations with reasons]
 
-   ### Enforcement Compliance
+   ### Compliance
    - [ ] Constitutional Rules in AGENTS.md followed (real dependencies in stack/E2E tests; mocks only in unit tests)
    - [ ] Evidence shown for all claims
    - [ ] All source changes have test coverage

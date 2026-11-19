@@ -10,7 +10,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=21"
+    "node": ">=22"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

@@ -35,7 +35,7 @@ Invoke this skill BEFORE starting any design work. It adds three capabilities on
 
 3. Identify:
    - Existing patterns this feature should follow
-   - Test infrastructure available (vitest, pytest, stack tests)
+   - Test infrastructure available (the project's unit test runner, Docker stack tests)
    - Modules that will be affected
    - Constitutional Rules in AGENTS.md (real dependencies in stack/E2E tests; mocks only in unit tests)
 

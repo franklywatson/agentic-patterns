@@ -19,6 +19,8 @@ remove several artefacts for one run.
 expected. Tasks that need Docker are skipped unless --docker is given.
 
 Exit status: 0 when the run completed (a failed task is not an error), 1 when a dry run mismatches, 2 on a usage error.
+--model ID is only written to the run log; it is not passed to the agent command and does not select a model. Put the
+model choice inside --agent-cmd.
 Run log: one JSON line per run with date, model, commit, removed artefacts, passed and failed task ids.
 """
 import argparse
@@ -364,7 +366,8 @@ def main():
     parser.add_argument("--agent-cmd")
     parser.add_argument("--task", action="append")
     parser.add_argument("--remove", action="append", default=[])
-    parser.add_argument("--model", default="unrecorded")
+    # --model is recorded in the run log only; it does not change how the agent command runs.
+    parser.add_argument("--model", default="unrecorded", help="model id written to the run log only; not passed to the agent command")
     parser.add_argument("--run-log", default=str(DEFAULT_LOG))
     parser.add_argument("--skip-docker", action="store_true")
     parser.add_argument("--keep", action="store_true")

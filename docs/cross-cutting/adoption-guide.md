@@ -18,10 +18,10 @@ the cap described in [How far to let go](#how-far-to-let-go).
 ## Assessment: Where Are You Now?
 
 Before choosing a path, assess your current state. For a repository with an `.autonomy.yaml` register, run
-`autonomy census` first: it computes the platform, governance, ownership and measuring positions from the repository's
-own artefacts, marks what it cannot see as `unknown` (counted as C2), and lists what is missing for the next level
-([Pattern A.4](../earned-autonomy.md#pattern-a4--census),
-[runnable example](../../examples/autonomy/README.md)). The checklist below covers what a census cannot read and is
+the example CLI `autonomy census` ([examples/autonomy](../../examples/autonomy/README.md)) first, with `--dir` set to
+your repository. It computes the platform, governance, ownership and measuring positions from the repository's own
+files, treats a dimension with no evidence as C1 (only `skill` can be `unknown`, counted as C2), and lists what is
+missing for the next position ([Pattern A.4](../earned-autonomy.md#pattern-a4--census)). The checklist below covers what a census cannot read and is
 the starting point when there is no register yet.
 
 ### Entry Points
@@ -95,7 +95,7 @@ Document every assumption they had to make. Each assumption is a gap.
 |-------|-------|-------------|-----------|
 | **L0 Foundation** | Structure, AGENTS.md, doc freshness, cleanup | No AGENTS.md, technical-layer organization, stale docs | Write AGENTS.md, restructure by domain |
 | **L1 Closed Loop Design** | Design-led verification with stack tests and focused integration tests | No stack tests, shallow assertions, no edge-case coverage for complex external deps | Add app-startup stack test |
-| **L2 Guardrails** | Skills, hooks, behavioral rules | No enforcement, agents make common errors | Add test-integrity skill |
+| **L2 Guardrails** | Skills, hooks, behavioral rules | Rules only in prose, agents make common errors | Move the most violated rule into a hook or CI check |
 | **L3 Optimization (optional)** | Native structured tools, context isolation | Raw grep/cat commands, token waste | Route grep and cat to native tools |
 | **L4 Standards & Measurement** | Evidence, metrics, CI guardrails, context eval | Claims without evidence, no outcome metrics | Establish evidence standard |
 
@@ -103,7 +103,7 @@ Document every assumption they had to make. Each assumption is a gap.
 
 ## Adoption Paths
 
-Four suggested paths. Choose based on your situation.
+Five suggested paths. Choose based on your situation.
 
 ### Path A: Foundation-First (Default When Unsure)
 
@@ -120,7 +120,7 @@ study compares layers). Then build upward.
 
 If your testing is the biggest pain point — no stack tests, shallow assertions, or missing edge-case coverage for external dependencies — start at L1.
 
-1. **L1** — Ensure that there exists a stack test to cover all user journeys, avoiding duplicated testing as much as possible. For complex external dependencies (payment processors, blockchain RPCs), add focused integration tests against real testnet/sandbox. See [Pattern 1.1 — Stack Tests](../L1-feedback-loops.md#pattern-11--stack-tests), [Pattern 1.5 — Real Dependencies](../L1-feedback-loops.md#pattern-15--real-dependencies-in-e2eintegration-and-stack-tests), and [examples/stack-test/](../../examples/stack-test/).
+1. **L1** — Ensure that there exists a stack test to cover all user journeys, avoiding duplicated testing as much as possible. For complex external dependencies (payment processors, blockchain RPCs), add focused integration tests against real testnet/sandbox. See [Pattern 1.1 — Stack Tests](../L1-patterns/1.1-stack-tests.md), [Pattern 1.5 — Real Dependencies](../L1-patterns/1.5-real-dependencies.md), and [examples/stack-test/](../../examples/stack-test/).
 2. **L0** — Once stack tests are working, structure the project to make them maintainable. Deep modules, AGENTS.md, progressive disclosure.
 3. **L2-L4** — Continue upward as in Path A.
 
@@ -151,6 +151,15 @@ developer machines, start with containment. Do not loosen approvals first.
 5. **Then** continue with L1 and L2 as in Path A. Check the [Containment and governance
    block](#containment-and-governance) before each step toward unattended work.
 
+### Path E: One Person, Attended Sessions
+
+If one person watches each step, start with containment and a short instruction file: [Pattern
+2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) (sandbox and credentials), [Pattern
+0.4](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution) (a short AGENTS.md) and [Pattern
+1.6](../L1-patterns/1.6-test-integrity.md) (test integrity in CI). Rules that need a second person (the high tier of
+Pattern 2.13, the approver in Pattern 4.7) cannot be met. Keep every workflow at A1 or A2 and do not enable
+auto-merge.
+
 ---
 
 ## How Far to Let Go
@@ -164,9 +173,11 @@ Layers say what to build. Two other scales say how far a team may let agents run
 - **Grants, A1 to A5,** are what one named workflow may do: suggest, open pull requests, pass checks before a human
   merges, act on events within limits, and run as a managed investment.
 
-Adopting every pattern as written leaves production ownership at C1, so the library's own ceiling for unattended
-work is C1 (see the [README](../../README.md#how-far-a-team-can-let-go)). A team that wants A3 or A4 closes the
-capping dimension that `autonomy census` reports as lowest, then promotes workflows one grant at a time on evidence
+The cap comes from the team's own census, not from the library
+([The Curve and the Cap](../earned-autonomy.md#the-curve-and-the-cap)). A team that adopts only this library is held
+back by measuring value: C3 needs a committed baseline file, and the library does not describe how to build one
+([README](../../README.md#what-this-library-does-not-cover)). Until a baseline exists the practical ceiling is C2 and
+the grant A2. A team that wants A3 or A4 closes the capping dimension that `autonomy census` reports as lowest, then promotes workflows one grant at a time on evidence
 ([Pattern A.3](../earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate)).
 
 Repair of owned code in production is the one unattended-work seam this library defines in detail: [Patterns 1.7
@@ -209,7 +220,7 @@ installing ([Pattern 2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plu
 
 1. **Incremental adoption** — Each layer delivers value independently. Don't try to implement everything at once.
 2. **Start with L0 if unsure** — Structure and AGENTS.md cost little and the later layers depend on them (evidence: first-party experience, not a measured ROI).
-3. **Measure before you loosen** — Run `autonomy census` and read the cap before raising any grant.
+3. **Measure before you loosen** — Run the example `autonomy census` and read the cap before raising any grant.
 4. **Update docs in the same task as code** — Deferred documentation is stale documentation. See [Pattern 0.7 — Documentation as System Map](../L0-foundation.md#pattern-07--documentation-as-system-map).
 5. **Remove dead code as you find it** — Cleanup is continuous, not periodic. See [Pattern 0.8 — Aggressive Cleanup](../L0-foundation.md#pattern-08--aggressive-cleanup).
 6. **Use the New Starter Test regularly** — It catches gaps that code review misses. See [Pattern 0.9 — AI-as-New-Starter Standard](../L0-foundation.md#pattern-09--ai-as-new-starter-standard).
@@ -236,4 +247,5 @@ installing ([Pattern 2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plu
 - [L3 Optimization](../L3-optimization.md) — Optional token efficiency
 - [L4 Standards & Measurement](../L4-standards-measurement.md) — Evidence, metrics, CI guardrails, context eval
 - [Anti-Patterns](./anti-patterns.md) — Common mistakes to avoid
+- [Earned Autonomy](../earned-autonomy.md) — Curve, cap and grants
 - [Reference Implementation Case Study](../references/reference-telegram-trading-bot-case-study.md) — Project walkthrough with commit statistics (descriptive, not evidence)

@@ -1,6 +1,6 @@
 ---
 name: tdd+
-description: "Invoke AFTER plan+ is approved. Wraps superpowers:test-driven-development with full-loop assertions, real-dependency enforcement for stack tests, zero-defect, stale test detection, and scoped test runs. Implements plan tasks with RED-GREEN-REFACTOR discipline."
+description: "Invoke AFTER plan+ is approved. Wraps superpowers:test-driven-development with full-loop assertions, real-dependency rules for stack tests, zero-defect, stale test detection, and scoped test runs. Implements plan tasks with RED-GREEN-REFACTOR discipline."
 argument-hint: "[plan file path or task range]"
 user-invocable: true
 owner: franklywatson
@@ -13,10 +13,12 @@ reviewed: 2026-11-19
 
 Wraps `superpowers:test-driven-development`. Requires superpowers to be installed.
 
-**This skill activates tdd+ phase in the enforcement layer.** During this phase:
+This skill is prompt-level guidance. It guarantees nothing by itself. If hooks that track phases are installed
+(for example by `rig init`), the skill also switches the hook phase to tdd+ and the hooks can redirect full-suite
+runs and warn about stale tests; without hooks, the agent follows the same rules from this text. During this phase:
 
-- Full test suite runs are redirected (use scoped tests only)
-- Stale test warnings fire when source edits lack test updates
+- Run scoped tests only; the full suite is reserved for verify+
+- Check that every source edit has a matching test update
 - The Constitutional Rules in AGENTS.md apply (real dependencies in stack/E2E tests; mocks only in unit tests)
 
 ## Procedure
@@ -26,10 +28,10 @@ Wraps `superpowers:test-driven-development`. Requires superpowers to be installe
 1. Announce phase entry:
 
    ```
-   Now using tdd+ skill. Enforcement layer active:
+   Now using tdd+ skill. Rules for this phase:
    - Test scope: scoped runs only (full suite reserved for verify+)
-   - Stale tests: warnings when source edited without test updates
-   - Zero-defect: every failure must be fixed before proceeding
+   - Stale tests: update the test when a source file changes
+   - Zero-defect: every failure is fixed before proceeding
    ```
 
 2. Load the plan from the path given in the argument, or from the current session.
@@ -52,7 +54,7 @@ Wraps `superpowers:test-driven-development`. Requires superpowers to be installe
    **GREEN — Write minimal code to make the test pass:**
    - Write the smallest possible implementation
    - Do not add features not in the plan
-   - Run the scoped test: `npx vitest run tests/path/to/specific.test.ts`
+   - Run the scoped test with the project's test command (listed in AGENTS.md), limited to the test file or case
    - Show the passing output
 
    **REFACTOR — Clean up while tests pass:**
@@ -62,8 +64,7 @@ Wraps `superpowers:test-driven-development`. Requires superpowers to be installe
 
 2. After each source file edit, check:
    - Was the corresponding test file also updated?
-   - If not, the enforcement layer will emit a stale test warning
-   - Address it before proceeding to the next task
+   - If not, update it before proceeding to the next task (installed hooks emit a stale test warning here)
 
 ### Phase C: Task Completion
 
@@ -78,19 +79,16 @@ Wraps `superpowers:test-driven-development`. Requires superpowers to be installe
 
 ## Test Scope Rules
 
-During tdd+ phase, the enforcement layer redirects:
-
-- `npx vitest run` (full suite) → advise to run scoped tests only
-- `pytest` (full suite) → advise to run specific test file
-
-Use scoped commands:
+During tdd+ phase, run the project's test command (listed in AGENTS.md) on one test file or case, not on the
+whole suite. Examples of scoped commands, depending on the project's runner:
 
 ```
-npx vitest run tests/router/resolver.test.ts
-pytest tests/test_config.py::test_load_config
+npm test -- tests/unit/gate.test.ts
+uv run pytest tests/unit/test_gate.py::test_gate_blocks_mask
 ```
 
-Full suite runs happen during `verify+` phase, not here.
+Full suite runs happen during `verify+` phase, not here. Installed hooks can redirect a full-suite command
+during this phase.
 
 ## Skill Chain
 

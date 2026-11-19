@@ -84,3 +84,21 @@ test("check passes after the grant is lowered to the cap", () => {
   writeFileSync(path, lowered);
   assert.equal(cli(["check", "--dir", dir, "--now", NOW, "--no-commits"]).status, 0);
 });
+
+const RULES_CASES: Array<[string, boolean]> = [
+  ["rules-import", true],
+  ["rules-claude-only", true],
+  ["rules-agents-only", true],
+  ["rules-agents-not-imported", false],
+  ["rules-none", false],
+];
+
+for (const [name, expected] of RULES_CASES) {
+  test(`constitutional-rules probe on ${name} is ${expected ? "met" : "not met"}`, () => {
+    const dir = gitFixtureRepo(name);
+    cli(["census", "--dir", dir, "--now", NOW]);
+    const profile = JSON.parse(readFileSync(join(dir, ".autonomy", "profile.json"), "utf8"));
+    assert.equal(profile.dimensions.governance.evidence.includes("constitutional-rules"), expected);
+    assert.equal(profile.dimensions.governance.level, expected ? 2 : 1);
+  });
+}

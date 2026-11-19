@@ -2,6 +2,9 @@
   "name": "stack-test-example-typescript",
   "version": "1.0.0",
   "description": "Minimal stack test example in TypeScript",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "test": "jest",
     "test:stack": "jest --config=jest.config.cjs",

@@ -30,9 +30,10 @@ This skill runs after `brain+` has produced a validated design. It creates the i
    [List the Constitutional Rules from AGENTS.md that apply to this plan]
    - Use real [database/payment/logger] connections in stack/E2E tests — mocks are appropriate in unit tests
    - Show command output before claiming done
-   - Every source file change requires corresponding test changes
-   - Full-loop assertions: verify primary + second-order + third-order effects
    ```
+
+   Add project conventions separately (they are not Constitutional Rules): every source file change comes with
+   test changes; full-loop assertions verify primary, second-order and third-order effects.
 
 3. Identify the mock policy for this plan based on the Constitutional Rules:
 

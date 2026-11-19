@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from tests.conftest import NOW, fixture_json
 
 
@@ -75,3 +77,19 @@ def test_check_passes_after_the_grant_is_lowered_to_the_cap(cli, git_fixture_rep
     assert lowered != original
     path.write_text(lowered)
     assert cli(["check", "--dir", str(directory), "--now", NOW, "--no-commits"]).returncode == 0
+
+
+RULES_CASES = [
+    ("rules-import", True),
+    ("rules-claude-only", True),
+    ("rules-agents-only", True),
+    ("rules-agents-not-imported", False),
+    ("rules-none", False),
+]
+
+
+@pytest.mark.parametrize("name,expected", RULES_CASES)
+def test_constitutional_rules_probe(cli, git_fixture_repo, name, expected):
+    governance = census(cli, git_fixture_repo(name))["dimensions"]["governance"]
+    assert ("constitutional-rules" in governance["evidence"]) is expected
+    assert governance["level"] == (2 if expected else 1)

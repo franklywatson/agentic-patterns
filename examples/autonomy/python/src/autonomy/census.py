@@ -21,6 +21,7 @@ from autonomy.util import (
 
 FRESH_DAYS = 90
 WORKSHEET_MAX_AGE_DAYS = 90
+AGENTS_IMPORT = re.compile(r"(^|\s)@AGENTS\.md\b", re.M)
 CHECK_CMD = re.compile(r"\b(npm (run )?(test|check)|pnpm (run )?(test|check)|pytest|make (test|check))\b")
 
 
@@ -31,6 +32,11 @@ class Ctx:
         self.files = list_files(directory)
         self.settings = self._json(".claude/settings.json")
         self.claude_md = self.text("CLAUDE.md")
+        # Rules live in CLAUDE.md, plus AGENTS.md when CLAUDE.md imports it or CLAUDE.md is absent.
+        if not self.exists("CLAUDE.md") or AGENTS_IMPORT.search(self.claude_md):
+            self.rules_text = self.claude_md + "\n" + self.text("AGENTS.md")
+        else:
+            self.rules_text = self.claude_md
         workflow_files = [f for f in self.files if re.fullmatch(r"\.github/workflows/.+\.ya?ml", f)]
         self.workflows = "\n".join(self.text(f) for f in workflow_files)
         self.codeowners = "\n".join(self.text(p) for p in ("CODEOWNERS", ".github/CODEOWNERS", "docs/CODEOWNERS"))
@@ -199,7 +205,7 @@ PROBES: list[Probe] = [
     Probe("operating_model", 4, "review-tiers", lambda c: c.exists("REVIEW.md") or len(_codeowners_sets(c)) >= 2),
     Probe("operating_model", 5, "retired-rules-recorded", lambda c: c.exists("docs/retired.md")),
     # governance
-    Probe("governance", 2, "constitutional-rules", lambda c: re.search(r"constitutional", c.claude_md, re.I) is not None),
+    Probe("governance", 2, "constitutional-rules", lambda c: re.search(r"constitutional", c.rules_text, re.I) is not None),
     Probe("governance", 3, "sandbox-locked", lambda c: _sandbox(c).get("enabled") is True and _sandbox(c).get("allowUnsandboxedCommands") is False),
     Probe("governance", 3, "deny-rules", lambda c: _non_empty_list((c.settings.get("permissions") or {}).get("deny"))),
     Probe("governance", 3, "extensions-pinned", _pins_valid),

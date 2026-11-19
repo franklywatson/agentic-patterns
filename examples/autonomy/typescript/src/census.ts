@@ -17,6 +17,7 @@ interface Ctx {
   changedWithin(path: string, days: number): boolean;
   settings: Json;
   claudeMd: string;
+  rulesText: string;
   workflows: string;
   codeowners: string;
   register: Json | null;
@@ -32,6 +33,15 @@ interface Probe {
 }
 
 const CHECK_CMD = /\b(npm (run )?(test|check)|pnpm (run )?(test|check)|pytest|make (test|check))\b/;
+
+const AGENTS_IMPORT = /(^|\s)@AGENTS\.md\b/m;
+
+/** Text that can hold the rules: CLAUDE.md, plus AGENTS.md when CLAUDE.md imports it or CLAUDE.md is absent. */
+function rulesTextOf(text: (p: string) => string, exists: (p: string) => boolean): string {
+  const claude = text("CLAUDE.md");
+  if (!exists("CLAUDE.md") || AGENTS_IMPORT.test(claude)) return `${claude}\n${text("AGENTS.md")}`;
+  return claude;
+}
 
 function build(dir: string, now: number): Ctx {
   const files = listFiles(dir);
@@ -79,6 +89,7 @@ function build(dir: string, now: number): Ctx {
     },
     settings: json(".claude/settings.json"),
     claudeMd: text("CLAUDE.md"),
+    rulesText: rulesTextOf(text, (p) => existsSync(join(dir, p))),
     workflows: workflowFiles.map(text).join("\n"),
     codeowners,
     register,
@@ -175,7 +186,7 @@ export const PROBES: Probe[] = [
   { dimension: "operating_model", level: 4, id: "review-tiers", test: (c) => c.exists("REVIEW.md") || codeownersSets(c).size >= 2 },
   { dimension: "operating_model", level: 5, id: "retired-rules-recorded", test: (c) => c.exists("docs/retired.md") },
   // governance
-  { dimension: "governance", level: 2, id: "constitutional-rules", test: (c) => /constitutional/i.test(c.claudeMd) },
+  { dimension: "governance", level: 2, id: "constitutional-rules", test: (c) => /constitutional/i.test(c.rulesText) },
   { dimension: "governance", level: 3, id: "sandbox-locked", test: (c) => sandbox(c).enabled === true && sandbox(c).allowUnsandboxedCommands === false },
   { dimension: "governance", level: 3, id: "deny-rules", test: (c) => nonEmptyArray(c.settings.permissions?.deny) },
   { dimension: "governance", level: 3, id: "extensions-pinned", test: pinsValid },

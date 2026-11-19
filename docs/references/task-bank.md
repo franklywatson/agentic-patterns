@@ -24,7 +24,7 @@ Each task has four fields:
 Expected values, seeds and the check parameters live in `scripts/task-bank/` (`answers.json`, `seeds/`, `run.py`).
 The runner copies the repository into a scratch directory without `scripts/task-bank/`, so the agent cannot read
 them, and it never writes into the repository's fixtures. None of these tasks may be passed by mocking a stack
-dependency ([Pattern 1.5](../L1-patterns/1.5-no-mock-philosophy.md)).
+dependency ([Pattern 1.5](../L1-patterns/1.5-real-dependencies.md)).
 
 Lookup tasks (T-03, T-04, T-06, T-09, T-10, T-11) check whether the agent finds and applies a rule that is written in
 the library. They discriminate little between models and are included because a removed artefact can break the lookup.
@@ -70,9 +70,9 @@ the library. They discriminate little between models and are included because a 
 
 ### T-05 Place a fixture repository on the curve
 
-- **Prompt**: Using the repository's own tooling, find the cap and the level of each dimension for
+- **Prompt**: Using the repository's own tooling, find the cap and the position of each dimension for
   `examples/autonomy/fixtures/repos/adopter`. Write `ANSWER.json` with `cap` and `levels` (a map from dimension name
-  to level, with `unknown` where the tool reports it).
+  to position, with `unknown` where the tool reports it).
 - **Artefact**: `ANSWER.json`.
 - **Check**: Mechanical comparison against the census output for the fixture. The runner works in a scratch copy, so
   running `census` there does not change the repository.
@@ -171,26 +171,43 @@ the library. They discriminate little between models and are included because a 
 - **Artefact**: A change to the application code.
 - **Check**: Mechanical (needs Docker). The runner plants the seed (`seeds/T-15.patch`). Nothing under `tests/`
   changed, no `.skip`, `.only` or `xfail` was added, and `npm run test:stack` passes.
-- **Relies on**: Patterns 1.6, 1.9, testing infrastructure.
+- **Relies on**: Patterns 1.1, 1.6, 1.9.
 
 ## Run Log
 
 One row per run. A run covers all 15 tasks with one set of artefacts removed. The first row of each re-baselining is
-the baseline with nothing removed. The runner also appends one JSON line per run to `scripts/task-bank/run-log.jsonl`.
+the baseline with nothing removed. The runner also appends one JSON line per run to `scripts/task-bank/run-log.jsonl`
+with the date, the `--model` value, the commit, the artefacts removed and the task ids passed, failed and skipped.
+It does not record the effort level or the harness; write those in this table by hand.
 
-| Date | Model | Commit | Artefacts removed | Task ids passed |
-|------|-------|--------|-------------------|-----------------|
-| (no run recorded) | | | | |
+| Field | What to record |
+|-------|----------------|
+| Date | Date of the run |
+| Model | Model id the harness command sets (for Claude Code, `--model <id>`) |
+| Effort | Effort level the harness command sets (for Claude Code, `--effort <level>`; available levels depend on the model) |
+| Harness | Harness name and version (for Claude Code, the output of `claude --version`) |
+| Commit | Commit of this repository |
+| Artefacts removed | Paths passed with `--remove`, or none for the baseline |
+| Task ids passed | Tasks that passed in every repeat |
+
+| Date | Model | Effort | Harness | Commit | Artefacts removed | Task ids passed |
+|------|-------|--------|---------|--------|-------------------|-----------------|
+| (no run recorded) | | | | | | |
 
 ## Procedure for a Run
 
-1. Pin the model id and the commit. Record both in the run log before starting.
+1. Pin the model id, the effort level, the harness version and the commit, and record them in the run log before
+   starting. The harness command sets the model and effort; the runner does not. User-level instruction files
+   (`~/.claude/CLAUDE.md`, `~/.claude/rules/`) and auto memory load into every Claude Code session
+   ([memory](https://code.claude.com/docs/en/memory)), so run under a user profile without them, or set
+   `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` and record what else loaded.
 2. Build the autonomy CLI once (`cd examples/autonomy/typescript && npm ci && npm run build`). Tasks that need Docker
    need a running Docker daemon.
-3. Run `python3 scripts/task-bank/run.py --agent-cmd "<harness command>" --model <id>`. The runner makes a fresh
-   scratch copy of the repository for each task, without `scripts/task-bank/`, plants any seed, removes each path
-   named by `--remove`, runs the harness command in the copy with the prompt on stdin (and in `TASK_PROMPT`), and
-   scores the result against `answers.json`.
+3. Run `python3 scripts/task-bank/run.py --agent-cmd "<harness command>" --model <id>`. `--model` only writes the
+   id to the run log; it is not passed to the harness command. The runner makes a fresh scratch copy of the
+   repository for each task, without `scripts/task-bank/`, plants any seed, removes each path named by `--remove`,
+   runs the harness command in the copy with the prompt on stdin (and in `TASK_PROMPT`), and scores the result
+   against `answers.json`.
 4. Run the baseline first, with nothing removed. A task that fails at baseline is fixed or replaced before any artefact
    is tested, and the change is recorded.
 5. Repeat with one artefact removed at a time (`--remove PATH`): the instruction file's rules, each skill, each hook,
@@ -204,9 +221,8 @@ the baseline with nothing removed. The runner also appends one JSON line per run
 
 `python3 scripts/task-bank/run.py --dry-run` scores a known-good and a known-bad artefact for the tasks that have
 dry-run data in `answers.json` (T-03 to T-07, T-09 to T-13) and exits 1 if either is scored wrongly. It skips the
-Docker tasks (T-01, T-02, T-08, T-15; add `--docker` to include them where data exists) and T-14, which has no
-dry-run data. Build the autonomy CLI first (step 2 above); T-05 and T-12 run it. Run the dry run after changing a
-check or an answer.
+Docker tasks (T-01, T-02, T-08, T-15) and T-14, none of which has dry-run data yet. Build the autonomy CLI first
+(step 2 above); T-05 and T-12 run it. Run the dry run after changing a check or an answer.
 
 Add a task when a failure in real work was not caught by any task. Retire a task only with a note in the run log that
 says why.

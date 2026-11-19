@@ -50,7 +50,7 @@ ecommerce-app/
 - Related code scattered across `services/`, `handlers/`, `utils/`, `types/`
 - Can't find all order processing logic in one place
 - File paths don't indicate domain
-- 18 files at top level of `src/` — cognitive overload
+- 19 files spread across five technical-layer directories in `src/`
 
 ---
 
@@ -136,7 +136,7 @@ ecommerce_bot/
 
 **Problems**:
 
-- 20+ files at root — no structure
+- 17 modules at the root, with no structure
 - No indication of which files belong together
 - `utils.py` and `constants.py` become dumping grounds
 - Can't navigate without reading everything
@@ -198,7 +198,7 @@ ecommerce_bot/
 | Aspect | Before | After |
 |--------|--------|-------|
 | **Grouping** | Technical layer (`services/`, `utils/`) | Domain/capability (`orders/`, `inventory/`) |
-| **Exports** | 20+ functions, leaking internals | 3-5 exports per module |
+| **Exports** | Many functions, leaking internals | 3-5 exports per module |
 | **Discovery** | Flat or scattered | Progressive disclosure |
 | **Navigation** | File paths meaningless | File paths signal domain |
 | **Testing** | Unit/integration split | Stack tests at domain boundaries |
@@ -209,4 +209,4 @@ ecommerce_bot/
 
 - [L0 Foundation](../../docs/L0-foundation.md) — Deep modules, progressive disclosure, conceptual organization
 - [L1 Closed Loop Design](../../docs/L1-feedback-loops.md) — Stack tests at module boundaries
-- [L2 Behavioral Guardrails](../../docs/L2-behavioral-guardrails.md) — Skills that enforce structural conventions
+- [L2 Behavioral Guardrails](../../docs/L2-behavioral-guardrails.md) — Skills that carry structural conventions
