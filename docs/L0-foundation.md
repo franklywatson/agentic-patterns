@@ -1,3 +1,8 @@
+---
+last-validated-model: claude-opus-5-5
+reviewed: 2026-11-19
+---
+
 # L0: Foundation — Project Structure for AI Accessibility
 
 Your codebase is the biggest influence on AI's output. Structure it so an AI with zero prior context can navigate, understand, and contribute effectively.
@@ -183,7 +188,7 @@ Keep the file short, owned, tested and re-baselined:
 - **Short**: link to docs for anything long. CI warns at about 200 lines. Length costs context on every session, and instruction-following accuracy falls as the number of instructions grows ([SC-6](references/sources.md)).
 - **Owned**: a named person owns the file and records a reviewed date in it.
 - **Tested**: CI checks the file (line count, links, reachability of every doc).
-- **Re-baselined**: at each model upgrade, test whether each rule still changes behaviour, and delete the rules that no longer do.
+- **Re-baselined**: at each model upgrade, test whether each rule still changes behaviour, and delete the rules that no longer do ([Pattern 0.10](#pattern-010--prune-and-re-baseline-context)).
 
 **In Practice**:
 
@@ -218,7 +223,7 @@ Claude Code expands `@path` imports into context when CLAUDE.md loads, so an ind
 
 **Anti-Pattern**: Writing tutorials or extensive guides in the instruction file. Every line displaces context the agent needs for the actual task. A file with no owner and no review date, whose rules nobody has re-tested since the last model upgrade, accumulates rules that no longer help.
 
-**Cross-References**: [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether the instruction file succeeds. [Pattern 0.7 — Documentation as System Map](#pattern-07--documentation-as-system-map) covers keeping the system map in sync with code.
+**Cross-References**: [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether the instruction file succeeds. [Pattern 0.10](#pattern-010--prune-and-re-baseline-context) removes rules the current model no longer needs. [Pattern 0.7 — Documentation as System Map](#pattern-07--documentation-as-system-map) covers keeping the system map in sync with code.
 
 **Evidence:** Partial — instruction-file studies disagree on value; the 200-line warning is a house rule (SC-4, SC-5, SC-8, SC-11)
 
@@ -483,12 +488,114 @@ Apply the zero-context rule to every doc section: no undefined terms, no assumed
 
 ---
 
+## Pattern 0.10 — Prune and Re-baseline Context
+
+**Problem**: Instruction files, skills, hooks and routing rules accumulate and are rarely removed. Each rule was
+written to compensate for a weakness of the model of that day. When the model improves, the rule is noise, or it
+pushes the agent away from what the newer model does well. A study of committed AI configuration found that most of
+it is never changed after it is added (MC-11), so presence in the repository says nothing about whether a rule is
+maintained or still helps. Anthropic reports removing over 80% of a system prompt for a new model generation with no
+loss on its evaluations (AN-7).
+
+**Solution**: Treat every context artefact as something with an owner, a review date and an expiry, and test each one
+against the current model by removing it.
+
+A **context artefact** is any file or setting that adds instructions to an agent session: the instruction file, a
+skill, a hook, a deny rule, a routing note, a memory file. The steps:
+
+1. **Owner, `reviewed:` date and expiry per artefact.** Record them where the artefact lives, in front matter for a
+   file or in the [agent register](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) for a
+   hook or setting. An artefact past its expiry is retired or re-reviewed; there is no third state.
+2. **A fixed task bank, run against a pinned model.** 10 to 30 tasks that represent the work agents do in the
+   project. Each task has a prompt, an expected artefact and a check that does not depend on the agent's own report.
+   The bank changes only by recorded additions. The model id is pinned for each run so that a difference between two
+   runs comes from the artefact or the model, not from both. This repository's bank is
+   [the task bank](references/task-bank.md).
+3. **Delete first at each model upgrade, and at least quarterly.** Run the bank without the artefact. If every task
+   passes, delete it. If a task regresses, add the artefact back and record the task that justified it next to the
+   artefact. An artefact with no justifying task is guidance nobody can show is needed.
+4. **Classify each rule as guidance or invariant.** Guidance is prose that shapes how the agent works and is prunable
+   by step 3. An invariant is a rule that must hold regardless of the model: it lives in a hook, a deny rule, a
+   sandbox setting or a required CI check, and is never prose only ([Pattern
+   2.4](L2-behavioral-guardrails.md#pattern-24--constitutional-rules) names the enforcement point per rule). Re-baselining
+   removes prose duplicates of invariants and tests the rest; it does not remove the hook, deny rule or CI check.
+5. **Measure maintained configuration.** Three numbers per artefact set: when each file last changed, how often each
+   skill was invoked in the period, and how many rules have a justifying task. Fail CI on any artefact past its
+   expiry.
+
+**In Practice**:
+
+Front matter for a document or skill file, with the fields this repository checks:
+
+```yaml
+---
+last-validated-model: claude-opus-5-5
+reviewed: 2026-11-19
+---
+```
+
+For artefacts that carry an owner and expiry, add them to the same block:
+
+```yaml
+---
+owner: platform-team
+reviewed: 2026-11-19
+expires: 2027-02-17
+justified-by: T-07
+---
+```
+
+This repository checks the `reviewed:` date of every pattern doc with
+[scripts/check-doc-freshness.py](../scripts/check-doc-freshness.py). It warns at 90 days and fails at 180 days or when
+the key is missing. `last-validated-model:` records the model against which the doc was last read for correctness; the
+script requires the key to be present and does not compare its value with the current model.
+
+A re-baseline run, in order:
+
+1. Pin the model id and record it in the run log.
+2. Run the whole bank with every artefact present. This is the baseline; a task that fails here is a task or model
+   problem, not an artefact problem.
+3. For each artefact, remove it, run the bank, and record which tasks pass.
+4. Delete every artefact whose removal regressed no task. Keep each artefact whose removal regressed a task, and write
+   the task id next to it.
+5. Commit the deletions and the log in one change so that `git revert` restores them.
+
+The run log and procedure for this repository are in [the task bank](references/task-bank.md#run-log).
+
+A rule that must always hold is not a candidate for deletion by this procedure. If removing a prose rule regresses
+nothing because a hook already blocks the violation, delete the prose. If removing it regresses nothing because the
+bank has no task that exercises the rule, add the task before deleting.
+
+**Anti-Pattern**:
+
+- "We added it, so it must help." No artefact is removed because no run shows what it contributes. The
+  configuration only grows ([anti-patterns catalog](cross-cutting/anti-patterns.md#we-added-it-so-it-must-help)).
+- A line cap used as a proxy for signal. A file under its cap can be all noise, and a file over it can be all
+  needed. Length is a warning to look; the test is whether removing a rule changes a task result
+  ([anti-patterns catalog](cross-cutting/anti-patterns.md#line-caps-as-a-proxy-for-signal)).
+- A bank that was written from the artefacts it tests, so it passes with or without them. Draw tasks from real work and
+  incidents.
+- Re-running only the tasks the artefact was written for. A removal can regress an unrelated task.
+- Deleting an invariant because the model "now behaves". A hook or CI check holds the rule for the day the model does
+  not.
+
+**Cross-References**: [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) sets the instruction
+file's owner and review date. [Pattern 0.8](#pattern-08--aggressive-cleanup) is the same discipline for code. [Pattern
+2.4](L2-behavioral-guardrails.md#pattern-24--constitutional-rules) places each rule at an enforcement point. [Pattern
+4.6](L4-standards-measurement.md#pattern-46--context-eval) supplies the scoring method for a task bank. [Pattern
+4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) holds owner and expiry for hooks and
+settings.
+
+**Evidence:** Partial — committed AI configuration is mostly unmaintained and one vendor removed over 80% of a system prompt with no evaluation loss; no controlled study of delete-first re-baselining (MC-11, AN-7, MV-9)
+
+---
+
 ## Related Patterns
 
 - **L1: Closed Loop Design** — Testing at module boundaries validates deep module design
 - **L2: Behavioral Guardrails** — Skills enforce structural conventions during implementation
 - **L3: Optimization** — Good structure reduces token overhead for navigation
-- **L4: Standards & Measurement** — Evidence-based claims, metrics, CI guardrails, context eval
+- **L4: Standards & Measurement** — Evidence-based claims, metrics, CI guardrails, context eval; the task bank scoring in Pattern 0.10 uses [Pattern 4.6](L4-standards-measurement.md#pattern-46--context-eval)
 
 ## Further Reading
 

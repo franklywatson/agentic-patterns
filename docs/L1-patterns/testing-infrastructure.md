@@ -1,3 +1,8 @@
+---
+last-validated-model: claude-opus-5-5
+reviewed: 2026-11-19
+---
+
 # Testing Infrastructure Is Production Code
 
 The tooling that enables stack tests — port allocators, compose file generators, container managers, health check pollers, authentication utilities — is not test scaffolding. It is application code that happens to serve a testing purpose. Treat it with the same rigor as any production module: unit tests, error handling, edge case coverage, and code review.

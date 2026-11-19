@@ -1,6 +1,11 @@
+---
+last-validated-model: claude-opus-5-5
+reviewed: 2026-11-19
+---
+
 # L4: Standards & Measurement
 
-L4 covers evidence-based claims, development metrics, CI guardrails, and context eval. Where L0 establishes foundations and L1-L3 provide execution patterns, L4 checks that those standards hold and measures what they change. Drift detection and the new-starter audit are in L0 ([Pattern 0.7](L0-foundation.md#pattern-07--documentation-as-system-map) and [Pattern 0.9](L0-foundation.md#pattern-09--ai-as-new-starter-standard)).
+L4 covers evidence-based claims, development metrics, CI guardrails, and context eval. Where L0 establishes foundations and L1-L3 provide execution patterns, L4 checks that those standards hold and measures what they change. Drift detection, the new-starter audit and pruning of context artefacts are in L0 ([Pattern 0.7](L0-foundation.md#pattern-07--documentation-as-system-map), [Pattern 0.9](L0-foundation.md#pattern-09--ai-as-new-starter-standard) and [Pattern 0.10](L0-foundation.md#pattern-010--prune-and-re-baseline-context)).
 
 > **Scope note:** Patterns 4.1, 4.4 and 4.5 were not used in the reference project. The rig implements Pattern 4.6
 > (Context Eval) as first-party code, with 6 evaluation suites covering tool routing, enforcement pipelines, Python
@@ -469,6 +474,7 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements context e
 - [Pattern 2.6 — Enforcement Pipeline](L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition) — Pipeline behavior can be eval'd through scenarios
 - [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — Context eval produces evidence for decision-layer effectiveness claims
 - [Pattern 4.5 — CI Guardrails](#pattern-45--ci-guardrails) — Context eval runs in CI as a non-negotiable quality gate
+- [Pattern 0.10 — Prune and Re-baseline Context](L0-foundation.md#pattern-010--prune-and-re-baseline-context) — A task bank scored with this method decides which context artefacts to delete
 
 **Evidence:** Partial — task banks, repeated trials and reading transcripts are documented practice from two vendors; no independent outcome evidence that scored routing improves results (MV-9, MV-10)
 

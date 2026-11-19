@@ -1,3 +1,8 @@
+---
+last-validated-model: claude-opus-5-5
+reviewed: 2026-11-19
+---
+
 # L2: Behavioral Guardrails
 
 Prose is guidance. Hooks are deterministic policy within the harness. Containment and credentials are the boundary. Put each rule at the weakest enforcement point that can hold it:

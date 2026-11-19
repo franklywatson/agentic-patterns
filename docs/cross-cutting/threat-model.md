@@ -1,3 +1,8 @@
+---
+last-validated-model: claude-opus-5-5
+reviewed: 2026-11-19
+---
+
 # Threat Model for an Agentic Repository
 
 This page lists what an agent can reach, what could go wrong, and which pattern holds each risk. Use it to

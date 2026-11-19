@@ -1,3 +1,8 @@
+---
+last-validated-model: claude-opus-5-5
+reviewed: 2026-11-19
+---
+
 # Earned Autonomy
 
 How much one workflow may do without a human is a grant. A named person gives it, evidence supports it, and it is withdrawn when the evidence stops. This guide defines the grants, the records that justify them and the checks that enforce them.

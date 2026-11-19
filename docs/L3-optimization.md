@@ -1,3 +1,8 @@
+---
+last-validated-model: claude-opus-5-5
+reviewed: 2026-11-19
+---
+
 # L3: Optimization (Optional)
 
 **Layer**: Optimization (L3)
