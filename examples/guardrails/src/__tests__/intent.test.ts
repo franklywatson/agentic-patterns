@@ -46,13 +46,16 @@ describe('classifyCommand', () => {
   });
 });
 
-describe('known bypasses (string matching is a nudge, not a control)', () => {
-  // These tests record current behaviour. They are not endorsements: any
-  // process that can run a shell can rewrite files through a path the
-  // patterns do not match. See README.md, "Docker is default-allow" and
-  // the sed -i note.
+describe('known classifier bypasses (string matching is a nudge, not a control)', () => {
+  // The classifier anchors at the start of each segment. These tests record
+  // current behaviour; any process that can run a shell can rewrite files
+  // through a path the patterns do not match.
   it('does not classify /usr/bin/sed -i as file_modify', () => {
     assert.deepEqual(classifyCommand("/usr/bin/sed -i 's/a/b/' f"), ['pass_through']);
+  });
+
+  it('does not classify sed -E -i as file_modify', () => {
+    assert.deepEqual(classifyCommand("sed -E -i 's/a/b/' f"), ['pass_through']);
   });
 
   it('does not classify perl -pi as file_modify', () => {
@@ -66,8 +69,13 @@ describe('known bypasses (string matching is a nudge, not a control)', () => {
     );
   });
 
-  it('does not see through command substitution', () => {
+  it('does not see through runtime-assembled commands', () => {
     assert.deepEqual(classifyCommand("$(echo sed) -i 's/a/b/' f"), ['pass_through']);
+    assert.deepEqual(classifyCommand("S=sed; $S -i 's/a/b/' f"), ['pass_through', 'pass_through']);
+  });
+
+  it('does not flag echo sed -i (anchoring avoids the router false positive)', () => {
+    assert.deepEqual(classifyCommand('echo sed -i hi'), ['pass_through']);
   });
 });
 

@@ -71,6 +71,16 @@ npm test        # runs `npm run build` (tsc) first, then node:test on dist/**/*.
 
 Tests live in `src/__tests__/`. They cover intent classification, environment-aware resolution, the docker default-allow rule, and the known string-matching bypasses. Environment detection (`detectEnvironment`) shells out to `which rtk` and has no injectable seam, so the tests exercise `resolve()` with hand-built `Environment` values instead.
 
+### String matching is a nudge, not a control
+
+The classifier (`src/core/intent.ts`) and the router (`src/config/routing.config.ts`) use different patterns for `sed -i`:
+
+- The classifier is anchored to the start of each segment (`^\s*sed\s+(-i|--in-place)`). It misses `/usr/bin/sed -i` and `sed -E -i`.
+- The router rule is unanchored (`\bsed\s+(-i|--in-place)\b`). It catches `/usr/bin/sed -i` but also blocks harmless text such as `echo sed -i` (false positive). It misses `sed -E -i`.
+- Neither matches `perl -pi`, `python -c` file writes, or commands assembled at runtime (`$(echo sed) -i ...`).
+
+Use a containment boundary for limits that must hold.
+
 ## Intent Types
 
 | Intent | Description | Default Resolution |

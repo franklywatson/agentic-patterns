@@ -110,24 +110,21 @@ describe('pass-through', () => {
   });
 });
 
-describe('router and classifier disagree on absolute-path sed -i', () => {
-  // The router rule uses an unanchored \bsed pattern, so it blocks
-  // /usr/bin/sed -i and also over-matches `echo sed -i`. The classifier
-  // anchors at the start of the segment and does not flag either command.
-  // README.md says /usr/bin/sed -i bypasses; that is true of classifyCommand
-  // only. Recorded here as current behaviour.
+describe('router sed rule: unanchored, so it over-matches and still has bypasses', () => {
+  // String matching is a nudge, not a control. The router rule
+  // /\bsed\s+(-i|--in-place)\b/ is unanchored, unlike the classifier.
   it('blocks /usr/bin/sed -i', () => {
     assert.equal(route("/usr/bin/sed -i 's/a/b/' f", env()).action, 'block');
   });
 
-  it('blocks echo sed -i (false positive)', () => {
+  it('blocks echo sed -i (false positive on harmless text)', () => {
     assert.equal(route('echo sed -i hi', env()).action, 'block');
   });
-});
 
-describe('known bypasses of the router patterns', () => {
-  // String matching is a nudge, not a control. perl, python and command
-  // substitution rewrite files without matching any rule.
+  it('allows sed -E -i', () => {
+    assert.deepEqual(route("sed -E -i 's/a/b/' f", env()), { action: 'allow' });
+  });
+
   it('allows perl -pi', () => {
     assert.deepEqual(route("perl -pi -e 's/a/b/' f", env()), { action: 'allow' });
   });
@@ -136,8 +133,9 @@ describe('known bypasses of the router patterns', () => {
     assert.deepEqual(route(`python -c "open('f','w').write('x')"`, env()), { action: 'allow' });
   });
 
-  it('allows sed -i hidden behind command substitution', () => {
+  it('allows runtime-assembled sed -i', () => {
     assert.deepEqual(route("$(echo sed) -i 's/a/b/' f", env()), { action: 'allow' });
+    assert.deepEqual(route("S=sed; $S -i 's/a/b/' f", env()), { action: 'allow' });
   });
 });
 

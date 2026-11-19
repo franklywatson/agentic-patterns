@@ -210,7 +210,7 @@ hook.on('PreToolUse', (tool, args) => {
 });
 ```
 
-**Limits of string matching.** Matching `sed -i` in the command string is an ergonomic nudge that steers the agent to the Edit tool. It is not a security control: `/usr/bin/sed -i`, `perl -pi`, `python -c` file writes and `$(...)` substitution all bypass it. Enforce destructive-operation limits with a containment boundary (sandbox, credential scope); see [the containment prerequisite track](refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people).
+**Limits of string matching.** Matching `sed -i` in the command string is an ergonomic nudge that steers the agent to the Edit tool. It is not a security control. `command.includes('sed -i')` catches `/usr/bin/sed -i`, but not `sed -E -i`, `sed --in-place`, `perl -pi`, `python -c` file writes, or a command assembled at runtime (`$(echo sed) -i ...`, `S=sed; $S -i ...`); it also matches harmless text such as `echo sed -i`. Enforce destructive-operation limits with a containment boundary (sandbox, credential scope); see [the containment prerequisite track](refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people).
 
 A context-aware hook:
 

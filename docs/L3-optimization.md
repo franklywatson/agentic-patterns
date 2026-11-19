@@ -129,7 +129,7 @@ function classifyCommand(command: string): Intent[] {
 
 Precedence is critical: `sed -i` must match before generic text patterns, else it gets classified as `text_search` and allowed through.
 
-String matching is an ergonomic nudge, not a security control. `/usr/bin/sed -i`, `perl -pi` and `$(...)` substitution bypass these patterns, and the `docker` intent allows every Docker command (Docker socket access is root-equivalent). Use a containment boundary (sandbox, credential scope) for limits that must hold; see [the containment prerequisite track](refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people).
+String matching is an ergonomic nudge, not a security control. the anchored classifier pattern (`^\s*sed\s+(-i|--in-place)`) misses `/usr/bin/sed -i` and `sed -E -i`, and every pattern misses `perl -pi`, `python -c` file writes and `$(...)` substitution, and the `docker` intent allows every Docker command (Docker socket access is root-equivalent). Use a containment boundary (sandbox, credential scope) for limits that must hold; see [the containment prerequisite track](refresh/synthesis.md#6-prerequisite-track-containment-ownership-and-people).
 
 ### Anti-Pattern
 
