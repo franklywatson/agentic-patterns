@@ -1,3 +1,5 @@
+import pytest
+
 from repair_loop.classify import classify
 from repair_loop.diff import glob_match, parse_diff
 from support.builders import make_diff, patch_text, rules
@@ -65,6 +67,37 @@ def test_an_outbound_http_call_raises_the_class_to_r4():
 
 def test_a_changed_line_that_mentions_a_password_raises_blast_to_b3():
     assert cls(make_diff("app/src/routes/users.py", ["password = body.password"])).blast == "B3"
+
+
+def test_an_openapi_change_is_b2():
+    result = cls(make_diff("app/openapi.yaml", ["x"]))
+    assert (result.reversibility, result.blast) == ("R2", "B2")
+
+
+@pytest.mark.parametrize("path", ["app/src/routes/../auth.py", "tests/../app/src/routes/evil.py"])
+def test_unsafe_paths_take_the_unknown_class_and_are_not_normalized_into_a_lower_one(path):
+    result = cls(make_diff(path, ["x"]))
+    assert (result.reversibility, result.blast) == ("R4", "B3")
+
+
+def test_redundant_segments_in_a_safe_path_are_normalized_before_matching():
+    assert cls(make_diff("app/src/./auth.py", ["x"])).blast == "B3"
+
+
+def test_parse_diff_follows_hunk_counts_a_removed_line_starting_with_dashes_hides_nothing():
+    text = "\n".join([
+        "--- a/app/src/routes/users.py", "+++ b/app/src/routes/users.py", "@@ -1,2 +1,3 @@",
+        "--- sql comment", " keep", "+except Exception:", "+    pass", "",
+    ])
+    (file,) = parse_diff(text)
+    assert file.removed == ["-- sql comment"]
+    assert file.added == ["except Exception:", "    pass"]
+
+
+def test_parse_diff_reads_a_directory_diff_first_component_stripped_added_detected_by_hunk():
+    text = "\n".join(["--- base/tests/x.py\t1970-01-01", "+++ base-candidate/tests/x.py\t2026-01-01", "@@ -0,0 +1,1 @@", "+x", ""])
+    (file,) = parse_diff(text)
+    assert (file.path, file.status, file.added) == ("tests/x.py", "added", ["x"])
 
 
 def test_the_class_of_a_diff_is_the_maximum_over_its_files():

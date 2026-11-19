@@ -1,4 +1,4 @@
-import { globMatch } from './diff';
+import { globMatch, isUnsafePath, normalizePath } from './diff';
 import type { Blast, Classification, DiffFile, Reversibility } from './types';
 import type { ReversibilityRules } from './config';
 
@@ -27,8 +27,9 @@ export function classify(files: DiffFile[], rules: ReversibilityRules): Classifi
   let reversibility: Reversibility = 'R0';
   let blast: Blast = 'B0';
   const reasons: string[] = [];
-  for (const file of files) {
-    const rule = rules.paths.find((p) => globMatch(p.glob, file.path));
+  for (const diffFile of files) {
+    const file = { ...diffFile, path: normalizePath(diffFile.path) };
+    const rule = isUnsafePath(file.path) ? undefined : rules.paths.find((p) => globMatch(p.glob, file.path));
     if (rule) {
       reversibility = maxR(reversibility, rule.reversibility);
       blast = maxB(blast, rule.blast);
@@ -38,7 +39,7 @@ export function classify(files: DiffFile[], rules: ReversibilityRules): Classifi
       blast = maxB(blast, rules.unknown.blast);
       reasons.push(`${file.path}: no rule, unknown -> ${rules.unknown.reversibility}/${rules.unknown.blast}`);
     }
-    if (file.path.startsWith('tests/')) continue;
+    if (!isUnsafePath(file.path) && file.path.startsWith('tests/')) continue;
     const changed = [...file.added, ...file.removed].join('\n');
     for (const content of rules.content) {
       if (new RegExp(content.pattern, 'i').test(changed)) {

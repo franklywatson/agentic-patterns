@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from .classify import exceeds
-from .diff import glob_match
+from .diff import glob_match, is_unsafe_path, normalize_path
 from .models import GRANTS, Decision, EvidenceBundle, GateResult, RepairPolicy
 
 SEVERITY: dict[str, int] = {"auto": 0, "human": 1, "block": 2}
@@ -25,10 +25,10 @@ def gate(bundle: EvidenceBundle, policy: RepairPolicy) -> GateResult:
     if repro.frozen_sha256 != repro.current_sha256:
         add("block", "reproduction test changed after it was frozen")
     for file in bundle.diff:
-        if any(glob_match(g, file.path) for g in policy.protected_paths):
+        if is_unsafe_path(file.path):
+            add("block", f"diff contains unsafe path {file.path}")
+        elif any(glob_match(g, normalize_path(file.path)) for g in policy.protected_paths):
             add("block", f"diff touches protected path {file.path}")
-        elif file.status != "added" and glob_match(policy.existing_tests_glob, file.path):
-            add("block", f"diff modifies existing test {file.path}")
     if not repro.green_on_candidate:
         add("block", "reproduction is not green on the candidate")
     if bundle.regression != "pass":

@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import re
+from dataclasses import replace
 
 from .config import ReversibilityRules
-from .diff import glob_match
+from .diff import glob_match, is_unsafe_path, normalize_path
 from .models import BLAST, REVERSIBILITY, Classification, DiffFile
 
 
@@ -35,8 +36,9 @@ def classify(files: list[DiffFile], rules: ReversibilityRules) -> Classification
         )
     reversibility, blast = "R0", "B0"
     reasons: list[str] = []
-    for file in files:
-        rule = next((p for p in rules.paths if glob_match(p["glob"], file.path)), None)
+    for diff_file in files:
+        file = replace(diff_file, path=normalize_path(diff_file.path))
+        rule = None if is_unsafe_path(file.path) else next((p for p in rules.paths if glob_match(p["glob"], file.path)), None)
         if rule:
             reversibility = max_r(reversibility, rule["reversibility"])
             blast = max_b(blast, rule["blast"])
@@ -47,7 +49,7 @@ def classify(files: list[DiffFile], rules: ReversibilityRules) -> Classification
             reasons.append(
                 f"{file.path}: no rule, unknown -> {rules.unknown['reversibility']}/{rules.unknown['blast']}"
             )
-        if file.path.startswith("tests/"):
+        if not is_unsafe_path(file.path) and file.path.startswith("tests/"):
             continue
         changed = "\n".join([*file.added, *file.removed])
         for content in rules.content:

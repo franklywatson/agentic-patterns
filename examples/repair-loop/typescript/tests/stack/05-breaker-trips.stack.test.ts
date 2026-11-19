@@ -7,17 +7,17 @@
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { engageStop, recordRecurrence, restoreGrant } from '../../src/breaker';
+import { engageStop, restoreGrant } from '../../src/breaker';
 import { gate } from '../../src/gate';
 import { fingerprintsFromLog } from '../../src/incident';
-import { runRepair } from '../../src/loop';
+import { observeRecurrence, runRepair } from '../../src/loop';
 import { loadRules } from '../../src/config';
 import axios from 'axios';
 import { cleanup, incident, outboxOf, patchPath, repairWith } from './support';
 
 describe('Stack Test 05: the breaker trips on a recurrence', () => {
   let first: Awaited<ReturnType<typeof repairWith>>;
-  let afterRecurrence: ReturnType<typeof recordRecurrence>;
+  let afterRecurrence: ReturnType<typeof observeRecurrence>;
 
   beforeAll(async () => {
     first = await repairWith('INC-001.fix.patch');
@@ -25,9 +25,8 @@ describe('Stack Test 05: the breaker trips on a recurrence', () => {
     const regressed = await first.env.deploy(first.outcome.base!);
     try {
       await axios.get(`${regressed.baseUrl}${incident().request.path}`, { validateStatus: () => true });
-      const seen = fingerprintsFromLog(regressed.logs());
-      expect(seen).toContain(incident().fingerprint);
-      afterRecurrence = recordRecurrence(first.outcome.breaker, incident().fingerprint, first.env.now() + 3600_000, first.policy);
+      expect(fingerprintsFromLog(regressed.logs())).toContain(incident().fingerprint);
+      afterRecurrence = observeRecurrence(first.outcome.breaker, incident(), regressed.logs(), first.env.now() + 3600_000, first.policy);
     } finally {
       regressed.stop();
     }

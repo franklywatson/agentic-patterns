@@ -10,11 +10,11 @@ from pathlib import Path
 import httpx
 import pytest
 
-from repair_loop.breaker import engage_stop, record_recurrence, restore_grant
+from repair_loop.breaker import engage_stop, restore_grant
 from repair_loop.config import load_rules
 from repair_loop.gate import gate
 from repair_loop.incident import fingerprints_from_log
-from repair_loop.loop import run_repair
+from repair_loop.loop import observe_recurrence, run_repair
 from repair_loop.runtime import DockerEnvironment
 from stack.support import cleanup, incident, outbox_of, patch_path, repair_with
 
@@ -37,7 +37,7 @@ def after_recurrence(first):
     try:
         httpx.get(f"{regressed.base_url}{incident().request['path']}")
         assert incident().fingerprint in fingerprints_from_log(regressed.logs())
-        return record_recurrence(first.outcome.breaker, incident().fingerprint, first.env.now() + 3600, first.policy)
+        return observe_recurrence(first.outcome.breaker, incident(), regressed.logs(), first.env.now() + 3600, first.policy)
     finally:
         regressed.stop()
 

@@ -23,6 +23,7 @@ class Incident:
     expected: dict[str, Any]
     dependencies: dict[str, Any]
     detected_at: str
+    replay_paths: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -90,7 +91,6 @@ class RepairPolicy:
     min_grant_for_auto: str
     auto_ceiling: dict[str, str]
     protected_paths: list[str]
-    existing_tests_glob: str
     attempts_per_fingerprint: int
     cooldown_seconds: int
     recurrence_window_days: int

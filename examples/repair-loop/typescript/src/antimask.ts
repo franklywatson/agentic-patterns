@@ -1,3 +1,4 @@
+import { isUnsafePath, normalizePath } from './diff';
 import type { AntimaskHit, DiffFile } from './types';
 
 // Pattern 1.6 forbidden patterns, applied to production diffs: a change that makes the
@@ -22,8 +23,9 @@ function numericSettings(lines: string[]): Map<string, number> {
 /** Scan the added lines of non-test files. Returns every hit; an empty list means clean. */
 export function scanProductionDiff(files: DiffFile[]): AntimaskHit[] {
   const hits: AntimaskHit[] = [];
-  for (const file of files) {
-    if (file.path.startsWith('tests/') || file.status === 'deleted') continue;
+  for (const diffFile of files) {
+    const file = { ...diffFile, path: normalizePath(diffFile.path) };
+    if ((!isUnsafePath(file.path) && file.path.startsWith('tests/')) || file.status === 'deleted') continue;
     file.added.forEach((line, index) => {
       if (CATCH.test(line)) {
         const following = file.added.slice(index, index + CATCH_WINDOW).join('\n');

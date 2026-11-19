@@ -1,5 +1,5 @@
 import { exceeds } from './classify';
-import { globMatch } from './diff';
+import { globMatch, isUnsafePath, normalizePath } from './diff';
 import type { Decision, EvidenceBundle, GatePolicy, GateResult, Grant } from './types';
 
 const GRANT_ORDER: Grant[] = ['A1', 'A2', 'A3', 'A4', 'A5'];
@@ -23,10 +23,10 @@ export function gate(bundle: EvidenceBundle, policy: GatePolicy): GateResult {
     add('block', 'reproduction test changed after it was frozen');
   }
   for (const file of bundle.diff) {
-    if (policy.protectedPaths.some((glob) => globMatch(glob, file.path))) {
+    if (isUnsafePath(file.path)) {
+      add('block', `diff contains unsafe path ${file.path}`);
+    } else if (policy.protectedPaths.some((glob) => globMatch(glob, normalizePath(file.path)))) {
       add('block', `diff touches protected path ${file.path}`);
-    } else if (file.status !== 'added' && globMatch(policy.existingTestsGlob, file.path)) {
-      add('block', `diff modifies existing test ${file.path}`);
     }
   }
   if (!reproduction.greenOnCandidate) add('block', 'reproduction is not green on the candidate');

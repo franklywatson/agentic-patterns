@@ -3,16 +3,16 @@
   "workflow": "repair-loop",
   "grant": "A3",
   "minGrantForAuto": "A3",
-  "autoCeiling": { "reversibility": "R2", "blast": "B1" },
+  "autoCeiling": {
+    "reversibility": "R2",
+    "blast": "B1"
+  },
   "protectedPaths": [
-    "tests/repro/**",
-    "tests/regression/**",
-    "tests/stack/**",
+    "tests/**",
     ".autonomy.yaml",
     ".github/**",
     "shared/config/**"
   ],
-  "existingTestsGlob": "tests/**",
   "budget": {
     "attemptsPerFingerprint": 1,
     "cooldownSeconds": 900

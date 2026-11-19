@@ -50,4 +50,37 @@ describe('incident', () => {
     expect(source).toContain('expect(response.data).toEqual({"error":"User not found"});');
     expect(source).not.toMatch(/\bif\s*\(/);
   });
+
+  test.each([
+    ['id', (r: any) => { r.id = '../../../escaped'; }],
+    ['journey', (r: any) => { r.journey = "x');process.exit(1);('"; }],
+    ['method', (r: any) => { r.request.method = "GET', url: 'x"; }],
+    ['path with a quote', (r: any) => { r.request.path = "/x');require('fs');test('y"; }],
+    ['path with ..', (r: any) => { r.request.path = '/a/../b'; }],
+    ['replay path', (r: any) => { r.replayPaths = ['/ok', '/bad path']; }],
+    ['header value with a newline', (r: any) => { r.request.headers.accept = 'x\nimport os'; }],
+    ['errorClass', (r: any) => { r.errorClass = 'a b'; }],
+  ])('untrusted %s is rejected before any code is generated', (_name, mutate) => {
+    const bad = record();
+    mutate(bad);
+    expect(() => parseIncident(bad)).toThrow(/invalid|does not match|email/);
+  });
+
+  test('secret-like keys are rejected anywhere in request, observed and expected', () => {
+    for (const where of ['request', 'observed', 'expected'] as const) {
+      const bad = record();
+      bad[where].extra = { 'x-api-key': 'k' };
+      expect(() => parseIncident(bad)).toThrow('secret field');
+    }
+    const cookie = record();
+    cookie.request.headers['set-cookie'] = 'a=b';
+    expect(() => parseIncident(cookie)).toThrow('secret field');
+  });
+
+  test('the rendered reproduction carries every record value as a JSON literal', () => {
+    const incident = parseIncident(record());
+    const source = renderReproduction({ ...incident, journey: 'user-lookup' });
+    expect(source).toContain('url: "/users/undefined"');
+    expect(source).toContain('describe("INC-001 reproduction: user-lookup"');
+  });
 });

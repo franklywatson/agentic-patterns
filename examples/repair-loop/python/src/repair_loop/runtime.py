@@ -6,6 +6,7 @@ from __future__ import annotations
 import dataclasses
 import json
 import os
+import re
 import secrets
 import shutil
 import socket
@@ -17,8 +18,9 @@ from pathlib import Path
 
 import httpx
 
+from .diff import is_unsafe_path, parse_diff
 from .incident import fingerprints_from_log
-from .loop import Deployment, Handle, OutboxEntry
+from .loop import Deployment, Handle, OutboxEntry, ReproductionRun
 from .models import Incident
 from .reproduce import freeze_reproduction, read_frozen_hash, repro_path, sha256_file
 
@@ -63,11 +65,42 @@ def remove_workspaces(base: Handle) -> None:
     shutil.rmtree(f"{base.dir}-candidate", ignore_errors=True)
 
 
-def apply_patch(handle: Handle, patch_file: str) -> str:
+def validate_patch(patch_text: str) -> None:
+    """Reject a patch that names an absolute path, a `..` segment, a backslash or a NUL, or that
+    contains no file at all. Both GNU patch and BSD (macOS) patch follow `..` out of the target
+    directory, so the check runs before any patch tool sees the text."""
+    files = parse_diff(patch_text)
+    if not files:
+        raise ValueError("patch contains no files")
+    for file in files:
+        if is_unsafe_path(file.path):
+            raise ValueError(f"patch names an unsafe path: {file.path}")
+    for line in patch_text.split("\n"):
+        if line.startswith(("+++ ", "--- ")):
+            path = re.sub(r"^[^/]+/", "", line[4:].split("\t")[0])
+            if ".." in path.split("/") or path.startswith("/"):
+                raise ValueError(f"patch names an unsafe path: {path}")
+
+
+def apply_patch(handle: Handle, patch_file: str) -> None:
+    """Apply a validated patch inside the workspace only."""
+    validate_patch(Path(patch_file).read_text())
     code, output = _run(["patch", "-p1", "--no-backup-if-mismatch", "-s", "-i", patch_file], cwd=Path(handle.dir))
     if code != 0:
         raise RuntimeError(f"patch {patch_file} failed:\n{output}")
-    return Path(patch_file).read_text()
+
+
+def observed_diff(base: Handle, candidate: Handle) -> str:
+    """The diff that the gate sees: observed between the base and candidate directories."""
+    parent = Path(base.dir).parent
+    code, output = _run(
+        ["diff", "-ruN", "-x", ".repair", "-x", "node_modules", "-x", "__pycache__",
+         Path(base.dir).name, Path(candidate.dir).name],
+        cwd=parent,
+    )
+    if code not in (0, 1):
+        raise RuntimeError(f"diff failed:\n{output}")
+    return output
 
 
 class StackDeployment:
@@ -90,6 +123,8 @@ class StackDeployment:
 
 
 def deploy_stack(handle: Handle) -> StackDeployment:
+    # The compose file is always the pristine template: a candidate cannot change ports or mounts.
+    shutil.copy(ROOT / "docker-compose.yml", Path(handle.dir) / "docker-compose.yml")
     app, postgres, redis = free_ports(3)
     project = f"repair-{os.getpid()}-{secrets.token_hex(3)}"
     env = {**os.environ, "APP_PORT": str(app), "POSTGRES_PORT": str(postgres), "REDIS_PORT": str(redis)}
@@ -106,7 +141,8 @@ def run_pytest(handle: Handle, target: str, base_url: str) -> tuple[bool, str]:
     env = {k: v for k, v in os.environ.items() if k != "PYTEST_CURRENT_TEST"}
     env.update({"REPRO_BASE_URL": base_url, "REGRESSION_BASE_URL": base_url})
     code, output = _run(
-        [sys.executable, "-m", "pytest", "-c", str(ROOT / "pytest.sub.ini"), "--rootdir", handle.dir, target],
+        [sys.executable, "-m", "pytest", "-c", str(ROOT / "pytest.sub.ini"), "--rootdir", handle.dir,
+         "--noconftest", "--import-mode=importlib", target],
         cwd=Path(handle.dir),
         env=env,
     )
@@ -151,31 +187,40 @@ class DockerEnvironment:
         directory = f"{base.dir}-candidate"
         shutil.copytree(base.dir, directory)
         handle = Handle(directory)
-        return handle, apply_patch(handle, patch_file)
+        apply_patch(handle, patch_file)
+        return handle, observed_diff(base, handle)
 
     def deploy(self, handle: Handle) -> Deployment:
         return deploy_stack(handle)
 
-    def run_reproduction(self, handle: Handle, deployment: Deployment) -> bool:
-        passed, output = run_pytest(handle, "tests/repro", deployment.base_url)
-        self.runs.append(TestRun("reproduction", handle.dir, passed, output))
-        return passed
+    def run_reproduction(self, base: Handle, deployment: Deployment, incident: Incident) -> ReproductionRun:
+        passed, output = run_pytest(base, repro_path(incident), deployment.base_url)
+        self.runs.append(TestRun("reproduction", base.dir, passed, output))
+        symptom = f"assert {incident.observed['status']} == {incident.expected['status']}"
+        return ReproductionRun(passed, symptom in output)
 
-    def run_regression(self, handle: Handle, deployment: Deployment) -> bool:
-        passed, output = run_pytest(handle, "tests/regression", deployment.base_url)
-        self.runs.append(TestRun("regression", handle.dir, passed, output))
+    def run_regression(self, base: Handle, deployment: Deployment) -> bool:
+        passed, output = run_pytest(base, "tests/regression/test_app_regression.py", deployment.base_url)
+        self.runs.append(TestRun("regression", base.dir, passed, output))
         return passed
 
     def frozen_hash(self, handle: Handle, incident: Incident) -> str:
         return read_frozen_hash(Path(handle.dir), incident)
 
     def current_hash(self, handle: Handle, incident: Incident) -> str:
-        return sha256_file(Path(handle.dir) / repro_path(incident))
+        path = Path(handle.dir) / repro_path(incident)
+        return sha256_file(path) if path.exists() else "missing"
 
     def traffic(self, deployment: Deployment, incident: Incident, samples: int) -> tuple[int, int]:
-        with httpx.Client(base_url=deployment.base_url, timeout=30.0) as client:
-            for _ in range(samples):
-                client.request(incident.request["method"], incident.request["path"], headers=incident.request["headers"])
+        paths = incident.replay_paths
+        for i in range(samples):
+            # One connection per request: the app closes the connection after a 500. A transport
+            # error still counts as a sample, because the confirmation rule counts samples sent.
+            try:
+                httpx.request(incident.request["method"], deployment.base_url + paths[i % len(paths)],
+                              headers=incident.request["headers"], timeout=30.0)
+            except httpx.TransportError as error:
+                print(f"confirmation request {i} failed: {error}", file=sys.stderr)
         count = sum(1 for f in fingerprints_from_log(deployment.logs()) if f == incident.fingerprint)
         return samples, count
 

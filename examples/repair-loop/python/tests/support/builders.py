@@ -46,7 +46,8 @@ def bundle_from_diff(text: str, **overrides) -> EvidenceBundle:
 
 def make_diff(path: str, added: list[str], removed: list[str] | None = None, status: str = "modified") -> str:
     old = "/dev/null" if status == "added" else f"a/{path}"
-    lines = [f"--- {old}", f"+++ b/{path}", "@@ -1,1 +1,1 @@"]
+    old_start = 0 if status == "added" else 1
+    lines = [f"--- {old}", f"+++ b/{path}", f"@@ -{old_start},{len(removed or [])} +1,{len(added)} @@"]
     lines += [f"-{line}" for line in removed or []]
     lines += [f"+{line}" for line in added]
     return "\n".join(lines) + "\n"

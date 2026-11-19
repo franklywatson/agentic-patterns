@@ -32,5 +32,10 @@
       "connected": true
     }
   },
-  "detectedAt": "2026-11-18T09:14:00Z"
+  "detectedAt": "2026-11-18T09:14:00Z",
+  "replayPaths": [
+    "/users/undefined",
+    "/users/null",
+    "/users/0"
+  ]
 }

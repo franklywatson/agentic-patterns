@@ -55,5 +55,56 @@ def test_the_rendered_reproduction_asserts_the_expected_status_and_body_uncondit
     source = render_reproduction(incident)
     assert repro_path(incident) == "tests/repro/test_inc_001_repro.py"
     assert "assert response.status_code == 404" in source
-    assert 'assert response.json() == {"error": "User not found"}' in source
+    assert "assert response.json() == {'error': 'User not found'}" in source
     assert "\n    if " not in source
+
+
+def _set(path, value):
+    def mutate(r):
+        target = r
+        for key in path[:-1]:
+            target = target[key]
+        target[path[-1]] = value
+    return mutate
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        _set(["id"], "../../../escaped"),
+        _set(["journey"], "x\nimport os"),
+        _set(["request", "method"], "GET():\n    import os\ndef test_x"),
+        _set(["request", "path"], "/x');import os;('"),
+        _set(["request", "path"], "/a/../b"),
+        _set(["replayPaths"], ["/ok", "/bad path"]),
+        _set(["request", "headers", "accept"], "x\nimport os"),
+        _set(["errorClass"], "a b"),
+    ],
+    ids=["id", "journey", "method", "path-quote", "path-dotdot", "replay-path", "header-newline", "error-class"],
+)
+def test_untrusted_fields_are_rejected_before_any_code_is_generated(mutate):
+    bad = record()
+    mutate(bad)
+    with pytest.raises(ValueError, match="invalid|does not match|email"):
+        parse_incident(bad)
+
+
+@pytest.mark.parametrize("where", ["request", "observed", "expected"])
+def test_secret_like_keys_are_rejected_anywhere_in_request_observed_and_expected(where):
+    bad = record()
+    bad[where]["extra"] = {"x-api-key": "k"}
+    with pytest.raises(ValueError, match="secret field"):
+        parse_incident(bad)
+
+
+def test_a_set_cookie_header_is_rejected():
+    bad = record()
+    bad["request"]["headers"]["set-cookie"] = "a=b"
+    with pytest.raises(ValueError, match="secret field"):
+        parse_incident(bad)
+
+
+def test_the_rendered_reproduction_carries_every_record_value_as_a_literal_and_compiles():
+    source = render_reproduction(parse_incident(record()))
+    assert "base_url + '/users/undefined'" in source
+    compile(source, "repro", "exec")

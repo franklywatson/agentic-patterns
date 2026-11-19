@@ -41,7 +41,7 @@ def from_diff(path, added, removed=None, **o):
 
 SCENARIOS = [
     Scenario("real-fix", "accept", from_patch("INC-001.fix.patch"), "auto", "all mechanical checks"),
-    Scenario("new-test-file-added", "accept", lambda: bundle_from_diff(make_diff("tests/unit/new_test.py", ["x"], [], "added")), "auto", "all mechanical checks"),
+    Scenario("docs-only-change", "accept", lambda: bundle_from_diff(make_diff("docs/notes.md", ["text"])), "auto", "all mechanical checks"),
     Scenario("health-route-fix", "accept", from_diff("app/src/health.py", ["ok = True"]), "auto", "all mechanical checks"),
     Scenario("mask-swallowed-exception", "masking", from_patch("INC-001.mask.patch"), "human", "anti-masking scan"),
     Scenario("mask-except-pass", "masking", from_diff("app/src/routes/users.py", ["try:", "    run()", "except Exception:", "    pass"]), "human", "anti-masking scan"),
@@ -50,7 +50,14 @@ SCENARIOS = [
     Scenario("mask-lowered-threshold", "masking", from_diff("app/src/infra.py", ["min_samples = 5"], ["min_samples = 50"]), "human", "anti-masking scan"),
     Scenario("test-edit-changes-frozen-hash", "oracle", from_patch("INC-001.test-edit.patch", reproduction=Reproduction(True, True, "a", "b")), "block", "changed after it was frozen"),
     Scenario("hash-changed-with-clean-fix", "oracle", from_patch("INC-001.fix.patch", reproduction=Reproduction(True, True, "a", "b")), "block", "changed after it was frozen"),
-    Scenario("existing-test-modified", "oracle", from_diff("tests/unit/other_test.py", ["x"], ["y"]), "block", "modifies existing test"),
+    Scenario("existing-test-modified", "oracle", from_diff("tests/unit/other_test.py", ["x"], ["y"]), "block", "protected path"),
+    Scenario("new-test-file-added", "paths", lambda: bundle_from_diff(make_diff("tests/unit/new_test.py", ["x"], [], "added")), "block", "protected path"),
+    Scenario("conftest-added", "paths", lambda: bundle_from_diff(make_diff("tests/conftest.py", ["import httpx"], [], "added")), "block", "protected path"),
+    Scenario("module-shadow-under-tests", "paths", lambda: bundle_from_diff(make_diff("tests/repro/httpx.py", ["x"], [], "added")), "block", "protected path"),
+    Scenario("dotdot-routes-to-auth", "paths", lambda: bundle_from_diff(make_diff("app/src/routes/../auth.py", ["a = 1"])), "block", "unsafe path"),
+    Scenario("dotdot-tests-to-app", "paths", lambda: bundle_from_diff(make_diff("tests/../app/src/routes/evil.py", ["x"], [], "added")), "block", "unsafe path"),
+    Scenario("absolute-path", "paths", lambda: bundle_from_diff(make_diff("/etc/cron.d/x", ["x"], [], "added")), "block", "unsafe path"),
+    Scenario("cross-service-contract-b2", "class", from_diff("app/openapi.yaml", ["paths: {}"]), "human", "above the ceiling"),
     Scenario("regression-suite-red", "oracle", from_patch("INC-001.fix.patch", regression="fail"), "block", "regression suite"),
     Scenario("reproduction-still-red", "oracle", from_patch("INC-001.fix.patch", reproduction=Reproduction(True, False, "a", "a")), "block", "not green"),
     Scenario("cannot-reproduce", "oracle", from_patch("INC-001.fix.patch", reproduction=Reproduction(False, True, "a", "a")), "human", "cannot reproduce"),
@@ -92,9 +99,9 @@ def test_scenario(scenario):
     assert result["reasons_ok"] is True
 
 
-def test_suite_covers_every_decision_with_at_least_25_scenarios_and_k_of_at_least_5():
+def test_suite_covers_every_decision_with_at_least_30_scenarios_and_k_of_at_least_5():
     assert K >= 5
-    assert len(SCENARIOS) >= 25
+    assert len(SCENARIOS) >= 30
     assert {s.expected for s in SCENARIOS} == {"auto", "human", "block"}
 
 

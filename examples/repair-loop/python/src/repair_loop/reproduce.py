@@ -16,7 +16,11 @@ def repro_path(incident: Incident) -> str:
 
 
 def render_reproduction(incident: Incident) -> str:
-    """The test asserts the invariant: the expected status and body."""
+    """The test asserts the invariant: the expected status and body.
+
+    Every value from the incident record enters the source as a Python literal produced by
+    repr() or json.dumps(); the record is validated by parse_incident before it gets here.
+    """
     request, expected = incident.request, incident.expected
     return f'''"""Reproduction for {incident.id} (fingerprint {incident.fingerprint}), journey {incident.journey}.
 
@@ -28,15 +32,15 @@ import os
 import httpx
 
 
-def test_{request["method"].lower()}_request_answers_as_expected():
+def test_request_answers_as_expected():
     base_url = os.environ["REPRO_BASE_URL"]
     response = httpx.request(
-        {json.dumps(request["method"])},
-        base_url + {json.dumps(request["path"])},
-        headers={json.dumps(request["headers"])},
+        {request["method"]!r},
+        base_url + {request["path"]!r},
+        headers={dict(request["headers"])!r},
     )
-    assert response.status_code == {expected["status"]}
-    assert response.json() == {json.dumps(expected["body"])}
+    assert response.status_code == {int(expected["status"])}
+    assert response.json() == {dict(expected["body"])!r}
 '''
 
 

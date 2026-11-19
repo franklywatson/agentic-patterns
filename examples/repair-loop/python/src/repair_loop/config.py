@@ -37,7 +37,6 @@ def load_policy() -> RepairPolicy:
         min_grant_for_auto=raw["minGrantForAuto"],
         auto_ceiling=raw["autoCeiling"],
         protected_paths=raw["protectedPaths"],
-        existing_tests_glob=raw["existingTestsGlob"],
         attempts_per_fingerprint=raw["budget"]["attemptsPerFingerprint"],
         cooldown_seconds=raw["budget"]["cooldownSeconds"],
         recurrence_window_days=raw["breaker"]["recurrenceWindowDays"],

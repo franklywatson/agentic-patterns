@@ -10,7 +10,15 @@ from typing import Any
 from .models import Incident
 
 EMAIL = re.compile(r"[^\s\"'@]+@[^\s\"'@]+\.[^\s\"'@]+")
-SECRET_KEYS = re.compile(r"^(password|passwd|token|authorization|cookie|secret)$", re.I)
+SECRET_KEYS = re.compile(r"(password|passwd|token|authorization|cookie|secret|api[-_]?key)", re.I)
+ID = re.compile(r"INC-[0-9]{1,9}")
+METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
+PATH = re.compile(r"/[A-Za-z0-9._~/%-]*")
+SLUG = re.compile(r"[a-z0-9][a-z0-9-]*")
+ERROR_CLASS = re.compile(r"[A-Za-z0-9:_.-]+")
+ENTRYPOINT = re.compile(r"(GET|POST|PUT|PATCH|DELETE) /[A-Za-z0-9._~/:%-]*")
+HEADER_NAME = re.compile(r"[A-Za-z0-9-]+")
+HEADER_VALUE = re.compile(r"[\x20-\x7e]*")
 REQUIRED = ["id", "fingerprint", "journey", "entrypoint", "errorClass", "request", "observed", "expected", "dependencies"]
 
 
@@ -23,9 +31,34 @@ def _assert_pii_free(value: Any, path: str) -> None:
         raise ValueError(f"incident record contains an email address at {path}")
     if isinstance(value, dict):
         for key, child in value.items():
-            if SECRET_KEYS.match(key):
+            if SECRET_KEYS.search(key):
                 raise ValueError(f"incident record contains a secret field at {path}.{key}")
             _assert_pii_free(child, f"{path}.{key}")
+
+
+def _check(ok: bool, message: str) -> None:
+    if not ok:
+        raise ValueError(f"incident record is invalid: {message}")
+
+
+def _assert_shape(raw: dict[str, Any]) -> None:
+    """Incident records are untrusted input. Every field that reaches generated code or a file path is checked."""
+    _check(isinstance(raw["id"], str) and ID.fullmatch(raw["id"]) is not None, "id must match INC-<digits>")
+    _check(isinstance(raw["journey"], str) and SLUG.fullmatch(raw["journey"]) is not None, "journey must be a lowercase slug")
+    _check(isinstance(raw["entrypoint"], str) and ENTRYPOINT.fullmatch(raw["entrypoint"]) is not None, 'entrypoint must be "<METHOD> /path"')
+    _check(isinstance(raw["errorClass"], str) and ERROR_CLASS.fullmatch(raw["errorClass"]) is not None, "errorClass has unexpected characters")
+    request = raw["request"]
+    _check(request.get("method") in METHODS, "request.method is not allowed")
+    paths = [request.get("path"), *raw.get("replayPaths", [])]
+    _check(
+        all(isinstance(p, str) and PATH.fullmatch(p) is not None and ".." not in p.split("/") for p in paths),
+        "request paths must match the path allowlist",
+    )
+    for name, value in (request.get("headers") or {}).items():
+        _check(HEADER_NAME.fullmatch(name) is not None and isinstance(value, str) and HEADER_VALUE.fullmatch(value) is not None,
+               f"header {name} has unexpected characters")
+    _check(isinstance(raw["observed"].get("status"), int) and isinstance(raw["expected"].get("status"), int), "statuses must be integers")
+    _check(isinstance(raw["expected"].get("body"), dict), "expected.body must be an object")
 
 
 def parse_incident(raw: dict[str, Any]) -> Incident:
@@ -34,6 +67,9 @@ def parse_incident(raw: dict[str, Any]) -> Incident:
         if key not in raw:
             raise ValueError(f'incident record is missing "{key}"')
     _assert_pii_free(raw["request"], "request")
+    _assert_pii_free(raw["observed"], "observed")
+    _assert_pii_free(raw["expected"], "expected")
+    _assert_shape(raw)
     expected = fingerprint_of(raw["entrypoint"], raw["observed"]["status"], raw["errorClass"])
     if raw["fingerprint"] != expected:
         raise ValueError(f"fingerprint {raw['fingerprint']} does not match the record (expected {expected})")
@@ -48,6 +84,7 @@ def parse_incident(raw: dict[str, Any]) -> Incident:
         expected=raw["expected"],
         dependencies=raw["dependencies"],
         detected_at=raw.get("detectedAt", ""),
+        replay_paths=list(raw.get("replayPaths", [raw["request"]["path"]])),
     )
 
 

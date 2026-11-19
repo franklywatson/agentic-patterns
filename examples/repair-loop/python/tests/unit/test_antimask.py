@@ -47,3 +47,7 @@ def test_a_lowered_threshold_is_a_hit_a_raised_one_is_not():
 
 def test_test_files_are_not_production_code():
     assert scan("tests/unit/a_test.py", ["except Exception:", "    pass"]) == []
+
+
+def test_a_path_that_only_looks_like_a_test_path_is_scanned_as_production():
+    assert rules_of(scan("tests/../app/src/a.py", ["except Exception:", "    pass"])) == ["swallowed-exception"]

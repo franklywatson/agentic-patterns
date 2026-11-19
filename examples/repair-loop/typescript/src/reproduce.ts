@@ -7,15 +7,20 @@ export const REPRO_DIR = 'tests/repro';
 
 export const reproPath = (incident: Incident): string => `${REPRO_DIR}/${incident.id}.repro.test.ts`;
 
-/** Render the reproduction stack test. It asserts the invariant: the expected status and body. */
+/**
+ * Render the reproduction stack test. It asserts the invariant: the expected status and body.
+ * Every value from the incident record enters the source as a JSON literal; the record is
+ * validated by parseIncident before it gets here.
+ */
 export function renderReproduction(incident: Incident): string {
   const { request, expected } = incident;
+  const title = JSON.stringify(`${request.method} ${request.path} answers as expected`);
   return `// Reproduction for ${incident.id} (fingerprint ${incident.fingerprint}), journey ${incident.journey}.
 // Generated from the incident record. Frozen before any fix is written.
 import axios from 'axios';
 
-describe('${incident.id} reproduction: ${incident.journey}', () => {
-  test('${request.method} ${request.path} answers as expected', async () => {
+describe(${JSON.stringify(`${incident.id} reproduction: ${incident.journey}`)}, () => {
+  test(${title}, async () => {
     expect(process.env.REPRO_BASE_URL).toBeDefined();
     const response = await axios.request({
       baseURL: process.env.REPRO_BASE_URL,

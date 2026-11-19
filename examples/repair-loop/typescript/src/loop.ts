@@ -1,9 +1,10 @@
 import { scanProductionDiff } from './antimask';
-import { budgetFor, recordAttempt, recordConfirmed, type BreakerState } from './breaker';
+import { budgetFor, recordAttempt, recordConfirmed, recordRecurrence, type BreakerState } from './breaker';
 import { classify } from './classify';
 import type { ReversibilityRules } from './config';
 import { parseDiff } from './diff';
 import { gate } from './gate';
+import { fingerprintsFromLog } from './incident';
 import type { EvidenceBundle, GateResult, Incident, RepairPolicy } from './types';
 
 export type LoopState =
@@ -42,10 +43,16 @@ export interface OutboxEntry { kind: 'ticket' | 'pr' | 'page'; incidentId: strin
 export interface RepairEnvironment {
   now(): number;
   freeze(incident: Incident): Promise<Handle>;
+  /** Apply the patch inside a copy of the base workspace. `patchText` is the observed diff between the two directories. */
   candidate(base: Handle, patchFile: string): Promise<{ handle: Handle; patchText: string }>;
   deploy(handle: Handle): Promise<Deployment>;
-  runReproduction(handle: Handle, deployment: Deployment): Promise<boolean>;
-  runRegression(handle: Handle, deployment: Deployment): Promise<boolean>;
+  /**
+   * Run the frozen reproduction and regression suite from the base workspace against a
+   * deployment. Candidate-supplied test files are never executed. `matchesIncident` is true
+   * when a failure shows the incident's own symptom (not a stack that is down).
+   */
+  runReproduction(base: Handle, deployment: Deployment, incident: Incident): Promise<{ passed: boolean; matchesIncident: boolean }>;
+  runRegression(base: Handle, deployment: Deployment): Promise<boolean>;
   frozenHash(handle: Handle, incident: Incident): string;
   currentHash(handle: Handle, incident: Incident): string;
   traffic(deployment: Deployment, incident: Incident, samples: number): Promise<{ samples: number; fingerprintCount: number }>;
@@ -111,33 +118,30 @@ export async function runRepair(env: RepairEnvironment, input: RepairInput): Pro
   }
 
   const baseDeployment = await env.deploy(base);
-  let reproducedRed: boolean;
-  try {
-    reproducedRed = !(await env.runReproduction(base, baseDeployment));
-  } finally {
-    baseDeployment.stop();
-  }
+  const baseRun = await using(baseDeployment, () => env.runReproduction(base, baseDeployment, incident));
+  const reproducedRed = !baseRun.passed && baseRun.matchesIncident;
   if (!reproducedRed) {
-    move('not_reproduced', 'reproduction passed on the base commit');
-    env.emit(base, { kind: 'ticket', incidentId: incident.id, title: `${incident.id}: cannot reproduce`, owner: policy.owner, detail: ['the reproduction was not red on the base commit'] });
+    const reason = baseRun.passed ? 'cannot reproduce' : 'reproduction failed for a reason other than the incident symptom';
+    move('not_reproduced', reason);
+    env.emit(base, { kind: 'ticket', incidentId: incident.id, title: `${incident.id}: ${reason}`, owner: policy.owner, detail: [reason] });
     breaker = recordAttempt(breaker, incident.fingerprint, env.now(), 'not-reproduced');
-    return finish(['cannot reproduce'], null, null);
+    return finish([reason], null, null);
   }
-  move('reproduced', 'reproduction is red on the base commit');
+  move('reproduced', 'reproduction is red on the base commit with the incident symptom');
 
   const { handle: candidate, patchText } = await env.candidate(base, patchFile);
   move('candidate_ready', `candidate built from ${patchFile}`);
   const diff = parseDiff(patchText);
   const candidateDeployment = await env.deploy(candidate);
-  try {
-    const greenOnCandidate = await env.runReproduction(candidate, candidateDeployment);
-    const regressionPassed = await env.runRegression(candidate, candidateDeployment);
+  return using(candidateDeployment, async () => {
+    const candidateRun = await env.runReproduction(base, candidateDeployment, incident);
+    const regressionPassed = await env.runRegression(base, candidateDeployment);
     const bundle: EvidenceBundle = {
       incidentId: incident.id,
       fingerprint: incident.fingerprint,
       reproduction: {
         redOnBase: reproducedRed,
-        greenOnCandidate,
+        greenOnCandidate: candidateRun.passed,
         frozenSha256: env.frozenHash(base, incident),
         currentSha256: env.currentHash(candidate, incident),
       },
@@ -186,7 +190,32 @@ export async function runRepair(env: RepairEnvironment, input: RepairInput): Pro
       breaker = recordAttempt(breaker, incident.fingerprint, env.now(), 'rolled-back');
     }
     return finish([confirmation], result, bundle);
-  } finally {
-    candidateDeployment.stop();
+  });
+}
+
+/** Stop a deployment after `fn`. A failure to stop never hides the error that `fn` threw. */
+async function using<T>(deployment: Deployment, fn: () => Promise<T>): Promise<T> {
+  let result: T;
+  try {
+    result = await fn();
+  } catch (error) {
+    try {
+      deployment.stop();
+    } catch (stopError) {
+      console.error('failed to stop a deployment after an error:', stopError);
+    }
+    throw error;
   }
+  deployment.stop();
+  return result;
+}
+
+/**
+ * Recurrence monitor: if the application logs show the incident's fingerprint again, report
+ * it to the breaker. Inside the window after a confirmed repair this drops the grant.
+ */
+export function observeRecurrence(breaker: BreakerState, incident: Incident, logText: string, now: number, policy: RepairPolicy): BreakerState {
+  return fingerprintsFromLog(logText).includes(incident.fingerprint)
+    ? recordRecurrence(breaker, incident.fingerprint, now, policy)
+    : breaker;
 }

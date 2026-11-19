@@ -1,18 +1,70 @@
 {
   "version": 1,
-  "unknown": { "reversibility": "R4", "blast": "B3" },
+  "unknown": {
+    "reversibility": "R4",
+    "blast": "B3"
+  },
   "paths": [
-    { "glob": "tests/**", "reversibility": "R0", "blast": "B0" },
-    { "glob": "**/*.md", "reversibility": "R0", "blast": "B0" },
-    { "glob": "app/src/routes/**", "reversibility": "R2", "blast": "B0" },
-    { "glob": "app/src/health.*", "reversibility": "R2", "blast": "B1" },
-    { "glob": "app/src/index.*", "reversibility": "R2", "blast": "B1" },
-    { "glob": "app/src/main.*", "reversibility": "R2", "blast": "B1" },
-    { "glob": "app/src/infra.*", "reversibility": "R2", "blast": "B1" },
-    { "glob": "app/src/auth.*", "reversibility": "R2", "blast": "B3" },
-    { "glob": "app/migrations/**", "reversibility": "R3", "blast": "B1" },
-    { "glob": ".autonomy.yaml", "reversibility": "R4", "blast": "B3" },
-    { "glob": ".github/**", "reversibility": "R4", "blast": "B3" }
+    {
+      "glob": "tests/**",
+      "reversibility": "R0",
+      "blast": "B0"
+    },
+    {
+      "glob": "**/*.md",
+      "reversibility": "R0",
+      "blast": "B0"
+    },
+    {
+      "glob": "app/src/routes/**",
+      "reversibility": "R2",
+      "blast": "B0"
+    },
+    {
+      "glob": "app/src/health.*",
+      "reversibility": "R2",
+      "blast": "B1"
+    },
+    {
+      "glob": "app/src/index.*",
+      "reversibility": "R2",
+      "blast": "B1"
+    },
+    {
+      "glob": "app/openapi.*",
+      "reversibility": "R2",
+      "blast": "B2"
+    },
+    {
+      "glob": "app/src/main.*",
+      "reversibility": "R2",
+      "blast": "B1"
+    },
+    {
+      "glob": "app/src/infra.*",
+      "reversibility": "R2",
+      "blast": "B1"
+    },
+    {
+      "glob": "app/src/auth.*",
+      "reversibility": "R2",
+      "blast": "B3"
+    },
+    {
+      "glob": "app/migrations/**",
+      "reversibility": "R3",
+      "blast": "B1"
+    },
+    {
+      "glob": ".autonomy.yaml",
+      "reversibility": "R4",
+      "blast": "B3"
+    },
+    {
+      "glob": ".github/**",
+      "reversibility": "R4",
+      "blast": "B3"
+    }
   ],
   "content": [
     {

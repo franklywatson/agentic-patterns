@@ -6,6 +6,8 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   testMatch: ['**/tests/repro/*.repro.test.ts', '**/tests/regression/*.regression.test.ts'],
+  roots: ['<rootDir>/tests/repro', '<rootDir>/tests/regression'],
+  moduleDirectories: [require('node:path').join(__dirname, 'node_modules')],
   testTimeout: 60000,
   transform: { '^.+\\.ts$': ['ts-jest', { tsconfig: { module: 'CommonJS', esModuleInterop: true, strict: true, target: 'ES2022', types: ['jest', 'node'] }, diagnostics: false }] },
 };

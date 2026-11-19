@@ -38,6 +38,10 @@ describe('scanProductionDiff', () => {
     expect(scan('app/src/a.ts', ['const minSamples = 5;'], ['const minSamples = 50;']).map((h) => h.rule)).toEqual(['lowered-threshold']);
   });
 
+  test('a path that only looks like a test path is scanned as production', () => {
+    expect(scan('tests/../app/src/a.ts', ['} catch {']).map((h) => h.rule)).toEqual(['swallowed-exception']);
+  });
+
   test('test files are not production code', () => {
     expect(scan('tests/unit/a.test.ts', ['} catch {'])).toEqual([]);
   });

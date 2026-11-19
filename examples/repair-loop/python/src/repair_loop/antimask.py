@@ -6,7 +6,9 @@ A change that makes the failure disappear without removing its cause is a mitiga
 from __future__ import annotations
 
 import re
+from dataclasses import replace
 
+from .diff import is_unsafe_path, normalize_path
 from .models import AntimaskHit, DiffFile
 
 CATCH = re.compile(r"^\s*except\b|\.catch\s*\(|\bcatch\b")
@@ -32,8 +34,9 @@ def _numeric_settings(lines: list[str]) -> dict[str, float]:
 def scan_production_diff(files: list[DiffFile]) -> list[AntimaskHit]:
     """Scan the added lines of non-test files. An empty result means clean."""
     hits: list[AntimaskHit] = []
-    for file in files:
-        if file.path.startswith("tests/") or file.status == "deleted":
+    for diff_file in files:
+        file = replace(diff_file, path=normalize_path(diff_file.path))
+        if (not is_unsafe_path(file.path) and file.path.startswith("tests/")) or file.status == "deleted":
             continue
         for index, line in enumerate(file.added):
             if CATCH.search(line):

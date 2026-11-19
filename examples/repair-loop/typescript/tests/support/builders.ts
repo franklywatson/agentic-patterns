@@ -42,7 +42,7 @@ export function makeDiff(path: string, added: string[], removed: string[] = [], 
   return [
     `--- ${old}`,
     `+++ b/${path}`,
-    '@@ -1,1 +1,1 @@',
+    `@@ -${status === 'added' ? 0 : 1},${removed.length} +1,${added.length} @@`,
     ...removed.map((l) => `-${l}`),
     ...added.map((l) => `+${l}`),
     '',

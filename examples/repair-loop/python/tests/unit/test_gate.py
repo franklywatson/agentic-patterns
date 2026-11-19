@@ -1,6 +1,8 @@
 import copy
 from dataclasses import replace
 
+import pytest
+
 from repair_loop.gate import gate
 from repair_loop.models import Budget, Reproduction
 from support.builders import bundle_from_diff, clean_bundle, make_diff, patch_text, policy
@@ -22,14 +24,29 @@ def test_a_changed_reproduction_hash_blocks():
     assert "reproduction test changed after it was frozen" in result.reasons
 
 
-def test_an_existing_test_modified_by_the_diff_blocks():
-    result = gate(bundle_from_diff(make_diff("tests/unit/other_test.py", ["x"], ["y"])), policy)
+@pytest.mark.parametrize("status", ["modified", "added"])
+def test_any_change_under_tests_blocks_modified_or_added(status):
+    result = gate(bundle_from_diff(make_diff("tests/unit/other_test.py", ["x"], ["y"] if status == "modified" else [], status)), policy)
     assert result.decision == "block"
-    assert "diff modifies existing test tests/unit/other_test.py" in result.reasons
+    assert "diff touches protected path tests/unit/other_test.py" in result.reasons
 
 
-def test_a_new_test_file_is_allowed():
-    assert gate(bundle_from_diff(make_diff("tests/unit/new_test.py", ["x"], [], "added")), policy).decision == "auto"
+def test_a_deleted_test_blocks():
+    bundle = bundle_from_diff(make_diff("tests/unit/other_test.py", [], ["y"]))
+    deleted = replace(bundle.diff[0], status="deleted")
+    assert gate(replace(bundle, diff=[deleted]), policy).decision == "block"
+
+
+@pytest.mark.parametrize("path", ["tests/conftest.py", "tests/repro/httpx.py", "tests/regression/__init__.py"])
+def test_a_conftest_or_shadowing_module_added_under_tests_blocks(path):
+    assert gate(bundle_from_diff(make_diff(path, ["x"], [], "added")), policy).decision == "block"
+
+
+@pytest.mark.parametrize("path", ["app/src/routes/../auth.py", "tests/../app/src/routes/evil.py", "/etc/passwd", "../escape.py"])
+def test_a_path_with_dotdot_segments_blocks_whatever_it_resolves_to(path):
+    result = gate(bundle_from_diff(make_diff(path, ["x"], [], "added")), policy)
+    assert result.decision == "block"
+    assert "unsafe path" in "\n".join(result.reasons)
 
 
 def test_the_register_file_is_protected_whatever_its_status():

@@ -1,5 +1,6 @@
-# Autonomy register for the repair-loop example, written against the schema in
-# docs/refresh/reviews/review-autonomy.md (pattern A.1). The repair workflow is granted
+# Autonomy register for the repair-loop example. Schema: examples/autonomy/schema/autonomy.schema.json;
+# design: docs/refresh/reviews/review-autonomy.md (pattern A.1). The cap check needs a census profile
+# that this example does not ship. The repair workflow is granted
 # A3: changes pass the required checks before a person sees them, and a person merges.
 # The example shows the gate. It does not grant A4.
 version: 1

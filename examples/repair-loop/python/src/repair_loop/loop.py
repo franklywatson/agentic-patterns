@@ -7,14 +7,16 @@ decisions are testable without Docker. Real adapters live in runtime.py.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
+import sys
+from typing import Callable, Protocol, TypeVar
 
 from .antimask import scan_production_diff
-from .breaker import BreakerState, budget_for, record_attempt, record_confirmed
+from .breaker import BreakerState, budget_for, record_attempt, record_confirmed, record_recurrence
 from .classify import classify
 from .config import ReversibilityRules
 from .diff import parse_diff
 from .gate import gate
+from .incident import fingerprints_from_log
 from .models import EvidenceBundle, GateResult, Incident, RepairPolicy, Reproduction
 
 TRANSITIONS: dict[str, dict[str, str]] = {
@@ -53,6 +55,12 @@ class Deployment(Protocol):
 
 
 @dataclass(frozen=True)
+class ReproductionRun:
+    passed: bool
+    matches_incident: bool
+
+
+@dataclass(frozen=True)
 class OutboxEntry:
     kind: str  # ticket | pr | page
     incident_id: str
@@ -64,10 +72,17 @@ class OutboxEntry:
 class RepairEnvironment(Protocol):
     def now(self) -> float: ...
     def freeze(self, incident: Incident) -> Handle: ...
-    def candidate(self, base: Handle, patch_file: str) -> tuple[Handle, str]: ...
+    def candidate(self, base: Handle, patch_file: str) -> tuple[Handle, str]:
+        """Apply the patch inside a copy of the base workspace. The text returned is the observed diff."""
+        ...
     def deploy(self, handle: Handle) -> Deployment: ...
-    def run_reproduction(self, handle: Handle, deployment: Deployment) -> bool: ...
-    def run_regression(self, handle: Handle, deployment: Deployment) -> bool: ...
+    def run_reproduction(self, base: Handle, deployment: Deployment, incident: Incident) -> ReproductionRun:
+        """Run the frozen reproduction from the base workspace against a deployment. Candidate-supplied
+        test files are never executed. `matches_incident` is true when a failure shows the incident's
+        own symptom (not a stack that is down)."""
+        ...
+
+    def run_regression(self, base: Handle, deployment: Deployment) -> bool: ...
     def frozen_hash(self, handle: Handle, incident: Incident) -> str: ...
     def current_hash(self, handle: Handle, incident: Incident) -> str: ...
     def traffic(self, deployment: Deployment, incident: Incident, samples: int) -> tuple[int, int]: ...
@@ -132,29 +147,29 @@ def run_repair(
         return finish(["attempt budget exhausted or cooldown active"])
 
     base_deployment = env.deploy(base)
-    try:
-        red_on_base = not env.run_reproduction(base, base_deployment)
-    finally:
-        base_deployment.stop()
+    base_run = _using(base_deployment, lambda: env.run_reproduction(base, base_deployment, incident))
+    red_on_base = (not base_run.passed) and base_run.matches_incident
     if not red_on_base:
-        move("not_reproduced", "reproduction passed on the base commit")
-        env.emit(base, OutboxEntry("ticket", incident.id, f"{incident.id}: cannot reproduce", policy.owner,
-                                   ["the reproduction was not red on the base commit"]))
+        reason = "cannot reproduce" if base_run.passed else "reproduction failed for a reason other than the incident symptom"
+        move("not_reproduced", reason)
+        env.emit(base, OutboxEntry("ticket", incident.id, f"{incident.id}: {reason}", policy.owner, [reason]))
         breaker = record_attempt(breaker, incident.fingerprint, env.now(), "not-reproduced")
-        return finish(["cannot reproduce"])
-    move("reproduced", "reproduction is red on the base commit")
+        return finish([reason])
+    move("reproduced", "reproduction is red on the base commit with the incident symptom")
 
     candidate, patch_text = env.candidate(base, patch_file)
     move("candidate_ready", f"candidate built from {patch_file}")
     diff = parse_diff(patch_text)
     deployment = env.deploy(candidate)
-    try:
-        green = env.run_reproduction(candidate, deployment)
-        regression_passed = env.run_regression(candidate, deployment)
+
+    def verify() -> RepairOutcome:
+        nonlocal breaker
+        candidate_run = env.run_reproduction(base, deployment, incident)
+        regression_passed = env.run_regression(base, deployment)
         bundle = EvidenceBundle(
             incident_id=incident.id,
             fingerprint=incident.fingerprint,
-            reproduction=Reproduction(red_on_base, green, env.frozen_hash(base, incident), env.current_hash(candidate, incident)),
+            reproduction=Reproduction(red_on_base, candidate_run.passed, env.frozen_hash(base, incident), env.current_hash(candidate, incident)),
             regression="pass" if regression_passed else "fail",
             diff=diff,
             classification=classify(diff, rules),
@@ -195,7 +210,30 @@ def run_repair(
             env.emit(base, OutboxEntry("page", incident.id, f"{incident.id}: confirmation failed, rolled back", policy.owner, [confirmation]))
             breaker = record_attempt(breaker, incident.fingerprint, env.now(), "rolled-back")
         return finish([confirmation], result, bundle)
-    finally:
-        deployment.stop()
+
+    return _using(deployment, verify)
 
 
+T = TypeVar("T")
+
+
+def _using(deployment: Deployment, fn: Callable[[], T]) -> T:
+    """Stop a deployment after `fn`. A failure to stop never hides the error that `fn` raised."""
+    try:
+        result = fn()
+    except BaseException:
+        try:
+            deployment.stop()
+        except Exception as stop_error:
+            print(f"failed to stop a deployment after an error: {stop_error}", file=sys.stderr)
+        raise
+    deployment.stop()
+    return result
+
+
+def observe_recurrence(breaker: BreakerState, incident: Incident, log_text: str, now: float, policy: RepairPolicy) -> BreakerState:
+    """Recurrence monitor: if the application logs show the incident's fingerprint again, report it
+    to the breaker. Inside the window after a confirmed repair this drops the grant."""
+    if incident.fingerprint in fingerprints_from_log(log_text):
+        return record_recurrence(breaker, incident.fingerprint, now, policy)
+    return breaker

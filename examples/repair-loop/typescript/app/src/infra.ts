@@ -23,7 +23,23 @@ CREATE TABLE IF NOT EXISTS users (
 );
 `;
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Retry a start-up step for about 30 seconds: the dependencies may still be starting. */
+async function untilReady(step: () => Promise<unknown>): Promise<void> {
+  const deadline = Date.now() + 30_000;
+  for (;;) {
+    try {
+      await step();
+      return;
+    } catch (error) {
+      if (Date.now() > deadline) throw error;
+      await sleep(1000);
+    }
+  }
+}
+
 export async function initInfra(): Promise<void> {
-  await redis.connect();
-  await pool.query(SCHEMA);
+  await untilReady(() => redis.connect());
+  await untilReady(() => pool.query(SCHEMA));
 }

@@ -12,6 +12,27 @@ describe('parseDiff and globMatch', () => {
     expect(files[0].removed).toEqual([]);
   });
 
+  test('parseDiff follows hunk counts: a removed line starting with "-- " hides nothing', () => {
+    const text = [
+      '--- a/app/src/routes/users.ts',
+      '+++ b/app/src/routes/users.ts',
+      '@@ -1,2 +1,3 @@',
+      '--- sql comment',
+      ' keep',
+      '+} catch {}',
+      '+retries = 3;',
+      '',
+    ].join('\n');
+    const [file] = parseDiff(text);
+    expect(file.removed).toEqual(['-- sql comment']);
+    expect(file.added).toEqual(['} catch {}', 'retries = 3;']);
+  });
+
+  test('parseDiff reads a directory diff: first path component stripped, added files detected by hunk', () => {
+    const text = ['--- base/tests/x.ts\t1970-01-01', '+++ base-candidate/tests/x.ts\t2026-01-01', '@@ -0,0 +1,1 @@', '+x', ''].join('\n');
+    expect(parseDiff(text)).toEqual([{ path: 'tests/x.ts', status: 'added', added: ['x'], removed: [] }]);
+  });
+
   test('parseDiff marks files created from /dev/null as added', () => {
     expect(parseDiff(makeDiff('tests/unit/new.test.ts', ['x'], [], 'added'))[0].status).toBe('added');
   });
@@ -60,6 +81,20 @@ describe('classify', () => {
   test('a changed line that mentions a password raises blast to B3', () => {
     const diff = makeDiff('app/src/routes/users.ts', ['const password = req.body.password;']);
     expect(classify(parseDiff(diff), rules).blast).toBe('B3');
+  });
+
+  test('an openapi change is B2', () => {
+    expect(classify(parseDiff(makeDiff('app/openapi.yaml', ['x'])), rules)).toMatchObject({ reversibility: 'R2', blast: 'B2' });
+  });
+
+  test('unsafe paths take the unknown class and are not normalized into a lower one', () => {
+    for (const path of ['app/src/routes/../auth.ts', 'tests/../app/src/routes/evil.ts']) {
+      expect(classify(parseDiff(makeDiff(path, ['x'])), rules)).toMatchObject({ reversibility: 'R4', blast: 'B3' });
+    }
+  });
+
+  test('redundant segments in a safe path are normalized before matching', () => {
+    expect(classify(parseDiff(makeDiff('app/src/./auth.ts', ['x'])), rules)).toMatchObject({ blast: 'B3' });
   });
 
   test('the class of a diff is the maximum over its files', () => {

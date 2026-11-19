@@ -1,6 +1,7 @@
 """PostgreSQL and Redis access and schema creation."""
 
 import os
+import time
 
 import psycopg
 import redis
@@ -36,6 +37,15 @@ redis_client = redis.Redis(
 )
 
 
-def init_schema() -> None:
-    with connect_db() as conn:
-        conn.execute(SCHEMA)
+def init_schema(timeout_s: float = 30.0) -> None:
+    """Create the schema. Retry for about 30 seconds: PostgreSQL may still be starting."""
+    deadline = time.monotonic() + timeout_s
+    while True:
+        try:
+            with connect_db() as conn:
+                conn.execute(SCHEMA)
+            return
+        except psycopg.OperationalError:
+            if time.monotonic() > deadline:
+                raise
+            time.sleep(1)

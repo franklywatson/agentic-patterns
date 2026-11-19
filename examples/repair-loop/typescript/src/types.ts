@@ -10,6 +10,7 @@ export interface Incident {
   entrypoint: string;
   errorClass: string;
   request: { method: string; path: string; headers: Record<string, string>; body: unknown };
+  replayPaths: string[];
   observed: { status: number; body: unknown };
   expected: { status: number; body: Record<string, unknown> };
   dependencies: Record<string, { connected: boolean }>;
@@ -57,7 +58,6 @@ export interface GatePolicy {
   minGrantForAuto: Grant;
   autoCeiling: { reversibility: Reversibility; blast: Blast };
   protectedPaths: string[];
-  existingTestsGlob: string;
 }
 
 export interface GateResult {

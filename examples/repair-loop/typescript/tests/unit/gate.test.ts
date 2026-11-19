@@ -15,15 +15,28 @@ describe('gate', () => {
     expect(result.reasons).toContain('reproduction test changed after it was frozen');
   });
 
-  test('an existing test modified by the diff blocks', () => {
-    const result = gate(bundleFromDiff(makeDiff('tests/unit/other.test.ts', ['x'], ['y'])), policy);
-    expect(result.decision).toBe('block');
-    expect(result.reasons).toContain('diff modifies existing test tests/unit/other.test.ts');
+  test('any change under tests/ blocks: modified, added or deleted', () => {
+    for (const status of ['modified', 'added'] as const) {
+      const result = gate(bundleFromDiff(makeDiff('tests/unit/other.test.ts', ['x'], ['y'], status)), policy);
+      expect(result.decision).toBe('block');
+      expect(result.reasons).toContain('diff touches protected path tests/unit/other.test.ts');
+    }
+    const deleted = bundleFromDiff(makeDiff('tests/unit/other.test.ts', [], ['y']));
+    expect(gate({ ...deleted, diff: [{ ...deleted.diff[0], status: 'deleted' }] }, policy).decision).toBe('block');
   });
 
-  test('a new test file is allowed', () => {
-    const result = gate(bundleFromDiff(makeDiff('tests/unit/new.test.ts', ['x'], [], 'added')), policy);
-    expect(result.decision).toBe('auto');
+  test('a conftest-style file or a shadowing module added under tests/ blocks', () => {
+    for (const path of ['tests/conftest.py', 'tests/__mocks__/axios.ts', 'tests/repro/node_modules/axios/index.js']) {
+      expect(gate(bundleFromDiff(makeDiff(path, ['x'], [], 'added')), policy).decision).toBe('block');
+    }
+  });
+
+  test('a path with .. segments blocks, whatever it resolves to', () => {
+    for (const path of ['app/src/routes/../auth.ts', 'tests/../app/src/routes/evil.ts', '/etc/passwd', '../escape.ts']) {
+      const result = gate(bundleFromDiff(makeDiff(path, ['x'], [], 'added')), policy);
+      expect(result.decision).toBe('block');
+      expect(result.reasons.join('\n')).toContain('unsafe path');
+    }
   });
 
   test('the register file is protected whatever its status', () => {

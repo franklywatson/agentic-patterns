@@ -1,8 +1,9 @@
 /**
  * 04-repair-test-edit-blocked.stack.test.ts
  *
- * Journey: a candidate edits the reproduction test so that it passes against the unfixed
- * app. The frozen hash no longer matches, so the gate returns block.
+ * Journey: a candidate edits the reproduction test so that it would pass against the unfixed
+ * app. The loop runs the frozen reproduction, never the candidate's copy, so the bug is still
+ * seen; the changed hash and the protected path make the gate return block.
  */
 import { cleanup, incident, outboxOf, repairWith } from './support';
 
@@ -20,10 +21,13 @@ describe('Stack Test 04: editing the reproduction is blocked', () => {
     expect(result.outcome.state).toBe('BLOCKED');
   });
 
-  test('second order: the edited test is green although the bug is still in the app', () => {
+  test('second order: the frozen reproduction still fails on the candidate, because the bug is still in the app', () => {
     const [onBase, onCandidate] = result.env.runs.filter((r) => r.kind === 'reproduction');
     expect(onBase.passed).toBe(false);
-    expect(onCandidate.passed).toBe(true);
+    expect(onCandidate.passed).toBe(false);
+    expect(onCandidate.workspace).toBe(onBase.workspace);
+    expect(onCandidate.output).toContain('Received: 500');
+    expect(result.outcome.bundle?.reproduction.greenOnCandidate).toBe(false);
     expect(result.outcome.bundle?.diff.map((f) => f.path)).toEqual(['tests/repro/INC-001.repro.test.ts']);
   });
 

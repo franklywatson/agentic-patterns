@@ -5,7 +5,8 @@ import pytest
 from repair_loop.breaker import new_breaker, record_attempt
 from repair_loop.config import load_incident_record
 from repair_loop.incident import parse_incident
-from repair_loop.loop import Handle, evaluate_confirmation, run_repair, transition
+from repair_loop.breaker import record_confirmed
+from repair_loop.loop import Handle, ReproductionRun, evaluate_confirmation, observe_recurrence, run_repair, transition
 from support.builders import patch_text, policy, rules
 
 incident = parse_incident(load_incident_record("INC-001"))
@@ -19,14 +20,20 @@ class FakeDeployment:
     def logs(self) -> str:
         return ""
 
+    raises: bool = False
+
     def stop(self) -> None:
         self.log.append(f"stop:{self.base_url}")
+        if self.raises:
+            raise RuntimeError("stop failed")
 
 
 @dataclass
 class FakeEnvironment:
     """A fake environment for unit tests. Mocks are appropriate here (Pattern 1.5)."""
 
+    other_failure: bool = False
+    stop_raises: bool = False
     base_red: bool = True
     candidate_green: bool = True
     patch: str = field(default_factory=lambda: patch_text("INC-001.fix.patch"))
@@ -47,12 +54,14 @@ class FakeEnvironment:
 
     def deploy(self, handle):
         self.deployed.append(f"start:{handle.dir}")
-        return FakeDeployment(handle.dir, self.deployed)
+        return FakeDeployment(handle.dir, self.deployed, self.stop_raises and handle.dir == "candidate")
 
-    def run_reproduction(self, handle, deployment):
-        return (not self.base_red) if handle.dir == "base" else self.candidate_green
+    def run_reproduction(self, base, deployment, incident):
+        if deployment.base_url == "base":
+            return ReproductionRun(not self.base_red, not self.other_failure)
+        return ReproductionRun(self.candidate_green, True)
 
-    def run_regression(self, handle, deployment):
+    def run_regression(self, base, deployment):
         return True
 
     def frozen_hash(self, handle, incident):
@@ -159,3 +168,39 @@ def test_the_gate_sees_a_bundle_built_from_observations_not_from_the_candidate()
     assert outcome.bundle.regression == "pass"
     assert outcome.bundle.grant == "A3"
     assert (outcome.bundle.reproduction.frozen_sha256, outcome.bundle.reproduction.current_sha256) == ("frozen", "frozen")
+
+
+def test_a_reproduction_that_is_red_for_another_reason_is_not_accepted_as_the_incident():
+    env = make_env(other_failure=True)
+    outcome = repair(env)
+    assert outcome.state == "HUMAN"
+    assert outcome.reasons == ["reproduction failed for a reason other than the incident symptom"]
+    assert env.outbox[0].kind == "ticket"
+    assert env.deployed == ["start:base", "stop:base"]
+
+
+def test_a_deployment_that_fails_to_stop_does_not_hide_the_original_error(capsys):
+    env = make_env(stop_raises=True)
+
+    def crash(base, deployment):
+        raise RuntimeError("regression runner crashed")
+
+    env.run_regression = crash
+    with pytest.raises(RuntimeError, match="regression runner crashed"):
+        repair(env)
+    assert "failed to stop a deployment" in capsys.readouterr().err
+
+
+def _log(route):
+    return '{"level":"error","event":"unhandled_error","route":"%s","status":500,"errorClass":"pg:22P02"}' % route
+
+
+def test_observe_recurrence_drops_the_grant_when_the_incident_fingerprint_reappears_after_a_confirmed_repair():
+    confirmed = record_confirmed(new_breaker("A3"), incident.fingerprint, 0)
+    assert observe_recurrence(confirmed, incident, _log("GET /users/:id"), 3600, policy).grant == "A2"
+
+
+def test_observe_recurrence_ignores_other_fingerprints_and_clean_logs():
+    confirmed = record_confirmed(new_breaker("A3"), incident.fingerprint, 0)
+    assert observe_recurrence(confirmed, incident, _log("GET /orders/:id"), 3600, policy).grant == "A3"
+    assert observe_recurrence(confirmed, incident, "INFO started", 3600, policy).grant == "A3"
