@@ -446,7 +446,7 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements context e
 - [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims) — Context eval produces evidence for decision-layer effectiveness claims
 - [Pattern 4.5 — CI Guardrails](#pattern-45--ci-guardrails) — Context eval runs in CI as a non-negotiable quality gate
 
-**Evidence:** Strong — as a practice (task banks, repeated trials, reading transcripts); no outcome evidence that scored routing improves results (MV-9, MV-10, PO-25)
+**Evidence:** Partial — task banks, repeated trials and reading transcripts are documented practice from two vendors; no independent outcome evidence that scored routing improves results (MV-9, MV-10)
 
 ---
 

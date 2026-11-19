@@ -342,7 +342,7 @@ tells a reviewer where to look.
 
 The [rig](https://github.com/franklywatson/claude-rig) repo implements a constitutional check in `src/enforcement/checks/constitutional.ts`; it detects mock patterns in edited files by regex, so it is a hook-layer check and inherits the limits listed in [Pattern 2.3](#pattern-23--hook-automation).
 
-**Evidence:** Strong — for enforcing hard rules in deterministic checks, same sources as 2.3; the rule list itself is a project choice (OM-7, OM-18, SG-16)
+**Evidence:** Partial — enforcing hard rules in deterministic checks has independent support (see Pattern 2.3); whether a declared rule list improves behaviour is contested; the rule list itself is a project choice (SC-4, SC-5, SC-11)
 
 ---
 

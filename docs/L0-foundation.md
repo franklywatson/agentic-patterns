@@ -427,7 +427,7 @@ Cleanup:
 
 **Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) — clean file structure and clean code reinforce each other. [Pattern 0.7](#pattern-07--documentation-as-system-map) — documentation cleanup is a separate concern; stale docs are covered there. [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) establishes the standard for verifying cleanup doesn't break anything.
 
-**Evidence:** Thin — reasoned and first-party, n=1; a feedback flywheel must remove as well as add (IS-13)
+**Evidence:** Thin — reasoned; the author's practice (first-party, n=1)
 
 ---
 
