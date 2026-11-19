@@ -11,6 +11,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+# package.json carries "type": "module", which Node needs to load dist/*.js as ES modules.
 COPY package.json ./
 EXPOSE 3000
 CMD ["node", "dist/index.js"]

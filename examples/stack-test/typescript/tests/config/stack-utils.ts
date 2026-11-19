@@ -50,10 +50,7 @@ export class StackTestUtils {
     const composeContent = template
       .replace(/\$\{APP_PORT:-3000\}/g, String(appPort))
       .replace(/\$\{POSTGRES_PORT:-5432\}/g, String(postgresPort))
-      .replace(/\$\{REDIS_PORT:-6379\}/g, String(redisPort))
-      .replace(/\$\{CONTAINER_NAME:-stack-test-app\}/g, `stack-test-${testId}-app`)
-      .replace(/\$\{CONTAINER_NAME_POSTGRES:-stack-test-postgres\}/g, `stack-test-${testId}-postgres`)
-      .replace(/\$\{CONTAINER_NAME_REDIS:-stack-test-redis\}/g, `stack-test-${testId}-redis`);
+      .replace(/\$\{REDIS_PORT:-6379\}/g, String(redisPort));
 
     writeFileSync(this.composeFile, composeContent);
 

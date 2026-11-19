@@ -15,7 +15,7 @@
  * query databases or internal services directly.
  */
 
-import { StackTestUtils } from '../config/stack-utils.js';
+import { StackTestUtils } from '../config/stack-utils';
 
 describe('Stack Test: User signs up and accesses their account', () => {
   let utils: StackTestUtils;

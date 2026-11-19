@@ -96,6 +96,10 @@ api.get('/users/me', requireSession, async (_req, res) => {
   const { rows } = await pool.query('SELECT id, email, username, created_at FROM users WHERE id = $1', [
     res.locals.userId,
   ]);
+  if (rows.length === 0) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
   res.json(publicUser(rows[0]));
 });
 

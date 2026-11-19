@@ -2,10 +2,9 @@
   "name": "stack-test-example-typescript",
   "version": "1.0.0",
   "description": "Minimal stack test example in TypeScript",
-  "type": "module",
   "scripts": {
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "test:stack": "NODE_OPTIONS=--experimental-vm-modules jest --config=jest.config.js",
+    "test": "jest",
+    "test:stack": "jest --config=jest.config.cjs",
     "test:browser": "playwright test --config=playwright.config.ts",
     "test:all": "npm run test:stack && npm run test:browser"
   },

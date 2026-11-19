@@ -53,7 +53,7 @@ A healthy test suite uses both: API tests for fast feedback on backend changes, 
 ```
 .
 ├── package.json              # Dependencies (Jest + Playwright)
-├── jest.config.js            # Jest config: 300s timeout, runInBand
+├── jest.config.cjs           # Jest config: 300s timeout, runInBand
 ├── playwright.config.ts      # Playwright config: Chromium, sequential
 ├── docker-compose.test.yml   # Template stack: app, postgres, redis
 ├── app/                      # Express + PostgreSQL + Redis app under test
@@ -84,7 +84,7 @@ npx playwright install chromium
 npm run test:stack
 ```
 
-Expected result: `Test Suites: 2 passed, 2 total` and `Tests: 9 passed, 9 total`. Jest prints an `ExperimentalWarning: VM Modules` line because the package uses ES modules (`NODE_OPTIONS=--experimental-vm-modules`).
+Expected result: `Test Suites: 2 passed, 2 total` and `Tests: 9 passed, 9 total`.
 
 Browser-level tests share one running stack. Start it, run Playwright, then remove it:
 
@@ -111,7 +111,7 @@ npx playwright test --config=playwright.config.ts --ui
 
 - Docker and Docker Compose v2 installed
 - Node.js 20+
-- Ports 10000-65535 available
+- Free ports: 10000-65535 for `npm run test:stack` (allocated dynamically); 13000, 15432 and 16379 for the browser commands above (3000, 5432 and 6379 without the overrides)
 - Chromium browser (installed via `npx playwright install chromium`)
 
 ## Key Concepts
@@ -178,6 +178,8 @@ Browser tests add assertion layers that API tests cannot provide:
 - `/order-confirmation` — most recent order (`data-testid="order-*"`)
 - `/orders` — order history (`data-testid="order-row"`)
 
-The app has a single shared cart and a single "most recent order" for all visitors. Playwright opens a new browser context per test, so per-visitor cookies would hide the cart from the next test step. Run the browser suite against a fresh stack; a second run on the same stack starts with the first run's orders in `/orders` but an empty cart.
+The app has a single shared cart and a single "most recent order" for all visitors. Playwright opens a new browser context per test, so per-visitor cookies would hide the cart from the next test step. Browser tests run serially (`workers: 1`, `fullyParallel: false`) with `retries: 0`, because a retried step would mutate that shared state. Run the browser suite against a fresh stack.
+
+The admin endpoints (`/admin/*`) are unauthenticated and `JWT_SECRET` falls back to a fixed demo value. Both exist to keep the example small and are not production patterns.
 
 To test your own application instead, point the `app` service in `docker-compose.test.yml` at it and keep the endpoints and `data-testid` attributes your tests use.

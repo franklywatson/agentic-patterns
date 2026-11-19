@@ -1,7 +1,6 @@
 services:
   app:
     build: ./app
-    container_name: ${CONTAINER_NAME:-stack-test-app}
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
@@ -28,7 +27,6 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: ${CONTAINER_NAME_POSTGRES:-stack-test-postgres}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     environment:
@@ -45,7 +43,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: ${CONTAINER_NAME_REDIS:-stack-test-redis}
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
