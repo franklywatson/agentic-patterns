@@ -123,7 +123,7 @@ The pattern docs contain the detailed guidance. This guide links to them rather 
 2. **Start with L0 if unsure** — Structure and CLAUDE.md have the highest ROI for the least effort.
 3. **Update docs in the same task as code** — Deferred documentation is stale documentation. See [Pattern 0.7 — Documentation as System Map](../L0-foundation.md#pattern-07--documentation-as-system-map).
 4. **Remove dead code as you find it** — Cleanup is continuous, not periodic. See [Pattern 0.8 — Aggressive Cleanup](../L0-foundation.md#pattern-08--aggressive-cleanup).
-5. **Use the New Starter Test regularly** — It catches gaps that code review misses. See [Pattern 4.3 — New Starter Standard](../L4-standards-measurement.md#pattern-43--new-starter-standard).
+5. **Use the New Starter Test regularly** — It catches gaps that code review misses. See [Pattern 0.9 — AI-as-New-Starter Standard](../L0-foundation.md#pattern-09--ai-as-new-starter-standard).
 
 ### Common Pitfalls
 

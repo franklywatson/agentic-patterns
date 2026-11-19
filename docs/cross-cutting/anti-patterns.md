@@ -16,7 +16,7 @@ Use this catalog when agents encounter friction. Match the symptom, apply the pa
 
 **Pattern**: Apply [Pattern 0.1 - Deep Modules](../L0-foundation.md#pattern-01--deep-modules):
 
-- Export 3-5 functions maximum per module
+- Keep the public interface small (heuristic: 3-5 exports per module)
 - Put complex logic behind a simple facade
 - Split by domain concern
 - Let tests specify behavior, not implementation
@@ -273,7 +273,7 @@ expect(response.status).toBe(200);
 
 - Dynamic port allocation from range (10000-65535)
 - Verify ports are available before assigning
-- Unique container names with test name + PID + random
+- Unique compose project name (`docker compose -p`) with test name + PID + random
 
 Example refactor:
 

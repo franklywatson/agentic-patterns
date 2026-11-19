@@ -49,7 +49,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Container Isolation
 
 **Level**: L1 - Closed Loop Design
-**Definition**: Four mechanisms (unique container names, dynamic port allocation, transient volumes, per-test compose files) ensuring tests never interfere with each other.
+**Definition**: Four mechanisms (compose project scoping, dynamic port allocation, transient volumes, per-run compose files) ensuring tests never interfere with each other.
 **See**: [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation)
 
 ### Context Engineering
@@ -65,7 +65,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Deep Module
 
 **Level**: L0 - Foundation
-**Definition**: Module with a simple interface (3-5 exports maximum) that hides complex implementation details behind a clean facade.
+**Definition**: Module with a small interface that hides complex implementation details behind a clean facade. As a heuristic, 3-5 exports; more suggests the module has more than one job.
 **See**: [Pattern 0.1 - Deep Modules](../L0-foundation.md#pattern-01--deep-modules)
 
 ### Docker Resource Limits
@@ -155,9 +155,9 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 ### New Starter Standard
 
-**Level**: L0 - Foundation, L4 - Standards & Measurement
+**Level**: L0 - Foundation
 **Definition**: Ultimate test where someone with zero context must be able to understand the project from CLAUDE.md + README + file structure alone.
-**See**: [Pattern 0.9 - AI-as-New-Starter Standard](../L0-foundation.md#pattern-09--ai-as-new-starter-standard) | [Pattern 4.3 - New Starter Standard](../L4-standards-measurement.md#pattern-43--new-starter-standard)
+**See**: [Pattern 0.9 - AI-as-New-Starter Standard](../L0-foundation.md#pattern-09--ai-as-new-starter-standard)
 
 ### Real Dependencies (No-Mock in Stack Tests)
 
@@ -235,9 +235,9 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 
 ### Spec Drift
 
-**Level**: L4 - Standards & Measurement
+**Level**: L0 - Foundation
 **Definition**: Misalignment between documentation, tests, and code that accumulates over time, creating confusion and wasting tokens as agents chase outdated specifications.
-**See**: [Pattern 4.2 - Spec Drift Detection](../L4-standards-measurement.md#pattern-42--spec-drift-detection)
+**See**: [Pattern 0.7 - Documentation as System Map](../L0-foundation.md#pattern-07--documentation-as-system-map)
 
 ### Stack Test
 

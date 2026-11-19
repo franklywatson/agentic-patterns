@@ -151,7 +151,7 @@ Tests ordered by dependency so that if test N fails, the agent knows tests 1 thr
 
 ### [Pattern 1.4 — Container Isolation](L1-patterns/1.4-container-isolation.md)
 
-Four mechanisms ensuring tests never interfere: unique container names, dynamic port allocation, transient volumes, and per-test compose files. Aggressive cleanup prevents Docker resource exhaustion during concurrent test execution. **Why it matters:** Hardcoded ports and shared state produce flaky, non-deterministic test failures that waste agent tokens on false investigations. Isolation makes every test run deterministic.
+Four mechanisms ensuring tests never interfere: compose project scoping (`docker compose -p <unique project>`), dynamic port allocation, transient volumes, and per-run compose files. Aggressive cleanup prevents Docker resource exhaustion during concurrent test execution. **Why it matters:** Hardcoded ports and shared state produce flaky, non-deterministic test failures that waste agent tokens on false investigations. Isolation makes every test run deterministic.
 
 ### [Pattern 1.5 — Real Dependencies in E2E/Integration and Stack Tests](L1-patterns/1.5-no-mock-philosophy.md)
 
