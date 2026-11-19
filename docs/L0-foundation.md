@@ -104,9 +104,9 @@ project/
 
 **Anti-Pattern**: "Treasure hunt" structures where understanding one file requires reading 10 others scattered across the tree.
 
-**Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) expands on grouping by domain. [L4: New Starter Standard](L4-standards-measurement.md) tests whether disclosure works for zero-context agents.
+**Cross-References**: [Pattern 0.3](#pattern-03--conceptual-file-organization) expands on grouping by domain. [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether disclosure works for zero-context agents.
 
-**Evidence:** Partial — vendor guidance on loading context just in time, no measured comparison ([SC-1, AN-2](references/sources.md))
+**Evidence:** Partial — vendor guidance on loading context just in time, no measured comparison (SC-1, AN-2)
 
 ---
 
@@ -171,7 +171,7 @@ src/
 
 **Problem**: An agent entering a project needs to know: what is this, how is it structured, what must I never do, what patterns must I follow. Scattering this across READMEs, CONTRIBUTING files, and wiki pages forces the agent to hunt for rules it may violate before finding them.
 
-**Solution**: One agent instruction file is the single source of truth: a contract, not a tutorial. It answers the essential questions in one place. Use AGENTS.md as the shared file, which several coding agents read, and have CLAUDE.md import it. Claude Code reads CLAUDE.md, not AGENTS.md, unless CLAUDE.md imports AGENTS.md or settings say otherwise ([SC-8, AN-8](references/sources.md)).
+**Solution**: One agent instruction file is the single source of truth: a contract, not a tutorial. It answers the essential questions in one place. Use AGENTS.md as the shared file, which several coding agents read, and have CLAUDE.md import it. Claude Code reads CLAUDE.md, not AGENTS.md, unless CLAUDE.md imports AGENTS.md or settings say otherwise ([SC-8](references/sources.md)).
 
 Keep the file short, owned, tested and re-baselined:
 
@@ -257,7 +257,7 @@ During a refactoring session:
 
 **Cross-References**: [L1: Stack Tests](L1-feedback-loops.md#pattern-11--stack-tests) — the system-level complement to unit tests. [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) — the instruction file as the human-readable contract layer. [L2: Zero-Defect Tolerance](L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance) — every test failure matters, unit or stack.
 
-**Evidence:** Partial — vendor guidance to give agents a verifiable check; no outcome study (OM-7, AN-3)
+**Evidence:** Partial — one vendor's guidance to give agents a verifiable check; no outcome study (OM-7)
 
 ---
 
@@ -290,9 +290,9 @@ Convention: `.worktrees/<branch-name>/` directory.
 
 **Anti-Pattern**: Working directly on main for feature work. Agents should never modify main without explicit instruction.
 
-**Cross-References**: [L2: Skills](L2-behavioral-guardrails.md) can enforce worktree usage via hooks. [L3: Optimization](L3-optimization.md) benefits from deterministic starting states. See [Further Reading](references/further-reading.md) for the superpowers framework.
+**Cross-References**: [L2: Skills](L2-behavioral-guardrails.md) can enforce worktree usage via hooks. See [Further Reading](references/further-reading.md) for the superpowers framework.
 
-**Evidence:** Partial — isolation by default is vendor and practitioner guidance; now native in Claude Code (OM-18, PL-15)
+**Evidence:** Partial — isolation by default is vendor and practitioner guidance; native in Claude Code (OM-18, PL-15)
 
 ---
 
@@ -303,7 +303,7 @@ Convention: `.worktrees/<branch-name>/` directory.
 **Solution**: Treat documentation as the system map: the navigational layer for structure, intent and conventions. Update the affected docs in the same task as the code change, and check for drift with commands that run in CI.
 
 - **Synchronous updates**: a code change and its doc update land in the same commit.
-- **Reachability**: every doc is linked from AGENTS.md or from a doc that AGENTS.md links to ([Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution)). An unlinked doc is invisible to agents.
+- **Reachability**: every doc is reachable from AGENTS.md by following links, directly or through other docs ([Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution)). An unlinked doc is invisible to agents.
 - **Current examples**: code in docs matches the code in the repository.
 - **Deletion over archiving**: version control is the archive. Delete docs for deleted features.
 
@@ -315,7 +315,8 @@ This repository runs these checks in `.github/workflows/docs.yml`:
 |-------|------------------|-------------------|
 | `markdown-lint` (`npm run lint:md`) | Markdown style rules | Fails |
 | `link-integrity` (`python3 scripts/check-doc-links.py .`) | Every relative link and `#anchor` resolves | Fails |
-| `doc-reachability` | Every file under `docs/` is referenced from AGENTS.md | Warns |
+| `doc-reachability` (`python3 scripts/check-doc-reachability.py .`) | Every file under `docs/` is reachable from AGENTS.md by following links | Warns |
+| `source-ids` (`python3 scripts/sourcecheck.py .`) | Every cited source ID has a row in `docs/references/sources.md` | Fails |
 | `writing-conventions` | No filler words ("basically", "simply") | Warns |
 
 Run the link check locally before committing:
@@ -471,7 +472,7 @@ Apply the zero-context rule to every doc section: no undefined terms, no assumed
 - **L1: Closed Loop Design** — Testing at module boundaries validates deep module design
 - **L2: Behavioral Guardrails** — Skills enforce structural conventions during implementation
 - **L3: Optimization** — Good structure reduces token overhead for navigation
-- **L4: Standards & Measurement** — Maturity practices: evidence-based discipline, drift detection, metrics
+- **L4: Standards & Measurement** — Evidence-based claims, metrics, CI guardrails, context eval
 
 ## Further Reading
 

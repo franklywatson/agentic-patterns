@@ -48,11 +48,11 @@ The library has five layers, L0 to L4. A layer is a group of patterns that depen
 
 **[L1: Closed Loop Design and Verification](docs/L1-feedback-loops.md)** — The layer where agents stop guessing and start designing. Context harvesting gathers targeted evidence before implementation. Design rinsing extends this beyond the current project — extracting distilled architectural understanding from external sources (codebases, transcripts, articles) and translating it into design decisions for the target project. Stack tests validate design intent end-to-end through the full application stack — real dependencies (no mocks in stack tests), no partial integration, no ambiguous results. Mocks are appropriate in unit tests for isolation. Full-loop assertion layering catches regressions at primary, secondary, and tertiary levels of assertion.
 
-**[L2: Behavioral Guardrails](docs/L2-behavioral-guardrails.md)** — Prose is guidance. Hooks are deterministic policy within the harness. Containment and credentials are the boundary. Put each rule at the lowest layer that can hold it, and name that layer for every constitutional rule. Skills overlay project rules on base agent capabilities; the skill chain and phase tracking are optional and scale with risk.
+**[L2: Behavioral Guardrails](docs/L2-behavioral-guardrails.md)** — Prose is guidance. Hooks are deterministic policy within the harness. Containment and credentials are the boundary. Put each rule at the weakest enforcement point that can hold it, and name that enforcement point for every constitutional rule. Skills overlay project rules on base agent capabilities; the skill chain and phase tracking are optional and scale with risk.
 
 **[L3: Optimization (optional)](docs/L3-optimization.md)** — Reduces tokens spent on exploration and tool output. It is not on the path to verified or unattended work. Covers preferring native structured tools and blocking destructive shell edits, context isolation with a scout sub-agent (from the WISC framework), and a pointer to rig's code for environment-aware routing.
 
-**[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, spec drift detection, the new starter audit, development metrics, CI guardrails, and context eval for routing effectiveness. Verifies that L0-L3 are holding and measures their impact over time.
+**[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, development metrics, CI guardrails, and context eval for routing effectiveness. Measures whether L0-L3 are holding and what they change. Drift detection and the new-starter audit live in L0 ([Pattern 0.7](docs/L0-foundation.md#pattern-07--documentation-as-system-map) and [Pattern 0.9](docs/L0-foundation.md#pattern-09--ai-as-new-starter-standard)).
 
 ## How Far a Team Can Let Go
 
@@ -84,11 +84,11 @@ Three dimensions that cap unattended work are not covered, or are covered only i
 - **Security and governance.** L2 covers enforcement and containment. It does not cover supply-chain controls, data handling, audit retention or approval policy.
 - **Measuring value against a baseline.** L4 describes metrics. It does not describe how to set a baseline before adopting a pattern or how to compare against it afterwards.
 
-The consequence: production ownership sets the cap for unattended work. A team that adopts every pattern in this library has it at C1, so it is capped at C1. Closing the security and governance gap or the measurement gap alone does not raise the cap, because those dimensions sit at C2 and C2-C3.
+The consequence: production ownership sets the cap for unattended work. A team that adopts every pattern in this library has it at C1, so it is capped at C1. Closing the security and governance gap or the measurement gap alone does not raise the cap, because production ownership stays at C1. Closing production ownership alone raises it only to C2 (security and governance).
 
 ## Getting Started
 
-1. **New to agentic development?** Start with [L0: Foundation](docs/L0-foundation.md). The structural changes there are the highest-impact, lowest-effort starting point.
+1. **New to agentic development?** Start with [L0: Foundation](docs/L0-foundation.md). Structural changes there are the cheapest to make and every later pattern builds on them; no study measures their impact relative to other patterns.
 2. **Already using AI coding tools?** Jump to [L1: Closed Loop Design and Verification](docs/L1-feedback-loops.md) to understand how context harvesting and closed-loop verification improve agent outcomes.
 3. **Building team practices?** [L2: Behavioral Guardrails](docs/L2-behavioral-guardrails.md) and [L4: Standards & Measurement](docs/L4-standards-measurement.md) together establish the discipline layer.
 4. **Looking for adoption paths?** See the [Adoption Guide](docs/cross-cutting/adoption-guide.md) for suggested approaches — not a rigid plan, but a set of paths teams have found useful.

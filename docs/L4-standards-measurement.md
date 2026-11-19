@@ -1,8 +1,11 @@
 # L4: Standards & Measurement
 
-L4 is the maturity layer. Where L0 establishes foundations and L1-L3 provide execution patterns, L4 ensures those standards hold over time through evidence-based discipline, automated monitoring, periodic audits, and measurable outcomes.
+L4 covers evidence-based claims, development metrics, CI guardrails, and context eval. Where L0 establishes foundations and L1-L3 provide execution patterns, L4 checks that those standards hold and measures what they change. Drift detection and the new-starter audit are in L0 ([Pattern 0.7](L0-foundation.md#pattern-07--documentation-as-system-map) and [Pattern 0.9](L0-foundation.md#pattern-09--ai-as-new-starter-standard)).
 
-> **Scope note:** Patterns 4.1-4.5 were not implemented in the reference project, which operated at L0-L3. They describe the maturity layer that enterprise adopters or larger teams would add, informed by the reference project's informal practices and industry standards. Pattern 4.6 (Context Eval) is an exception — it is implemented and validated in the [rig](https://github.com/franklywatson/claude-rig) reference implementation, with 6 evaluation suites covering tool routing, enforcement pipelines, Python environment detection, session state, config overrides, and determinism.
+> **Scope note:** Patterns 4.1, 4.4 and 4.5 were not used in the reference project. The rig implements Pattern 4.6
+> (Context Eval) as first-party code, with 6 evaluation suites covering tool routing, enforcement pipelines, Python
+> environment detection, session state, config overrides, and determinism. L4 contains patterns 4.1, 4.4, 4.5 and 4.6.
+> The [rig](https://github.com/franklywatson/claude-rig) repository holds the 4.6 implementation.
 
 ---
 
@@ -99,7 +102,7 @@ Claim: The error existed before this commit. Changes in abc123 don't touch the r
 - [Pattern 0.8 — Aggressive Cleanup](L0-foundation.md#pattern-08--aggressive-cleanup): Remove dead code that wastes verification tokens
 - [Pattern 0.7 — Documentation as System Map](L0-foundation.md#pattern-07--documentation-as-system-map): Automated checks replace manual verification
 
-**Evidence:** Strong — developers believed AI sped them up 20% after a measured 19% slowdown, so self-report cannot stand in for output ([IS-6, MV-7, MV-8, MC-22](references/sources.md))
+**Evidence:** Strong — developers believed AI sped them up 20% after a measured 19% slowdown, so self-report cannot stand in for output (IS-6, MV-8, MC-22)
 
 ---
 
@@ -115,7 +118,7 @@ Teams adopt agentic practices based on intuition and anecdote. Without measureme
 
 This is not about tracking agent activity for its own sake. Tokens consumed, commands executed, and sessions started are activity metrics — they measure effort, not outcomes. The metrics that matter measure whether the codebase is getting better and whether agents are becoming more effective over time.
 
-**Autonomy is a separate axis.** These metrics measure outcomes. They do not say how much autonomy an agent should hold for a given workflow. That is a per-workflow grant, capped by the weakest control around it. See [the synthesis, section 3](refresh/synthesis.md#3-the-reframe-two-axes-and-a-cap-line). The full pattern arrives with `docs/earned-autonomy.md`.
+**Autonomy is a separate axis.** These metrics measure outcomes. They do not say how much autonomy an agent should hold for a given workflow. That is a per-workflow grant, capped by the weakest control around it. See [How Far a Team Can Let Go](../README.md#how-far-a-team-can-let-go).
 
 **Key metric categories:**
 
@@ -515,7 +518,7 @@ Adopt this checklist for code reviews, PR reviews, and task completion verificat
 
 ## Summary: L4 as Standards & Measurement
 
-L4 is the maturity layer — the practices that verify L0-L3 are holding and measure their impact:
+L4 holds the practices that check L0-L3 and measure their impact:
 
 1. **Pattern 4.1 (Evidence-Based Claims):** Verify before claiming, show output
 2. **Pattern 4.4 (Agentic Development Metrics):** Measure outcomes, close the feedback loop
