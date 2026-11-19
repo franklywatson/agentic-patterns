@@ -2,6 +2,11 @@
 
 Your codebase is the biggest influence on AI's output. Structure it so an AI with zero prior context can navigate, understand, and contribute effectively.
 
+**Structure includes the boundary.** Where the agent runs, what it can write and which credentials it can reach are
+decisions about how the project is set up, and they are cheapest on day one. Decide them before you loosen any
+approvals: see [Pattern 2.9 — Contain Before You
+Relax](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax).
+
 ## Pattern 0.1 — Deep Modules
 
 **Problem**: Shallow modules expose too much surface area. When a module exports 20+ functions, types leak across boundaries, and the AI must track many interconnections simultaneously. Each export creates a potential coupling point. The agent wastes context understanding implementation details that should be hidden.
@@ -269,7 +274,12 @@ During a refactoring session:
 
 **In Practice**:
 
-Worktree management can be manual, but is most effective when automated through agent skills. The [obra/superpowers](https://github.com/obra/superpowers) framework provides a **[using-git-worktrees](https://github.com/obra/superpowers)** skill that automates worktree creation with smart directory selection and safety verification — agents create isolated worktrees at the start of feature work without manual `git worktree` commands.
+Worktree management can be manual, but is most effective when automated through agent skills. The
+[obra/superpowers](https://github.com/obra/superpowers) framework (a skill pack: read it before you install
+it, per [Pattern 2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)) provides a
+**[using-git-worktrees](https://github.com/obra/superpowers)** skill that automates worktree creation with
+smart directory selection and safety verification — agents create isolated worktrees at the start of feature
+work without manual `git worktree` commands.
 
 ```bash
 # Manual equivalent (agents typically use the skill instead)
@@ -287,6 +297,9 @@ Benefits:
 - **Deterministic state**: Worktrees created from a known commit
 
 Convention: `.worktrees/<branch-name>/` directory.
+
+A worktree separates files, not privileges. An agent in a worktree still has the user's shell, keys and network.
+Containment is a separate decision ([Pattern 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
 
 **Anti-Pattern**: Working directly on main for feature work. Agents should never modify main without explicit instruction.
 
@@ -456,6 +469,9 @@ Audit quarterly and after each major structural change:
 - [ ] AGENTS.md is a map with stated rules, not a wall of links.
 - [ ] Examples in docs run as written.
 - [ ] Directory names communicate intent ([Pattern 0.2](#pattern-02--progressive-disclosure)).
+- [ ] Work sample: an engineer who did not review a module an agent changed recently can explain it and find the
+  cause of a failing test without the agent ([Pattern
+  4.9](L4-standards-measurement.md#pattern-49--deliberate-practice)).
 
 Apply the zero-context rule to every doc section: no undefined terms, no assumed prior knowledge, no "we" implying existing team membership, no examples that depend on unstated setup.
 

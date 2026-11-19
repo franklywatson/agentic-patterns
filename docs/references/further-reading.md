@@ -89,6 +89,12 @@ The sources cited by the evidence labels on each pattern are listed in [sources.
 
 ## Tools
 
+Skills, plugins, hooks, command proxies and MCP servers run with the agent's privileges. Read the source, pin
+a version and review updates before installing any tool listed here ([Pattern
+2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)). jcodemunch is free for
+non-commercial use and needs a paid licence for commercial use (README at
+github.com/jgravelle/jcodemunch-mcp).
+
 ### Superpowers (obra)
 
 - **Type:** Tool / Framework

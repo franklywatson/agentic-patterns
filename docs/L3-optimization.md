@@ -53,7 +53,13 @@ search_symbols("process", kind="function")
 ]
 ```
 
-String matching is a nudge, not a control. The classifier's anchored pattern, `/^\s*sed\s+(-i|--in-place)\b/` (`examples/guardrails/src/core/intent.ts`), misses `/usr/bin/sed -i` and `sed -E -i`. The example router's unanchored rule, `/\bsed\s+(-i|--in-place)\b/` (`examples/guardrails/src/config/routing.config.ts`), catches the absolute-path form but still misses `sed -E -i`, and it blocks harmless text such as `echo sed -i`. Neither catches `perl -pi`, `python -c` file writes or `$(...)` substitution. The `docker` rule allows every Docker command, and Docker socket access is root-equivalent. Use a sandbox or credential scope for limits that must hold.
+String matching is a nudge, not a control. The classifier's anchored pattern, `/^\s*sed\s+(-i|--in-place)\b/`
+(`examples/guardrails/src/core/intent.ts`), misses `/usr/bin/sed -i` and `sed -E -i`. The example router's
+unanchored rule, `/\bsed\s+(-i|--in-place)\b/` (`examples/guardrails/src/config/routing.config.ts`), catches
+the absolute-path form but still misses `sed -E -i`, and it blocks harmless text such as `echo sed -i`.
+Neither catches `perl -pi`, `python -c` file writes or `$(...)` substitution. The `docker` rule allows every
+Docker command, and Docker socket access is root-equivalent. Use a sandbox or credential scope for limits that
+must hold ([Pattern 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
 
 The [guardrails example](../examples/guardrails/) implements the classifier and routing table in TypeScript, with tests.
 
@@ -108,7 +114,15 @@ Cross-References:
 
 Routing should depend on which tools exist: an indexed repository can use symbol search, and a machine without the indexer should fall back to the Grep tool. Detect available tools once per session, cache the result, and degrade to the native tool when a specialized one is missing.
 
-This guide does not reproduce the detection and caching code. The reference implementations are in the [rig](https://github.com/franklywatson/claude-rig) repository: [`src/router`](https://github.com/franklywatson/claude-rig/tree/main/src/router) for environment-aware resolution and [`src/session`](https://github.com/franklywatson/claude-rig/tree/main/src/session) for session-start detection and caching. rig is by this repository's author.
+This guide does not reproduce the detection and caching code. The reference implementations are in the
+[rig](https://github.com/franklywatson/claude-rig) repository:
+[`src/router`](https://github.com/franklywatson/claude-rig/tree/main/src/router) for environment-aware
+resolution and [`src/session`](https://github.com/franklywatson/claude-rig/tree/main/src/session) for
+session-start detection and caching. rig is by this repository's author. It installs hooks and skills, so
+review it before you install it ([Pattern
+2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)). The same applies to RTK,
+which proxies your shell commands, and to the jcodemunch MCP server, which is licensed for non-commercial use
+and needs a paid licence for commercial use.
 
 **Evidence:** Thin — design from rig (first-party, n=1); no study of detection caching
 
