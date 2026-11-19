@@ -363,7 +363,7 @@ CI: required check searches stack-test directories for mock libraries
 
 **Symptom**: Every change, including a typo fix, runs through five phases. Agents and reviewers skip phases in bulk. Or the opposite: changes ship without verification evidence or review because they "looked small".
 
-**Why This Happens**: The chain compensated for models that skipped planning or verification, so it was applied uniformly. Applied uniformly, it adds ceremony to small changes, and people learn to bypass it. Visiting a phase also does not show that the phase did its job.
+**Why This Happens**: A chain that applies uniformly is simple to state. Applied to every change, it adds ceremony to small changes, and people learn to bypass it. Visiting a phase also does not show that the phase did its job.
 
 **Pattern**: Apply [Pattern 2.2 - The Skill Chain](../L2-behavioral-guardrails.md#pattern-22--the-skill-chain) as an optional pipeline:
 

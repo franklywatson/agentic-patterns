@@ -43,7 +43,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Constitutional Rule
 
 **Level**: L2 - Behavioral Guardrails
-**Definition**: Hard constraint declared in CLAUDE.md that never relaxes; foundational to a project's guardrail system.
+**Definition**: Hard rule declared in the instruction file (CLAUDE.md or AGENTS.md) that names its enforcement point: prompt, hook, CI, sandbox or downstream. A rule is only as absolute as its weakest enforcement point.
 **See**: [Pattern 2.4 - Constitutional Rules](../L2-behavioral-guardrails.md#pattern-24--constitutional-rules)
 
 ### Container Isolation
@@ -87,7 +87,7 @@ Alphabetical reference for specialized terms used across the agentic-patterns li
 ### Enforcement Pipeline
 
 **Level**: L2 - Behavioral Guardrails
-**Definition**: Composable pipeline where independent enforcement checks return severity levels, resolved to the most severe result (block > advise > silent).
+**Definition**: Composable pipeline where independent enforcement checks return severity levels, resolved to the most severe result (block > advise > silent). PostToolUse checks are detective: they run after the tool call and report it, but cannot prevent it. Prevention needs a PreToolUse hook or a boundary outside the agent.
 **See**: [Pattern 2.6 - Enforcement Pipeline Composition](../L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition)
 
 ### Focused Integration Test

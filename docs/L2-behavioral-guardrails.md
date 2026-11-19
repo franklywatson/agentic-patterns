@@ -22,8 +22,7 @@ reference implementation. Hook syntax in this document follows Claude Code; each
 
 ## Overview
 
-L1 established testing discipline. L2 decides where each rule is held, so that the rule is as strong as its
-weakest enforcement point and no stronger. The layers, from weakest to strongest:
+L2 decides where each rule is held. A rule is as strong as its weakest enforcement point and no stronger. The layers, from weakest to strongest:
 
 | Layer | Mechanism | Holds | Can the agent bypass it? |
 |-------|-----------|-------|--------------------------|
@@ -35,8 +34,7 @@ weakest enforcement point and no stronger. The layers, from weakest to strongest
 
 A sandbox with credentials kept outside it makes hooks such as "block `sed -i`" or "block `docker system
 prune`" unnecessary as safety controls. They remain useful as ergonomic nudges
-([AN-9, SG-10](references/sources.md)). This document does not specify sandbox setup; see the containment
-patterns planned for this layer in the refresh plan ([docs/refresh/README.md](refresh/README.md)).
+([AN-9, SG-10](references/sources.md)). Sandbox and credential setup is outside the scope of this document.
 
 The mechanisms in this document:
 
@@ -107,7 +105,7 @@ Copying the same rules into every prompt. This creates drift: prompts get update
 
 ## Pattern 2.2 — The Skill Chain
 
-![Skill Chain Pipeline](diagrams/2.2-skill-chain-pipeline.png)
+![Skill chain pipeline (optional)](diagrams/2.2-skill-chain-pipeline.png)
 
 **Status: optional.** Scale ceremony to risk. A one-line fix does not need five phases. Verification and
 review stay outcome gates for every change: evidence before claiming done, and review before merge, at a
@@ -115,10 +113,9 @@ depth set by reversibility and blast radius.
 
 ### Problem
 
-Models that skip planning or verification produce code that cannot be checked systematically. A phased
-workflow compensated for this. Current models plan and verify more reliably on their own, so a mandatory
-five-phase chain now adds ceremony to small changes while the gates that matter (tests run, evidence shown,
-review done) can be held by CI and review directly.
+A fixed five-phase chain applied to every change adds ceremony to small changes, and people learn to skip
+phases in bulk. The gates that matter (tests run, evidence shown, review done) are outcomes that CI and the
+merge process can hold directly, whichever phases the agent visited.
 
 ### Solution
 
@@ -294,7 +291,7 @@ from [the layers above](#overview): prompt, hook, CI, sandbox, downstream.
 
 | Rule | Enforcement point | What holds it |
 |------|-------------------|---------------|
-| Real dependencies in E2E/integration and stack tests | Prompt, hook, CI | Skill carries the rule; PreToolUse hook blocks mock imports in stack-test files; CI check greps stack-test directories for mock libraries |
+| Real dependencies in E2E/integration and stack tests | Prompt, hook (best effort), CI | Skill carries the rule; PreToolUse hook (best effort, since a regex on imports is bypassable) blocks mock imports in stack-test files; CI check greps stack-test directories for mock libraries |
 | No conditional test assertions | CI | Lint rule or test-integrity check in the required CI job ([Pattern 1.6](L1-patterns/1.6-test-integrity.md)) |
 | Evidence-based claims only | Prompt, CI | Verification skill requires output; CI result is the evidence the reviewer reads |
 | Zero-defect tolerance | CI | Required check fails on any test failure, lint error or warning |
