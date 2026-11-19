@@ -1,0 +1,425 @@
+<title>Agentic Patterns Refresh</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: matches the research baseline page; one reading column, sticky section bar, verdict and curve placement lead, then the two goals, the prerequisite track, pruning, fixes, roadmap and decisions. */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --surface-2:#eef1f5; --ink:#0f1b33; --ink-2:#3b4660; --muted:#647089;
+  --line:#d9dee7; --navy:#13254a; --accent:#2f5bd3; --accent-soft:#e3eaff;
+  --strong:#1d7a4f; --strong-bg:#e2f3ea; --partial:#9a5b00; --partial-bg:#fbefd9; --thin:#8a3b3b; --thin-bg:#f6e3e3;
+  --l1:#c9d3e6; --l2:#a9bbdf; --l3:#7e9ad6; --l4:#4f73c9; --l5:#2a4fa8;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1220; --surface:#121a2c; --surface-2:#18223a; --ink:#e7ecf6; --ink-2:#c1cadc; --muted:#8f9bb4;
+  --line:#26314a; --navy:#c9d6f2; --accent:#7f9ff0; --accent-soft:#1c2a4d;
+  --strong:#6fd1a0; --strong-bg:#123326; --partial:#f0b75c; --partial-bg:#3a2a10; --thin:#f09a9a; --thin-bg:#3a1a1a;
+  --l1:#26324d; --l2:#2c3f6b; --l3:#36508c; --l4:#4466b4; --l5:#5f82d6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1220; --surface:#121a2c; --surface-2:#18223a; --ink:#e7ecf6; --ink-2:#c1cadc; --muted:#8f9bb4;
+  --line:#26314a; --navy:#c9d6f2; --accent:#7f9ff0; --accent-soft:#1c2a4d;
+  --strong:#6fd1a0; --strong-bg:#123326; --partial:#f0b75c; --partial-bg:#3a2a10; --thin:#f09a9a; --thin-bg:#3a1a1a;
+  --l1:#26324d; --l2:#2c3f6b; --l3:#36508c; --l4:#4466b4; --l5:#5f82d6; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.6;margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:var(--accent)}
+a:focus-visible,summary:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2;color:var(--navy)}
+h1{font-size:clamp(1.9rem,4.5vw,2.8rem);font-weight:700;letter-spacing:-.02em;margin:0}
+h2{font-size:1.55rem;font-weight:700;letter-spacing:-.01em;margin:0 0 .3rem}
+h3{font-size:1.08rem;font-weight:600;margin:0 0 .4rem}
+h4{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 .4rem}
+p{margin:0 0 .8rem}
+code{font-family:var(--mono);font-size:.84em;background:var(--surface-2);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+pre{font-family:var(--mono);font-size:.8rem;line-height:1.5;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;margin:0;color:var(--ink)}
+.eyebrow{font-size:.74rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:1.12rem;color:var(--ink-2);max-width:72ch}
+header.top{padding-block:48px 28px;border-bottom:1px solid var(--line);background:var(--surface)}
+header.top .wrap{display:grid;gap:14px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.85rem;color:var(--muted)}
+.meta span{white-space:nowrap}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+nav.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+nav.bar .wrap{display:flex;gap:4px;overflow-x:auto;padding-block:8px;scrollbar-width:none}
+nav.bar a{flex:none;text-decoration:none;color:var(--ink-2);font-size:.86rem;font-weight:500;padding:6px 10px;border-radius:6px}
+nav.bar a:hover{background:var(--surface-2);color:var(--ink)}
+section.block{padding-block:44px;border-bottom:1px solid var(--line);scroll-margin-top:52px}
+section.block > .wrap{display:grid;gap:18px}
+.sectlede{color:var(--ink-2);max-width:75ch;margin:0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:14px}
+.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;min-width:0;display:grid;gap:8px;align-content:start}
+.panel p,.panel li{font-size:.93rem;color:var(--ink-2);margin:0}
+.panel ul,.panel ol{margin:0;padding-left:1.15rem;display:grid;gap:6px}
+.panel h3{margin:0}
+.callout{background:var(--accent-soft);border-left:3px solid var(--accent);border-radius:6px;padding:14px 16px;color:var(--ink)}
+.callout p{margin:0}
+.callout p + p{margin-top:.5rem}
+.warn{background:var(--partial-bg);border-left:3px solid var(--partial);border-radius:6px;padding:12px 16px;color:var(--ink);font-size:.93rem}
+.warn p{margin:0}
+.prose{display:grid;gap:10px;color:var(--ink-2);max-width:78ch}
+.prose p{margin:0}
+.prose ul,.prose ol{margin:0;padding-left:1.25rem;display:grid;gap:7px}
+.prose b{color:var(--ink)}
+.ev{display:inline-block;font-size:.68rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px;white-space:nowrap;vertical-align:middle}
+.ev.s{color:var(--strong);background:var(--strong-bg)} .ev.p{color:var(--partial);background:var(--partial-bg)} .ev.t{color:var(--thin);background:var(--thin-bg)}
+.ev.n{color:var(--muted);background:var(--surface-2)}
+.lens{display:inline-block;font-family:var(--mono);font-size:.7rem;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:4px;margin:0 3px 3px 0}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:.86rem}
+table.narrow{min-width:560px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+thead th{background:var(--surface-2);font-weight:600;color:var(--navy);font-size:.8rem}
+tbody th{font-weight:600;color:var(--ink)}
+tbody tr:last-child td,tbody tr:last-child th{border-bottom:none}
+td{color:var(--ink-2)}
+td.num,th.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.84rem;color:var(--ink-2);align-items:center}
+/* curve placement chart */
+.profile{display:grid;gap:8px}
+.prow{display:grid;grid-template-columns:minmax(120px,190px) 1fr minmax(70px,auto);gap:12px;align-items:center}
+.prow .nm{font-size:.88rem;color:var(--ink);font-weight:500}
+.prow .nm small{display:block;font-size:.72rem;color:var(--partial);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.track{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:3px;height:22px}
+.track span{border-radius:3px;background:var(--surface-2)}
+.track span.on1{background:var(--l1)} .track span.on2{background:var(--l2)} .track span.on3{background:var(--l3)} .track span.on4{background:var(--l4)} .track span.on5{background:var(--l5)}
+.track span.half{background:repeating-linear-gradient(135deg,var(--l3) 0 4px,var(--surface-2) 4px 8px)}
+.prow .lv{font-family:var(--mono);font-size:.8rem;color:var(--ink-2);text-align:right;white-space:nowrap}
+.axis{display:grid;grid-template-columns:minmax(120px,190px) 1fr minmax(70px,auto);gap:12px}
+.axis .ticks{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;font-size:.72rem;color:var(--muted);text-align:center}
+.capline{display:grid;grid-template-columns:minmax(120px,190px) 1fr minmax(70px,auto);gap:12px;align-items:center;margin-top:6px;padding-top:10px;border-top:2px dashed var(--partial)}
+.capline .nm{font-weight:700;color:var(--partial);font-size:.9rem}
+.capline .lv{font-family:var(--mono);font-weight:700;color:var(--partial);text-align:right}
+@media (max-width:560px){.prow,.axis,.capline{grid-template-columns:96px 1fr 54px;gap:8px}.prow .nm{font-size:.78rem}}
+/* loop */
+ol.loop{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.86rem}
+ol.loop li{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--ink-2)}
+ol.loop li.have{border-color:var(--strong);color:var(--strong);background:var(--strong-bg)}
+ol.loop li.miss{border-style:dashed;color:var(--thin)}
+ol.loop li + li::before{content:"→";margin:0 8px 0 -4px;color:var(--muted)}
+/* patterns */
+.pat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:6px;min-width:0}
+.pat .ph{display:flex;gap:10px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.pat .ph h3{margin:0;font-size:1rem}
+.pat .ph h3 .k{font-family:var(--mono);font-size:.75rem;color:var(--muted);margin-right:8px}
+.pat p{font-size:.92rem;color:var(--ink-2);margin:0}
+.pat .fm{font-size:.84rem;color:var(--muted)}
+.pats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:12px}
+details.more{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+details.more > summary{cursor:pointer;list-style:none;padding:12px 16px;font-weight:600;color:var(--navy);font-size:.95rem}
+details.more > summary::-webkit-details-marker{display:none}
+details.more > summary::before{content:"▶";font-size:.7rem;color:var(--muted);margin-right:8px;display:inline-block;transition:transform .2s}
+details.more[open] > summary::before{transform:rotate(90deg)}
+details.more > .body{padding:0 16px 16px;display:grid;gap:12px}
+/* prune lists */
+.prune{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:12px}
+.prune .panel h3{display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.d-cut{background:var(--thin)} .d-merge{background:var(--partial)} .d-demote{background:var(--muted)} .d-promote{background:var(--strong)}
+/* roadmap */
+.phases{display:grid;gap:12px}
+.phase{display:grid;grid-template-columns:110px 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+@media (max-width:560px){.phase{grid-template-columns:1fr;gap:6px}}
+.phase .pn{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.phase .pn b{display:block;font-family:var(--font);font-size:1rem;color:var(--navy)}
+.phase ul{margin:0;padding-left:1.1rem;display:grid;gap:5px;font-size:.92rem;color:var(--ink-2)}
+.phase .exit{font-size:.84rem;color:var(--ink);margin-top:6px}
+/* decisions */
+ol.decide{margin:0;padding:0;list-style:none;display:grid;gap:10px;counter-reset:d}
+ol.decide li{counter-increment:d;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px 14px 52px;position:relative;color:var(--ink-2);font-size:.93rem}
+ol.decide li::before{content:counter(d);position:absolute;left:16px;top:13px;width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-family:var(--mono);font-size:.8rem;display:grid;place-items:center}
+ol.decide li b{color:var(--ink);display:block;margin-bottom:2px}
+ol.decide li .rec{display:block;margin-top:6px;color:var(--ink);font-size:.88rem}
+footer{padding-block:32px 48px;color:var(--muted);font-size:.85rem}
+footer .wrap{display:grid;gap:8px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<header class="top"><div class="wrap">
+<div class="eyebrow">agentic-patterns · critical review and evolution proposal</div>
+<h1>Agentic Patterns Refresh</h1>
+<p class="lede">The repository was reviewed against the research baseline and the Anthropic guidance companion, by five reviewers with different lenses. The verification core holds up well and should become the centre of the library. Most of the optimisation layer has aged. Security, ownership and measurement are missing, and those three set the ceiling on how much autonomy any adopter can safely grant. This page proposes how the library grows into two goals: software that earns its own autonomy, and software that repairs itself.</p>
+<div class="meta"><span>19 Nov 2026</span><span>Repo reviewed at <code>a07ad93</code> (last change 18 Apr 2026)</span><span>Five lenses, one synthesis</span><span>Proposal; no pattern docs changed yet</span></div>
+<p class="sectlede" style="font-size:.9rem">Inputs: an AI-native engineering maturity research baseline, and an Anthropic guidance companion that maps Anthropic's published practice onto it. Reference IDs (MC-, SC-, OM-, SG-, PO-, IS-, MV-) are the baseline's; A-numbers are the companion's.</p>
+</div></header>
+
+<nav class="bar" aria-label="Sections"><div class="wrap">
+<a href="#verdict">Verdict</a><a href="#placement">Where it stands</a><a href="#reframe">Reframe</a><a href="#ladder">Earned autonomy</a><a href="#repair">Self-repair</a><a href="#contain">Containment</a><a href="#prune">Prune</a><a href="#fixes">Fix now</a><a href="#roadmap">Roadmap</a><a href="#decisions">Decisions</a>
+</div></nav>
+
+<section class="block" id="verdict"><div class="wrap">
+<div class="eyebrow">1 · Verdict</div><h2>What holds, what has aged, what is missing</h2>
+<div class="three">
+<div class="panel"><h3 style="color:var(--strong)">Holds, and matters more now</h3><ul>
+<li>Stack tests, full-loop assertions and test integrity (1.1, 1.2, 1.6). They turn "the agent says it worked" into a signal a machine can trust, which is what earns delegation (finding 2; companion position 02).</li>
+<li>"Prose is suggestion; enforcement is deterministic" (L2). The research now backs it with independent sources (SC-8, OM-7, OM-18, SG-11, SG-16).</li>
+<li>Evidence-based claims (4.1) and context eval (4.6). Both match the field's best practice on self-report and task banks (IS-6, MV-9).</li>
+</ul></div>
+<div class="panel"><h3 style="color:var(--partial)">Has aged</h3><ul>
+<li>Command routing, intent classification and environment detection (3.1–3.3, 3.8). Current harnesses ship native tools that do this.</li>
+<li>TOON (3.7). Its worked example is arithmetically wrong.</li>
+<li>Token-saving figures (60–90%). They are unsourced, and the docs disagree with each other.</li>
+<li>A mandatory five-phase skill chain with a blocking phase tracker (2.2, 2.7). This ceremony compensated for models that skipped planning or verification.</li>
+<li>The 150-line CLAUDE.md rule, while CLAUDE.md <code>@</code>-imports every doc.</li>
+</ul></div>
+<div class="panel"><h3 style="color:var(--thin)">Missing</h3><ul>
+<li>Containment: sandbox, egress, credentials and agent identity.</li>
+<li>Ownership: agent register, author of record, a tested stop and retirement.</li>
+<li>Measuring value against a baseline.</li>
+<li>Any notion of per-workflow autonomy, or of production beyond the development loop. The FAQ scopes production out.</li>
+</ul></div>
+</div>
+<div class="callout"><p><b>The central reframe.</b> L0–L4 is a capability stack. It says whether letting go is safe. It does not say how much a given workflow is allowed to let go, on what evidence, or how that grant is withdrawn. The research's defensible top is exactly that missing piece: "the ability to raise autonomy for a named workflow when evidence supports it, show that evidence, and lower it again" (baseline 3.7).</p><p>So keep the layers. Add an orthogonal autonomy axis, gated by the cap rule. Fill the three capping dimensions the library ignores. Self-repair then becomes one family of workflows on that axis, rather than a new level on top of the pyramid.</p></div>
+<div class="prose"><p><b>Method.</b> Five reviewers each read the full repository and both research pages:</p>
+<ol>
+<li><span class="lens">evidence</span> held the repo to its own "every claim verifiable" rule.</li>
+<li><span class="lens">autonomy</span> mapped the pyramid onto the 5 × 7 curve.</li>
+<li><span class="lens">repair</span> extended the closed loop into production.</li>
+<li><span class="lens">governance</span> covered security, ownership and people.</li>
+<li><span class="lens">adopter</span> red-teamed the repo as a staff engineer in Nov 2026 working with Claude 5-generation models.</li>
+</ol>
+<p>Their findings converged far more than they conflicted. Where they disagreed, section 10 says so. Lens tags beside a finding show who raised it.</p></div>
+</div></section>
+
+<section class="block" id="placement"><div class="wrap">
+<div class="eyebrow">2 · Where the library stands</div><h2>A full adopter, placed on the curve</h2>
+<p class="sectlede">This is the profile a team would reach by adopting every pattern in the library as written. It shows the ceiling the content allows. It does not assess any particular team. The curve's levels are written C1–C5 here so they stay distinct from the repo's L0–L4. <span class="lens">autonomy</span><span class="lens">repair</span><span class="lens">governance</span></p>
+<div class="panel" style="gap:10px">
+<div class="axis"><span></span><div class="ticks"><span>C1 Individual</span><span>C2 Grounded</span><span>C3 Verified</span><span>C4 Governed</span><span>C5 Self-corr.</span></div><span></span></div>
+<div class="profile">
+<div class="prow"><span class="nm">Shared context</span><div class="track"><span class="on1"></span><span class="on2"></span><span class="on3"></span><span></span><span></span></div><span class="lv">C3</span></div>
+<div class="prow"><span class="nm">Team operating model</span><div class="track"><span class="on1"></span><span class="on2"></span><span class="on3"></span><span></span><span></span></div><span class="lv">C3</span></div>
+<div class="prow"><span class="nm">Platform<small>caps</small></span><div class="track"><span class="on1"></span><span class="on2"></span><span class="half"></span><span></span><span></span></div><span class="lv">C2–3</span></div>
+<div class="prow"><span class="nm">Measuring value<small>caps</small></span><div class="track"><span class="on1"></span><span class="on2"></span><span class="half"></span><span></span><span></span></div><span class="lv">C2–3</span></div>
+<div class="prow"><span class="nm">Individual &amp; team skill</span><div class="track"><span class="on1"></span><span class="on2"></span><span></span><span></span><span></span></div><span class="lv">C2</span></div>
+<div class="prow"><span class="nm">Security &amp; governance<small>caps</small></span><div class="track"><span class="on1"></span><span class="on2"></span><span></span><span></span><span></span></div><span class="lv">C2</span></div>
+<div class="prow"><span class="nm">Production ownership<small>caps</small></span><div class="track"><span class="on1"></span><span></span><span></span><span></span><span></span></div><span class="lv">C1</span></div>
+</div>
+<div class="capline"><span class="nm">Cap for unattended work</span><span style="font-size:.85rem;color:var(--ink-2)">Lowest of the four capping dimensions. Production ownership is out of scope in <code>faq.md</code>.</span><span class="lv">C1</span></div>
+</div>
+<div class="two">
+<div class="panel"><h3>What this means</h3><p>The library produces teams that are good at verified, attended delegation. It does not give them the scaffolding to earn unattended delegation. Its strongest dimensions, shared context and operating model, are exactly the two that do not set the cap. The repo never tells readers this.</p></div>
+<div class="panel"><h3>Where the pyramid misleads</h3><p>Pattern 4.4 maps maturity stages one-to-one onto L0–L4 and puts "Autonomous: end-to-end delivery" at the top. That is a single sequential ladder with a volume-based top, the two flaws the baseline names (3.3, 3.7). It treats token efficiency (L3) as "self-optimizing", and places measurement last when the curve needs a baseline before autonomy rises.</p></div>
+</div>
+</div></section>
+
+<section class="block" id="reframe"><div class="wrap">
+<div class="eyebrow">3 · The reframe</div><h2>Two axes and a cap line</h2>
+<p class="sectlede">All five lenses rejected adding an "L5 Autonomy" or "L5 Self-repair" apex. An apex repeats the single-ladder error. It also implies autonomy is earned by finishing L0–L4, when the cap rule says it is limited by the weakest column. <span class="lens">autonomy</span><span class="lens">repair</span><span class="lens">governance</span></p>
+<div class="two">
+<div class="panel"><h4>Axis 1 · Capability layers (keep, rename)</h4>
+<div class="tablewrap" style="border:none"><table class="narrow"><thead><tr><th>Layer</th><th>Role in the new model</th></tr></thead><tbody>
+<tr><th>L0 Foundation</th><td>Shared-context and operating-model prerequisites</td></tr>
+<tr><th>L1 Closed loops</th><td>The hinge. It is what makes verification mechanical, and so what earns A3 and A4. Extended to production by the 1.7–1.12 repair family.</td></tr>
+<tr><th>L2 Guardrails</th><td>The mechanism grants are enforced through. Gains containment and supply chain, and a layered-enforcement rewrite.</td></tr>
+<tr><th>L3 Efficiency</th><td>Optional. Feeds cost per outcome. Not on the autonomy critical path.</td></tr>
+<tr><th>L4 Evidence</th><td>Evidence, evals and measurement, used at every grant. The 4.4 stage table is replaced by Axis 2.</td></tr>
+</tbody></table></div></div>
+<div class="panel"><h4>Axis 2 · Autonomy grant per workflow (new)</h4>
+<div class="tablewrap" style="border:none"><table class="narrow"><thead><tr><th>Grant</th><th>Agent may</th><th>Needs cap ≥</th></tr></thead><tbody>
+<tr><th>A1 Assisted</th><td>Suggest; a human applies</td><td class="num">—</td></tr>
+<tr><th>A2 Reviewed</th><td>Edit and open PRs; a human reads every change</td><td class="num">C2</td></tr>
+<tr><th>A3 Gated</th><td>Changes pass required checks before a human sees them; a human merges; a named owner for each change</td><td class="num">C3</td></tr>
+<tr><th>A4 Unattended, reversible</th><td>Acts on an event, schedule or backlog within permitted actions; owner, limits, audit and a tested stop; only where verification is mechanical and the action reversible</td><td class="num">C4</td></tr>
+<tr><th>A5 Portfolio-managed</th><td>A4 plus baseline, target, review date and stop rule; the grant moves on evidence; the workflow can be retired</td><td class="num">C5</td></tr>
+</tbody></table></div></div>
+</div>
+<div class="warn"><p><b>A5 grants no more power than A4.</b> A5 is A4 managed as an investment. That encodes the defensible top as a capability (moving grants on evidence) rather than a volume (more agents, fewer humans).</p></div>
+<div class="prose"><p><b>Primary diagram.</b> Replace the pyramid with the dimension grid from section 2, with the cap line drawn across it. No workflow grant may sit above the line. Keep the pyramid as a secondary "layer dependencies" diagram, because its dependency claims are right: L1 does depend on L0, and L2 does depend on L1 producing binary signals.</p></div>
+</div></section>
+
+<section class="block" id="ladder"><div class="wrap">
+<div class="eyebrow">4 · Goal A</div><h2>Software that ladders itself up to autonomy</h2>
+<p class="sectlede">The repo already has most of the A3 machinery: blocking hooks, constitutional rules, the enforcement pipeline, CI guardrails and context eval as a task bank. What it lacks is a binding between that machinery and an explicit, revocable grant. The A-series supplies it. my-claw's trust tiers are the seed; the comparison table below shows what changes. <span class="lens">autonomy</span></p>
+<div class="pats">
+<div class="pat"><div class="ph"><h3><span class="k">A.1</span>Autonomy register</h3><span class="ev p">Partial</span></div><p>A committed, schema-validated <code>.autonomy.yaml</code> lists every agent workflow. Interactive sessions count as a workflow. Each entry records owner, sponsor, grant, identity, permitted and forbidden actions, risk class, limits, stop mechanism with its last-tested date, review date and stop rule. It is protected by CODEOWNERS and is never writable by an agent.</p></div>
+<div class="pat"><div class="ph"><h3><span class="k">A.2</span>Evidence ledger</h3><span class="ev p">Partial</span></div><p>An append-only record per run, written only by CI and by jobs that observe source control afterwards, never by the agent. It captures check results, reverts, rework within 14 days and escaped defects. A <code>harness_hash</code> covers model, CLAUDE.md, skills and hooks; changing it is a release.</p></div>
+<div class="pat"><div class="ph"><h3><span class="k">A.3</span>Promotion, demotion and the cap gate</h3><span class="ev t">Thin</span></div><p>Promotion moves one level at a time, through a human-approved PR with ledger evidence that uses lower confidence bounds. Demotion is automatic and immediate, with hysteresis and a cooldown. <code>autonomy check</code> is a required CI check and has no exception field.</p></div>
+<div class="pat"><div class="ph"><h3><span class="k">A.4</span>Self-placement census</h3><span class="ev p">Partial</span></div><p><code>autonomy census</code> probes artefacts for presence and practice: last changed, run by CI, exercised in the ledger. It writes a profile with one level per dimension. Unknown cells count as C2, so missing evidence lowers the cap instead of being ignored.</p></div>
+<div class="pat"><div class="ph"><h3><span class="k">A.5</span>Tested stop</h3><span class="ev t">Thin</span></div><p>Every A4+ workflow gets a monthly drill. It triggers the stop against a canary run, asserts the halt and token revocation, restores the workflow and records the date. A failed drill demotes the workflow.</p></div>
+<div class="pat"><div class="ph"><h3><span class="k">A.6</span>Enforcement through hooks</h3><span class="ev s">Strong</span><span class="ev t">Thin</span></div><p>SessionStart computes the effective level. PreToolUse blocks anything outside the grant, including any agent write to <code>.autonomy*</code>, CODEOWNERS or CI config. PostToolUse writes an audit line. Context eval gains an <code>autonomy</code> suite that tests the gate itself.</p><p class="fm">Strong on the mechanism; thin on outcomes.</p></div>
+<div class="pat"><div class="ph"><h3><span class="k">A.7</span>Portfolio review</h3><span class="ev t">Thin</span></div><p>At each review date a job opens an issue with the ledger trend, cost per merged outcome against the baseline, and the stop rule evaluated. The owner records keep, promote, demote or retire. Retirement revokes the identity.</p></div>
+</div>
+<details class="more"><summary>Register entry and promotion criteria</summary><div class="body">
+<pre>workflows:
+  - id: dep-bump
+    owner: team-platform            # resolves in CODEOWNERS
+    sponsor: "@alice"               # accountable human; access expires with sponsorship
+    granted_level: 4
+    identity: github-app:deps-bot   # non-personal, short-lived token
+    permitted_actions: { paths: [package.json, package-lock.json], git: [open_pr, auto_merge] }
+    forbidden_actions: [deploy, read_secrets, edit_ci, edit_autonomy]
+    risk: { reversible: true, verification: mechanical, blast_radius: repo,
+            trifecta: { untrusted_input: true, sensitive_data: false, external_action: false } }
+    limits: { max_runs_per_day: 5, max_cost_usd_per_run: 2.00, max_diff_lines: 400 }
+    stop: { mechanism: "disable workflow; revoke app token", authority: [team-platform, "@oncall"],
+            last_tested: 2026-11-02 }   # written by the drill job
+    review_date: 2027-02-01
+    stop_rule: "retire if &lt; 2 merged PRs/month over 90 days"</pre>
+<div class="tablewrap"><table><thead><tr><th>To</th><th>Criteria over the evidence window (illustrative defaults)</th></tr></thead><tbody>
+<tr><th>A3</th><td>≥ 20 runs at A2; first-run pass on required checks, lower bound ≥ 0.80; a traced sample shows substantive human review; owner named</td></tr>
+<tr><th>A4</th><td>≥ 30 runs at A3; first-run pass lower bound ≥ 0.90; revert upper bound ≤ 3%; zero escaped defects; task bank ≥ 0.90 on the current harness; reversible and mechanically verifiable; stop drill within 30 days; cap ≥ C4</td></tr>
+<tr><th>A5</th><td>≥ 90 days at A4; baseline, target and stop rule set; cost per merged outcome reported; one review cycle completed with a recorded decision; cap ≥ C5</td></tr>
+<tr><th>Demote</th><td>Any one of: an S2+ escaped defect or linked incident; revert rate above 6% (hysteresis against the 3% promotion threshold); task bank below floor; harness changed without an eval; stop drill overdue; owner, sponsor or access expired; a limit breached or a forbidden action attempted</td></tr>
+</tbody></table></div>
+<div class="tablewrap"><table><thead><tr><th>my-claw trust tiers today</th><th>Change</th></tr></thead><tbody>
+<tr><td>Tiers per agent</td><td>Grants per workflow; one agent may run several workflows at different grants</td></tr>
+<tr><td>Promotion on consecutive successes, source unspecified</td><td>Promotion on CI-written ledger evidence with confidence bounds, plus human sign-off</td></tr>
+<tr><td>"Autonomous (no oversight)"</td><td>"Unattended (observed)": owner, limits, audit record and tested stop remain</td></tr>
+<tr><td>No link to model changes</td><td>A <code>harness_hash</code> change caps the grant at A3 until the task bank passes</td></tr>
+</tbody></table></div>
+</div></details>
+<div class="callout"><p><b>One line the repo should say outright:</b> stack tests are what earn autonomy. A4's "verification is mechanical" condition can only be met where L1 covers the workflow's user journey. That is companion position 02 in the repo's own vocabulary, and it gives L1 a new reason to exist that no model improvement will erode.</p></div>
+</div></section>
+
+<section class="block" id="repair"><div class="wrap">
+<div class="eyebrow">5 · Goal B</div><h2>Self-repairing software</h2>
+<p class="sectlede">The repo closes a development-time loop. Self-repair closes a production-time loop. The only evidenced top of the curve is unattended change "because verification is mechanical and the action reversible", as in Spotify's 2.5 million auto-merged maintenance PRs (MC-21). The repo supplies the mechanical half and none of the reversible half. No unattended incident repair was found in either research document; only maintenance. <span class="lens">repair</span></p>
+<div class="panel"><h4>The repair loop: what exists (solid) and what is missing (dashed)</h4>
+<ol class="loop"><li class="miss">detect</li><li class="have">diagnose (1.3 ladder)</li><li class="miss">reproduce from incident</li><li class="miss">propose fix</li><li class="have">verify (1.1, 1.2, 1.6)</li><li class="miss">classify risk</li><li class="miss">production gate</li><li class="miss">progressive confirm</li><li class="have">learn (2.8, prose only)</li><li class="miss">stop / roll back</li></ol>
+<p style="font-size:.85rem;color:var(--muted)">The health endpoint's test mode (1.1) is a ready-made detection probe, but it is only defined for test runs.</p></div>
+<p class="sectlede">These are proposed as an L1 sub-family, "Closing the loop in production". Production repair is the same closed loop with a different trigger and a wider confirm step. It is blocked by L4 maturity, not stacked on top of it.</p>
+<div class="pats">
+<div class="pat"><div class="ph"><h3><span class="k">1.7</span>Incident-to-stack-test: reproduce before repair</h3><span class="ev s">Strong</span><span class="ev p">Partial</span></div><p>Every incident in owned code ends with a reproduction stack test. It is red on the pre-fix commit, green on the fix, and placed in the sequential suite. No repair is proposed until the reproduction is red. "Cannot reproduce" routes to a human. Incidents in agent configuration become eval cases instead.</p><p class="fm">Ship this first. It is useful at A3 with no autonomy at all, and it turns compound engineering from prose into executable regression tests.</p></div>
+<div class="pat"><div class="ph"><h3><span class="k">1.8</span>Reversibility and blast-radius classes</h3><span class="ev p">Partial</span><span class="ev n">Taxonomy new</span></div><p>Each proposed action is classified deterministically from the diff, before any human sees it. Reversibility: R0 inert, R1 flag-reversible, R2 deploy-reversible, R3 data-forward, R4 irreversible or external. Blast radius: B0 single journey, B1 one service, B2 cross-service contract, B3 money, auth, PII or audit. Unknown is treated as the highest class, so the classifier fails closed.</p></div>
+<div class="pat"><div class="ph"><h3><span class="k">1.9</span>Repair loop with a frozen oracle</h3><span class="ev s">Strong</span><span class="ev n">Oracle separation new</span></div><p>The reproduction test is frozen, as a protected path, before the fix is written. The fix may not touch existing tests. An anti-masking scan applies 1.6's six forbidden patterns to production diffs: swallowed exceptions, new retries, widened timeouts, lowered thresholds. A hit reclassifies the change as a mitigation and routes it to a human.</p><p class="fm">The repair reviewer calls separating the oracle from the repairer the most original contribution the repo could make.</p></div>
+<div class="pat"><div class="ph"><h3><span class="k">1.10</span>Production gate and progressive confirmation</h3><span class="ev p">Partial</span><span class="ev t">Thin</span></div><p>"The agent may act up to the production gate and cannot pass it" (A27). The gate is deterministic code outside the agent that returns auto, human or block. Auto changes go out behind a flag or canary, with a pre-declared confirmation rule and a minimum sample size. Rollback is automatic on failure, and rehearsed.</p></div>
+<div class="pat"><div class="ph"><h3><span class="k">1.11</span>Repair budget, circuit breaker and stop authority</h3><span class="ev p">Partial</span><span class="ev n">None found in practice</span></div><p>Each incident fingerprint gets an attempt budget, with a cooldown after any rollback. If repair-revert or recurrence rates rise, the workflow drops one grant automatically; restoring it is a recorded human decision. A named on-call role holds a tested stop. Anthropic names this breaker as not yet built (A29).</p></div>
+<div class="pat"><div class="ph"><h3><span class="k">1.12</span>Self-healing tests are not self-healing systems</h3><span class="ev n">Definitional</span></div><p>Tests never heal themselves; a test that rewrites its own assertions is a soft assertion. A test the loop wants to change means the spec changed, which is a design decision. Systems heal at three depths: runtime recovery, mitigation and repair. Only repair produces a learning artefact. Recovery that repeats without a repair ticket is a masked defect.</p></div>
+</div>
+<div class="tablewrap"><table class="narrow"><thead><tr><th>Grant</th><th>Defensible repair capability</th></tr></thead><tbody>
+<tr><th>A3</th><td>The agent drafts a reproduction and fix as a PR from an incident record. A human merges. An evidence bundle is required.</td></tr>
+<tr><th>A4</th><td>First-pass diagnosis on every incident. R0–R1 / B0 repairs go through the gate with a canary, budgets, a tested stop and a register entry.</td></tr>
+<tr><th>A5</th><td>Grants move on revert and recurrence evidence, and workflows are retired. R2 repairs run unattended for named classes only.</td></tr>
+<tr><th>Never, on current evidence</th><td>Unattended R3 or R4 repairs at any grant. The trading-bot reference domain is mostly R4, so it supports stack tests but cannot serve as a self-repair exemplar.</td></tr>
+</tbody></table></div>
+<details class="more"><summary>Where self-repair collides with the repo's own constitution</summary><div class="body"><div class="prose"><ul>
+<li><b>Zero-defect plus automatic action flaps.</b> In production, zero-defect should govern what must be addressed (triaged, fingerprinted, owned), not what is auto-repaired.</li>
+<li><b>Automatic repair tends to mask.</b> The fastest way to make an error disappear is to catch it. Without the 1.9 anti-masking scan, a repair loop converts defects into silent defects.</li>
+<li><b>Evidence is binary; production confirmation is statistical.</b> Accept graded evidence under a pre-declared decision rule decided by code, and say so. Keep it out of gates for irreversible actions.</li>
+<li><b>"Real dependencies" blocks the commonest reproduction.</b> Most incidents are a dependency misbehaving. Add a carve-out: network-level fault injection in front of a real dependency is not a mock; replacing the client is.</li>
+<li><b>Doc freshness.</b> A repair that changes behaviour must update docs in the same change, so a code-only repair loop breaks rule 4 by construction.</li>
+<li><b>Approval fatigue.</b> "A human approves every auto-repair PR" is the worst design: polished evidence bundles get less scrutiny (IS-3), and 93% of prompts are approved (SG-9). Humans decide about risk classes, not each instance.</li>
+</ul></div></div></details>
+</div></section>
+
+<section class="block" id="contain"><div class="wrap">
+<div class="eyebrow">6 · The prerequisite track</div><h2>Containment, ownership and people</h2>
+<p class="sectlede">Both goals are blocked by the same three capping dimensions. This track lifts them, and the adoption guide should check it before any team moves from attended to unattended work. <span class="lens">governance</span><span class="lens">autonomy</span><span class="lens">adopter</span></p>
+<div class="callout"><p><b>Proposed replacement for the L2 thesis.</b> Prose is guidance. Hooks are deterministic policy within the harness. Containment and credentials are the boundary. Put each rule at the lowest layer that can hold it:</p>
+<ul style="margin:.4rem 0 0;padding-left:1.2rem;display:grid;gap:4px">
+<li>What must never happen is prevented by the sandbox, credential scope or downstream authorisation.</li>
+<li>What must always happen runs as a hook and a required CI check.</li>
+<li>Prompts and skills carry everything else.</li>
+</ul>
+<p>A hook is inside the agent's operating environment, so it is not a security boundary. An allowed <code>bash</code> is a general-purpose computer, and hook configuration is often a file the agent can edit.</p></div>
+<div class="tablewrap"><table><thead><tr><th>Proposed pattern</th><th>Problem it solves</th><th>Evidence</th><th>Sources</th></tr></thead><tbody>
+<tr><th>Contain before you relax</th><td>Agents run on the host with shell, keys, network and the Docker socket, and hooks are asked to compensate. Sandbox on and locked by default, secrets injected outside the boundary, fail closed.</td><td><span class="ev p">Partial</span></td><td class="num">PL-14 PL-15 SG-10 A9 A11</td></tr>
+<tr><th>Layered enforcement</th><td>One mechanism is used for nudging, quality and safety. Declare each rule's enforcement point. PostToolUse is detective, not preventive.</td><td><span class="ev s">Strong</span></td><td class="num">SG-7 SG-11 SG-16 SC-8 OM-7</td></tr>
+<tr><th>Least agency and session composition</th><td>Design rinsing and MCP sessions combine untrusted input, private data and external action. Never all three without a gate. Rinsing runs read-only.</td><td><span class="ev s">Strong</span></td><td class="num">SG-1 SG-2 SG-3 SG-16</td></tr>
+<tr><th>Agent identity and delegation</th><td>Agents act with a developer's static keys, and logs cannot tell agent from human. Use per-agent, short-lived, audience-bound credentials and record "agent X for person Y".</td><td><span class="ev p">Partial</span></td><td class="num">PL-5 PL-7 PL-8 SG-20</td></tr>
+<tr><th>Skill, plugin and MCP supply chain</th><td>The repo recommends installing several third-party frameworks with full privileges and gives no vetting advice. One scan found critical issues in 13.4% of 3,984 public skills. Allowlist, pin, read before install, review updates as diffs.</td><td><span class="ev s">Strong</span> (threat)</td><td class="num">SG-28 SG-29 IS-13</td></tr>
+<tr><th>Risk-tiered review</th><td>Uniform review becomes "human-in-the-loop theater". Tier review by reversibility and blast radius. The requester cannot approve, and an agent's approval never counts as a human one.</td><td><span class="ev p">Partial</span></td><td class="num">SG-9 SG-26 OM-18 A29</td></tr>
+<tr><th>Author of record and agent register</th><td>Nobody is named for an agent, a skill or agent-written code. The requester answers for it, and a register records owner, sponsor, expiry and retirement. This folds into A.1.</td><td><span class="ev p">Partial</span></td><td class="num">PO-10 to PO-17</td></tr>
+<tr><th>Evidence over self-report</th><td>4.1's evidence is output the agent pastes into its own transcript. Completion evidence should come from systems the agent cannot edit, such as CI logs and required checks.</td><td><span class="ev s">Strong</span></td><td class="num">IS-6 MC-22 MV-8</td></tr>
+<tr><th>Deliberate practice</th><td>Heavy delegation erodes the debugging skill that makes supervision possible. Protect hands-on time, run explain-before-merge for owned modules, and add a work sample to the new-starter audit.</td><td><span class="ev p">Partial</span></td><td class="num">IS-1 IS-4 A20</td></tr>
+<tr><th>Threat model page</th><td>No document says what the agent can reach. One page covering assets, untrusted entry points (rinse sources, issues, MCP output, learnings memory), capabilities, and which pattern mitigates each.</td><td><span class="ev n">Synthesis</span></td><td class="num">SG chapter</td></tr>
+</tbody></table></div>
+<div class="two">
+<div class="panel"><h3>Vendor neutrality</h3><ul>
+<li>Write each pattern against a neutral contract. Then add short bindings for Claude Code, one other harness, and "no harness: CI only".</li>
+<li>Make AGENTS.md the shared source, with CLAUDE.md importing it. Claude Code reads only CLAUDE.md when both exist (A8).</li>
+<li>Disclose the author's relationship to rig, the most-cited reference implementation, as the Anthropic guidance companion discloses its own lean.</li>
+</ul></div>
+<div class="panel"><h3>A lesson from compound engineering</h3><p>2.8 lets agent-written learnings flow into future prompts without review, so one bad session can poison later ones (IS-13). A masked repair recorded as a "solution" would be inherited by every later session. Promote a learning only after review, and only after the confirmation window and recurrence check pass. Pair capture with pruning.</p></div>
+</div>
+</div></section>
+
+<section class="block" id="prune"><div class="wrap">
+<div class="eyebrow">7 · Prune and re-baseline</div><h2>Apply the library's own cleanup rule to itself</h2>
+<p class="sectlede">The repo has not changed since 18 April 2026. That makes it an instance of the RAMP finding it should warn about: committed AI configuration that is present but never maintained (MC-11). Anthropic reports removing over 80% of Claude Code's system prompt for the Claude 5 generation with no eval loss (A7). The library needs the same pass, and a pattern for adopters to repeat it. <span class="lens">adopter</span><span class="lens">evidence</span></p>
+<div class="pat"><div class="ph"><h3><span class="k">New</span>Prune and re-baseline context</h3><span class="ev p">Partial</span></div><p>Give every context artefact (instruction file, skill, hook, rule) an owner, a reviewed date and an expiry. Keep a fixed task bank of 10–30 tasks against a pinned model. On each model upgrade, or quarterly, delete first: run the bank without the artefact, and add it back only if a task regresses, recording which task justified it. Classify each rule as guidance, which is prunable prose, or invariant, which lives in a hook, deny rule or CI. Track how recently each artefact changed, not whether it exists.</p></div>
+<div class="prune">
+<div class="panel"><h3><span class="dot d-cut"></span>Cut, or move to rig's docs</h3><ul>
+<li>3.7 TOON (correct its numbers wherever it survives)</li>
+<li>3.8 Session lifecycle</li>
+<li>3.3 environment-aware routing code</li>
+<li>2.6 and 2.7 snippets that document rig internals</li>
+<li><code>specs/</code> and <code>docs/plans/</code>: completed plans, unlinked from CLAUDE.md</li>
+<li>Trading-bot commit-mix analysis presented as evidence</li>
+</ul></div>
+<div class="panel"><h3><span class="dot d-merge"></span>Merge</h3><ul>
+<li>0.9 and 4.3, the two new-starter patterns</li>
+<li>3.1, 3.2 and 3.5 into one note: prefer native tools; block destructive edits</li>
+<li>3.4 Scout into a context-isolation note</li>
+<li>0.7 and 4.2 into one docs-freshness pattern with a check</li>
+<li>Duplicate L1 summaries across the index, the pattern pages and the glossary</li>
+</ul></div>
+<div class="panel"><h3><span class="dot d-demote"></span>Demote to optional</h3><ul>
+<li>2.2 skill chain as mandatory, and the 2.7 blocking tracker: scale ceremony to risk</li>
+<li>Constitutional rule 6 (150 lines): make it "short, owned, tested", with a warning at about 200 lines</li>
+<li>"3–5 exports maximum", to a heuristic</li>
+<li>3.6 multi-repo alignment, which is opinion</li>
+</ul></div>
+<div class="panel"><h3><span class="dot d-promote"></span>Promote or add</h3><ul>
+<li>Verification (1.1, 1.2, 1.6) as the library's core</li>
+<li>Generalise 4.6 to "evals gate every context, skill or model change", reporting pass^k</li>
+<li>Evidence labels (Strong, Partial, Thin) on every pattern, with a <code>last-validated-model</code> tag</li>
+<li>A one-day start page and the repo census script</li>
+</ul></div>
+</div>
+</div></section>
+
+<section class="block" id="fixes"><div class="wrap">
+<div class="eyebrow">8 · Fix now</div><h2>Defects that break the repo's own rules</h2>
+<p class="sectlede">These are independent of any reframe. Several were found by two or more reviewers separately.</p>
+<div class="tablewrap"><table><thead><tr><th>Defect</th><th>Where</th><th>Rule broken</th><th>Found by</th></tr></thead><tbody>
+<tr><td>TOON example claims 163 vs 61 characters (63% smaller). Measured: 117 vs 79 (32%). The "46 characters" example is 38.</td><td><code>L3:425-436</code>, <code>:516</code></td><td>Verifiable claims</td><td><span class="lens">evidence</span><span class="lens">adopter</span></td></tr>
+<tr><td>Token savings stated as 60–90%, 60–80% and "80% more", all unsourced</td><td>README, L3, glossary, anti-patterns</td><td>Evidence-based claims</td><td><span class="lens">evidence</span><span class="lens">adopter</span></td></tr>
+<tr><td>"~80% of failures come from context" and "90.2% better" come from a YouTube video. Label them thin and attribute them.</td><td><code>L3:242</code>, further-reading</td><td>Evidence-based claims</td><td><span class="lens">evidence</span></td></tr>
+<tr><td>Stack-test examples mount <code>./mock-app</code>, which does not exist, so neither runs as-is. The guardrails example has no tests.</td><td><code>examples/stack-test/*/docker-compose.test.yml</code></td><td>Examples run as-is</td><td><span class="lens">adopter</span><span class="lens">repair</span></td></tr>
+<tr><td>A hook example comments "block" but returns, which allows the call. That is the advisory-hook anti-pattern the repo's own catalogue warns against.</td><td><code>L2:216-225</code></td><td>Internal consistency</td><td><span class="lens">governance</span><span class="lens">repair</span><span class="lens">evidence</span></td></tr>
+<tr><td>The <code>sed -i</code> string match is bypassed by <code>/usr/bin/sed</code>, <code>perl -pi</code> and <code>$(…)</code>. The router allows every <code>docker</code> command, which is root-equivalent on the host.</td><td>L2, L3, <code>examples/guardrails</code></td><td>Presented as a control</td><td><span class="lens">governance</span></td></tr>
+<tr><td>The trading-bot study says PostToolUse hooks "redirect" commands. They fire after the command has run.</td><td>trading-bot case study</td><td>Accuracy</td><td><span class="lens">evidence</span><span class="lens">governance</span></td></tr>
+<tr><td>CLAUDE.md's <code>@docs/…</code> imports load the whole library into context, so the 150-line rule does not limit what loads</td><td><code>CLAUDE.md</code></td><td>Rule 6 intent</td><td><span class="lens">evidence</span></td></tr>
+<tr><td>Mock rules contradict each other: 1.1 says stack-test failures "always indicate real bugs"; my-claw says unit tests use no mocks and has integration tests that auto-skip without <code>.env</code></td><td>1.1, 1.5, L0.5, my-claw study</td><td>Rules 1 and 5</td><td><span class="lens">evidence</span></td></tr>
+<tr><td>Broken internal anchors (13 by one reviewer's check, 27 by another's using GitHub slug rules); CI strips anchors before checking links. L4.5 refers to a <code>scripts/</code> directory that does not exist.</td><td>Across docs, <code>L4:394-399</code></td><td>Spec drift</td><td><span class="lens">adopter</span><span class="lens">evidence</span></td></tr>
+<tr><td>jcodemunch is linked to two different owners; my-claw gives two different test counts; the master index omits <code>specs/</code> and <code>docs/plans/</code></td><td>L3, further-reading, my-claw study, CLAUDE.md</td><td>Master index, accuracy</td><td><span class="lens">evidence</span><span class="lens">governance</span><span class="lens">autonomy</span></td></tr>
+<tr><td>Design rinsing feeds untrusted external content into a session with write, shell and network access, with no prompt-injection warning</td><td><code>L1:70-134</code></td><td>Safety</td><td><span class="lens">governance</span></td></tr>
+</tbody></table></div>
+<p class="sectlede" style="font-size:.88rem">Already done in this session: gstack references removed and two pre-existing markdown-lint errors in L4 fixed, in draft <a href="https://github.com/franklywatson/agentic-patterns/pull/4">PR #4</a>.</p>
+</div></section>
+
+<section class="block" id="roadmap"><div class="wrap">
+<div class="eyebrow">9 · Roadmap</div><h2>Proposed order of work</h2>
+<p class="sectlede">Each phase leaves the repo consistent and shippable. Later phases depend on the reframe, and the earlier phases do not.</p>
+<div class="phases">
+<div class="phase"><div class="pn">Phase 0<b>Correct</b></div><div><ul><li>Fix every defect in section 8</li><li>Add an anchor check to CI</li><li>Build a real minimal app so the stack-test examples run</li><li>Replace CLAUDE.md <code>@</code> imports with plain links</li><li>Bump the "Last updated" date</li></ul><p class="exit">Exit: lint, link and anchor checks pass; both stack-test examples run from a clean clone.</p></div></div>
+<div class="phase"><div class="pn">Phase 1<b>Reframe</b></div><div><ul><li>Rename levels to layers</li><li>Add a "what this library does not cover" section stating the cap consequence</li><li>Replace the 4.4 stage table</li><li>Add evidence labels to every pattern</li><li>Run the prune, merge and demote pass</li><li>Make AGENTS.md the shared source</li><li>Rewrite the L2 thesis as layered enforcement</li></ul><p class="exit">Exit: every pattern carries an evidence label, and CLAUDE.md indexes a smaller library.</p></div></div>
+<div class="phase"><div class="pn">Phase 2<b>Contain</b></div><div><ul><li>Add contain-before-relax, least agency, agent identity, supply chain, risk-tiered review, evidence over self-report and deliberate practice</li><li>Write the threat model page</li><li>Add containment and ownership to the adoption guide as a gate</li></ul><p class="exit">Exit: a reader can reach C3 on security and governance from the library alone.</p></div></div>
+<div class="phase"><div class="pn">Phase 3<b>Earn autonomy</b></div><div><ul><li>Write <code>docs/earned-autonomy.md</code> (A.1–A.7)</li><li>Add <code>examples/autonomy/</code> in TypeScript and Python: schema, <code>autonomy check</code>, <code>autonomy census</code>, a ledger fixture, a stop drill and an eval suite for the gate</li></ul><p class="exit">Exit: the census places this repo itself, and <code>autonomy check</code> runs in its CI.</p></div></div>
+<div class="phase"><div class="pn">Phase 4<b>Repair</b></div><div><ul><li>Write patterns 1.7–1.12</li><li>Add the fault-injection carve-out to 1.5</li><li>Write the app/ops contract into the FAQ: incident record in, reproduction and evidence bundle out</li><li>Add <code>examples/repair-loop/</code> in TypeScript and Python with no LLM: fix, masking and test-edit patches through the gate, and breaker and stop drills as stack tests</li></ul><p class="exit">Exit: stack tests show the gate accepts the fix, routes the masking patch to a human and blocks the test edit.</p></div></div>
+<div class="phase"><div class="pn">Ongoing<b>Re-baseline</b></div><div><ul><li>Run prune and re-baseline on the library at each model generation</li><li>Record <code>last-validated-model</code> per pattern</li><li>Write the outcome up as the library's own case study</li></ul></div></div>
+</div>
+</div></section>
+
+<section class="block" id="decisions"><div class="wrap">
+<div class="eyebrow">10 · Decisions</div><h2>What needs your call, with a recommendation each</h2>
+<p class="sectlede">Where reviewers disagreed or the choice is editorial, it is listed here. Four lenses each proposed a different "Pattern 4.7" (workflow register, repair register, author of record, prune). The synthesis folds the registers into A.1 and keeps prune as its own pattern.</p>
+<ol class="decide">
+<li><b>Scope: development library or full lifecycle?</b>The FAQ keeps production out, and self-repair puts it back in.<span class="rec">Recommendation: bring in the seam (incident record in, reproduction out) and the repair patterns, but keep deployment tooling out. Repair is the closed loop extended, so it belongs in L1.</span></li>
+<li><b>Restructure depth.</b>Option one: rename levels to layers and add the autonomy axis and cap line. Option two: keep L0–L4 as-is and add the axis as a separate doc.<span class="rec">Recommendation: option one. The 4.4 stage table actively contradicts the research and should not survive.</span></li>
+<li><b>What happens to L3?</b><span class="rec">Recommendation: keep a short "efficiency" layer that is explicitly optional. Move TOON, session lifecycle and routing internals to rig's docs.</span></li>
+<li><b>Constitutional rule 6 (150 lines).</b><span class="rec">Recommendation: replace it with "short, owned, tested, re-baselined", with a CI warning at about 200 lines. Rule 6 is the repo's own constitution, so this is your call.</span></li>
+<li><b>Vendor posture.</b>the Anthropic guidance companion leans Anthropic by design. The library could stay vendor-neutral with bindings, or lean Claude openly.<span class="rec">Recommendation: neutral contracts with Claude Code as the first binding, and a disclosure line. the Anthropic guidance companion can then link to the library as its neutral pattern source.</span></li>
+<li><b>The <code>specs/</code> and <code>docs/plans/</code> folders.</b>The gstack removal edited two March planning records.<span class="rec">Recommendation: delete both folders in Phase 1, per the repo's own "git is the archive" rule. That makes the edit question moot.</span></li>
+<li><b>Where the autonomy tooling lives.</b>Options: <code>examples/autonomy/</code> in this repo, or a feature of rig.<span class="rec">Recommendation: a minimal runnable example here, so the pattern stands without rig, with rig as a fuller implementation.</span></li>
+</ol>
+</div></section>
+
+<footer><div class="wrap">
+<p>Synthesis of five independent reviews of <code>franklywatson/agentic-patterns</code> at <code>a07ad93</code>, each reading the full repository and both research pages. Evidence labels follow the baseline: Strong, Partial, Thin, plus "None found" or "new" where a pattern is this review's own synthesis. Upper autonomy grants and every repair pattern beyond 1.7 rest on thin evidence; the library's own rule 2 obliges the new docs to say so.</p>
+</div></footer>
