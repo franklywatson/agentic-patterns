@@ -1,0 +1,3 @@
+# Project
+
+@AGENTS.md

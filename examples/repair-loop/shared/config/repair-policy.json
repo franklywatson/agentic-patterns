@@ -7,6 +7,19 @@
     "reversibility": "R2",
     "blast": "B1"
   },
+  "unattendedCeiling": {
+    "A4": {
+      "reversibility": "R1",
+      "blast": "B0"
+    },
+    "A5": {
+      "reversibility": "R2",
+      "blast": "B0"
+    }
+  },
+  "unattendedR2Paths": [
+    "app/src/routes/**"
+  ],
   "protectedPaths": [
     "tests/**",
     ".autonomy.yaml",

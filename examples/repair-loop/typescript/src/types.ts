@@ -2,6 +2,8 @@ export type Reversibility = 'R0' | 'R1' | 'R2' | 'R3' | 'R4';
 export type Blast = 'B0' | 'B1' | 'B2' | 'B3';
 export type Grant = 'A1' | 'A2' | 'A3' | 'A4' | 'A5';
 export type Decision = 'auto' | 'human' | 'block';
+/** Who merges an `auto` change: a person, or nobody (unattended). `human` and `block` carry none. */
+export type Merge = 'person' | 'unattended';
 
 export interface Incident {
   id: string;
@@ -22,6 +24,8 @@ export interface DiffFile {
   status: 'added' | 'modified' | 'deleted';
   added: string[];
   removed: string[];
+  /** Set when the diff named this file in a way that could not be read unambiguously: it classifies as unknown. */
+  unparsed?: true;
 }
 
 export interface Classification {
@@ -57,12 +61,17 @@ export interface EvidenceBundle {
 export interface GatePolicy {
   minGrantForAuto: Grant;
   autoCeiling: { reversibility: Reversibility; blast: Blast };
+  /** Highest class that merges unattended, per grant. A grant with no entry never merges unattended. */
+  unattendedCeiling: Partial<Record<Grant, { reversibility: Reversibility; blast: Blast }>>;
+  /** An R2 change merges unattended only when every changed file is on one of these paths. */
+  unattendedR2Paths: string[];
   protectedPaths: string[];
 }
 
 export interface GateResult {
   decision: Decision;
   reasons: string[];
+  merge: Merge | null;
 }
 
 export interface RepairPolicy extends GatePolicy {

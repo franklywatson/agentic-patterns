@@ -5,7 +5,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/examples/autonomy/typescript/dist/src/cli.js\" hook session-start"
+            "command": "node \"$CLAUDE_PROJECT_DIR/examples/autonomy/typescript/dist/src/cli.js\" hook session-start",
+            "onFailure": "block"
           }
         ]
       }
@@ -16,7 +17,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/examples/autonomy/typescript/dist/src/cli.js\" hook pre-tool-use"
+            "command": "node \"$CLAUDE_PROJECT_DIR/examples/autonomy/typescript/dist/src/cli.js\" hook pre-tool-use",
+            "onFailure": "block"
           }
         ]
       }

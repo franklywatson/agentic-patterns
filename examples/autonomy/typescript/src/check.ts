@@ -44,23 +44,57 @@ export interface Commit {
   files: string[];
 }
 
-// Tier 1: never changed by an agent commit, no relief.
-const TIER1 = [/^\.autonomy/, /(^|\/)codeowners$/, /^\.claude\/settings[^/]*\.json$/, /^\.claude\/hooks\//, /^\.harness\.yaml$/];
-// Tier 2: changed by an agent commit only when a later non-agent commit acknowledges it.
-const TIER2 = [/^\.github\/workflows\//];
+// Locked files: never changed by an agent commit, no relief.
+const LOCKED_FILES = [/^\.autonomy/, /(^|\/)codeowners$/, /^\.claude\/settings[^/]*\.json$/, /^\.claude\/hooks\//, /^\.harness\.yaml$/];
+// Workflow files: changed by an agent commit only when a later non-agent commit acknowledges it.
+const WORKFLOW_FILES = [/^\.github\/workflows\//, /^\.github\/actions\//];
 
-export function isTier1File(path: string): boolean {
-  const lower = path.toLowerCase();
-  return TIER1.some((re) => re.test(lower));
+/** NFKC, lower case, and `ß` written as `ss`: the case folding a case-insensitive file system applies. */
+export function foldText(text: string): string {
+  return text.normalize("NFKC").toLowerCase().replace(/ß/g, "ss").normalize("NFKC");
 }
 
-export function isTier2File(path: string): boolean {
-  const lower = path.toLowerCase();
-  return !isTier1File(path) && TIER2.some((re) => re.test(lower));
+/**
+ * The form a path is compared in: folded (see foldText), with trailing dots and spaces removed from each name.
+ * A case-insensitive file system opens `.claude/settings.json` for `.claude/ſettings.json` (long s),
+ * `CODEOWNERſ`, `.harneß.yaml` or a Kelvin sign, and Windows drops trailing dots and spaces from a name.
+ */
+export function foldPath(path: string): string {
+  return foldText(path)
+    .split("/")
+    .map((name) => {
+      const trimmed = trimEndChars(name, ". ");
+      return trimmed === "" || /^\.+$/.test(name) ? name : trimmed;
+    })
+    .join("/");
+}
+
+/** Remove trailing characters in `chars` with a loop: a regex like `/[. ]+$/` takes quadratic time on a long run. */
+export function trimEndChars(text: string, chars: string): string {
+  let end = text.length;
+  while (end > 0 && chars.includes(text[end - 1])) end--;
+  return text.slice(0, end);
+}
+
+/** Remove leading and trailing characters in `chars`, in linear time. */
+export function trimChars(text: string, chars: string): string {
+  let start = 0;
+  while (start < text.length && chars.includes(text[start])) start++;
+  return trimEndChars(text.slice(start), chars);
+}
+
+export function isLockedFile(path: string): boolean {
+  const folded = foldPath(path);
+  return LOCKED_FILES.some((re) => re.test(folded));
+}
+
+export function isWorkflowFile(path: string): boolean {
+  const folded = foldPath(path);
+  return !isLockedFile(path) && WORKFLOW_FILES.some((re) => re.test(folded));
 }
 
 export function isGovernanceFile(path: string): boolean {
-  return isTier1File(path) || isTier2File(path);
+  return isLockedFile(path) || isWorkflowFile(path);
 }
 
 const ACK_LINE = /^governance-approved:[ \t]*([0-9a-f]{7,40})$/i;
@@ -159,12 +193,10 @@ export function runCheck(opts: CheckOptions): CheckResult {
   const profile: Json | null = existsSync(profilePath) ? readJsonIfExists(profilePath) : null;
   const state = readJsonIfExists(join(dir, ".autonomy", "state.json"));
   const status = profileStatus(profile, opts.now);
-  result.cap = capOf(profile);
+  result.cap = capOf(profile, opts.now);
   if (status === "missing") result.failures.push({ code: "profile-missing" });
+  else result.profile_age_days = ageDays(opts.now, parseTime(profile.generated));
   if (status === "stale") result.failures.push({ code: "profile-stale" });
-  if (profile !== null && typeof profile.generated === "string") {
-    result.profile_age_days = ageDays(opts.now, parseTime(profile.generated));
-  }
   for (const wf of allWorkflows(register)) {
     const eff: Effective = effectiveLevel(wf, profile, state, register.defaults, opts.now);
     result.workflows.push({ id: wf.id, granted: eff.granted, effective: eff.effective, reasons: eff.reasons });
@@ -189,9 +221,9 @@ export function runCheck(opts: CheckOptions): CheckResult {
     for (const file of commit.files) {
       if (file.includes("\ufffd")) {
         result.failures.push({ code: "path-undecodable", commit: commit.sha, file });
-      } else if (isTier1File(file)) {
+      } else if (isLockedFile(file)) {
         result.failures.push({ code: "governance-file-changed-by-agent", commit: commit.sha, file });
-      } else if (isTier2File(file)) {
+      } else if (isWorkflowFile(file)) {
         if (acknowledger) result.acknowledged.push({ commit: commit.sha, file, by: acknowledger.sha });
         else result.failures.push({ code: "workflow-change-unacknowledged", commit: commit.sha, file });
       }

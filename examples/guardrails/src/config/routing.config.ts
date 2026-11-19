@@ -3,6 +3,10 @@
  *
  * Data-driven routing rules that map command patterns to optimal tools.
  * Each rule specifies resolutions for different environments (RTK, jcodemunch, etc.).
+ *
+ * `grep`, `find` and `fd` advise only an RTK or jcodemunch tool. Claude Code's
+ * Grep and Glob tools are absent by default on macOS, Linux and WSL, so no rule
+ * advises them: without RTK or an index the command is allowed (Pattern 3.1).
  */
 
 import type { RoutingRule } from '../core/router.js';
@@ -50,11 +54,6 @@ export const ROUTING_RULES: readonly RoutingRule[] = [
         tool: 'jcodemunch search_text',
         reason: 'indexed search, faster',
       },
-      general: {
-        action: 'advise',
-        tool: 'Grep tool',
-        reason: 'structured results, no artifacts',
-      },
       fallback: {
         action: 'allow',
       },
@@ -87,11 +86,6 @@ export const ROUTING_RULES: readonly RoutingRule[] = [
         tool: 'jcodemunch get_file_tree',
         reason: 'structured file tree with summaries',
       },
-      general: {
-        action: 'advise',
-        tool: 'Glob tool',
-        reason: 'pattern matching, targeted discovery',
-      },
       fallback: {
         action: 'allow',
       },
@@ -101,11 +95,6 @@ export const ROUTING_RULES: readonly RoutingRule[] = [
     match: /\bfd\b/,
     intent: 'file_discovery',
     resolutions: {
-      general: {
-        action: 'advise',
-        tool: 'Glob tool',
-        reason: 'pattern matching, more efficient than fd',
-      },
       fallback: {
         action: 'allow',
       },

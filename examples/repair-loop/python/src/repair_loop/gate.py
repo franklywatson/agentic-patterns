@@ -4,14 +4,38 @@ from __future__ import annotations
 
 from .classify import exceeds
 from .diff import glob_match, is_unsafe_path, normalize_path
-from .models import GRANTS, Decision, EvidenceBundle, GateResult, RepairPolicy
+from .models import GRANTS, Decision, EvidenceBundle, GateResult, Merge, RepairPolicy
 
 SEVERITY: dict[str, int] = {"auto": 0, "human": 1, "block": 2}
+# Pattern 1.11: nothing above R2, and nothing beyond B0, merges unattended at any grant. The policy cannot raise this.
+UNATTENDED_LIMIT = {"reversibility": "R2", "blast": "B0"}
+# Pattern 1.11: below A4 a person merges, whatever the policy's unattended_ceiling lists.
+UNATTENDED_MIN_GRANT = "A4"
+
+
+def merge_for(bundle: EvidenceBundle, policy: RepairPolicy) -> Merge:
+    """Who merges an auto change (Pattern 1.11). A person, unless the grant is A4 or higher and
+    the class is within that grant's unattended ceiling; an R2 change also needs every changed
+    file on a named path."""
+    if GRANTS.index(bundle.grant) < GRANTS.index(UNATTENDED_MIN_GRANT):
+        return "person"
+    ceiling = policy.unattended_ceiling.get(bundle.grant)
+    c = bundle.classification
+    if ceiling is None or exceeds(c, ceiling) or exceeds(c, UNATTENDED_LIMIT):
+        return "person"
+    if c.reversibility == "R2":
+        named = bool(bundle.diff) and all(
+            not is_unsafe_path(f.path) and any(glob_match(g, normalize_path(f.path)) for g in policy.unattended_r2_paths)
+            for f in bundle.diff
+        )
+        if not named:
+            return "person"
+    return "unattended"
 
 
 def gate(bundle: EvidenceBundle, policy: RepairPolicy) -> GateResult:
     """Return the most severe decision any check produced (block > human > auto, as in
-    Pattern 2.6) and the reasons for that decision. The loop builds the bundle from
+    Pattern 2.3) and the reasons for that decision. The loop builds the bundle from
     observations (hashes, test runs, the applied diff), not from the repair agent's claims."""
     findings: list[tuple[Decision, str]] = []
 
@@ -27,7 +51,7 @@ def gate(bundle: EvidenceBundle, policy: RepairPolicy) -> GateResult:
     for file in bundle.diff:
         if is_unsafe_path(file.path):
             add("block", f"diff contains unsafe path {file.path}")
-        elif any(glob_match(g, normalize_path(file.path)) for g in policy.protected_paths):
+        elif any(glob_match(g, normalize_path(file.path), True) for g in policy.protected_paths):
             add("block", f"diff touches protected path {file.path}")
     if not repro.green_on_candidate:
         add("block", "reproduction is not green on the candidate")
@@ -57,5 +81,5 @@ def gate(bundle: EvidenceBundle, policy: RepairPolicy) -> GateResult:
         if SEVERITY[d] > SEVERITY[decision]:
             decision = d
     if decision == "auto":
-        return GateResult("auto", ["all mechanical checks passed within the ceiling"])
-    return GateResult(decision, [reason for d, reason in findings if d == decision])
+        return GateResult("auto", ["all mechanical checks passed within the ceiling"], merge_for(bundle, policy))
+    return GateResult(decision, [reason for d, reason in findings if d == decision], None)

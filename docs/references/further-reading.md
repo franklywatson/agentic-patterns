@@ -1,70 +1,65 @@
+---
+reviewed: 2026-11-19
+---
+
 # Further Reading
 
-The sources cited by the evidence labels on each pattern are listed in [sources.md](sources.md).
+The sources cited by the evidence labels on each pattern are listed in [sources.md](sources.md). This page lists
+the material the patterns draw on beyond those citations, for readers who want the background behind a pattern.
 
-## Articles
+## Start Here
 
-### Your codebase is NOT ready for AI (here's how to fix it)
+- PL-21: [AGENTS.md](https://agents.md/), the open format for agent instruction files, stewarded by the Agentic AI
+  Foundation under the Linux Foundation ([Pattern
+  0.4](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution)).
+- PL-16: [Best practices](https://code.claude.com/docs/en/best-practices.md), Anthropic's guidance on instruction
+  files, verification and context.
+- PL-18: [Harness engineering for coding agent
+  users](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html) (Böckeler), Thoughtworks' account
+  of harness design for coding agents.
+- IS-6: [METR's 2025 randomized trial](https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/)
+  of 16 experienced developers: they believed AI sped them up while measured time rose ([Pattern
+  4.1](../L4-standards-measurement.md#pattern-41--evidence-based-claims)). METR's [February 2026
+  update](https://metr.org/blog/2026-02-24-uplift-update/) marks the early-2025 speed result as out of date, calls
+  its new estimate unreliable because of selection effects, and does not re-test the perception gap.
+- [Writing effective tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents) (Anthropic,
+  Sep 2025): evaluate tools with realistic tasks; build few, well-scoped tools that return concise output.
+- [OWASP Top 10 for Agentic
+  Applications](https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/)
+  (Dec 2025): ten agent-specific risks, ASI01 Agent Goal Hijack to ASI10 Rogue Agents, alongside the LLM list that
+  SG-16 cites ([Threat Model](../cross-cutting/threat-model.md)).
 
-- **Type:** Article
-- **Author:** Matt Pocock
-- **Summary:** Discusses deep modules, progressive disclosure, graybox modules, and the AI-as-new-starter metaphor to prepare codebases for AI assistance.
-- **Related to:** L0
-- **URL:** <https://medium.com/@mattpocockuk>
+## Articles and Podcasts
 
-### Beyond Copilots: Building a Closed-Loop Agentic Testing Ecosystem with MCP and Cursor
-
-- **Type:** Article
-- **Author:** Kadam Sagar
-- **Summary:** Explores skill-based architecture, MCP integration, and defect prediction workflows for creating intelligent testing systems.
-- **Related to:** L1, L2
-- **URL:** <https://medium.com/@kadam.sagar2689/beyond-copilots-building-a-closed-loop-agentic-testing-ecosystem-with-mcp-and-cursor-22a603c76b7d>
-
-### What is Agentic Testing?
-
-- **Type:** Article
-- **Creator:** Autonoma
-- **Summary:** Introduces intent-based testing, three-agent architecture (planner/automator/maintainer), self-healing tests, and the 80/20 rule for efficient testing.
-- **Related to:** L1
-- **URL:** <https://www.getautonoma.com/blog/what-is-agentic-testing>
-
-### The Creator of Clawd — "I Ship Code"
+### Peter Steinberger on shipping code with agents
 
 - **Type:** Podcast / Article
-- **Creator:** Gergely Orosz (The Pragmatic Engineer) with Peter Steinberger
-- **Summary:** Peter Steinberger (creator of OpenClaw) describes building entirely with AI agents: closing the feedback loop so agents verify their own work, investing heavily in planning before implementation, managing 5-10 parallel agents, and treating code reviews as architecture discussions. Demonstrates that agentic development requires more engineering discipline, not less.
-- **Related to:** L0, L1, L2, L3, L4
+- **Creator:** Gergely Orosz (The Pragmatic Engineer) with Peter Steinberger, creator of OpenClaw
+- **Summary:** Steinberger describes building with AI agents: closing the feedback loop so agents verify their
+  own work, planning before implementation, running 5-10 parallel agents, and treating code review as an
+  architecture discussion. The page is titled "The Creator of Clawd", the project's name before it became
+  OpenClaw. The account is one practitioner's; this library treats an agent's verification of its own work as
+  self-report ([Pattern 4.1](../L4-standards-measurement.md#pattern-41--evidence-based-claims)).
+- **Related to:** L0, L1, L2
 - **URL:** <https://newsletter.pragmaticengineer.com/p/the-creator-of-clawd-i-ship-code>
-
-### Andrej Karpathy's LLM Coding Principles
-
-- **Type:** Behavioral specification
-- **Author:** Forrest Chang (forrestchang)
-- **Summary:** Codifies Andrej Karpathy's observations about LLM coding pitfalls into four behavioral principles: Think Before Coding, Simplicity First, Surgical Changes, and Goal-Driven Execution. Installable as a Claude Code plugin or per-project CLAUDE.md overlay. The principles reduce the most common costly mistakes LLMs make when writing code — wrong assumptions, overcomplicated abstractions, and unnecessary refactoring.
-- **Related to:** L2
-- **URL:** <https://github.com/forrestchang/andrej-karpathy-skills>
-
-### Claw Code — Autonomous Agent Coordination
-
-- **Type:** Tool / Framework
-- **Creator:** UltraWorkers
-- **Summary:** Rust reimplementation of a multi-agent coding coordination system. Demonstrates three-part architecture: OmX (workflow layer converting human directives into structured execution), clawhip (event and notification router keeping monitoring outside the agent's context window), and OmO (multi-agent coordination with planning, handoffs, and verification loops). Features token-based routing, a 9-lane parallel development model, and a mock parity harness for behavioral validation against a deterministic Anthropic-compatible service.
-- **Related to:** L1, L2, L3
-- **URL:** <https://github.com/ultraworkers/claw-code>
 
 ### Compound Engineering Plugin
 
 - **Type:** Tool / Framework
 - **Creator:** Every Inc.
-- **Summary:** AI-agent plugin providing a structured development workflow built on the principle that each unit of engineering work should make subsequent units easier, not harder. The core cycle is ideate -> brainstorm -> plan -> work -> review -> compound -> repeat, with 80% planning and review, 20% execution. Knowledge is codified as "learnings" via `/ce:compound` so it compounds across the team over time. Available for Claude Code and convertible to 10+ other agent platforms.
-- **Related to:** L2, L3
+- **Summary:** Plugin for a development workflow in which each unit of work records what it learned so the next
+  unit is easier: brainstorm, plan, work, simplify, review, compound. The compound step, `/ce-compound`, records the
+  learnings. The project's own description puts 80% of the effort in planning and review and 20% in execution.
+- **Related to:** L2
 - **URL:** <https://github.com/EveryInc/compound-engineering-plugin>
 
 ### REPL is dead, long live REPL
 
 - **Type:** Article
 - **Author:** Brandon Waselnuk (Unblocked)
-- **Summary:** Argues that the Read-Eval-Print Loop hasn't died with agentic coding — it's been promoted. Engineers now operate the REPL at the intent layer (read agent output, evaluate against intent, print next instruction, loop) while agents handle the code-level REPL. The article demonstrates that context curation and intent-level evaluation produce drastically better outcomes than naive code-level REPL, and that the skill shift is learnable but real: from writing code to writing instructions and reviewing diffs.
+- **Summary:** Argues that the Read-Eval-Print Loop sits at the level of intent: engineers read agent output,
+  evaluate it against intent, print the next instruction and loop, while agents run the code-level loop. The
+  article argues that curated context and intent-level evaluation produce better results than a code-level loop.
 - **Related to:** L1
 - **URL:** <https://getunblocked.com/blog/repl-is-dead-long-live-repl/>
 
@@ -74,32 +69,37 @@ The sources cited by the evidence labels on each pattern are listed in [sources.
 
 - **Type:** Video
 - **Creator:** Matt Pocock
-- **Summary:** Covers deep modules, graybox modules, and progressive disclosure of complexity to make codebases AI-friendly.
+- **Summary:** Deep modules, graybox modules and progressive disclosure of complexity as ways to make a codebase
+  workable for AI agents.
 - **Related to:** L0
 - **URL:** <https://youtu.be/uC44zFz7JSM>
 
-### The WISC Framework (Cole Medin video)
+### The WISC Framework
 
 - **Type:** Video / Framework
-- **Creator:** Cole Medin (original), DIY Smart Code (adaptation)
-- **Summary:** Context engineering framework — **W**rite, **I**solate, **S**elect, **C**ompress. Core thesis (as claimed in the video by Cole Medin, from a single uncontrolled source; evidence level: Thin): ~80% of agent failures come from context management, not the model, and the video title claims 90.2% better AI coding results. Write externalizes memory (structured commits, progress files, separate planning/implementation sessions). Isolate splits work across sub-agents (scout pattern, research delegation). Select loads only what's needed via a 3-tier context system (global rules, on-demand rules, reference docs). Compress provides focused compaction and session handoffs. The Scout Pattern used in [Pattern 3.2](../L3-optimization.md#pattern-32--context-isolation-scout) maps to WISC's Isolate strategy.
+- **Creator:** Cole Medin
+- **Summary:** Context engineering framework: Write, Isolate, Select, Compress. The video claims that most agent
+  failures come from context management rather than the model; the claim comes from a single uncontrolled
+  source (evidence: Thin). Write externalizes memory (progress files, separate planning and implementation
+  sessions). Isolate splits work across subagents. Select loads only what a task needs through tiered rules and
+  reference docs. Compress covers focused compaction and session handoffs. The scout in [Pattern
+  3.2](../L3-optimization.md#pattern-32--context-isolation-scout) corresponds to Isolate.
 - **Related to:** L3
 - **URL:** <https://youtu.be/gyo0eRgsUWk>
 - **GitHub:** <https://github.com/coleam00/context-engineering-intro/tree/main/use-cases/ai-coding-wisc-framework>
 
 ## Tools
 
-Skills, plugins, hooks, command proxies and MCP servers run with the agent's privileges. Read the source, pin
-a version and review updates before installing any tool listed here ([Pattern
-2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)). jcodemunch is free for
-non-commercial use and needs a paid licence for commercial use (README at
-github.com/jgravelle/jcodemunch-mcp).
+Skills, plugins, hooks, command proxies and MCP servers run with the agent's privileges. Read the source and
+license, pin a version and review updates before installing any tool listed here ([Pattern
+2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)).
 
 ### Superpowers (obra)
 
 - **Type:** Tool / Framework
 - **Creator:** Jesse Vincent (obra)
-- **Summary:** Skills framework for Claude Code providing automated worktree management, brainstorming, planning, TDD, code review, and verification workflows. The worktree, planning, and execution skills automate the full development lifecycle within isolated git worktrees — the pattern described in L0.6.
+- **Summary:** Skills framework for Claude Code covering worktree management, brainstorming, planning, test-driven
+  development, code review and verification workflows.
 - **Related to:** L0, L2
 - **URL:** <https://github.com/obra/superpowers>
 
@@ -107,7 +107,7 @@ github.com/jgravelle/jcodemunch-mcp).
 
 - **Type:** Tool
 - **Creator:** J. Gravelle
-- **Summary:** Structured code search and symbol navigation tool that indexes repositories for AI-efficient code exploration, returning typed, summarized results instead of raw text.
+- **Summary:** Indexes a repository and returns typed, summarized symbol search results instead of raw text.
 - **Related to:** L3
 - **URL:** <https://github.com/jgravelle/jcodemunch-mcp>
 
@@ -115,22 +115,15 @@ github.com/jgravelle/jcodemunch-mcp).
 
 - **Type:** Tool
 - **Creator:** Community
-- **Summary:** CLI proxy that optimizes shell commands for token usage, filtering noisy command output before it reaches the agent.
+- **Summary:** CLI proxy that filters noisy shell command output before it reaches the agent.
 - **Related to:** L3
 - **URL:** <https://github.com/rtk-ai/rtk>
 
-### Claude Code (Anthropic)
+### Claude Code
 
 - **Type:** Tool
 - **Creator:** Anthropic
-- **Summary:** AI coding CLI with skills, hooks, and agentic capabilities that enhances developer productivity through intelligent code assistance and automation.
+- **Summary:** Coding agent CLI with skills, hooks, subagents and settings-based permissions; the harness that the
+  L2 examples target.
 - **Related to:** L2, L3
-- **URL:** <https://claude.ai/code>
-
-### Excalidraw Diagram Skill
-
-- **Type:** Tool / Skill
-- **Creator:** Cole Medin (coleam00)
-- **Summary:** Skill for generating Excalidraw diagram JSON files to visualize workflows, architectures, and concepts directly from agent sessions.
-- **Related to:** L0, L1
-- **URL:** <https://github.com/coleam00/excalidraw-diagram-skill>
+- **URL:** <https://code.claude.com/docs/en/overview>

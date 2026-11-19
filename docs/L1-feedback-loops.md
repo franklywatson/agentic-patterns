@@ -3,209 +3,135 @@ last-validated-model: claude-opus-5-5
 reviewed: 2026-11-19
 ---
 
-# L1 Closed Loop Design and Verification
+# L1: Closed Loop Design and Verification
 
-**Layer 1** of the agentic patterns: the layer where agents stop guessing and start designing. L0 provides navigable structure — deep modules, progressive disclosure, the agent instruction file as constitution, unit tests as contract. L1 is where the agent uses that structure to gather evidence, form hypotheses, propose architectural changes, and validate the result through closed-loop verification.
-
-The "closed loop" is design→implement→verify→confirm, not just test→fix→test. Stack tests are the validation mechanism that closes the loop — they confirm that the design intent was implemented correctly. But the design comes first. Every plan, every bugfix, every investigation begins with harvesting the right context: understanding what the system does, what it should do, and what evidence supports the proposed change.
+L1 is how an agent proves its own change works. Read it when agent changes pass review and then fail in use, or when
+"the agent says it passed" is the only evidence. The core is the stack test
+([Pattern 1.1](L1-patterns/1.1-stack-tests.md)): the whole application in Docker, real dependencies, one user journey per
+test, assertions on every effect. Before changing code, the agent gathers the context that shows what the system does
+and should do; after, a test a machine runs decides whether the change worked. Patterns 1.7 to 1.12 extend the same
+loop to production incidents in code you own.
 
 ---
 
 ## The REPL Fractal — Closed Loops at Every Scale
 
-The Read-Eval-Print Loop exists at every abstraction layer. L1's closed-loop design is a higher-order REPL:
-
-- **Read** = Context harvesting (gather evidence, read docs/code/tests/logs)
-- **Eval** = Design + implement (agent acts on harvested context)
-- **Print** = Stack test output (verify the result)
-- **Loop** = Iterate based on feedback (adjust design, re-verify)
-
-This REPL exists at multiple scales:
-
-- **Line-level**: Agent reads code, evaluates syntax, prints result
-- **Function-level**: Agent reads contract, implements, runs unit test
-- **Journey-level**: Agent reads requirements, implements feature, runs stack test
-- **System-level**: Agent reads architecture, makes cross-cutting change, runs full suite
-
-Each higher-level REPL absorbs but doesn't replace the lower ones. Unit tests don't go away when you add stack tests — they become the contract that stack tests verify against. The fractal pattern means every interaction follows the same structure: gather context, act, verify, iterate.
-
-This fractal view of the REPL — where agents handle code-level loops so engineers can operate at the intent layer — is explored further in Brandon Waselnuk's article [REPL is dead, long live REPL](https://getunblocked.com/blog/repl-is-dead-long-live-repl/).
+The loop is design, implement, verify, confirm, not only test, fix, test. It runs at every scale, from one function's
+unit test to the full stack suite ([REPL is dead, long live REPL](https://getunblocked.com/blog/repl-is-dead-long-live-repl/),
+Brandon Waselnuk). Perfect tests confirm a wrong design with high confidence, which is why the agent understands the
+system before changing it.
 
 ---
 
 ## Context Harvesting — From Understanding to Design
 
-Every agent interaction with the system — a new feature, a bug fix, an architectural investigation — starts with context, not code. The agent harvests targeted information from documentation (intent), code (contract), tests (expected behavior), and logs (what actually happened) to construct a mental model before proposing changes.
+Every feature, bug fix or investigation starts with context, not code. The agent harvests targeted information from
+documentation (intent), code (contract), tests (expected behavior) and logs (what happened), then proposes a change.
+Reading a whole file to find one assertion wastes context; the test that holds the assertion states it directly.
 
 ### The Design-First Workflow
 
-1. **Explain the problem** — Describe what's broken or what needs to change. Be specific: which component, which behavior, which user journey is affected.
+1. **Explain the problem.** Name the component, behavior or user journey affected.
+2. **Provide evidence.** Log excerpts, reference code that models the preferred solution, test output showing the
+   current behavior.
+3. **State the goal.** Define the end state precisely, for example: "The system stores the order status when the
+   order is sent. We also need confirmation that the upstream ERP received the order and acknowledged it."
+4. **Invoke the right skill.** A debugging skill for investigations (such as superpowers `systematic-debugging`) or a
+   planning skill for design proposals (such as `writing-plans`). The skill structures the analysis.
+5. **Iterate on the plan.** The plan includes the unit and stack test changes that give end-to-end confidence. Review
+   it and challenge assumptions; it is a contract between intent and execution.
+6. **Save the converged plan** to the filesystem so later sessions can verify implementation against it.
+7. **Execute** with an execution skill (such as `executing-plans`), run the tests and check the plan's acceptance
+   criteria.
 
-2. **Provide evidence** — Give the agent pointers to the relevant context: log excerpts showing the failure, reference code that models the preferred solution, test output that demonstrates the current behavior. The agent needs concrete evidence, not vague descriptions.
+The workflow does not depend on a skill pack. The [rig](https://github.com/franklywatson/claude-rig) pack (review it
+before installing, per [Pattern 2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain))
+implements it as a skill chain with `plan+` for the design step; see
+[L2: Behavioral Guardrails](L2-behavioral-guardrails.md).
 
-3. **State the goal** — Define the desired end state with precision. For example: "Right now the system only stores the order status when the order is sent. We also need confidence that the order was triggered into the upstream ERP and that system has acknowledged receipt."
+---
 
-4. **Invoke the right skill** — Use `systematic-debugging` for investigations (analyzing failures, tracing root causes) or `plan+` for design proposals (new features, architectural changes). The skill structures the agent's analysis and prevents undisciplined exploration.
+## Design Rinsing — Cross-Domain Architectural Extraction
 
-5. **Iterate on the plan** — The design must include unit and stack test changes that provide end-to-end confidence. Review the plan, challenge assumptions, refine scope. The plan is a contract between human intent and agent execution.
-
-6. **Save the refined plan** — Persist the converged plan to the filesystem after Q&A is complete. Future sessions can reference the plan; the agent can verify implementation against it.
-
-7. **Execute** — Use the `executing-tasks` skill to implement the plan as documented. Run tests, fix issues found, verify against the plan's acceptance criteria.
-
-The [rig](https://github.com/franklywatson/claude-rig) framework (a hook and skill pack: review it before
-installing, per [Pattern 2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain))
-automates this workflow through its skill chain — enforcing the transition from planning to implementation to
-verification. The `plan+` skill structures the design-first approach; the phase tracker prevents jumping to
-`tdd+` without a prior plan. See [L2: Behavioral Guardrails](L2-behavioral-guardrails.md) for the full skill
-chain architecture.
-
-### Why Context Harvesting Precedes Testing
-
-Stack tests validate design intent. But if the design is wrong, perfect tests just confirm the wrong thing with high confidence. The agent needs to understand the system before changing it.
-
-This is why L0 exists as a prerequisite: deep modules make code contracts discoverable, progressive disclosure makes structure navigable, and the agent instruction file makes rules explicit. L1 is where the agent activates those foundations — reading the map before charting the course, then verifying the destination was reached.
-
-### Targeted Context, Not Exhaustive Reading
-
-Don't read everything. The agent constructs a mental model from targeted slices:
-
-- **Docs for intent** — What is this module supposed to do? What are the constraints?
-- **Code for contract** — What does the interface promise? What types flow in and out?
-- **Tests for expected behavior** — What does the system actually do today? What edge cases are covered?
-- **Logs for what happened** — What went wrong in this specific instance? What was the observable behavior?
-
-Each source answers a different question. Reading a 500-line file to find one assertion wastes context. Reading the test for that assertion gives the answer in 20 lines.
-
-### Design Rinsing — Cross-Domain Architectural Extraction
-
-Context harvesting typically draws from the *current* project — docs, code, tests, logs. But agents can also extract architectural insight from *external* sources: other codebases (possibly in different languages, designed for different purposes), YouTube transcripts, articles, or design notes. **Design rinsing** is the structured process of directing an agent to analyze an external source, distill transferable patterns, and translate them into design decisions for the target project.
-
-Design rinsing is not copying code. It is extracting the *why* behind architectural decisions — the structural reasoning, the failure modes that shaped a design, the trade-offs that were considered. The agent then translates those abstracted principles into the target project's language, constraints, and purpose. The result is never a direct port; it is an adaptation informed by cross-domain insight.
-
-**How design rinsing differs from internal context harvesting:**
-
-| Context Harvesting | Design Rinsing |
-|-------------------|----------------|
-| Internal — current codebase | External — outside sources |
-| Before a specific change | Before a design direction or architectural evolution |
-| Targeted slices (docs, code, tests, logs) | Cross-domain distillation (different language, purpose, or medium) |
-| Agent reads to understand current state | Agent reads to extract transferable patterns |
+**Design rinsing** directs an agent to analyze an *external* source (another codebase, a talk transcript, an article)
+and distill the reasoning behind its architecture: the failure modes that shaped it and the trade-offs considered. The
+agent translates those principles into the target project's language and constraints. The result is an adaptation,
+never a port. Context harvesting reads the current project to understand it; design rinsing reads outside material to
+extract transferable patterns before a design direction is set. It works at the system scale of the loop.
 
 ![Design Rinsing Workflow](diagrams/1.8-design-rinsing-workflow.png)
 
-#### The Design Rinsing Workflow
+1. **Identify the source** with architectural insight relevant to the design challenge.
+2. **Scope the rinse**: architecture, testing, agent coordination, error handling, state management.
+3. **Direct the agent** with specific questions ("How does this system handle multi-agent coordination?"), not
+   "read this codebase."
 
-1. **Identify the source** — What external material contains architectural insight relevant to your design challenge? A codebase in a different language, a YouTube talk, a design document from another domain.
+   **Warning: external sources are untrusted input.** A repository, transcript or article can contain text that
+   instructs the agent (prompt injection). Rinse in a read-only session with no write access to the target project and
+   no network egress beyond the source. Carry only the distilled notes into the design session
+   ([Pattern 2.10](L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition)).
+4. **Distill** the decisions, their reasons and their trade-offs, not surface code.
+5. **Translate** to the target. A Rust ownership model does not port to Python, but its approach to resource
+   lifecycle might.
+6. **Document** what was rinsed, extracted and translated, as design rationale for later sessions.
 
-2. **Scope the rinse** — What specific aspects are you looking for? Architecture, testing, agent coordination, error handling, progressive disclosure, state management.
+Rinse when another project has already solved the question, or the team is entering an unfamiliar domain. Skip it when
+existing patterns solve the problem, the source is too distant (a game engine rarely informs a CRUD API) or the rinse
+costs more context than building the solution.
 
-3. **Direct the agent** — Point the agent at the source with specific analysis questions. "How does this system handle multi-agent coordination?" not "Read this entire codebase."
-
-   **Warning — external sources are untrusted input.** A repository, transcript, or article can contain text
-that instructs the agent (prompt injection). Rinse in a read-only session with no write access to the target
-project, and with no network egress beyond the source itself. Carry only the distilled notes into the design
-session. See [Pattern 2.10 — Least Agency and Session
-Composition](L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition) for the principle.
-
-4. **Distill** — The agent extracts essential patterns, not surface-level code. What decisions were made, why, and what trade-offs they represent.
-
-5. **Translate** — Adapt extracted patterns to the target project's language, constraints, and purpose. A Rust project's ownership model doesn't port to Python, but its approach to resource lifecycle management might.
-
-6. **Document** — Record what was rinsed, what was extracted, and how it was translated. This becomes the design rationale that future sessions can reference.
-
-#### Sources and Targets
-
-Design rinsing works with diverse source materials:
-
-| Source Type | What You Extract | Example |
-|-------------|-----------------|---------|
-| Codebase (different language) | Architecture, design patterns, testing strategy, module boundaries | Rust multi-agent system → agent coordination design for a Python service |
-| Codebase (same ecosystem) | Implementation patterns, tool choices, configuration conventions | Node.js trading bot stack tests → Python testing infrastructure |
-| YouTube demo / walkthrough | Concrete architecture, agent roles, pipeline design, routing logic | Multi-agent demo video → agent roles and message routing for the target system |
-| YouTube talk / lecture | Core concepts, design principles, mental models | Conference talk on distributed systems → retry and escalation policy for the target system |
-| Article / blog post | Distilled observations, failure modes, trade-off analysis | Blog post on LLM coding pitfalls → behavioral rules for the target project's agent skills |
-
-#### When to Use Design Rinsing
-
-Design rinsing is valuable when:
-
-- The target project faces architectural questions that another project has already solved
-- The team is exploring a new domain and needs mental models from established systems
-- Cross-domain insight would prevent not-invented-here reinvention
-- The design needs to evolve beyond the current codebase's accumulated patterns
-
-Design rinsing is overkill when:
-
-- The target project's existing patterns already solve the problem
-- The external source is too distant to provide relevant insight (a game engine's architecture rarely informs a CRUD API)
-- The rinse would take more context than building the solution from scratch
-
-#### Design Rinsing and the REPL Fractal
-
-Design rinsing operates at the **system-level** of the REPL fractal described earlier. It extends the Read phase beyond the current project — the agent reads external architecture to inform its mental model before acting. This is context harvesting at its broadest scope: not "what does this function do?" but "what design philosophy produced this system?"
-
-**Evidence:** Thin — a reasoned technique from first-party use; no study of cross-domain extraction (first-party, n=1)
+**Evidence:** Thin — a reasoned technique from this project's own use; no study of cross-domain extraction (n=1)
 
 ---
 
 ## Pattern Index
 
-The following patterns describe the verification mechanisms that close the loop on design intent. Each pattern has its own document with detailed guidance, code examples, and anti-patterns.
+Patterns 1.1 to 1.6 close the loop during development. Patterns 1.7 to 1.12 extend it to production incidents.
 
-### [Pattern 1.1 — Stack Tests](L1-patterns/1.1-stack-tests.md)
+### Development loop
 
-Full-system tests running the complete Docker stack with API-level verification, zero mocks for owned services, and high failure diagnosticity. Each test models an atomic user journey — a single, complete interaction from the user's perspective. Includes health endpoint test mode, test fixture bootstrapping, and the "Beyond API Testing" extension to browser-driven verification with Playwright. **Why it matters:** Stack tests close the feedback loop — the agent gets binary confirmation that the system works end-to-end, not that individual functions return correct values.
+#### [Pattern 1.1 — Stack Tests](L1-patterns/1.1-stack-tests.md)
 
-### [Pattern 1.2 — Full-Loop Assertion Layering](L1-patterns/1.2-full-loop-assertions.md)
+Full-stack, API-level tests of one user journey each, with no mocks for owned services. Includes the health endpoint
+test mode, fixture bootstrapping, browser-driven journeys and the rule that stack tooling is production code.
 
-Three-level assertion structure (primary, second-order, third-order) that provides diagnostic signal at increasing distance from the primary action. Primary verifies the direct response, second-order verifies side effects through a different API endpoint, third-order verifies cross-functional consistency (audit logs, notifications, cross-endpoint agreement). **Why it matters:** A `200 OK` response proves nothing about side effects. Second-order assertions catch missing persistence; third-order assertions catch broken observability. Each failure mode points to a specific subsystem.
+#### [Pattern 1.2 — Full-Loop Assertion Layering](L1-patterns/1.2-full-loop-assertions.md)
 
-### [Pattern 1.3 — Sequential / Additive Test Design](L1-patterns/1.3-sequential-design.md)
+Primary, second-order and third-order assertions, ordered so the failing layer points at a subsystem.
 
-Tests ordered by dependency so that if test N fails, the agent knows tests 1 through N-1 passed. The sequence acts as a diagnostic ladder narrowing the search space. Stack tests as vertical slices — each test is one atomic user journey that can be run individually during development or as a full suite before completion. **Why it matters:** Without ordering, a checkout failure could mean broken auth, broken database, or broken checkout logic — ordering tells the agent exactly which subsystem to investigate.
+#### [Pattern 1.3 — Sequential / Additive Test Design](L1-patterns/1.3-sequential-design.md)
 
-### [Pattern 1.4 — Container Isolation](L1-patterns/1.4-container-isolation.md)
+Tests ordered by dependency, so a failure at test N means tests 1 to N-1 passed.
 
-Four mechanisms ensuring tests never interfere: compose project scoping (`docker compose -p <unique project>`), dynamic port allocation, transient volumes, and per-run compose files. Aggressive cleanup prevents Docker resource exhaustion during concurrent test execution. **Why it matters:** Hardcoded ports and shared state produce flaky, non-deterministic test failures that waste agent tokens on false investigations. Isolation makes every test run deterministic.
+#### [Pattern 1.4 — Container Isolation](L1-patterns/1.4-container-isolation.md)
 
-### [Pattern 1.5 — Real Dependencies in E2E/Integration and Stack Tests](L1-patterns/1.5-no-mock-philosophy.md)
+Compose project scoping, dynamic ports, transient volumes and per-run compose files, so concurrent runs do not collide.
 
-Stack tests and E2E/integration tests use real everything — real PostgreSQL, real Redis, real message queues. If you own it, run it. If you can run it in Docker, run it in Docker. Also covers **focused integration tests** — a niche pattern for exhaustive edge-case coverage of complex external dependencies (payment providers, blockchain RPCs) against their real APIs, without running the full stack. **Why it matters:** Mocks create a fantasy system that passes tests but fails in production. Mocks are appropriate and encouraged in unit tests, which validate module contracts in isolation.
+#### [Pattern 1.5 — Real Dependencies in E2E/Integration and Stack Tests](L1-patterns/1.5-real-dependencies.md)
 
-### [Pattern 1.6 — Test Integrity Rules](L1-patterns/1.6-test-integrity.md)
+Real databases, caches and queues in stack and E2E tests; mocks in unit tests; focused integration tests for complex
+external dependencies; fault injection that keeps the real client.
 
-Six forbidden patterns that allow tests to silently pass: conditional assertions, catch without rethrow, optional chaining on expect, early returns before assertions, try-catch wrapped expectations, and soft assertions. Every test must either pass or fail explicitly. **Why it matters:** A test that can silently pass is worse than no test — it gives false confidence. Every test must provide unambiguous signal to the agent.
+#### [Pattern 1.6 — Test Integrity Rules](L1-patterns/1.6-test-integrity.md)
 
-### [Testing Infrastructure Is Production Code](L1-patterns/testing-infrastructure.md)
-
-The tooling that enables stack tests — port allocators, compose file generators, container managers — is application code, not scaffolding. Treat it with the same rigor: unit tests, error handling, edge case coverage, and code review. **Why it matters:** Brittle test infrastructure wastes more agent tokens than any other source — the agent debugs test tooling instead of application logic.
+Six forbidden patterns that let a test pass silently, and the lint, CI and mutation checks that catch them.
 
 ---
 
-## Closing the loop in production
+### Closing the loop in production
 
-Patterns 1.1 to 1.6 close the loop during development. The same loop can extend into production for one narrow case: an incident in code you own, repaired by a change that is reversible and that a machine can verify. The repair loop must not hide defects, must not grade its own work, and must be stoppable.
+The same loop can extend into production for one narrow case: an incident in code you own, repaired by a change that is
+reversible and that a machine can verify. The repair loop must not hide defects, must not grade its own work and must be
+stoppable. Pattern 1.7 needs no autonomy. The others set limits before any repair runs unattended.
 
-The first pattern needs no autonomy. The rest set the limits before any repair runs unattended. Evidence for the group is mixed: 1.7 is well supported for human-run teams, while 1.10, 1.11 and 1.12 are Thin (see each pattern's evidence line).
-
-- [Pattern 1.7 — Incident-to-Stack-Test](L1-patterns/1.7-incident-to-stack-test.md): every incident ends with a reproduction that fails on the production commit and passes on the fix. No repair before the reproduction is red.
-- [Pattern 1.8 — Reversibility and Blast-Radius Classes](L1-patterns/1.8-reversibility-blast-radius.md): classify each change from its diff, in code, failing closed. R0 to R4 for reversibility, B0 to B3 for reach.
-- [Pattern 1.9 — Repair Loop with a Frozen Oracle](L1-patterns/1.9-repair-loop-frozen-oracle.md): the reproduction is frozen before the fix, the fix touches no existing test, and a scan turns masking changes into mitigations for a human.
+- [Pattern 1.7 — Incident-to-Stack-Test](L1-patterns/1.7-incident-to-stack-test.md): every incident ends with a reproduction that fails on the production commit and passes on the fix.
+- [Pattern 1.8 — Reversibility and Blast-Radius Classes](L1-patterns/1.8-reversibility-blast-radius.md): classify each change from its diff, in code, failing closed (R0 to R4, B0 to B3).
+- [Pattern 1.9 — Repair Loop with a Frozen Oracle](L1-patterns/1.9-repair-loop-frozen-oracle.md): the reproduction is frozen before the fix, the fix touches no test file, and a scan turns masking changes into mitigations for a human.
 - [Pattern 1.10 — Production Gate and Progressive Confirmation](L1-patterns/1.10-production-gate-progressive-confirmation.md): a deterministic gate outside the agent, a staged rollout, a pre-declared confirmation rule and automatic rollback.
-- [Pattern 1.11 — Repair Budget, Circuit Breaker and Stop Authority](L1-patterns/1.11-repair-budget-circuit-breaker-stop.md): attempt budgets, a breaker that lowers the grant, a named stop. Unattended repair of R3 and R4 changes is not supported at any grant.
+- [Pattern 1.11 — Repair Budget, Circuit Breaker and Stop Authority](L1-patterns/1.11-repair-budget-circuit-breaker-stop.md): attempt budgets, a breaker that lowers the grant and a named stop. Unattended repair of R3 and R4 changes is not supported at any grant.
 - [Pattern 1.12 — Self-Healing Tests vs Self-Healing Systems](L1-patterns/1.12-self-healing-tests-vs-systems.md): tests never heal themselves, and recovery without a repair ticket is a masked defect.
 
-A runnable example of the gate is in [`examples/repair-loop/`](../examples/repair-loop/README.md) (TypeScript and Python). It simulates production confirmation and does not prove it.
-
----
-
-## Practitioner Insight
-
-> "Close the loop: AI agents must be able to verify their own work."
-> — Peter Steinberger, creator of OpenClaw
-
-This is the foundational principle behind stack tests. When an agent can spin up the full system, execute against real dependencies, and validate through the API, it gets clear binary feedback — not ambiguous partial results from mocked components. The agent either passes or fails, and when it fails, the diagnostic signal points directly to what's broken.
+A runnable example of the gate is in [`examples/repair-loop/`](../examples/repair-loop/README.md) (TypeScript and
+Python). It simulates production confirmation and does not prove it.
 
 ---
 

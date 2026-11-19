@@ -1,18 +1,19 @@
 # Repair Loop Example
 
-A runnable repair loop with a deterministic gate, in TypeScript and Python. The loop takes an
-incident record, reproduces the failure, applies a candidate patch, verifies it, and asks a
-pure-function gate for one of three answers: `auto`, `human` or `block`. A fixed patch stands
-in for the repair agent, so every run is reproducible. No LLM is involved.
+For a team that wants to see Patterns 1.7 to 1.11 run before building its own repair loop: a runnable loop with a
+deterministic gate, in TypeScript and Python. The loop takes an incident record, reproduces the failure, applies a
+candidate patch, verifies it, and asks a pure-function gate for `auto`, `human` or `block`; for `auto` it also says
+who merges, a person or nobody. A fixed patch stands in for the repair agent, so every run is reproducible.
 
-The example demonstrates three outcomes on one seeded defect (INC-001):
+The example runs four candidate patches against one seeded defect (INC-001) at grant A3, so every `auto` is
+merged by a person:
 
 | Candidate patch | What it does | Gate answer |
 |-----------------|--------------|-------------|
-| `INC-001.fix.patch` | Validates the id before the query | `auto` |
+| `INC-001.fix.patch` | Validates the id before the query | `auto`, merged by a person |
 | `INC-001.mask.patch` | Wraps the handler in a catch-all that returns 404 | `human`, with a root-cause ticket |
 | `INC-001.test-edit.patch` | Edits the reproduction to expect the 500 | `block` |
-| `INC-001.partial.patch` | Guards only the literal id `undefined`: green on the oracle, still failing on `/users/null` | `auto`, then the confirmation window rolls it back |
+| `INC-001.partial.patch` | Guards only the literal id `undefined`: green on the oracle, still failing on `/users/null` | `auto`, merged by a person, then the confirmation window rolls it back |
 
 ## What Is Real and What Is Simulated
 
@@ -21,10 +22,15 @@ Real:
 - The app runs in Docker with PostgreSQL and Redis. Reproduction and regression tests call it over HTTP.
 - The reproduction is red on the base commit and green on the fix, observed in test output.
 - Patches must be plain unified diffs. A strict validator refuses context diffs (`***`), `Index:`, `diff --git`,
-  renames, copies, mode lines (including symlinks), binary patches and any absolute, `..` or backslash path.
+  renames, copies, mode lines (including symlinks), binary patches, quoted names, control characters (NUL
+  included) in a name or a hunk line, and any absolute, `..` or backslash path.
   `git apply`, which refuses paths outside the work tree, then applies the patch in a throwaway repository
   inside a temporary workspace. The diff that the gate sees is observed with `diff -ruN` between the base and
   candidate directories (nothing excluded), not read from the patch text. Hashes are computed from files on disk.
+- The gate reads file names from the `---`/`+++` headers, `Binary files ... differ` lines and, in a git diff,
+  `diff --git`, `rename from`/`rename to` and `GIT binary patch` blocks, with C quoting. A name that contains
+  the separator (" and ", a space, a tab) is accepted only when exactly one reading names the same path on both
+  sides; any other line or name it cannot read unambiguously classifies as unknown (R4/B3), so a person decides.
 - The oracle never comes from the candidate. The loop runs the frozen reproduction and the regression suite
   from the base workspace against the candidate's deployment, with `--noconftest` and importlib mode (pytest)
   or explicit test paths and restricted roots (Jest). The compose file is always the pristine template.
@@ -35,9 +41,9 @@ Simulated:
 
 - **Production confirmation.** After the gate returns `auto`, the loop sends 50 requests that replay the
   incident to the candidate stack and counts the incident fingerprint in the app logs. This
-  simulates a canary window. It does not prove behaviour in production.
+  simulates a canary window. It does not prove behavior in production.
 - **The merge.** At grant A3 a person merges. The example treats the pull request in the outbox as merged.
-- **The outbox and register.** Tickets, pages and audit entries are JSON-lines files, not a ticketing system.
+- **The outbox and audit log.** Tickets, pages and audit entries are JSON-lines files, not a ticketing system.
 - **The repair agent.** Fixed patches replace it.
 
 Not demonstrated: the Pattern 1.5 carve-out for network-level fault injection (a proxy in front of a real
@@ -47,13 +53,15 @@ dependency). The example has no INC-002 that reproduces a dependency timeout.
 people or accounts. Running `autonomy check` on this directory alone still fails with `profile-missing`
 and `grant-exceeds-cap`, because the cap check needs a census profile that the example does not ship.
 
-To validate the register, copy `.autonomy.yaml` into an empty directory, add a `.autonomy/profile.json`
-with every dimension at level 3 and `"cap": 3`, then run the autonomy tooling there:
-`node dist/src/cli.js check --dir <that directory> --no-commits`. With that profile the check reports
+To validate the register, copy `.autonomy.yaml` into an empty directory and add a test-fixture
+`.autonomy/profile.json` (in a real repository the census writes it) with a current `generated` time, every
+dimension at C3 and `"cap": 3`. Then run the autonomy tooling there:
+`node dist/src/cli.js check --dir <that directory> --no-commits`, from `examples/autonomy/typescript` after
+`npm install && npm run build`. With that profile the check reports
 `workflow repair-loop: granted 3, effective 3` and `autonomy check: ok`.
 
-Out of scope: unattended repair of R3 (data-forward) or R4 (irreversible or external) changes. The
-gate sends every such change to a person, and the example never grants A4.
+Out of scope: unattended repair of R3 (data-forward) or R4 (irreversible or external) changes. The gate sends
+every such change to a person. The gate eval scores the unattended rule at A4 and A5.
 
 ## The Loop
 
@@ -72,32 +80,50 @@ gate sends every such change to a person, and the example never grants A4.
    class (R0 to R4 by B0 to B3), the anti-masking scan result, the attempt budget and the grant.
 7. **Gate.** Return the most severe decision any check produces (block over human over auto) with the reasons.
 8. **Act on the decision.**
-    - `auto`: open a pull request with the evidence bundle in the outbox, then run the confirmation rule
-      (at least 50 samples, no fingerprint hits). Confirmed repairs are recorded in the breaker.
+    - `auto`: open a pull request with the evidence bundle and the gate's merge in the outbox, treat it as
+      merged, then run the confirmation rule (at least 50 samples, no fingerprint hits). Confirmed repairs are recorded in the breaker.
       A failed confirmation rolls back and pages the owner.
     - `human`: open a ticket. A masking change gets a root-cause ticket.
     - `block`: page the owner.
 9. **Watch for recurrence.** `observeRecurrence` (`observe_recurrence` in Python) takes application logs. If the
-   incident fingerprint reappears inside 14 days of a confirmed repair, it drops the grant one level.
-   Restoring it needs a named person and five clean repairs. Stack test 05 drives it with the logs of a
-   regressed build.
+   incident fingerprint reappears inside 14 days of a confirmed repair, it drops the grant one step (A3 to A2)
+   in the breaker state; the example does not write the autonomy demotion override. Restoring it needs a named
+   person and five clean repairs. Stack test 05 drives it with the logs of a regressed build.
 
 ## Gate Rules
 
 | Result | Condition |
 |--------|-----------|
-| `block` | Stop switch engaged. Reproduction hash differs from the frozen hash. The diff touches a protected path: anything under `tests/` (added, changed or deleted), `.autonomy.yaml`, `.github` or `shared/config`. The diff names an unsafe path (absolute, `..`, backslash). The reproduction is not green on the candidate. The regression suite is not green. |
+| `block` | Stop switch engaged. Reproduction hash differs from the frozen hash. The diff touches a protected path, matched without regard to case: anything under `tests/` (added, changed or deleted), `.autonomy.yaml`, `.github` or `shared/config`. The diff names an unsafe path (absolute, `..`, backslash). The reproduction is not green on the candidate. The regression suite is not green. |
 | `human` | Reproduction was not red on base. The anti-masking scan has a hit. The class is above R2/B1. The grant is below A3. The attempt budget is spent or a cooldown is active. |
 | `auto` | None of the above. |
 
+The merge for an `auto` result follows the gate rule table in [Pattern
+1.11](../../docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md#grants-and-repair-capability):
+
+| Grant | Merges unattended | Policy key |
+|-------|-------------------|------------|
+| A3 | Nothing: a person merges | no entry in `unattendedCeiling` |
+| A4 | R0 and R1 at B0 | `unattendedCeiling.A4` |
+| A5 | R0 and R1 at B0; R2 at B0 when every changed file is on a named path (`app/src/routes/**`) | `unattendedCeiling.A5`, `unattendedR2Paths` |
+
+The gate code refuses unattended merge below A4 and above R2 or B0, whatever the policy says.
+
 Classification is deterministic and fails closed: a file with no path rule, and an empty diff, take the
-highest class (R4/B3). The rules are data in `shared/config/reversibility.json`. The policy, budgets and
-confirmation rule are in `shared/config/repair-policy.json`.
+highest class (R4/B3), and so does a file the diff names ambiguously. Instruction and tool-configuration files at
+any depth (`CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `GEMINI.md`, anything under a `.claude/` folder, `.mcp.json`)
+classify as medium tier (R0 at B1), so the gate never merges them unattended; `.claude/settings*.json` and
+`.claude/hooks/**` at any depth classify R4/B3. A file also takes the class of its first case-insensitive rule match
+when that is higher, because `claude.md` and `CLAUDE.md` are the same file on a case-insensitive file system; a case
+variant with no case-sensitive match (`.Claude/skills/x.sh`) takes the unknown class. Glob wildcards never match a
+line terminator. The rules are data in `shared/config/reversibility.json`; the policy, budgets and confirmation rule
+are in `shared/config/repair-policy.json`. The content rules (schema or data writes, external effects, money, auth
+and personal data) are a text heuristic like the anti-masking scan: a call spelled another way
+(`child_process`, `http.request`, `urllib`, a name built from strings) does not match them.
 
 The anti-masking scan applies the Pattern 1.6 forbidden patterns to production diffs: swallowed
-exceptions, new retries, widened timeouts and lowered thresholds. It is a text scan, so it flags
-conservatively and misses masks it has no pattern for. It is a heuristic and one input to the gate, not the
-only one. Known bypasses, all of which can reach `auto` on the evidence the gate sees:
+exceptions, new retries, widened timeouts and lowered thresholds. It is a text scan, one input to the gate: it
+flags conservatively and misses masks it has no pattern for. Known bypasses, all of which can reach `auto` on the evidence the gate sees:
 
 - An error-handler change in `main.py` or `index.ts` that answers 404 for every error (no `catch` token).
 - An `except` block with an unrelated `raise` inside the six-line window, or one that rethrows on a different path.
@@ -106,7 +132,7 @@ only one. Known bypasses, all of which can reach `auto` on the evidence the gate
 - Retries spelled `attempt` or `while`, and timeout or threshold changes made through expressions,
   multi-line settings or renamed keys.
 
-The confirmation window and the regression suite are the second line of defence for these.
+The confirmation window and the regression suite are the second line of defense for these.
 
 ## Layout
 
@@ -117,7 +143,8 @@ examples/repair-loop/
   shared/
     incidents/INC-001.json   Incident record (fingerprint, journey, PII-free request, observed, expected)
     config/                  reversibility.json and repair-policy.json
-  typescript/                Node 21+, Jest
+    eval/gate-scenarios.json Gate eval scenarios, read by both language suites
+  typescript/                Node 22+, Jest
   python/                    Python 3.12+, uv, pytest
 ```
 
@@ -126,15 +153,24 @@ Each language directory has the same structure:
 ```text
 app/                  The minimal app (PostgreSQL and Redis) with the seeded defect
 patches/              INC-001.fix, .mask, .test-edit and .partial
-src/                  incident, reproduce, classify, antimask, gate, breaker, loop, runtime
+src/                  Main modules: incident, reproduce, classify, antimask, gate, breaker, loop, runtime
 tests/unit/           Module tests (mocks allowed)
-tests/eval/           Gate eval: 35 scenarios, exact scoring, pass^5
+tests/eval/           Gate eval: exact scoring of the decision and the merge, pass^5
 tests/stack/          01 startup, 02 repair, 03 masking rejected, 04 test edit blocked, 05 breaker trips, 06 confirmation rollback
 tests/regression/     Regression suite that the loop runs, from the base workspace, against every candidate
 docker-compose.yml    Stack template; ports bind to 127.0.0.1
 ```
 
-Patches differ per language because the app does. The incident record and the configuration are shared.
+Patches differ per language because the app does. The incident record, the configuration and the gate eval
+scenarios are shared; a scenario value that differs per language is keyed by language.
+
+## Health Endpoint Shape
+
+The apps answer `GET /health` with `status` and `version`. With `?mode=test` or `?mode=prod` the response adds
+`services.postgres` and `services.redis`, each with `connected` and `latency_ms`. Both modes return the same
+test-mode shape. This is a demo simplification: Pattern 1.1 recommends a smaller production response with only
+`status` (`healthy`, `degraded` or `unhealthy`), one state per dependency and `version`, with no latency
+figures or counts. No loop step reads the endpoint, so the simplification does not change what the example shows.
 
 ## The Seeded Defect
 
@@ -145,7 +181,7 @@ structured line per unhandled error, which gives the incident its fingerprint:
 
 ## How to Run
 
-Requirements: Docker with Compose, Node 21 or later, Python 3.12 or later with
+Requirements: Docker with Compose, Node 22 or later, Python 3.12 or later with
 [uv](https://docs.astral.sh/uv/), and Git (for `git apply`) on the path.
 
 TypeScript, from `examples/repair-loop/typescript/`:
@@ -155,7 +191,7 @@ npm ci
 npm test                  # unit, eval and stack tests
 npm run test:unit         # no Docker
 npm run test:eval         # no Docker
-npm run test:stack        # Docker; about 5 minutes
+npm run test:stack        # Docker; 5 to 10 minutes
 ```
 
 Python, from `examples/repair-loop/python/`:
@@ -164,7 +200,7 @@ Python, from `examples/repair-loop/python/`:
 uv sync --frozen
 uv run pytest             # unit, eval and stack tests
 uv run pytest tests/unit tests/eval   # no Docker
-uv run pytest tests/stack             # Docker; about 5 minutes
+uv run pytest tests/stack             # Docker; 5 to 10 minutes
 ```
 
 Every stack run uses a unique compose project name (`repair-<pid>-<random>`), free ports on
@@ -174,6 +210,12 @@ network and built image. Workspaces are created under `.workspaces/` and removed
 
 ## Pattern References
 
-- [Pattern 1.1](../../docs/L1-patterns/1.1-stack-tests.md): stack tests and the health endpoint modes
+- [Pattern 1.1](../../docs/L1-patterns/1.1-stack-tests.md): stack tests and the health endpoint test mode
 - [Pattern 1.6](../../docs/L1-patterns/1.6-test-integrity.md): the forbidden patterns, applied to tests and, by the scan, to production diffs
-- [Pattern 1.5](../../docs/L1-patterns/1.5-no-mock-philosophy.md): real dependencies in stack tests; mocks only in unit tests
+- [Pattern 1.5](../../docs/L1-patterns/1.5-real-dependencies.md): real dependencies in stack tests; mocks only in unit tests
+- [Pattern 1.7](../../docs/L1-patterns/1.7-incident-to-stack-test.md): incident record to reproduction test
+- [Pattern 1.8](../../docs/L1-patterns/1.8-reversibility-blast-radius.md): reversibility and blast-radius classes
+- [Pattern 1.9](../../docs/L1-patterns/1.9-repair-loop-frozen-oracle.md): the repair loop and its frozen oracle
+- [Pattern 1.10](../../docs/L1-patterns/1.10-production-gate-progressive-confirmation.md): the production gate and the confirmation window
+- [Pattern 1.11](../../docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md): repair budget, circuit breaker and stop authority
+- [Pattern 1.12](../../docs/L1-patterns/1.12-self-healing-tests-vs-systems.md): self-healing tests versus self-healing systems

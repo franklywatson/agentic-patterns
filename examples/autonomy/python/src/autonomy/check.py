@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -9,32 +10,48 @@ from autonomy.levels import all_workflows, cap_of, effective_level, profile_stat
 from autonomy.register import load_register_file, validate_register
 from autonomy.util import age_days, git, inside_dir, parse_time, read_json_if_exists
 
-# Tier 1: never changed by an agent commit, no relief.
-TIER1 = [
+# Locked files: never changed by an agent commit, no relief.
+LOCKED_FILES = [
     re.compile(r"^\.autonomy"),
-    re.compile(r"(^|/)codeowners$"),
-    re.compile(r"^\.claude/settings[^/]*\.json$"),
+    re.compile(r"(^|/)codeowners\Z"),
+    re.compile(r"^\.claude/settings[^/]*\.json\Z"),
     re.compile(r"^\.claude/hooks/"),
-    re.compile(r"^\.harness\.yaml$"),
+    re.compile(r"^\.harness\.yaml\Z"),
 ]
-# Tier 2: changed by an agent commit only when a later non-agent commit acknowledges it.
-TIER2 = [re.compile(r"^\.github/workflows/")]
+# Workflow files: changed by an agent commit only when a later non-agent commit acknowledges it.
+WORKFLOW_FILES = [re.compile(r"^\.github/workflows/"), re.compile(r"^\.github/actions/")]
 
-ACK_LINE = re.compile(r"governance-approved:[ \t]*([0-9a-f]{7,40})", re.I)
-
-
-def is_tier1_file(path: str) -> bool:
-    lower = path.lower()
-    return any(p.search(lower) for p in TIER1)
+ACK_LINE = re.compile(r"governance-approved:[ \t]*([0-9a-f]{7,40})", re.I | re.A)
 
 
-def is_tier2_file(path: str) -> bool:
-    lower = path.lower()
-    return not is_tier1_file(path) and any(p.search(lower) for p in TIER2)
+def fold_text(text: str) -> str:
+    """NFKC, lower case, and `ß` written as `ss`: the case folding a case-insensitive file system applies."""
+    return unicodedata.normalize("NFKC", unicodedata.normalize("NFKC", text).lower().replace("ß", "ss"))
+
+
+def fold_path(path: str) -> str:
+    """The form a path is compared in: folded (see fold_text), with trailing dots and spaces removed from each name.
+    A case-insensitive file system opens `.claude/settings.json` for `.claude/ſettings.json` (long s),
+    `CODEOWNERſ`, `.harneß.yaml` or a Kelvin sign, and Windows drops trailing dots and spaces from a name."""
+    names = []
+    for name in fold_text(path).split("/"):
+        trimmed = name.rstrip(". ")
+        names.append(name if trimmed == "" or re.fullmatch(r"\.+", name) else trimmed)
+    return "/".join(names)
+
+
+def is_locked_file(path: str) -> bool:
+    folded = fold_path(path)
+    return any(p.search(folded) for p in LOCKED_FILES)
+
+
+def is_workflow_file(path: str) -> bool:
+    folded = fold_path(path)
+    return not is_locked_file(path) and any(p.search(folded) for p in WORKFLOW_FILES)
 
 
 def is_governance_file(path: str) -> bool:
-    return is_tier1_file(path) or is_tier2_file(path)
+    return is_locked_file(path) or is_workflow_file(path)
 
 
 def approved_prefixes(body: str | None) -> list[str]:
@@ -56,7 +73,7 @@ def agent_tokens(register: dict) -> list[str]:
     return tokens
 
 
-CO_AUTHOR_AGENT = re.compile(r"co-authored-by:[\s\S]*(claude|anthropic)", re.I)
+CO_AUTHOR_AGENT = re.compile(r"co-authored-by:[\s\S]*(claude|anthropic)", re.I | re.A)
 
 
 def is_agent_commit(commit: dict, tokens: list[str]) -> bool:
@@ -141,13 +158,13 @@ def run_check(directory: str | Path, now: int, register_path: str | Path | None 
     profile = read_json_if_exists(profile_path)
     state = read_json_if_exists(root / ".autonomy" / "state.json")
     status = profile_status(profile, now)
-    result["cap"] = cap_of(profile)
+    result["cap"] = cap_of(profile, now)
     if status == "missing":
         result["failures"].append({"code": "profile-missing"})
+    else:
+        result["profile_age_days"] = age_days(now, parse_time(profile["generated"]))
     if status == "stale":
         result["failures"].append({"code": "profile-stale"})
-    if profile is not None and isinstance(profile.get("generated"), str):
-        result["profile_age_days"] = age_days(now, parse_time(profile["generated"]))
     for wf in all_workflows(register):
         eff = effective_level(wf, profile, state, register.get("defaults"), now)
         result["workflows"].append({"id": wf["id"], "granted": eff.granted, "effective": eff.effective, "reasons": eff.reasons})
@@ -175,9 +192,9 @@ def run_check(directory: str | Path, now: int, register_path: str | Path | None 
         for file in commit["files"]:
             if "\ufffd" in file:
                 result["failures"].append({"code": "path-undecodable", "commit": commit["sha"], "file": file})
-            elif is_tier1_file(file):
+            elif is_locked_file(file):
                 result["failures"].append({"code": "governance-file-changed-by-agent", "commit": commit["sha"], "file": file})
-            elif is_tier2_file(file):
+            elif is_workflow_file(file):
                 if acknowledger:
                     result["acknowledged"].append({"commit": commit["sha"], "file": file, "by": acknowledger["sha"]})
                 else:

@@ -83,7 +83,7 @@ def run_drill(
     canary = subprocess.Popen(canary_command or [sys.executable, "-c", CANARY], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def result(passed: bool, reason: str | None, ms: int | None) -> dict[str, Any]:
-        return {"workflow": workflow["id"], "passed": passed, "reason": reason, "halted_in_ms": ms, "bound_ms": bound_ms}
+        return {"workflow": workflow["id"], "passed": passed, "reason": reason, "halted_in_ms": ms, "bound_ms": bound_ms, "last_tested": None}
 
     try:
         beating = _wait_for(lambda: int(_read_beat(heartbeat) or 0) >= 2, start_timeout_s)
@@ -131,7 +131,8 @@ def run_drill(
         return outcome
     if outcome["passed"]:
         path = Path(register_path)
-        path.write_text(set_last_tested(path.read_text(), workflow["id"], iso_date(now)))
+        outcome["last_tested"] = iso_date(now)
+        path.write_text(set_last_tested(path.read_text(), workflow["id"], outcome["last_tested"]))
     else:
         apply_demotion(root, workflow["id"], 3, [f"stop-drill-failed:{outcome['reason']}"], now)
     return outcome

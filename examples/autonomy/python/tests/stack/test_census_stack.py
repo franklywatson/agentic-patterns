@@ -1,4 +1,8 @@
 import json
+import os
+import subprocess
+
+import pytest
 
 from tests.conftest import NOW, fixture_json
 
@@ -75,3 +79,143 @@ def test_check_passes_after_the_grant_is_lowered_to_the_cap(cli, git_fixture_rep
     assert lowered != original
     path.write_text(lowered)
     assert cli(["check", "--dir", str(directory), "--now", NOW, "--no-commits"]).returncode == 0
+
+
+RULES_CASES = [
+    ("rules-import", True),
+    ("rules-claude-only", True),
+    ("rules-agents-only", True),
+    ("rules-agents-not-imported", False),
+    ("rules-none", False),
+]
+
+
+@pytest.mark.parametrize("name,expected", RULES_CASES)
+def test_constitutional_rules_probe(cli, git_fixture_repo, name, expected):
+    governance = census(cli, git_fixture_repo(name))["dimensions"]["governance"]
+    assert ("constitutional-rules" in governance["evidence"]) is expected
+    assert governance["level"] == (2 if expected else 1)
+
+
+STUB_BASELINES = {
+    "empty-flow": {"captured": "2026-10-20", "flow": {}, "stability": {"change_failure_rate": 0.08}},
+    "empty-stability": {"captured": "2026-10-20", "flow": {"median_cycle_hours": 31}, "stability": {}},
+    "flow-not-an-object": {"captured": "2026-10-20", "flow": "fast", "stability": {"change_failure_rate": 0.08}},
+    "missing-stability": {"captured": "2026-10-20", "flow": {"median_cycle_hours": 31}},
+    "null-values-only": {"captured": "2026-10-20", "flow": {"x": None}, "stability": {"y": None}},
+    "placeholder-strings": {"captured": "2026-10-20", "flow": {"lead_time": "TBD"}, "stability": {"change_failure_rate": "TBD"}},
+    "capture-date-in-the-future": {"captured": "2099-01-01", "flow": {"median_cycle_hours": 31}, "stability": {"change_failure_rate": 0.08}},
+    "capture-date-not-iso": {"captured": "October 20, 2026", "flow": {"median_cycle_hours": 31}, "stability": {"change_failure_rate": 0.08}},
+    "not-an-object": "[1]",
+}
+
+
+@pytest.mark.parametrize("name", STUB_BASELINES)
+def test_a_stub_baseline_does_not_satisfy_the_baseline_probe(cli, git_fixture_repo, name):
+    directory = git_fixture_repo("adopter")
+    baseline = STUB_BASELINES[name]
+    (directory / ".autonomy" / "baseline.json").write_text(baseline if isinstance(baseline, str) else json.dumps(baseline))
+    measuring = census(cli, directory)["dimensions"]["measuring"]
+    assert measuring["level"] == 2
+    assert "baseline" not in measuring["evidence"]
+    assert "baseline" in measuring["missing_for_next"]
+
+
+# Shared with the TypeScript suite: fixtures/census/non-author-approval.json.
+APPROVAL_CASES = {c["name"]: c for c in fixture_json("census", "non-author-approval.json")["cases"]}
+
+
+@pytest.mark.parametrize("name", APPROVAL_CASES)
+def test_non_author_approval_needs_an_active_default_branch_ruleset_and_a_named_code_owner(cli, git_fixture_repo, name):
+    case = APPROVAL_CASES[name]
+    directory = git_fixture_repo("adopter")
+    ruleset = case["ruleset"] if isinstance(case["ruleset"], str) else json.dumps(case["ruleset"])
+    (directory / ".github" / "rulesets" / "main.json").write_text(ruleset)
+    for path, text in case["files"].items():
+        if text is None:
+            (directory / path).unlink()
+        else:
+            (directory / path).write_text(text)
+    governance = census(cli, directory)["dimensions"]["governance"]
+    assert ("non-author-approval" in governance["evidence"]) is case["met"]
+    assert ("non-author-approval" in governance["missing_for_next"]) is not case["met"]
+
+
+def commit_at(directory, date):
+    env = {**os.environ, "GIT_AUTHOR_DATE": date, "GIT_COMMITTER_DATE": date}
+    base = ["git", "-c", "user.name=fixture", "-c", "user.email=fixture@example.invalid"]
+    for args in (["add", "-A"], ["commit", "-q", "-m", "change"]):
+        subprocess.run([*base, *args], cwd=directory, env=env, check=True, capture_output=True)
+
+
+def test_claude_md_fresh_follows_the_agents_md_import(cli, git_fixture_repo):
+    directory = git_fixture_repo("rules-import", "2026-01-01T00:00:00Z")
+    assert "claude-md-fresh" in census(cli, directory)["dimensions"]["shared_context"]["missing_for_next"]
+    with open(directory / "AGENTS.md", "a") as f:
+        f.write("2. Every change has a test.\n")
+    commit_at(directory, "2026-11-01T00:00:00Z")
+    assert "claude-md-fresh" not in census(cli, directory)["dimensions"]["shared_context"]["missing_for_next"]
+
+
+def test_claude_md_fresh_ignores_an_agents_md_that_claude_md_does_not_import(cli, git_fixture_repo):
+    directory = git_fixture_repo("rules-agents-not-imported", "2026-01-01T00:00:00Z")
+    with open(directory / "AGENTS.md", "a") as f:
+        f.write("2. Every change has a test.\n")
+    commit_at(directory, "2026-11-01T00:00:00Z")
+    assert "claude-md-fresh" in census(cli, directory)["dimensions"]["shared_context"]["missing_for_next"]
+
+
+def test_claude_md_short_counts_claude_md_and_the_imported_agents_md_together_against_200_lines(cli, git_fixture_repo):
+    directory = git_fixture_repo("rules-import")
+    claude_lines = len((directory / "CLAUDE.md").read_text().split("\n")) - 1
+    agents = directory / "AGENTS.md"
+    agents_lines = len(agents.read_text().split("\n")) - 1
+    agents.write_text(agents.read_text() + "- rule\n" * (200 - claude_lines - agents_lines))
+    assert "claude-md-short" not in census(cli, directory)["dimensions"]["shared_context"]["missing_for_next"]
+    with open(agents, "a") as f:
+        f.write("- one more\n")
+    assert "claude-md-short" in census(cli, directory)["dimensions"]["shared_context"]["missing_for_next"]
+
+
+def test_check_command_and_author_trailer_read_the_agents_md_that_claude_md_imports(cli, git_fixture_repo):
+    directory = git_fixture_repo("adopter")
+    (directory / "AGENTS.md").write_text((directory / "CLAUDE.md").read_text())
+    (directory / "CLAUDE.md").write_text("# Adopter project\n\n@AGENTS.md\n")
+    dims = census(cli, directory)["dimensions"]
+    assert dims["platform"]["level"] == 3
+    assert "check-command" in dims["platform"]["evidence"]
+    assert dims["ownership"]["level"] == 3
+    assert "author-trailer" in dims["ownership"]["evidence"]
+
+
+def test_the_census_text_output_names_the_probes_that_block_each_dimensions_next_position(cli, git_fixture_repo):
+    directory = git_fixture_repo("bare")
+    lines = cli(["census", "--dir", str(directory), "--now", NOW]).stdout.strip().split("\n")
+    assert lines[1:10] == [
+        "cap: 1",
+        "platform: 1 (next: agent-config)",
+        "shared_context: 2 (next: claude-md-owner, decision-log, blocking-hook-tested)",
+        "operating_model: 1 (next: ci-tests-lint)",
+        "governance: 1 (next: constitutional-rules)",
+        "ownership: 1 (next: register-owners)",
+        "skill: unknown (next: worksheet:skill)",
+        "measuring: 1 (next: outcome-tracking)",
+        f"worksheet: {directory.resolve() / '.autonomy' / 'worksheet.json'}",
+    ]
+
+
+# Shared with the TypeScript suite: fixtures/census/odd-inputs.json.
+ODD_INPUTS = {c["name"]: c for c in fixture_json("census", "odd-inputs.json")["cases"]}
+
+
+@pytest.mark.parametrize("name", ODD_INPUTS)
+def test_census_reads_unusual_inputs_the_same_way_in_both_languages(cli, git_fixture_repo, name):
+    case = ODD_INPUTS[name]
+    directory = git_fixture_repo("adopter")
+    for path, content in case["files"].items():
+        if "hex" in content:
+            (directory / path).write_bytes(bytes.fromhex(content["hex"]))
+        else:
+            (directory / path).write_text(content["text"], encoding="utf-8")
+    dims = census(cli, directory)["dimensions"]
+    assert {k: v["level"] for k, v in dims.items()} == case["levels"]

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "Repair loop with a deterministic gate (TypeScript, no LLM)",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "test": "jest",
     "test:unit": "jest --selectProjects unit",

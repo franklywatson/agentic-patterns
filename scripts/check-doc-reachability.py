@@ -3,7 +3,7 @@
 
 Usage: python3 scripts/check-doc-reachability.py [repo_root] [--exclude PREFIX ...]
 Links are followed transitively: AGENTS.md -> docs it links to -> docs those link to.
-Prints a GitHub Actions warning per orphan. Exits 0 either way; the result is advisory.
+Prints a GitHub Actions error annotation per orphan. Exits 1 when at least one orphan exists, 0 otherwise.
 """
 import re
 import sys
@@ -45,9 +45,9 @@ def main():
         rel = doc.relative_to(root).as_posix()
         if doc.resolve() in seen or any(rel.startswith(p) for p in excludes):
             continue
-        print(f"::warning file={rel}::Orphaned doc: {rel} is not reachable from AGENTS.md")
+        print(f"::error file={rel}::Orphaned doc: {rel} is not reachable from AGENTS.md")
         orphans += 1
-    print(f"{orphans} orphan warning(s); {len(seen)} files reachable from AGENTS.md")
+    print(f"{orphans} orphan doc(s); {len(seen)} files reachable from AGENTS.md")
     return 1 if orphans else 0
 
 

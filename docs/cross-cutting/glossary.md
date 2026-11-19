@@ -1,509 +1,251 @@
 # Glossary
 
-Alphabetical reference for specialized terms used across the agentic-patterns library.
+Terms used across the library, in alphabetical order. Each entry links to the doc that defines it.
 
----
+The [scales table](../../README.md#how-the-scales-fit-together) separates layer, enforcement point, review tier and
+grant.
 
-## A
+**Anti-Masking Scan** — A text scan of a repair diff for code that hides an error instead of fixing it, such as a
+new catch, a retry or a longer timeout. A flagged change is reclassified as a mitigation. See
+[Pattern 1.9](../L1-patterns/1.9-repair-loop-frozen-oracle.md).
 
-### Agent Register
+**Attended** — A person watches each step of the session and applies or approves what the agent does. See
+[Path E](adoption-guide.md#path-e-one-person-attended-sessions).
 
-**Layer**: L4 - Standards & Measurement
-**Definition**: One list of every agent, unattended workflow, skill, hook pack and MCP server in use, with its
-owner, sponsor, permitted actions, access expiry, state, last review, retirement rule and stop. It can start
-as a table and grow into a machine-readable file checked in CI.
-**See**: [Pattern 4.7 - Author of Record and Agent
-Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)
+**Author of Record** — The person who asked an agent for a change. They read it and answer for it, and they cannot
+approve it; a different person approves. See
+[Pattern 4.7](../L4-standards-measurement.md#pattern-47--author-of-record).
 
-### Agentic Testing
+**Behavior Surface** — An instruction or tool-configuration file (`CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `GEMINI.md` and `.mcp.json` at any depth, and anything under a `.claude/` folder except `.claude/settings*.json` and `.claude/hooks/**`): medium tier, edited in ordinary pull requests, never merged
+unattended. See [Pattern A.6](../earned-autonomy.md#pattern-a6--enforcement-through-hooks).
 
-**Layer**: L1 - Closed Loop Design
-**Definition**: Full-system, no-mock testing approach that enables AI agents to self-diagnose and self-correct during system development.
-**See**: [L1 Closed Loop Design](../L1-feedback-loops.md)
+**Blast-Radius Class** — How far a change reaches, classified from its diff: B0 one journey, B1 one service, B2 a
+cross-service contract, B3 money, auth, PII or audit. An unknown change is B3. See
+[Pattern 1.8](../L1-patterns/1.8-reversibility-blast-radius.md).
 
-### Approval Fatigue
+**Cap** — The lowest curve position among the four dimensions that limit unattended work: platform, security and
+governance, production ownership and measuring value. The census of one repository computes it, and no grant may
+exceed it. A spend limit is a budget and a size limit is a line limit, not a cap. See
+[The Curve and the Cap](../earned-autonomy.md#the-curve-and-the-cap).
 
-**Layer**: L2 - Behavioral Guardrails
-**Definition**: The effect of asking for confirmation too often: people approve without reading, and the
-prompt stops working as a control. The remedy is to tier approvals by risk and to measure the approve rate.
-**See**: [Pattern 2.13 - Risk-Tiered Review](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)
+**Ceiling** — In the repair-loop policy, the highest reversibility and blast-radius class a grant lets the gate pass as
+`auto` (`autoCeiling`) or merge with no person (`unattendedCeiling`). See
+[Pattern 1.11](../L1-patterns/1.11-repair-budget-circuit-breaker-stop.md#grants-and-repair-capability).
 
-### Autonomy Grant (A1-A5)
+**Census** — The command that reads a repository's files and writes a profile with one curve position per
+dimension and the cap. A dimension with no evidence is C1. Only skill, which no file shows, is recorded as
+`unknown` until a worksheet result exists. See [Pattern A.4](../earned-autonomy.md#pattern-a4--census).
 
-**Definition**: What one named workflow may do on its own. A1 suggests and a human applies the change. A2 opens pull requests that a human reads. A3 passes required checks before a human merges. A4 acts on an event or schedule within permitted actions. A5 is A4 managed as an investment with a baseline, target, review date and stop rule. A grant is per workflow and cannot sit above the cap line.
-**See**: [How Far a Team Can Let Go](../../README.md#how-far-a-team-can-let-go)
+**CI Guardrails** — Required CI checks that run on every push and pull request whether or not session hooks are
+active. Thresholds live in project config, not in the workflow file. See
+[Pattern 4.5](../L4-standards-measurement.md#pattern-45--ci-guardrails).
 
-### Assertion Layering (Full-Loop)
+**Circuit Breaker** — Code that lowers a repair workflow's grant when its revert or recurrence rate crosses a
+threshold. A person restores the grant. See [Pattern 1.11](../L1-patterns/1.11-repair-budget-circuit-breaker-stop.md).
 
-**Layer**: L1 - Closed Loop Design
-**Definition**: Three-level assertion structure (primary, second-order, third-order) that provides diagnostic signal at increasing distance from the primary action.
-**See**: [Pattern 1.2 - Full-Loop Assertion Layering](../L1-feedback-loops.md#pattern-12--full-loop-assertion-layering)
+**Cognitive Debt** — The gap that grows when a team ships code nobody can explain or debug without the agent. See
+[Pattern 4.9](../L4-standards-measurement.md#pattern-49--deliberate-practice).
 
-### Author of Record
+**Conditional Assertion** — An assertion inside an `if`, behind optional chaining or after an early return, so the
+test can pass without checking anything. Forbidden. See [Pattern 1.6](../L1-patterns/1.6-test-integrity.md).
 
-**Layer**: L4 - Standards & Measurement
-**Definition**: The person who asked an agent for a change. They read it and answer for it, and they cannot
-approve it; a different person approves.
-**See**: [Pattern 4.7 - Author of Record and Agent
-Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)
+**Constitutional Rule** — A hard rule in the agent instruction file that names its enforcement point. A rule held
+only in prose is guidance. See
+[Pattern 2.4](../L2-behavioral-guardrails.md#pattern-24--constitutional-rules).
 
-### Autonomy Grant
+**Container Isolation** — Running each test run in its own compose project with dynamic ports and transient
+volumes, so concurrent runs do not interfere. See [Pattern 1.4](../L1-patterns/1.4-container-isolation.md).
 
-**Layer**: Cross-cutting - Earned Autonomy
-**Definition**: What one named workflow may do without a human, from A1 (assisted) to A5 (portfolio-managed). Held per workflow, never above the cap.
-**See**: [Earned Autonomy](../earned-autonomy.md)
+**Containment** — Running the agent inside a boundary it cannot change: writes confined to the working tree, reads
+bounded, network allowlisted and credentials held outside. Approvals are relaxed only inside it. See
+[Pattern 2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax).
 
-### Autonomy Register
+**Context Artifact** — Any file or setting that adds instructions to an agent session: instruction file, skill,
+hook, deny rule, routing note or memory file. Each has an owner and a `reviewed:` date. See
+[Pattern 0.10](../L0-foundation.md#pattern-010--prune-and-re-baseline-context).
 
-**Layer**: Cross-cutting - Earned Autonomy
-**Definition**: Committed, schema-validated `.autonomy.yaml` listing every agent workflow with owner, grant, identity, limits, stop mechanism and review date. No agent may write it.
-**See**: [Earned Autonomy](../earned-autonomy.md)
+**Context Eval** — Running a fixed task bank against an agent's context or decision code and scoring the result.
+Deterministic checks score pass^k with no partial credit; judged tasks use a rubric fixed before the run. See
+[Pattern 4.6](../L4-standards-measurement.md#pattern-46--context-eval).
 
----
+**Context Harvesting** — Gathering targeted evidence from docs, code, tests and logs before proposing a change. See
+[L1](../L1-feedback-loops.md#context-harvesting--from-understanding-to-design).
 
-## B
+**Context Isolation** — Delegating exploration to a subagent that returns a short map, so search output stays out
+of the main session. See [Pattern 3.2](../L3-optimization.md#pattern-32--context-isolation-scout).
 
-### Blast Radius
+**Curve (C1-C5)** — A five-step scale applied to each of seven dimensions of one repository: C1 Individual, C2 Grounded,
+C3 Verified delegation, C4 Governed autonomy, C5 Self-correcting. A repository's place on one dimension is its position.
+See [The Curve and the Cap](../earned-autonomy.md#the-curve-and-the-cap).
 
-**Layer**: L1 - Closed Loop Design
-**Definition**: How far a change reaches, classified from its diff: B0 one journey, B1 one service, B2 a cross-service contract, B3 money, auth, PII or audit. An unknown change is treated as B3.
-**See**: [Pattern 1.8 - Reversibility and Blast-Radius Classes](../L1-patterns/1.8-reversibility-blast-radius.md)
+**Deep Module** — A module with a small interface that hides a complex implementation. See
+[Pattern 0.1](../L0-foundation.md#pattern-01--deep-modules).
 
----
+**Design Rinsing** — Extracting transferable design decisions from an external source in a read-only session, then
+translating them for the target project. See
+[L1](../L1-feedback-loops.md#design-rinsing--cross-domain-architectural-extraction).
 
-## C
+**Effective Grant** — The grant a workflow runs at: the lowest of its granted value, the cap, the freshness gate
+(overdue stop test, passed review date, expired access, stale or missing census profile), the harness gate and any
+demotion override. See [Pattern A.3](../earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate).
 
-### Cap Line
+**Enforcement Point** — Where a rule holds: prompt, hook, CI, sandbox or downstream authorization. Enforcement
+points stack. Prose is guidance, command hooks are deterministic policy inside the harness, and containment and
+credentials are the boundary. See [L2 Overview](../L2-behavioral-guardrails.md#overview).
 
-**Definition**: The lowest position among the four dimensions that cap unattended work (platform, measuring value, security and governance, production ownership). No workflow grant may sit above it.
-**See**: [How Far a Team Can Let Go](../../README.md#how-far-a-team-can-let-go)
+**Evidence-Based Claim** — A completion claim backed by the output of the command that was run and by the CI run
+the reviewer reads. Output the agent pastes with no CI run behind it is a claim, not evidence. See
+[Pattern 4.1](../L4-standards-measurement.md#pattern-41--evidence-based-claims).
 
-### CI Guardrails
+**Evidence Bundle** — The record a repair attempt hands the gate: test output before and after, the diff, its classes,
+the anti-masking result, the attempt budget and the grant. See
+[Pattern 1.9](../L1-patterns/1.9-repair-loop-frozen-oracle.md).
 
-**Layer**: L4 - Standards & Measurement
-**Definition**: GitHub Actions workflows for docs quality and test coverage, providing non-negotiable enforcement independent of session-scoped hooks. Thresholds defined in project config, not CI workflow.
-**See**: [Pattern 4.5 - CI Guardrails](../L4-standards-measurement.md#pattern-45--ci-guardrails)
+**Evidence Label** — The closing `**Evidence:**` line of a pattern: Strong (measured or corroborated by an independent
+source), Partial (support exists but is incomplete, contested or unmeasured guidance from one vendor) or Thin
+(reasoning, this project's own experience, a single anecdote or no source), followed by the basis and source IDs. See [Sources](../references/sources.md).
 
-### Context Artefact
+**Evidence Ledger** — The append-only record of workflow runs, written only by CI and after-the-fact jobs, from
+which promotion and demotion are computed. See [Pattern A.2](../earned-autonomy.md#pattern-a2--evidence-ledger).
 
-**Layer**: L0 - Foundation
-**Definition**: Any file or setting that adds instructions to an agent session: instruction file, skill, hook, deny
-rule, routing note or memory file. Each carries an owner, a `reviewed:` date and an expiry.
-**See**: [Pattern 0.10 - Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context)
+**Focused Integration Test** — A test of one adapter against one external dependency's real sandbox or testnet,
+without the full stack. See
+[Pattern 1.5](../L1-patterns/1.5-real-dependencies.md#focused-integration-tests-for-external-dependencies).
 
-### Context Eval
+**Frozen Oracle** — The reproduction test for an incident, hashed before the fix is written. The repair agent
+cannot edit it, and a changed hash blocks the repair. See
+[Pattern 1.9](../L1-patterns/1.9-repair-loop-frozen-oracle.md).
 
-**Layer**: L4 - Standards & Measurement
-**Definition**: Structured evaluation pattern that scores an agent's decisions against expected outcomes across multiple scenarios and configurations. Applies to any decision layer (tool routing, enforcement pipelines, skill selection, constitutional compliance). Uses graduated scoring (1.0 exact, 0.5 partial, 0.0 miss) and fails the build if overall score falls below a threshold.
-**See**: [Pattern 4.6 - Context Eval](../L4-standards-measurement.md#pattern-46--context-eval)
+**Full-Loop Assertions** — Checks at three orders of distance from the action: primary (the direct API response),
+second-order (the effect read through a different endpoint) and third-order (cross-functional effects read through
+admin or observability APIs, such as audit logs). See
+[Pattern 1.2](../L1-patterns/1.2-full-loop-assertions.md).
 
-### Circuit Breaker
+**Grant (A1-A5)** — What one named workflow may do and what a person still does, from A1 (suggests; a human applies the change)
+to A5 (unattended and managed against a baseline and a stop rule). A grant cannot exceed the cap. See
+[The Grants](../earned-autonomy.md#the-grants).
 
-**Layer**: L1 - Closed Loop Design
-**Definition**: Code that lowers a repair workflow's grant when its revert rate or recurrence rate crosses a threshold. A person restores the grant. The trip and reset thresholds differ so the grant does not flap.
-**See**: [Pattern 1.11 - Repair Budget, Circuit Breaker and Stop Authority](../L1-patterns/1.11-repair-budget-circuit-breaker-stop.md)
+**Guidance** — A rule held only as prose in an instruction file or skill. It shapes how the agent works and can be
+pruned by re-baselining. A rule that must always hold is an invariant. See
+[Pattern 0.10](../L0-foundation.md#pattern-010--prune-and-re-baseline-context).
 
-### Cognitive Debt
+**Harness** — The program that runs the agent with its tools, hooks and permissions, for example Claude Code.
 
-**Layer**: L4 - Standards & Measurement
-**Definition**: The gap that grows when a team ships code it does not understand: the code works, and nobody
-can explain or debug it. Agents widen the gap when people stop reading what they produce.
-**See**: [Pattern 4.9 - Deliberate Practice](../L4-standards-measurement.md#pattern-49--deliberate-practice)
+**Hook** — A handler the harness runs on an event such as a tool call. A command hook runs a script and is
+deterministic; Claude Code's prompt and agent hooks ask a model and are judgments
+([hooks reference](https://code.claude.com/docs/en/hooks)). A PreToolUse hook can block a call; a PostToolUse hook
+runs after it and can only report. Hooks are not a security boundary. See
+[Pattern 2.3](../L2-behavioral-guardrails.md#pattern-23--hook-automation).
 
-### Conditional Assertion (Anti-Pattern)
+**Incident Fingerprint** — A stable key for a production failure, built from the journey and error class rather than
+line numbers, so a recurrence after a repair is detected. See
+[Pattern 1.7](../L1-patterns/1.7-incident-to-stack-test.md).
 
-**Layer**: L1 - Closed Loop Design
-**Definition**: Forbidden test pattern where assertions are wrapped in conditional statements, allowing tests to pass silently without running any checks.
-**See**: [Pattern 1.6 - Test Integrity Rules](../L1-feedback-loops.md#pattern-16--test-integrity-rules)
+**Invariant** — A rule that holds regardless of the model, enforced by a command hook, deny rule, sandbox setting or
+required CI check. Re-baselining does not remove it. See
+[Pattern 2.4](../L2-behavioral-guardrails.md#pattern-24--constitutional-rules).
 
-### Constitutional Rule
+**Layer (L0-L4)** — A group of patterns: L0 Foundation, L1 Closed Loop Design and Verification, L2 Behavioral
+Guardrails, L3 Optimization (optional), L4 Standards and Measurement. The layers are not a maturity scale. See the
+[README](../../README.md).
 
-**Layer**: L2 - Behavioral Guardrails
-**Definition**: Hard rule declared in the instruction file (CLAUDE.md or AGENTS.md) that names its enforcement point: prompt, hook, CI, sandbox or downstream. A rule is only as absolute as its weakest enforcement point.
-**See**: [Pattern 2.4 - Constitutional Rules](../L2-behavioral-guardrails.md#pattern-24--constitutional-rules)
+**Least Agency** — Giving a session only the tools, permissions and autonomy its task needs. See
+[Pattern 2.10](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition).
 
-### Container Isolation
+**Lethal Trifecta / Rule of Two** — The trifecta is untrusted input, access to sensitive data and a way to act
+outside, in one session. The Rule of Two allows at most two of the three unless a deterministic or human gate sits
+between them. See [Pattern 2.10](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition).
 
-**Layer**: L1 - Closed Loop Design
-**Definition**: Four mechanisms (compose project scoping, dynamic port allocation, transient volumes, per-run compose files) ensuring tests never interfere with each other.
-**See**: [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation)
+**Locked File** — A permission or hook file that `autonomy check` always blocks from agent commits: `.autonomy*`
+(state and demotion override included), CODEOWNERS, `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`.
+Behavior surfaces are not locked. See [Pattern A.6](../earned-autonomy.md#pattern-a6--enforcement-through-hooks).
 
-### Containment
+**Mechanical Verification** — A check whose pass or fail a machine decides, with no judgment by the agent or a
+reviewer. Grant A4 requires it. See [Why Stack Tests Earn Autonomy](../earned-autonomy.md#why-stack-tests-earn-autonomy).
 
-**Layer**: L2 - Behavioral Guardrails
-**Definition**: Running the agent inside a boundary it cannot change: writes confined to the working tree,
-reads bounded, network allowlisted, credentials held outside, and no session if the boundary cannot start.
-Approvals are relaxed only inside it.
-**See**: [Pattern 2.9 - Contain Before You Relax](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)
+**Mitigation** — A change that removes the symptom but not the cause, such as a rollback or turning a flag off.
+It needs a root-cause ticket. See [Pattern 1.12](../L1-patterns/1.12-self-healing-tests-vs-systems.md).
 
-### Context Isolation
+**Native Structured Tools** — Tools that return typed results for search, file reads and edits, used in place of
+raw shell commands such as `grep`, `cat` and `sed -i`. See
+[Pattern 3.1](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits).
 
-**Layer**: L3 - Optimization (optional)
-**Definition**: Delegating exploration to a sub-agent that returns a short map, so search noise stays out of the main session.
-**See**: [Pattern 3.2 - Context Isolation](../L3-optimization.md#pattern-32--context-isolation-scout)
+**New-Starter Standard** — A check that someone with no context can understand the project from AGENTS.md, the
+README and the file structure alone. See
+[Pattern 0.9](../L0-foundation.md#pattern-09--ai-as-new-starter-standard).
 
-### Cap Rule
+**Pass^k** — A scenario passes only when all k runs pass; the suite score is the share of scenarios that pass. It
+rewards consistency, unlike best-of-k. See
+[Pattern 4.6](../L4-standards-measurement.md#pattern-46--context-eval).
 
-**Layer**: Cross-cutting - Earned Autonomy
-**Definition**: No grant may exceed the lowest position among the four capping dimensions: platform, security and governance, production ownership, measuring value.
-**See**: [Earned Autonomy](../earned-autonomy.md)
+**Probe** — One file check the census runs for a dimension and position, such as `agent-config` for platform at C2.
+A passed probe shows presence and recency, not quality. See [Pattern A.4](../earned-autonomy.md#pattern-a4--census).
 
-### Census
+**Production Gate** — Deterministic code outside the agent that takes an evidence bundle and change classes and
+returns `auto`, `human` or `block`. The agent can act up to the gate and cannot pass it. See
+[Pattern 1.10](../L1-patterns/1.10-production-gate-progressive-confirmation.md).
 
-**Layer**: Cross-cutting - Earned Autonomy
-**Definition**: Command that probes a repository for artefacts, checking presence and practice, and writes a profile with one level per dimension. Unknown counts as C2.
-**See**: [Earned Autonomy](../earned-autonomy.md)
+**Profile** — The file `autonomy census` writes (`.autonomy/profile.json`): one curve position per dimension, the cap
+and the probes behind each. A repository with no profile is at C1. See [Pattern A.4](../earned-autonomy.md#pattern-a4--census).
 
----
+**Progressive Disclosure** — A layout that lets a reader go from README to AGENTS.md to module interfaces to
+implementation, with directories named for concepts. See
+[Pattern 0.2](../L0-foundation.md#pattern-02--progressive-disclosure).
 
-## D
+**Register** — The committed, schema-validated `.autonomy.yaml` that lists every agent workflow with its owner,
+sponsor, grant, identity, limits, stop and review date. No agent may write it. See
+[Pattern A.1](../earned-autonomy.md#pattern-a1--autonomy-register).
 
-### Curve (C1-C5)
+**REPL Fractal** — The read-eval-print loop applied at every scale, from a line of code to a running system. See
+[L1](../L1-feedback-loops.md#the-repl-fractal--closed-loops-at-every-scale).
 
-**Definition**: A five-step scale applied separately to each of seven dimensions: C1 Individual, C2 Grounded, C3 Verified delegation, C4 Governed autonomy, C5 Self-correcting. The C prefix distinguishes it from the layers L0-L4.
-**See**: [How Far a Team Can Let Go](../../README.md#how-far-a-team-can-let-go)
+**Reversibility Class** — How a change can be undone, classified from its diff: R0 inert, R1 flag-reversible, R2
+deploy-reversible, R3 data-forward, R4 external or irreversible. An unknown change is R4. With the blast-radius
+class it sets the review tier, which decides the review; the grant decides who acts unattended. See the
+[risk model](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model).
 
-### Deep Module
+**Review Tier** — Low, medium or high, set by a change's reversibility and blast-radius classes. It decides the
+approvals a change needs. In this library's patterns, "tier" means only the review tier. See the [risk
+model](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model).
 
-**Layer**: L0 - Foundation
-**Definition**: Module with a small interface that hides complex implementation details behind a clean facade. As a heuristic, 3-5 exports; more suggests the module has more than one job.
-**See**: [Pattern 0.1 - Deep Modules](../L0-foundation.md#pattern-01--deep-modules)
+**Risk Model** — The table that maps a change's reversibility and blast-radius classes to a review tier and to the
+lowest grant that may merge it with no person. See
+[Pattern 1.8](../L1-patterns/1.8-reversibility-blast-radius.md#risk-model).
 
-### Delete-First Re-baselining
+**Skill** — A prompt-level instruction file the agent loads when relevant. A skill shapes behavior and guarantees
+nothing. A skill overlay adds project rules to a base skill. See
+[Pattern 2.1](../L2-behavioral-guardrails.md#pattern-21--skill-overlay-architecture).
 
-**Layer**: L0 - Foundation
-**Definition**: At each model upgrade, run the task bank with an artefact removed and keep the artefact only if a task
-regresses. The justifying task is recorded next to it.
-**See**: [Pattern 0.10 - Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context)
+**Skill Chain** — An optional sequence of skills (brain+, plan+, tdd+, verify+, review+) whose ceremony scales with
+the change's risk. See [Pattern 2.1](../L2-behavioral-guardrails.md#pattern-21--skill-overlay-architecture).
 
-### Docker Resource Limits
+**Sponsor** — The named person accountable for an agent identity, who renews or retires it. See
+[Pattern 2.11](../L2-behavioral-guardrails.md#pattern-211--agent-identity-and-delegation).
 
-**Layer**: L1 - Closed Loop Design
-**Definition**: Hard constraints in Docker (~31 networks per bridge driver, finite containers and volumes) that require aggressive cleanup hygiene to prevent exhaustion during concurrent testing.
-**See**: [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation)
+**Stack Test** — A test that runs the whole system in Docker and checks a user journey through the API, with no
+mocks for owned services. See [Pattern 1.1](../L1-patterns/1.1-stack-tests.md).
 
-### Dynamic Port Allocation
+**Stop Drill** — The scheduled run that triggers a workflow's stop against a canary and records `stop.last_tested`. See
+[Pattern A.5](../earned-autonomy.md#pattern-a5--tested-stop).
 
-**Layer**: L1 - Closed Loop Design
-**Definition**: Runtime assignment of confirmed-free ports from available range (10000-65535) to prevent port conflicts during concurrent test execution.
-**See**: [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation)
+**Task Bank** — A fixed set of representative tasks, each with a prompt, an expected artifact and a check,
+run against a pinned model. See [Pattern 4.6](../L4-standards-measurement.md#pattern-46--context-eval); this
+repository's bank is the [Task Bank](../references/task-bank.md).
 
----
+**Test Integrity** — Rules that remove the ways a test can skip its assertions, such as conditional assertions and
+a catch without a rethrow. See [Pattern 1.6](../L1-patterns/1.6-test-integrity.md).
 
-## E
+**Tested Stop** — A way to halt a workflow at grant A4 or higher that a scheduled drill has used: a named person
+who can invoke it and a mechanism such as revoking credentials. A failed or overdue drill demotes the workflow. See [Pattern A.5](../earned-autonomy.md#pattern-a5--tested-stop).
 
-### Enforcement Pipeline
+**Unattended** — An agent acts on an event, a schedule or a backlog with no person watching each step: grant A4 and
+above. At A3 a person still merges. See [The Grants](../earned-autonomy.md#the-grants).
 
-**Layer**: L2 - Behavioral Guardrails
-**Definition**: Composable pipeline where independent enforcement checks return severity levels, resolved to the most severe result (block > advise > silent). PostToolUse checks are detective: they run after the tool call and report it, but cannot prevent it. Prevention needs a PreToolUse hook or a boundary outside the agent.
-**See**: [Pattern 2.6 - Enforcement Pipeline Composition](../L2-behavioral-guardrails.md#pattern-26--enforcement-pipeline-composition)
+**Workflow** — One named entry in the register: a trigger, the actions it may take, its owner and its grant. See
+[Pattern A.1](../earned-autonomy.md#pattern-a1--autonomy-register).
 
-### Enforcement Point
+**Workflow File** — A file under `.github/workflows/` or `.github/actions/`. An agent commit may change it only with a later non-agent
+`Governance-Approved: <sha>` line. See [Pattern A.6](../earned-autonomy.md#pattern-a6--enforcement-through-hooks).
 
-**Layer**: L2 - Behavioral Guardrails
-**Definition**: The mechanism that holds a rule: prompt, hook, CI, sandbox or downstream authorisation. A rule is as strong as its weakest enforcement point, and each constitutional rule names its own.
-**See**: [Pattern 2.4 - Constitutional Rules](../L2-behavioral-guardrails.md#pattern-24--constitutional-rules)
-
-### Evidence Label
-
-**Definition**: The closing line of a pattern, `Evidence: Strong`, `Partial` or `Thin`, followed by the basis for the rating and the source IDs. Strong means the claim is measured or corroborated by independent sources, Partial means support exists but is incomplete or contested, and Thin means the pattern rests on reasoning, first-party experience or unmeasured vendor claims. Source IDs resolve in [Sources](../references/sources.md).
-
-### Focused Integration Test
-
-**Layer**: L1 - Closed Loop Design
-**Definition**: Narrow-scope test that exercises a single external dependency's real API (testnet or sandbox) with exhaustive edge-case coverage. No mocks, no full system stack — just the adapter code plus the real external service. Used for complex dependencies like payment providers where each error code, timeout scenario, and rate limit behavior needs individual verification.
-**See**: [Pattern 1.5 - Real Dependencies in E2E/Integration and Stack Tests](../L1-feedback-loops.md#pattern-15--real-dependencies-in-e2eintegration-and-stack-tests)
-
-### Evidence-Based Claim
-
-**Layer**: L4 - Standards & Measurement
-**Definition**: Completion claim backed by actual command output showing verification results; "tests should pass" is not evidence.
-**See**: [Pattern 4.1 - Evidence-Based Claims](../L4-standards-measurement.md#pattern-41--evidence-based-claims)
-
-### Evidence Ledger
-
-**Layer**: Cross-cutting - Earned Autonomy
-**Definition**: Append-only per-run record written only by CI and after-the-fact jobs, used to compute promotion and demotion evidence.
-**See**: [Earned Autonomy](../earned-autonomy.md)
-
----
-
-## F
-
-### Frozen Oracle
-
-**Layer**: L1 - Closed Loop Design
-**Definition**: The reproduction test for an incident, hashed before the fix is written. The repair agent cannot edit it, and a changed hash blocks the repair.
-**See**: [Pattern 1.9 - Repair Loop with a Frozen Oracle](../L1-patterns/1.9-repair-loop-frozen-oracle.md)
-
----
-
-## G
-
-### Graybox Module
-
-**Layer**: L0 - Foundation
-**Definition**: Module concept where tests lock down behavior, the public interface is carefully controlled, and the interior is delegatable to AI (based on Matt Pocock's concept).
-**See**: [Pattern 0.1 - Deep Modules](../L0-foundation.md#pattern-01--deep-modules)
-
-### Guardrail
-
-**Layer**: L2 - Behavioral Guardrails
-**Definition**: A control that holds a rule at one layer: prompt (guidance), hook (deterministic policy inside the harness), CI (required check), sandbox or credential scope (boundary), or downstream authorisation. Each rule is only as strong as the layer that holds it. A hook is not a security boundary.
-**See**: [L2 Behavioral Guardrails Overview](../L2-behavioral-guardrails.md)
-
-### Guidance
-
-**Layer**: L0 - Foundation
-**Definition**: A rule held only as prose in an instruction file or skill. It shapes how the agent works and is
-prunable by re-baselining. A rule that must always hold is an invariant instead.
-**See**: [Pattern 0.10 - Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context)
-
----
-
-## H
-
-### Hook
-
-**Layer**: L2 - Behavioral Guardrails
-**Definition**: Script the harness runs around a tool call. PreToolUse hooks run before the call and can block it; PostToolUse hooks run after the call and are detective (they report and record, and cannot prevent the call). Hooks gate the agent's tool calls, not what a permitted tool does once running.
-**See**: [Pattern 2.3 - Hook Automation](../L2-behavioral-guardrails.md#pattern-23--hook-automation)
-
----
-
-## I
-
-### Intent Classification
-
-**Layer**: L3 - Optimization (optional)
-**Definition**: Parsing bash commands into intent categories (file_read, text_search, file_modify, docker, etc.) to enable correct routing and blocking of dangerous operations.
-**See**: [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)
-
-### Incident Fingerprint
-
-**Layer**: L1 - Closed Loop Design
-**Definition**: A stable key for a production failure, built from the journey and error class rather than line numbers, so a recurrence after a repair can be detected.
-**See**: [Pattern 1.7 - Incident-to-Stack-Test](../L1-patterns/1.7-incident-to-stack-test.md)
-
-### Invariant
-
-**Layer**: L0 - Foundation
-**Definition**: A rule that holds regardless of the model, enforced by a hook, deny rule, sandbox setting or required
-CI check and never by prose alone. Re-baselining does not remove it.
-**See**: [Pattern 2.4 - Constitutional Rules](../L2-behavioral-guardrails.md#pattern-24--constitutional-rules)
-
----
-
-## L
-
-### Least Agency
-
-**Layer**: L2 - Behavioral Guardrails
-**Definition**: Giving a session only the tools, permissions and autonomy its task needs. Each unneeded
-capability is something an injected instruction can use.
-**See**: [Pattern 2.10 - Least Agency and Session
-Composition](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition)
-
-### Lethal Trifecta / Rule of Two
-
-**Layer**: L2 - Behavioral Guardrails
-**Definition**: The lethal trifecta is the combination of untrusted input, access to sensitive data and a way
-to act outside, in one session. The Rule of Two says a session holds at most two of the three unless a
-deterministic or human gate sits between them.
-**See**: [Pattern 2.10 - Least Agency and Session
-Composition](../L2-behavioral-guardrails.md#pattern-210--least-agency-and-session-composition)
-
-### Layer (L0-L4)
-
-**Definition**: A group of patterns that depend on the layers below it: L0 Foundation, L1 Closed Loop Design and Verification, L2 Behavioral Guardrails, L3 Optimization (optional), L4 Standards & Measurement. The layers are not a maturity scale. Not the same as an enforcement point or a position on the curve.
-**See**: [README](../../README.md)
-
----
-
-## M
-
-### Maintained Configuration
-
-**Layer**: L0 - Foundation
-**Definition**: Context artefacts that are kept current, measured by last change date, invocation counts and the share
-of rules with a justifying task. The opposite of configuration that is present but never changed.
-**See**: [Pattern 0.10 - Prune and Re-baseline Context](../L0-foundation.md#pattern-010--prune-and-re-baseline-context)
-
-### Master Index
-
-**Layer**: L0 - Foundation
-**Definition**: AGENTS.md (imported by CLAUDE.md) serves as the single source of truth and discovery mechanism; all project documents must be reachable from it via link chains.
-**See**: [Pattern 0.4 - Agent instruction file as project constitution](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution)
-
----
-
-## N
-
-### Native Structured Tools
-
-**Layer**: L3 - Optimization (optional)
-**Definition**: Routing shell commands to the native or structured tool that does the same job (Grep, Read, Glob, symbol search), and blocking in-place edits such as `sed -i`. Tool results are typed records instead of raw text.
-**See**: [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)
-
-### New Starter Standard
-
-**Layer**: L0 - Foundation
-**Definition**: Ultimate test where someone with zero context must be able to understand the project from AGENTS.md + README + file structure alone.
-**See**: [Pattern 0.9 - AI-as-New-Starter Standard](../L0-foundation.md#pattern-09--ai-as-new-starter-standard)
-
-### Real Dependencies (No-Mock in Stack Tests)
-
-**Layer**: L1 - Closed Loop Design
-**Definition**: Stack tests and E2E/integration tests use real dependencies (PostgreSQL, Redis, etc.) for owned services; only external services without testnet should be mocked. Mocks are appropriate and encouraged in unit tests for isolation.
-**See**: [Pattern 1.5 - Real Dependencies in E2E/Integration and Stack Tests](../L1-feedback-loops.md#pattern-15--real-dependencies-in-e2eintegration-and-stack-tests)
-
-### Pass^k
-
-**Layer**: L4 - Standards & Measurement
-**Definition**: The share of evaluation runs in which all k repeats of a scenario pass. It rewards consistency, unlike best-of-k. Used to score decisions on irreversible actions, such as the production gate.
-**See**: [Pattern 1.10 - Production Gate and Progressive Confirmation](../L1-patterns/1.10-production-gate-progressive-confirmation.md)
-
-### Production Gate
-
-**Layer**: L1 - Closed Loop Design
-**Definition**: Deterministic code outside the agent that takes an evidence bundle and change classes and returns `auto`, `human` or `block`. The agent can act up to the gate and cannot pass it.
-**See**: [Pattern 1.10 - Production Gate and Progressive Confirmation](../L1-patterns/1.10-production-gate-progressive-confirmation.md)
-
-### Progressive Disclosure
-
-**Layer**: L0 - Foundation
-**Definition**: Directory structure that mirrors mental models, allowing AI to discover complexity gradually (README → AGENTS.md → module interfaces → implementation).
-**See**: [Pattern 0.2 - Progressive Disclosure](../L0-foundation.md#pattern-02--progressive-disclosure)
-
-### Phase Transition Validation
-
-**Layer**: L2 - Behavioral Guardrails
-**Definition**: Optional state machine that records which skill chain phases the agent has visited and checks declared prerequisites, with strictness scaled to the change's risk. It records visits, not outcomes; verification and review remain outcome gates held by CI and the merge process.
-**See**: [Pattern 2.7 - Phase Transition Validation](../L2-behavioral-guardrails.md#pattern-27--phase-transition-validation)
-
----
-
-## R
-
-### Resource Hygiene
-
-**Layer**: L1 - Closed Loop Design
-**Definition**: Aggressive cleanup practices (docker compose down -v, volume removal, network pruning) required to prevent Docker resource exhaustion during concurrent testing.
-**See**: [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation)
-
-### Reversibility Class
-
-**Layer**: L1 - Closed Loop Design
-**Definition**: How a change can be undone, classified from its diff: R0 inert, R1 flag-reversible, R2 deploy-reversible, R3 data-forward, R4 external or irreversible. An unknown change is treated as R4.
-**See**: [Pattern 1.8 - Reversibility and Blast-Radius Classes](../L1-patterns/1.8-reversibility-blast-radius.md)
-
-### Routing Table
-
-**Layer**: L3 - Optimization (optional)
-**Definition**: Data structure mapping shell commands to the native or structured tool that does the same job.
-**See**: [Pattern 3.1 - Prefer Native Structured Tools](../L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits)
-
----
-
-## S
-
-### Scout Pattern
-
-**Layer**: L3 - Optimization (optional)
-**Definition**: Lightweight read-only sub-agent that maps codebase structure (relevant files, entry points, key symbols) and returns a short summary before implementation.
-**See**: [Pattern 3.2 - Context Isolation](../L3-optimization.md#pattern-32--context-isolation-scout)
-
-### Session Lifecycle
-
-**Layer**: L3 - Optimization (optional)
-**Definition**: Detecting available tools once at session start and caching the result, instead of re-detecting on every tool call.
-**See**: [Pattern 3.3 - Environment-Aware Routing and Session Lifecycle](../L3-optimization.md#pattern-33--environment-aware-routing-and-session-lifecycle)
-
-### Shallow Module
-
-**Layer**: L0 - Foundation
-**Definition**: Anti-pattern where a module exports 20+ functions, leaking implementation details and creating excessive coupling points that confuse AI agents.
-**See**: [Pattern 0.1 - Deep Modules](../L0-foundation.md#pattern-01--deep-modules)
-
-### Skill Chain
-
-**Layer**: L2 - Behavioral Guardrails
-**Definition**: Optional workflow pipeline where skills compose (brain+ → plan+ → tdd+ → verify+ → review+). Ceremony scales with risk; verification and review stay outcome gates for every change.
-**See**: [Pattern 2.2 - The Skill Chain](../L2-behavioral-guardrails.md#pattern-22--the-skill-chain)
-
-### Skill Overlay
-
-**Layer**: L2 - Behavioral Guardrails
-**Definition**: Extension of base agent capabilities with project-specific rules, hook activations, and integration points declared in a markdown file.
-**See**: [Pattern 2.1 - Skill Overlay Architecture](../L2-behavioral-guardrails.md#pattern-21--skill-overlay-architecture)
-
-### Spec Drift
-
-**Layer**: L0 - Foundation
-**Definition**: Misalignment between documentation, tests, and code that accumulates over time, creating confusion and wasting tokens as agents chase outdated specifications.
-**See**: [Pattern 0.7 - Documentation as System Map](../L0-foundation.md#pattern-07--documentation-as-system-map)
-
-### Stack Test
-
-**Layer**: L1 - Closed Loop Design
-**Definition**: Full-system test running complete Docker stack with API-level verification, zero mocks for owned services, and high failure diagnosticity.
-**See**: [Pattern 1.1 - Stack Tests](../L1-feedback-loops.md#pattern-11--stack-tests)
-
----
-
-## T
-
-### Task Bank
-
-**Layer**: L0 - Foundation
-**Definition**: A fixed set of 10 to 30 representative tasks, each with a prompt, an expected artefact and a
-mechanical check, run against a pinned model to test whether a context artefact is needed.
-**See**: [Task Bank](../references/task-bank.md)
-
-### Test Integrity
-
-**Layer**: L1 - Closed Loop Design
-**Definition**: Rules eliminating escape hatches (conditional assertions, catch without rethrow, optional chaining) that allow tests to silently skip assertions.
-**See**: [Pattern 1.6 - Test Integrity Rules](../L1-feedback-loops.md#pattern-16--test-integrity-rules)
-
-### Tested Stop
-
-**Layer**: L4 - Standards & Measurement
-**Definition**: A way to halt an unattended workflow that someone has used in a drill: a named person who can
-invoke it, a mechanism such as credential revocation or a queue pause, and a named role that approves restart.
-The agent register records whether one exists. Under [Earned Autonomy](../earned-autonomy.md) a scheduled drill
-runs the stop against a canary and writes the date it last passed; a failed or overdue drill demotes the workflow.
-**See**: [Pattern 4.7 - Author of Record and Agent
-Register](../L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)
-
-### Token Efficiency
-
-**Layer**: L3 - Optimization (optional)
-**Definition**: Lower token consumption per task, pursued through native structured tools and context isolation. Measure it on your own sessions, in tokens.
-**See**: [L3: Optimization](../L3-optimization.md)
-
-### Transient Volume
-
-**Layer**: L1 - Closed Loop Design
-**Definition**: Docker named volume that disappears with `docker compose down -v`, preventing state leakage between test runs.
-**See**: [Pattern 1.4 - Container Isolation](../L1-feedback-loops.md#pattern-14--container-isolation)
-
----
-
-## Z
-
-### Zero-Defect Tolerance
-
-**Layer**: L2 - Behavioral Guardrails
-**Definition**: Discipline requiring every error, warning, and failure to be addressed; agents cannot distinguish "relevant" from "irrelevant" issues without breaking the feedback loop.
-**See**: [Pattern 2.5 - Zero-Defect Tolerance](../L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance)
-
----
-
-## Cross-References
-
-- **L0 Foundation**: Project structure and entry points
-- **L1 Closed Loop Design**: Design-led verification and closed-loop testing
-- **L2 Behavioral Guardrails**: Skills, hooks, and enforcement
-- **L3 Optimization (optional)**: Token efficiency and routing
-- **L4 Standards & Measurement**: Evidence-based claims, metrics, CI guardrails, context eval
+**Zero-Defect Tolerance** — Every error and warning is addressed, because an agent cannot tell a relevant failure
+from an irrelevant one. See [Pattern 2.5](../L2-behavioral-guardrails.md#pattern-25--zero-defect-tolerance).

@@ -5,190 +5,78 @@ reviewed: 2026-11-19
 
 # L2: Behavioral Guardrails
 
-Prose is guidance. Hooks are deterministic policy within the harness. Containment and credentials are the boundary. Put each rule at the weakest enforcement point that can hold it:
-
-- What must never happen is prevented by the sandbox, credential scope, or downstream authorisation.
-- What must always happen runs as a hook and a required CI check.
-- Prompts and skills carry everything else.
-
-A hook runs inside the agent's operating environment, so it is not a security boundary. Anthropic's guidance
-says that a rule the model keeps missing despite emphasis belongs in a hook rather than in more prose
-([OM-7](references/sources.md)). Independent sources reach the same split between instructions, policy
-checks and boundaries ([SG-7, SG-11, SG-16, OM-18](references/sources.md)).
-
-**A note on skills frameworks:** The skills referenced in this document (brainstorming,
-test-driven-development, verification-before-completion) are drawn from the
-[superpowers](https://github.com/obra/superpowers) framework by Jesse Vincent (obra). The patterns are
-framework-agnostic; equivalent skill sets exist in [gstack](https://github.com/garrytan/gstack),
-[OpenSpec](https://github.com/openspec-dev/openspec) and other frameworks. **Disclosure:** the author of this
-library also wrote [rig](https://github.com/franklywatson/claude-rig), which this document links to as a
-reference implementation. Hook syntax in this document follows Claude Code; each pattern states the contract
-(what runs, when, with what authority), so other harnesses can bind it.
+L2 decides where each rule is held. Prose is guidance. Command hooks are deterministic policy inside the
+harness. Containment and credentials are the boundary. It is for whoever configures the agent's environment or
+reviews its rules; read it before relaxing any approval prompt, and start with [Pattern 2.9](#pattern-29--contain-before-you-relax). Anthropic's guidance puts a rule the model keeps
+missing into a hook rather than more prose ([OM-7](references/sources.md)); other sources draw the same line
+between instructions, policy checks and boundaries ([SG-7, SG-16, OM-18](references/sources.md)).
 
 ## Overview
 
-L2 decides where each rule is held. A rule is as strong as its weakest enforcement point and no stronger. The enforcement points, from weakest to strongest:
+Enforcement points stack: a violation has to get past every point that holds the rule, so adding a CI check to a
+rule a prompt carries makes it stronger. Put each rule at the cheapest point that can hold it, and add stronger
+points for rules that must hold.
 
-| Enforcement point | Mechanism | Holds | Can the agent bypass it? |
+| Enforcement point | Mechanism | Holds | Can the agent get past it? |
 |-------|-----------|-------|--------------------------|
 | Prompt | CLAUDE.md / AGENTS.md, skills | Conventions, preferences, procedure | Yes. The model may not follow it |
-| Hook | PreToolUse and PostToolUse scripts | Policy that matches structured tool arguments | Often. Hooks match tool calls, not what a permitted tool does once running, and project hook files are usually editable by the agent |
+| Hook | PreToolUse and PostToolUse handlers | Policy that matches structured tool arguments | Often. Hooks match tool calls, not what a permitted tool does once running, and project hook files are usually editable by the agent |
 | CI | Required checks on the merge path | Invariants that must hold for every change | No, if the check is required and the agent cannot edit the workflow or branch protection |
 | Sandbox | Filesystem and network isolation, credentials absent from the environment | What must never happen | No, if the sandbox is locked and fails closed |
-| Downstream | Authorisation in the system being called (scoped token, protected branch, approval) | Irreversible or external actions | No |
+| Downstream | Authorization in the system being called (scoped token, protected branch, approval) | Irreversible or external actions | No |
 
-A sandbox with credentials kept outside it makes hooks such as "block `sed -i`" or "block `docker system
-prune`" unnecessary as safety controls. They remain useful as ergonomic nudges
-([AN-9, PL-15](references/sources.md)). [Pattern 2.9](#pattern-29--contain-before-you-relax) covers sandbox
-and credential setup.
+What must never happen is prevented by the sandbox, credential scope or downstream authorization. What must always
+happen runs as a hook and a required CI check. Prompts and skills carry everything else; a skill guarantees
+nothing. Anthropic treats the sandbox as the hard boundary and keeps other defenses around it ([AN-9,
+PL-15](references/sources.md)).
 
-The mechanisms in this document:
-
-- **Skills**: overlay patterns that extend base agent capabilities with project-specific rules (prompt enforcement point)
-- **Hooks**: scripts that fire around tool calls (hook enforcement point)
-- **Constitutional rules**: the hard rules, each with a named enforcement point
-- **Zero-defect tolerance**: the discipline that keeps feedback unambiguous
-- **Containment, least agency, identity, supply chain and tiered review** (Patterns 2.9 to 2.13): the boundary
-  and the controls around it
-- **Skill chain and phase tracking**: optional workflow ceremony, scaled to risk
+**Bindings.** Syntax here follows Claude Code; each pattern states the contract so another harness can bind it.
+In another harness, look for: an operating-system sandbox or container mode for writes and network; a lock so
+neither user nor agent can change it; a fail-closed option; per-session credential injection; per-session tool
+allowlists; an administrator-controlled extension allowlist; a per-action approval policy with a log. Where one is
+missing, run the harness inside a container or virtual machine you control and apply the property there.
 
 ---
 
 ## Pattern 2.1 — Skill Overlay Architecture
 
-![Skill Overlay Architecture](diagrams/2.1-skill-overlay-architecture.png)
-
 ### Problem
 
-Skill frameworks such as [superpowers](https://github.com/obra/superpowers) provide base capabilities through skills like `brainstorming` and `test-driven-development`; Claude Code itself provides the skill mechanism, not those skills. Production projects need project-specific constraints layered on top of these generic capabilities. Writing all constraints inline in prompts is verbose and inconsistent.
+Skill frameworks such as superpowers provide generic skills like `test-driven-development`; Claude Code provides
+the skill mechanism, not those skills. A project needs its own constraints on top. Copying them into every prompt
+is verbose and drifts.
 
 ### Solution
 
-Skills extend base capabilities through an overlay architecture:
+A skill overlay is a short skill that names a base skill and adds the project's rules, each with the hook or CI
+check that holds it. Example: a TDD overlay extends `superpowers:test-driven-development` with "no mocks of
+database drivers or payment libraries in stack tests" (held by a PreToolUse hook on test-file edits and a CI
+check) and "full-loop assertions" (a convention the skill carries).
 
-```
-base capability (e.g., superpowers:test-driven-development)
-    + project-specific rules (constitutional rules, conventions)
-    + hook activations (when to fire which guards)
-    + integration points (how this skill connects to others)
-    = skill overlay
-```
+A skill is prompt-level material. It raises the probability that the agent follows a rule; it does not guarantee
+it. A skill that restates rules held elsewhere adds context cost without adding enforcement.
 
-A skill is a markdown file that declares:
+### The Optional Skill Chain
 
-- **Frontmatter**: name, description, base reference
-- **Purpose**: what this skill achieves
-- **Rules**: project-specific constraints this skill carries
-- **Hook activations**: what guards this skill relies on
-- **Integration points**: what other skills compose with this
-- **Checklist**: steps the agent follows when using the skill
+For large or risky changes, skills can be chained: design, plan, test-driven implementation, verify, review
+([rig](https://github.com/franklywatson/claude-rig), by this library's author: `brain+`, `plan+`, `tdd+`, `verify+`,
+`review+`; [superpowers](https://github.com/obra/superpowers): `brainstorming`, `writing-plans`,
+`test-driven-development`, `verification-before-completion`, `requesting-code-review`).
 
-A skill is prompt-level material. It raises the probability that the agent follows a rule; it does not
-guarantee it. A rule that must hold on every change needs a hook or CI check behind it, and the skill states
-which one. Keep skills short: a skill that restates rules already enforced elsewhere adds context cost without
-adding enforcement.
-
-The overlay architecture works with any structured skill set (superpowers, OpenSpec, custom frameworks): identify the base skill, then overlay project constraints.
-
-### In Practice
-
-A TDD skill for an ecommerce project might extend `superpowers:test-driven-development` and add:
-
-- No mocking of database drivers in stack tests (enforced by a hook on test-file edits and a CI check)
-- No mocking of payment processor libraries in stack tests (same enforcement)
-- Full-loop assertion requirements (project convention, carried by the skill)
-
-When the agent invokes this skill, it inherits the base TDD workflow plus the project-specific constraints.
+The chain is optional. Scale it to the review tier in [Pattern 2.13](#pattern-213--risk-tiered-review): a low-tier edit
+runs its checks; a medium-tier change runs the test-driven and verify steps; a high-tier change runs the full
+chain. Evidence before claiming done ([Pattern 4.1](L4-standards-measurement.md#pattern-41--evidence-based-claims))
+and review before merge apply to every change; CI and the merge process hold them, not the chain. A phase tracker (rig has one) records that the agent visited a phase, not that
+the phase did its job.
 
 ### Anti-Pattern
 
-Copying the same rules into every prompt. This creates drift: prompts get updated inconsistently, and some code paths miss constraints. The opposite failure is carrying non-negotiable rules only as skill prose, with no hook or CI check behind them.
+- Carrying a non-negotiable rule only as skill prose, with no hook or CI check behind it.
+- Running five phases on a typo fix, or shipping a "small" change with no verification evidence or review.
+- Treating a phase visit as proof that verification evidence exists.
 
-### Cross-References
-
-- [Pattern 0.4 — Agent instruction file as project constitution](L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution) — instruction file as rule source
-- [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — enforcement point per rule
-
-**Evidence:** Thin — overlay design from superpowers and rig use (first-party, n=1); inspect third-party skills before adopting (IS-13)
-
----
-
-## Pattern 2.2 — The Skill Chain
-
-![Skill chain pipeline (optional)](diagrams/2.2-skill-chain-pipeline.png)
-
-**Status: optional.** Scale ceremony to risk. A one-line fix does not need five phases. Verification and
-review stay outcome gates for every change: evidence before claiming done, and review before merge, at a
-depth set by reversibility and blast radius.
-
-### Problem
-
-A fixed five-phase chain applied to every change adds ceremony to small changes, and people learn to skip
-phases in bulk. The gates that matter (tests run, evidence shown, review done) are outcomes that CI and the
-merge process can hold directly, whichever phases the agent visited.
-
-### Solution
-
-Compose skills into a workflow pipeline when the change is large or risky enough to justify it:
-
-```
-brain+ (design with stack-first considerations)
-      +-> plan+ (create plan with testing strategy)
-              +-> tdd+ (RED-GREEN-REFACTOR with full-loop)
-                      +-> verify+ (evidence before claims)
-                              +-> review+ (checklist-based compliance review)
-```
-
-**Chain phases:**
-
-1. **brain+**: Design with stack testing in mind. What needs Docker? What are the full-loop assertions?
-2. **plan+**: Create implementation plan with explicit testing strategy. Which tests cover which requirements?
-3. **tdd+**: RED-GREEN-REFACTOR with full-loop assertions ([Pattern 1.2](L1-patterns/1.2-full-loop-assertions.md)).
-4. **verify+**: Evidence-based claims. Run commands, show output, then claim done.
-5. **review+**: Checklist-based compliance review. Tests pass, docs updated, constitutional rules followed.
-
-**Scaling by risk:**
-
-| Change | Suggested path | Gates that always apply |
-|--------|---------------|-------------------------|
-| Typo, comment, docs wording | Edit, run link and lint checks | CI checks, review at the team's normal depth |
-| Small, reversible code change | tdd+, verify+ | Tests and evidence; review before merge |
-| New feature or cross-module change | Full chain | All of the above plus plan review |
-| Irreversible or external effect (migration, payment path, permissions) | Full chain plus a human approver who is not the requester | All of the above plus downstream authorisation |
-
-The phases are a means. The outcome gates (verification evidence, review) are the point, and they are held
-by CI and the merge process, not by whether the agent visited a phase.
-
-**Superpowers framework integration:** The [obra/superpowers](https://github.com/obra/superpowers) library
-provides base skills the chain builds on. Skills are instructions the agent follows, so read them before you
-install them ([Pattern 2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)):
-
-| Skill | Role in Chain |
-|-------|--------------|
-| [brainstorming](https://github.com/obra/superpowers) | Design and requirements exploration — feeds into planning |
-| [writing-plans](https://github.com/obra/superpowers) | Creates bite-sized implementation plans with testing strategy |
-| [executing-plans](https://github.com/obra/superpowers) | Task-by-task execution with review checkpoints |
-| [test-driven-development](https://github.com/obra/superpowers) | RED-GREEN-REFACTOR with full-loop assertions |
-| [verification-before-completion](https://github.com/obra/superpowers) | Evidence-based claims — commands run, output shown, then claim |
-| [requesting-code-review](https://github.com/obra/superpowers) | Checklist-based review against plan requirements |
-| [finishing-a-development-branch](https://github.com/obra/superpowers) | Integration decisions (merge, PR, cleanup) when work is complete |
-
-### Anti-Pattern
-
-Running the full chain on every change regardless of risk, so that agents and reviewers learn to skip phases
-in bulk. The opposite failure is shipping without verification evidence or review because the change "looked small".
-
-### Cross-References
-
-- [Pattern 1.1 — Stack Tests](L1-patterns/1.1-stack-tests.md) — stack testing foundation
-- [Pattern 1.2 — Full-Loop Assertion Layering](L1-patterns/1.2-full-loop-assertions.md) — assertion requirements
-- [Glossary](cross-cutting/glossary.md) — skill chain terminology
-
-### Reference Implementation
-
-The [rig](https://github.com/franklywatson/claude-rig) repo implements the chain as skills, with a phase tracker; see its `src/skills/` directory.
-
-**Evidence:** Thin — the chain is a design from trading-bot and rig use; no comparison against unchained work (first-party, n=1)
+**Evidence:** Thin — overlay and chain designs from superpowers, rig and this project's own experience (n=1); no
+comparison against unchained work; inspect third-party skills before adopting (IS-13)
 
 ---
 
@@ -196,59 +84,56 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements the chain
 
 ### Problem
 
-Agents drop rules when context shifts or prompts get complex. Instructions written in prose are not an enforcement mechanism for rules that must always hold.
+Agents drop rules when context shifts or prompts get long. Prose does not hold a rule that must always hold.
 
 ### Solution
 
-Hooks are scripts the harness runs before or after a tool call. They apply policy at the tool-call boundary, independent of prompt content. Claude Code documents the hook events and their exit-code contract ([SG-11](references/sources.md)).
+Hooks are handlers the harness runs before or after a tool call, independent of prompt content
+([hooks reference](https://code.claude.com/docs/en/hooks)).
 
-**Contract:** a hook receives the tool name and arguments, and returns allow, advise or block. Two timing
-classes differ in what they can do:
+**Hook types.** A `command` hook runs a script and is deterministic. A `prompt` hook asks a model for a
+single-turn decision and an `agent` hook starts a subagent before deciding: both are model judgments and hold a
+rule at the strength of a prompt. `http` and `mcp_tool` hooks hand the decision to a service you review like any
+other code. Use `command` hooks for policy.
 
-**PreToolUse hooks** run before the tool call and can block it. Use them for policy that matches structured
-arguments:
-
-- Refuse an Edit whose `file_path` is a protected path (CI workflow, hook configuration, lockfile)
-- Refuse an Edit that adds a mock import to a stack-test file
-- Rewrite or redirect a call to a better tool (ergonomic nudge)
-
-**PostToolUse hooks** run after the tool call. They are detective: they can report, record and advise, but
-they cannot prevent a call that has already run ([Pattern 2.6](#pattern-26--enforcement-pipeline-composition)). Use them for:
-
-- Track source file edits in `pending-tests.json`
-- Emit "TEST TASK REQUIRED" when code changes without corresponding test changes
-- Append an audit record (tool, arguments, time)
+**PreToolUse hooks** run before the call and can block it, or return `ask` to put the call to the person. Use
+them for structured arguments: an Edit whose `file_path` is a protected path, an Edit that adds a mock import to
+a stack-test file. **PostToolUse hooks** run after the call. They report, record and advise (untested source
+edits, parsed test failures); they cannot prevent a call that already ran.
 
 **What hooks cannot hold:**
 
-- Hooks gate the agent's tool calls. They do not constrain what a permitted tool does once running. Any
-  allowed `bash`, `python`, `node`, `docker` or `make` is a general-purpose computer.
-- A regex over a free-text shell string is bypassable (quoting, variables, a script that does the work).
-  Hooks are strongest when they match structured arguments such as an Edit call's file path.
-- Project-level hook configuration is usually a file the agent can edit. Where the harness supports
-  managed settings that the agent cannot edit, put policy hooks there ([SG-12](references/sources.md)).
+- A permitted `bash`, `python`, `node` or `docker` is a general-purpose computer. Hooks gate the call, not what
+  the tool does once running.
+- A regex over a free-text shell string is bypassable (quoting, variables, a script). Match structured arguments.
+  The [autonomy hook](../examples/autonomy/README.md#hook) at A1 allows only plain read-only commands: allow-listed
+  commands joined by `|`, with no quotes, `$`, braces, globs, redirects or `;`. Above A1 its Bash rules are a
+  nudge; a `permitted_actions.tools` allowlist, CODEOWNERS, `autonomy check` in CI and containment hold.
+- State a hook reads from the working tree is in the agent's reach. The autonomy hook denies writes to
+  `.autonomy/`, where its demotion state lives; only operating-system permissions or a read-only mount make that a
+  boundary.
+- A project hook file is editable by the agent. Put policy hooks in managed settings with `allowManagedHooksOnly`
+  ([Pattern 2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)).
+- Hooks run outside the Claude Code sandbox with the user's full access
+  ([sandboxing](https://code.claude.com/docs/en/sandboxing)). Review a hook script as code that runs on the machine.
 
-Use hooks for what must always happen in the workflow and for ergonomics. Use the sandbox, credential scope
-and downstream authorisation for what must never happen.
+### Composing Checks
 
-**Hook decision flow:**
-
-```
-hook fires
-    +-> check state (which file? which arguments? what is on disk?)
-            +-> allow (operation proceeds)
-            +-> advise (operation proceeds; a message explains the better path)
-            +-> block (PreToolUse only: the call does not run)
-```
+Several checks can fire on one tool call (stale tests, mock detection, scope control, failure parsing). Run them
+through one orchestrator so the agent gets one signal. Each check has one responsibility and returns a severity
+(block, advise or silent) and a message; a project config file sets each rule's severity. The orchestrator returns
+the most severe result (block > advise > silent) with the messages at that severity. A PreToolUse block stops the
+call; a PostToolUse block means "stop and repair", because the call already ran. rig's PostToolUse handler is one
+such orchestrator.
 
 ### In Practice
 
-A PreToolUse hook that blocks an Edit to a protected path (Claude Code binding, shell hook reading JSON on
-stdin and exiting with code 2 to block). Claude Code passes absolute paths, so the patterns match `*/` prefixes:
+A PreToolUse hook that blocks an Edit or Write to a protected path. Claude Code passes JSON on stdin with
+absolute paths:
 
 ```bash
 #!/usr/bin/env bash
-# PreToolUse hook for the Edit and Write tools. Fails closed: input it cannot parse blocks the call.
+# PreToolUse hook for the Edit and Write tools. Input it cannot parse blocks the call.
 set -euo pipefail
 if ! path=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["tool_input"]["file_path"])' 2>/dev/null) \
     || [ -z "$path" ]; then
@@ -263,75 +148,38 @@ esac
 exit 0
 ```
 
-The same decision can be returned as JSON on stdout with exit code 0. A `deny` carries a reason that
-Claude sees. Exit code 2 always blocks, even if the JSON says `allow`; any other non-zero exit code is a
-non-blocking error and the call proceeds:
+Exit code 2 blocks. Exit code 0 proceeds unless JSON on stdout returns `"permissionDecision": "deny"`. Any other
+failure (another exit code, a crash, a timeout, a script that does not start) is a non-blocking error and the
+call proceeds, unless a `command`, `http` or `mcp_tool` handler sets `"onFailure": "block"` ([hooks
+reference](https://code.claude.com/docs/en/hooks#block-the-action-when-a-hook-fails)). Set it on every policy hook
+so the hook fails closed:
 
 ```json
-{
-  "hookSpecificOutput": {
-    "hookEventName": "PreToolUse",
-    "permissionDecision": "deny",
-    "permissionDecisionReason": "Protected path: ask a human to change it."
-  }
-}
+{ "hooks": { "PreToolUse": [ { "matcher": "Edit|Write", "hooks": [
+  { "type": "command", "command": ".claude/hooks/protect-paths.sh", "onFailure": "block" }
+] } ] } }
 ```
 
-Register the script in `.claude/settings.json` with an event, a tool-name matcher and a handler
-([hooks reference](https://code.claude.com/docs/en/hooks)):
-
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [{ "type": "command", "command": ".claude/hooks/protect-paths.sh" }]
-      }
-    ]
-  }
-}
-```
-
-A project hook file is editable by the agent. To make hooks the policy of record, put them in managed settings
-and set `allowManagedHooksOnly`, which blocks user, project, local and plugin hooks. Hooks themselves run outside the
-Claude Code sandbox, with the user's full access, so review a hook script as you would any code that runs on
-the machine.
-
-A PostToolUse hook is a record, not a gate:
-
-```bash
-#!/usr/bin/env bash
-# PostToolUse hook: append an audit line (time, tool name, path) after every Edit or Write.
-# The log lives outside the working tree so it is never committed and the agent's edits do not touch it.
-set -euo pipefail
-audit_dir="${HOME}/.local/state/agent-audit"
-mkdir -p "$audit_dir"
-python3 -c 'import json,sys,time; d=json.load(sys.stdin); print(json.dumps({"t":time.time(),"tool":d["tool_name"],"path":d["tool_input"].get("file_path")}))' \
-  >> "$audit_dir/tool-calls.jsonl"
-exit 0
-```
+**Audit records.** Use Claude Code's OpenTelemetry export, configured in managed settings and sent to a
+collector outside the agent's reach. It emits `claude_code.tool_decision` for each permission decision and
+`claude_code.tool_result` for each tool call, with arguments only when `OTEL_LOG_TOOL_DETAILS=1`; repository
+settings cannot turn it on or redirect it ([monitoring](https://code.claude.com/docs/en/monitoring-usage)). A
+harness without telemetry can append one JSON line per tool call from a PostToolUse hook. The agent's shell can
+reach that file unless the sandbox denies writes to it, so it is a record, not evidence.
 
 ### Anti-Pattern
 
-- Using a hook as the only control for something that must never happen (a destructive command, credential
-  access). The sandbox and credential scope hold that rule; the hook is defence in depth.
-- Advisory hooks for rules that must hold. Agents treat repeated warnings as noise; a rule that must hold needs
-  a block (PreToolUse) or a required CI check.
-- Blocking hooks that match too broadly and stop legitimate work. Keep each hook narrow, with documented behavior.
+- A hook as the only control for something that must never happen. The sandbox and credential scope hold that.
+- A policy hook without `"onFailure": "block"`, so a timeout or crash lets the call through.
+- A `prompt` or `agent` hook, or an advisory hook, presented as policy that holds.
+- A blocking hook that matches too broadly and stops legitimate work.
+- Several checks with no severity resolution, so the agent guesses which message governs.
 
-### Cross-References
+See [L3: Optimization](L3-optimization.md) for hooks as ergonomic nudges.
 
-- [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — which enforcement point holds which rule
-- [Pattern 2.6 — Enforcement Pipeline Composition](#pattern-26--enforcement-pipeline-composition) — composing checks
-- [L3: Optimization](L3-optimization.md#pattern-31--prefer-native-structured-tools-block-destructive-edits) — hooks used as ergonomic routing nudges
-- [examples/guardrails](../examples/guardrails/) — hook-adjacent middleware example
-
-### Reference Implementation
-
-The [rig](https://github.com/franklywatson/claude-rig) repo implements composable hooks in `src/enforcement/`.
-
-**Evidence:** Strong — several organisations hold must-hold rules in deterministic checks rather than prose; a hook is deterministic but runs inside the agent's environment (OM-7, OM-12, OM-18, SG-11, SG-16, SC-8)
+**Evidence:** Partial — Anthropic and Stripe put must-hold steps in deterministic code rather than prose, and
+OWASP puts authorization outside the model; no study measures the effect; the composition design is this
+project's own experience (OM-7, OM-12, SG-11, SG-16)
 
 ---
 
@@ -339,64 +187,44 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements composabl
 
 ### Problem
 
-Projects have rules that define their approach. When these rules are scattered across documentation or written as soft suggestions, they get forgotten or worked around. A rule declared in prose and enforced by nothing is only as strong as the model's attention on that turn.
+Rules scattered across documentation, or written as soft suggestions, get forgotten or worked around. A rule
+held by nothing depends on the model's attention on that turn.
 
 ### Solution
 
 Constitutional rules are the hard rules declared in the instruction file (CLAUDE.md or AGENTS.md). **Each rule
-names its enforcement point**, and a rule is only as absolute as its weakest enforcement point. The points,
-from [the table above](#overview): prompt, hook, CI, sandbox, downstream.
-
-**Example rules and their enforcement points:**
+names its enforcement point** from [the Overview table](#overview). A constitutional rule has no exceptions; a
+rule that needs exceptions is a convention and belongs in a skill.
 
 | Rule | Enforcement point | What holds it |
 |------|-------------------|---------------|
-| Real dependencies in E2E/integration and stack tests | Prompt, hook (best effort), CI | Skill carries the rule; PreToolUse hook (best effort, since a regex on imports is bypassable) blocks mock imports in stack-test files; CI check greps stack-test directories for mock libraries |
+| Real dependencies in E2E/integration and stack tests | Prompt, hook (best effort), CI | Skill carries the rule; a PreToolUse hook blocks mock imports in stack-test files (a regex on imports is bypassable); a CI check greps stack-test directories for mock libraries |
 | No conditional test assertions | CI | Lint rule or test-integrity check in the required CI job ([Pattern 1.6](L1-patterns/1.6-test-integrity.md)) |
-| Evidence-based claims only | Prompt, CI | Verification skill requires output; CI result is the evidence the reviewer reads |
+| Evidence-based claims only | Prompt, CI | Verification skill requires output; the CI result is the evidence the reviewer reads |
 | Zero-defect tolerance | CI | Required check fails on any test failure, lint error or warning |
 | Docs updated with code | CI | Required check fails when `examples/` changes without a `docs/` change |
-| No production credentials in the agent's environment | Sandbox, downstream | Credentials injected outside the sandbox; scoped, short-lived tokens; the production system authorises independently |
+| No production credentials in the agent's environment | Sandbox, downstream | Credentials injected outside the sandbox; scoped, short-lived tokens; the production system authorizes independently |
 | No writes outside the working tree, no unapproved network egress | Sandbox | Filesystem and network policy, locked and failing closed |
-| Docker-first development, never prune shared Docker state | Prompt, sandbox | Skill states the rule; the sandbox denies access to the host Docker socket |
+| Never prune shared Docker state | Prompt, sandbox | Skill states the rule; the sandbox denies access to the host Docker socket |
 | Requester cannot approve their own change | Downstream | Branch protection requiring a non-author review |
 
-**The rules flow:**
-
-```
-Instruction file declares the rule and its enforcement point
-    +-> skill carries the procedure (prompt)
-            +-> PreToolUse hook blocks the structured violation (hook)
-                    +-> required CI check catches what slipped past (CI)
-                            +-> sandbox, credentials and downstream authorisation hold what must never happen
-```
-
-If a rule has only a prompt entry, say so in the table. That marks it as guidance that may be missed, and
-tells a reviewer where to look.
-
-### In Practice
-
-1. The plan step reads the constitutional rules and lists, per rule, which enforcement points the change touches.
-2. The TDD step rejects mocked components in stack-test generation; the PreToolUse hook blocks the edit if it does not.
-3. The review step checks that each rule's CI check ran and passed, rather than re-reading the code for the rule.
+The table is a template; this repository's rules and what holds each are in
+[AGENTS.md](../AGENTS.md#constitutional-rules-never-violate). If a rule has only a prompt entry, say so: it is
+guidance that may be missed. At review, check that each rule's CI check ran and passed.
 
 ### Anti-Pattern
 
-- Rules with an enforcement-point column of "prompt" only, presented as absolute. Regex-based checks and
-  prose are not absolute; state what holds the rule.
-- Declaring a safety rule ("never touch production") and enforcing it with a hook alone. A permitted tool can
-  do what the hook forbids by another route. Hold it in the sandbox or downstream.
+- A rule held only by a prompt, presented as absolute.
+- A safety rule ("never touch production") held by a hook alone. A permitted tool can do what the hook forbids by
+  another route. Hold it in the sandbox or downstream.
 
-### Cross-References
+The instruction file format is [Pattern
+0.4](L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution); the first rule is [Pattern
+1.5](L1-patterns/1.5-real-dependencies.md).
 
-- [Pattern 0.4 — Agent instruction file as project constitution](L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution) — instruction file format
-- [Pattern 1.5 — Real Dependencies](L1-patterns/1.5-no-mock-philosophy.md) — the rule behind the first example
-
-### Reference Implementation
-
-The [rig](https://github.com/franklywatson/claude-rig) repo implements a constitutional check in `src/enforcement/checks/constitutional.ts`; it detects mock patterns in edited files by regex, so it is a hook-level check and inherits the limits listed in [Pattern 2.3](#pattern-23--hook-automation).
-
-**Evidence:** Partial — enforcing hard rules in deterministic checks has independent support (see Pattern 2.3); whether a declared rule list improves behaviour is contested; the rule list itself is a project choice (SC-4, SC-5, SC-11)
+**Evidence:** Partial — the case for deterministic checks rests on vendor guidance and one company report
+(Pattern 2.3); whether a declared rule list improves agent behavior is contested; the rule list is this
+library's design choice (SC-4, SC-5, SC-11)
 
 ---
 
@@ -404,184 +232,34 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements a constit
 
 ### Problem
 
-Agents do not have the intuition to work around known issues. When developers tolerate "unrelated" failures or "pre-existing" warnings, agents lose the ability to self-diagnose systematically. A tolerated defect becomes an undiagnosed regression later.
+When developers tolerate "unrelated" failures or "pre-existing" warnings, the agent cannot tell which errors need
+action, and the feedback loop breaks. A tolerated defect becomes an undiagnosed regression later.
 
 ### Solution
 
-Every error, warning and failure is addressed, not only the relevant ones. This applies to unit tests and stack tests alike: dismissing a unit test failure while trusting stack test results relies on partial feedback.
+Every error, warning and failure is addressed, in unit tests and stack tests alike:
 
-**What zero-defect means:**
-
-- "This failure is unrelated" is not accepted without evidence of isolation (different subsystem, proven by a run)
+- "This failure is unrelated" is not accepted without evidence of isolation (a different subsystem, shown by a run)
 - "This warning was pre-existing" means fix it now
-- A test that fails for any reason either passes or is explicitly skipped with documentation
-- Compiler warnings are resolved, not suppressed
-- Linter errors are fixed, not waived
+- A failing test is fixed, or skipped with a linked issue and a review date
+- Compiler warnings are resolved, not suppressed; linter errors are fixed, not waived
 
-**Enforcement point:** CI. A required check that fails on any test failure, lint error or warning holds
-this rule. The agent's prompt and the verification skill state it; they do not hold it.
+**Enforcement point:** CI. A required check that fails on any test failure, lint error or warning holds this
+rule. The prompt and the verification skill state it.
 
-**Why this matters for agents:** Agents process feedback systematically. When output contains errors, agents must be able to assume those errors are relevant. If some errors are "okay to ignore," the agent cannot distinguish which require action, and the feedback loop breaks.
-
-**In production, zero-defect governs what must be addressed, not what is auto-repaired.** Every production error is triaged, fingerprinted and owned. That does not mean every error triggers an automatic fix. Automatic action on every alert flaps. Which errors may be repaired without a person is decided by grant and class ([Pattern 1.11](L1-patterns/1.11-repair-budget-circuit-breaker-stop.md)).
-
-### In Practice
-
-A test run produces output:
-
-```
-FAIL test/ecommerce/order.test.ts
-  Order processing
-    + should process order
-PASS test/ecommerce/order.test.ts
-  Order processing
-    + should calculate fees
-
-Error: Cannot find module './utils/config.ts'
-```
-
-Zero-defect response:
-
-1. Fix the missing module import first
-2. Re-run tests
-3. If the order processing test still fails, investigate that
-4. The task is complete only when all errors and warnings are resolved
-
-Not zero-defect:
-
-1. "The module error is unrelated to the order test"
-2. Focus only on the order test failure
-3. Leave the module error unfixed
-
-### Anti-Pattern
-
-Classifying errors as "relevant" or "irrelevant" without evidence. Unless you can prove an error is unrelated, assume it is relevant.
-
-### Cross-References
-
-- [Pattern 1.3 — Sequential / Additive Test Design](L1-patterns/1.3-sequential-design.md) — sequential test ordering
-- [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) — evidence standards
-
-### Reference Implementation
-
-The [rig](https://github.com/franklywatson/claude-rig) repo parses test-runner output for failures and warnings in `src/enforcement/checks/zero-defect.ts`.
-
-**Evidence:** Partial — agents declare success on failing tests; the rest is a mechanism argument that agents cannot tell tolerated from real failures (IS-14, IS-15)
-
----
-
-## Pattern 2.6 — Enforcement Pipeline Composition
-
-### Problem
-
-Individual checks (stale tests, zero-defect, constitutional rules) are useful alone, but several checks firing on one tool call produce conflicting messages unless one severity is resolved.
-
-### Solution
-
-A pipeline in which each check is an independent function returning a level (block, advise or silent) and a message. The pipeline runs all checks and resolves to the most severe level (block > advise > silent). Checks are configurable per rule in a project config file.
-
-**PostToolUse checks are detective, not preventive.** A PostToolUse hook runs after the tool call has
-completed. It can report a violation, record it and tell the agent to repair it, but it cannot prevent the call
-that already ran. A "block" level returned from a PostToolUse pipeline means "stop and repair before
-continuing", delivered as feedback to the agent. Prevention needs a PreToolUse hook (for structured
-arguments) or a boundary outside the agent (sandbox, credentials, a required CI check).
-
-| Check timing | Can prevent the call? | Use for |
-|--------------|----------------------|---------|
-| PreToolUse | Yes | Protected paths, mock imports in stack-test files |
-| PostToolUse | No (detective) | Stale-test tracking, failure parsing, audit records |
-| Required CI check | Yes, for merge | Invariants on every change |
-| Sandbox / credential scope | Yes, for the whole session | What must never happen |
-
-**Key concepts:**
-
-- Each check has one responsibility (stale-test detection, scope control, mock detection, failure parsing)
-- Checks compose through a single orchestrator
-- Severity resolution: the most severe level wins, so the agent gets one clear signal
-- Each rule is configurable as block, advise or silent
+In production, zero-defect governs what must be addressed, not what is auto-repaired. Every production error is
+triaged, fingerprinted and owned; grant and class decide which errors may be repaired without a person ([Pattern
+1.11](L1-patterns/1.11-repair-budget-circuit-breaker-stop.md)).
 
 ### In Practice
 
-A pipeline contract in prose:
+A run shows `order.test.ts` failing and `Error: Cannot find module './utils/config.ts'`. Fix the missing module
+first, re-run, then investigate the order test if it still fails. The task is complete when no error or warning
+remains. Setting the module error aside as "unrelated to the order test" is the failure this pattern forbids.
+Evidence standards for the claim are in [Pattern 4.1](L4-standards-measurement.md#pattern-41--evidence-based-claims).
 
-1. The orchestrator receives the tool name, arguments and (for PostToolUse) the tool result.
-2. It runs every enabled check; each returns a level and a message.
-3. It returns the highest level and the messages of every check at that level.
-4. The harness delivers the result: a PreToolUse "block" stops the call; a PostToolUse result is feedback.
-
-For the implementation, see the reference below.
-
-### Anti-Pattern
-
-- Running checks independently without severity resolution, so the agent receives a "block" and an "advise" and has to guess which governs.
-- Describing a PostToolUse check as a guardrail that stops a violation. It reports the violation after the fact.
-
-### Cross-References
-
-- [Pattern 2.3 — Hook Automation](#pattern-23--hook-automation) — hooks fire checks; the pipeline composes them
-- [Pattern 2.7 — Phase Transition Validation](#pattern-27--phase-transition-validation) — optional phase-aware checks
-
-### Reference Implementation
-
-The [rig](https://github.com/franklywatson/claude-rig) repo implements the pipeline in `src/enforcement/` with an orchestrator, `handlePostToolUse`, that resolves severity. Its code is not reproduced here.
-
-**Evidence:** Thin — composition design from rig (first-party, n=1); the hook exit-code contract it builds on is documented (SG-11)
-
----
-
-## Pattern 2.7 — Phase Transition Validation
-
-**Status: optional.** Scale ceremony to risk; verification and review stay outcome gates. Use phase tracking
-when a team wants an audit trail of which workflow phases ran on large or risky changes. It is not a
-precondition for good work, and it does not replace CI evidence.
-
-### Problem
-
-Where a team uses the skill chain ([Pattern 2.2](#pattern-22--the-skill-chain)), agents can skip phases:
-implementing without a plan, or claiming completion without verification. Teams that want a record of which
-phases ran, or a warning when a phase was skipped on a high-risk change, need state to check.
-
-### Solution
-
-A small state machine that records each phase visit with a timestamp and checks declared prerequisites on
-entry (for example, `verify+` after `tdd+`). Query methods let other checks vary behavior by phase.
-
-**Key concepts:**
-
-- Phase history with timestamps
-- Declared prerequisites per phase, configurable per risk tier (for example, required for irreversible changes, advisory for small ones)
-- Query methods such as "is the agent in the TDD phase?"
-- A reset for new workflows
-
-A phase tracker is state inside the harness. It records that the agent visited a phase, not that the phase
-did its job. The gates that confirm the job (tests ran, evidence shown, review done) are held by CI and the
-merge process.
-
-### In Practice
-
-The contract, in prose:
-
-1. On entering a phase, the tracker checks the declared prerequisites for the current risk tier.
-2. A missing prerequisite on a high-risk change returns a block (PreToolUse) or an advisory message (low-risk change).
-3. The tracker records the phase and timestamp.
-
-For the implementation, see the reference below.
-
-### Anti-Pattern
-
-- Treating phase visits as proof of quality. Visiting `verify+` does not show that verification evidence exists.
-- Applying one blocking policy to every change. A required five-phase path on a typo fix teaches agents and reviewers to bypass the tracker.
-
-### Cross-References
-
-- [Pattern 2.2 — The Skill Chain](#pattern-22--the-skill-chain) — the optional chain this tracks
-- [Pattern 2.3 — Hook Automation](#pattern-23--hook-automation) — hooks can consult phase state
-
-### Reference Implementation
-
-The [rig](https://github.com/franklywatson/claude-rig) repo implements a phase tracker in `src/skills/phase-tracker.ts` with transition validation, query methods and reset. Its code is not reproduced here.
-
-**Evidence:** Thin — state-machine design from rig (first-party, n=1); no study of phase enforcement
+**Evidence:** Partial — agents declare success on failing tests; the rest is a mechanism argument that agents
+cannot tell tolerated from real failures (IS-15, OM-9)
 
 ---
 
@@ -589,93 +267,54 @@ The [rig](https://github.com/franklywatson/claude-rig) repo implements a phase t
 
 ### Problem
 
-Traditional development accumulates complexity. Agents compound this: without persistent memory, every session re-derives the same lessons. The first time an agent solves an N+1 query problem, it takes research. The next session facing the same problem starts from zero.
+Without persistent memory, every agent session re-derives the same lessons. The first time an agent solves an
+N+1 query problem, it takes research; the next session facing it starts from zero.
 
 ### Solution
 
-**Each unit of engineering work should make subsequent units easier, not harder.** Compound engineering extends the workflow with a feedback loop: after each cycle of brainstorm, plan, work and review, capture learnings back into the system so future sessions start from a higher baseline.
+After each cycle of brainstorm, plan, work and review, capture what the cycle learned so the next session starts
+from it: documented solutions (symptom, root cause, prevention), plans that survived review, architecture
+decisions and failure modes, and constitutional amendments with an enforcement point ([Pattern
+2.4](#pattern-24--constitutional-rules)).
 
-The core cycle:
-
-```
-brainstorm → plan → work → review → compound → repeat
-    ^                                     |
-    └─── knowledge feeds back ────────────┘
-```
-
-**What compounds:**
-
-- **Documented solutions** — symptoms, root cause and prevention for each fixed bug, so a recurrence is a lookup
-- **Refined plans** — plans that survived review become templates for similar features
-- **Captured patterns** — architecture decisions and failure modes recorded during review
-- **Constitutional amendments** — when a review catches a novel violation, the rules ([Pattern 2.4](#pattern-24--constitutional-rules)) expand to cover it, with an enforcement point
-
-**What does not compound:**
-
-- Undocumented fixes that live only in conversation history
-- Plans discarded after implementation without extracting lessons
-- Reviews that approve or reject without recording why
-- Errors dismissed as "unrelated" rather than investigated and catalogued
-
-**Learnings are context, so they need review and pruning.** Agent-written learnings feed future prompts. A
-wrong or stale learning degrades every later session, and the flywheel has to remove entries as well as add them
-([IS-13](references/sources.md)). Promote a learning into shared context only after a human has reviewed it, and
-prune learnings that no longer hold.
-
-**An agent-written learning is untrusted input.** The agent may have written it after reading an issue, a web
-page or a tool result that an outsider controls ([Pattern 2.10](#pattern-210--least-agency-and-session-composition)).
-A planted instruction that becomes a learning is read by every later session. Use a review step:
+Learnings are context. A wrong or stale learning degrades every later session, so the store of learnings has to
+lose entries as well as gain them ([IS-13](references/sources.md)). An agent-written learning is also untrusted input:
+the agent may have written it after reading content an outsider controls ([Pattern
+2.10](#pattern-210--least-agency-and-session-composition)), and a planted instruction that becomes a learning is
+read by every later session. Use a review step:
 
 1. The agent writes the learning to a draft location that sessions do not load automatically.
-2. A person reads it, checks the claim against the code or a test, and checks that it contains no instruction
-   aimed at the agent ("always run", "ignore", "send").
-3. The person promotes it by moving it to the loaded location, with the date and the reviewer's name.
-4. After a repair or fix, promote only after the confirmation window for that change has passed and the recurrence check shows the fingerprint has not returned ([Pattern 1.9](L1-patterns/1.9-repair-loop-frozen-oracle.md)). A repair that masked a defect looks like a solution until the failure returns.
-5. Learnings carry a review date and an owner. Prune on a schedule ([Pattern
+2. A person checks the claim against the code or a test, and checks that it contains no instruction aimed at the
+   agent ("always run", "ignore", "send").
+3. The person promotes it to the loaded location, with the date and the reviewer's name.
+4. After a repair, promote only after the confirmation window has passed and the recurrence check shows the
+   fingerprint has not returned ([Pattern 1.9](L1-patterns/1.9-repair-loop-frozen-oracle.md)). A repair that
+   masked a defect looks like a solution until the failure returns.
+5. Each learning has an owner and a review date. Prune on a schedule ([Pattern
    0.8](L0-foundation.md#pattern-08--aggressive-cleanup)).
 
-### In Practice
+### Bindings
 
-The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin implements this with `/ce:compound`, which captures solved problems into structured documentation (`docs/solutions/`) with YAML frontmatter for searchability. The vendor describes a split of 80% planning and review to 20% execution; that ratio is a vendor claim, not a measured result in this library.
+**Claude Code auto memory** is on by default in local sessions. Claude writes notes to
+`~/.claude/projects/<project>/memory/`, shared by every worktree of the repository, and the first 200 lines or
+25KB of `MEMORY.md` load at the start of every conversation ([memory](https://code.claude.com/docs/en/memory)).
+That is an agent-written learning loaded with no review step. For a session that reads untrusted input, set
+`"autoMemoryEnabled": false` in user or managed settings, or `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` in the launcher.
+Otherwise review `MEMORY.md` on the same schedule as other learnings.
 
-**Compounding across the layers:**
-
-| Layer | What Compounds | Mechanism |
-|-------|---------------|-----------|
-| L0 | Clean structure, current docs | [Pattern 0.8 — Aggressive Cleanup](L0-foundation.md#pattern-08--aggressive-cleanup) removes noise each session |
-| L1 | Test coverage, verification infrastructure | Stack tests accumulate; each new test catches regressions permanently |
-| L2 | Constitutional rules, skills, learnings | Each review that catches a novel violation adds a rule with an enforcement point |
-| L3 | Routing table and tool detection | See [Pattern 3.3](L3-optimization.md#pattern-33--environment-aware-routing-and-session-lifecycle) |
-| L4 | Metrics, evidence | Measurement creates a tightening feedback loop |
+The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin's `/ce-compound`
+writes learnings to `docs/solutions/`, which its planning skills read later. Review its output with the steps
+above.
 
 ### Anti-Pattern
 
-- **Disposable sessions** — work that produces code but no learnings.
-- **Knowledge silos** — learnings stored in conversation history or personal notes instead of discoverable documentation.
-- **Review without extraction** — approving or rejecting without recording the reasoning.
-- **Unreviewed, unpruned learnings** — agent-written entries promoted to shared context without review, and
-  never removed. Auto-loading the agent's own notes into every session turns one injected instruction into a
-  standing one.
-- **Premature abstraction** — compounding knowledge is not building frameworks. Document the why; let patterns emerge before promoting them.
+- Work that produces code but no learnings, or learnings kept only in conversation history or personal notes.
+- Approving or rejecting in review without recording why.
+- Agent-written entries loaded into every session without review and never removed. One injected instruction
+  becomes a standing one.
 
-### Cross-References
-
-- [Pattern 2.4 — Constitutional Rules](#pattern-24--constitutional-rules) — rules that grow through compounding
-- [Pattern 4.1 — Evidence-Based Claims](L4-standards-measurement.md#pattern-41--evidence-based-claims) — compounding requires evidence
-- [Pattern 2.10 — Least Agency and Session Composition](#pattern-210--least-agency-and-session-composition) —
-  learnings are untrusted until reviewed
-- [Pattern 2.12 — Skill, Plugin and MCP Supply Chain](#pattern-212--skill-plugin-and-mcp-supply-chain) — review
-  the plugin that writes them
-
-### Reference Implementation
-
-The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin provides
-`/ce:compound`. It is a dependency that writes to files later sessions read: review it before install
-([Pattern 2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)). The
-[rig](https://github.com/franklywatson/claude-rig) framework implements the brainstorm, plan, work and review
-portion of the loop.
-
-**Evidence:** Thin — vendor plugin claim, including the 80/20 split; a flywheel must remove as well as add (IS-13)
+**Evidence:** Thin — the review step is this library's design; a learning store must remove as well as add
+(IS-13); auto memory behavior is from vendor documentation (SC-8)
 
 ---
 
@@ -683,19 +322,17 @@ portion of the loop.
 
 ### Problem
 
-Agents run on the developer's machine with the developer's shell, keys, network and Docker socket. Teams then
-try to make that safe with approval prompts and hooks. Prompts wear out ([Pattern
-2.13](#pattern-213--risk-tiered-review)). Hooks run inside the agent's environment and match strings, so a
-permitted tool can do what the hook forbids by another route.
+Agents run on the developer's machine with the developer's shell, keys and network. From Claude Code
+v2.1.283, interactive sessions start in auto mode, where a classifier approves most actions, with the sandbox off;
+`claude -p` and the Agent SDK start in default (manual) mode ([permission
+modes](https://code.claude.com/docs/en/permission-modes), [sandboxing](https://code.claude.com/docs/en/sandboxing)).
+The vendor states that auto mode "does not guarantee safety".
 
-The [containment example](../examples/containment/) shows the gap. A policy function with a deny rule for `sed
--i` blocks `sed -i`. It allows `/usr/bin/sed -i`, `sed --in-place`, `perl -pi`, `bash -c "echo new > file"`
-and a command built from `$(echo sed)`. It also allows two network fetches to a host outside the allowlist.
-Eight of nine write commands and both network commands pass. A container with a read-only mount and no network
-stops all of them without parsing a command.
-
-This pattern is **Partial** on evidence: the vendors and one company's engineering report agree, and none of
-it compares containment designs independently.
+Teams try to make that safe with approval prompts and hooks. Prompts wear out ([Pattern
+2.13](#pattern-213--risk-tiered-review)). Hooks match strings, so a permitted tool can do what the hook forbids by
+another route: in the [containment example](../examples/containment/), eight of nine write commands and both
+network commands pass a string-matching policy, and a container with a read-only mount and no network stops all of
+them.
 
 ### Solution
 
@@ -703,96 +340,80 @@ Start every agent session inside a boundary the agent cannot change. Relax appro
 
 **Contract.** A boundary has five properties:
 
-1. **Writes are confined.** The agent can write to the working tree and a scratch directory, and nowhere else.
+1. **Writes are confined** to the working tree and a scratch directory.
 2. **Reads are bounded.** Credential files, home-directory secrets and other projects are unreadable.
-3. **Network is allowlisted.** Egress goes to named hosts only. Everything else fails.
-4. **Secrets live outside.** Credentials are not in the agent's environment or files. A component outside the
-   boundary injects a scoped credential when a call needs one ([Pattern
-   2.11](#pattern-211--agent-identity-and-delegation)).
-5. **Failure closes.** If the boundary cannot start, the session does not start. The agent never runs unconfined
-   as a fallback.
+3. **Network is allowlisted.** Egress goes to named hosts only.
+4. **Secrets live outside.** A component outside the boundary injects a scoped credential when a call needs one
+   ([Pattern 2.11](#pattern-211--agent-identity-and-delegation)).
+5. **Failure closes.** If the boundary cannot start, the session does not start.
 
-The agent cannot edit the boundary's configuration. Keep it where the agent has no write access:
-managed settings, a launcher script, a container definition outside the mounted tree.
+The agent cannot edit the boundary's configuration: keep it in managed settings, a launcher script or a container
+definition outside the mounted tree.
 
-**Stack tests need Docker.** Mounting the host Docker socket into the boundary hands the agent root on the
-host. Give the session its own Docker daemon instead: a rootless daemon, a daemon inside the session's
-container or virtual machine, or a per-session remote daemon. [Pattern
-1.4](L1-patterns/1.4-container-isolation.md) isolates test runs from each other. This pattern isolates the
-agent from the host.
-
-**Order of work.** Contain first, then loosen prompts. A boundary makes "block `docker system prune`" and
-"block `sed -i`" unnecessary as safety controls. They stay as ergonomic nudges ([Pattern
-2.3](#pattern-23--hook-automation)).
+**Stack tests need Docker.** Mounting the host Docker socket hands the agent root on the host. Give the session
+its own daemon: rootless, inside the session's container or virtual machine, or a per-session remote daemon.
+[Pattern 1.4](L1-patterns/1.4-container-isolation.md) isolates test runs from each other; this pattern isolates
+the agent from the host.
 
 ### In Practice
 
-1. Pick the boundary: the harness sandbox, a container, or a virtual machine.
-2. Set the five properties. Keep credentials out of the mounted tree, because the boundary does not hide files
-   inside what it mounts.
-3. Test the boundary. Run a command that must fail (a write outside the tree, a fetch to an unlisted host) and
-   check that it fails. The containment example runs each command twice, once in a permissive container to prove
-   it works and once in the boundary to prove it is stopped.
-4. Allow auto-approval of tool calls inside the boundary. Keep approval for actions that leave it ([Pattern
+1. Turn auto mode off until the boundary is in place (see Bindings).
+2. Pick the boundary (harness sandbox, container or virtual machine) and set the five properties. Keep
+   credentials out of the mounted tree; the boundary does not hide files inside what it mounts.
+3. Ask the agent to run `touch ~/outside-tree` and `curl -sI https://example.com`; both must fail. The
+   containment example runs each command in a permissive container and in the boundary.
+4. Allow auto-approval inside the boundary. Keep approval for actions that leave it ([Pattern
    2.13](#pattern-213--risk-tiered-review)).
 
 ### Bindings
 
 **Claude Code.**
-[`examples/containment/claude-code/settings.json`](../examples/containment/claude-code/settings.json) sets
-each property with keys documented at <https://code.claude.com/docs/en/settings> and
-<https://code.claude.com/docs/en/sandboxing>:
+[`examples/containment/claude-code/settings.json`](../examples/containment/claude-code/settings.json) sets each
+property with keys from the [settings reference](https://code.claude.com/docs/en/settings-reference) and the
+[sandboxing](https://code.claude.com/docs/en/sandboxing) page:
 
 | Property | Setting |
 |----------|---------|
-| Writes confined | `sandbox.enabled`, `sandbox.filesystem.denyWrite`; `permissions.blockWritesOutsideWorkingDirectories` for the file tools (Claude Code v2.1.314 or later) |
-| Reads bounded | `sandbox.filesystem.denyRead`; `permissions.deny` rules such as `Read(./.env)` for the Read tool |
-| Network allowlisted | `sandbox.network.allowedDomains` |
-| Secrets outside | `sandbox.credentials.files` and `sandbox.credentials.envVars` with mode `deny` |
+| Writes confined | `sandbox.enabled`, which also denies writes to `.git/hooks` and `.git/config`; `permissions.blockWritesOutsideWorkingDirectories` for the file tools |
+| Reads bounded | `sandbox.filesystem.denyRead` for shell commands; `permissions.blockReadsOutsideWorkingDirectories` for the file tools, which `denyRead` does not cover, and for sandboxed commands; `permissions.deny` rules such as `Read(./.env)` |
+| Network allowlisted | `sandbox.network.allowedDomains` (shell commands only; restrict WebFetch with permission rules) |
+| Secrets outside | `sandbox.credentials.files` and `sandbox.credentials.envVars` with mode `deny`; mode `mask` lets a command use a credential on an allowed host without the session seeing the value (needs `network.tlsTerminate`; honored only from user or managed settings or `--settings`) |
 | Failure closes | `sandbox.failIfUnavailable: true`, `sandbox.allowUnsandboxedCommands: false` |
-| Agent cannot edit it | Put the keys above in managed settings, which take precedence over user, project and command-line settings ([SG-12](references/sources.md)) |
+| Agent cannot edit it | [Managed settings](https://code.claude.com/docs/en/managed-settings) (MDM, file or server), which take precedence over user, project and command-line settings (SG-12) |
+| Minimum version | v2.1.257 for the reads key, v2.1.283 from which interactive sessions start in auto mode, v2.1.295 for hook `onFailure` (v2.1.328 on `mcp_tool` hooks; [Pattern 2.3](#pattern-23--hook-automation)), v2.1.314 for the writes key, v2.1.319 for `denyInsteadOfPrompting`; set `requiredMinimumVersion` (managed only) to the highest of these you use, so an older client refuses to start |
 
-Know what the sandbox does not cover. The sandboxing page states that it wraps shell commands and their child
-processes only. Claude's file tools, WebFetch, local MCP servers and hooks run outside it, so permission rules
-and managed settings govern those. `docker` does not run inside the sandbox. The documented fix is an
-`excludedCommands` entry, which runs the command with full access. For Docker stack tests, run the whole
-Claude Code session inside a container or virtual machine with its own daemon instead.
+Without managed settings, use user settings ([FAQ](cross-cutting/faq.md#i-work-alone-where-does-the-sandbox-settings-file-go)).
+Until the boundary holds, set
+[`permissions.disableAutoMode`](https://code.claude.com/docs/en/settings-reference#disableautomode) to `"disable"`
+there. The census ([Pattern A.4](earned-autonomy.md#pattern-a4--census)) reads only the project
+`.claude/settings.json`, so commit the same keys there too if you run it.
 
-For unattended sessions, `permissions.denyInsteadOfPrompting` (user or managed settings; Claude Code v2.1.319
-or later) turns permission prompts into denials, so a session without a person present stops instead of
-waiting.
+The sandbox wraps shell commands only. The file tools, WebFetch, local MCP servers and hooks run outside it, under
+permission rules and managed settings. Linux and WSL2 need `bubblewrap` and `socat` installed, or a session with
+`failIfUnavailable` refuses to start; native Windows runs commands unsandboxed, so use WSL2. `docker` does not
+run inside the sandbox, and an `excludedCommands` entry runs it with full access. For Docker stack tests, run the
+whole session inside a container or virtual machine with its own daemon; the
+[FAQ](cross-cutting/faq.md#my-stack-tests-need-docker-how-do-i-run-them-inside-the-sandbox) compares the options.
 
-**Another harness.** Look for these capabilities in any other agent harness: an operating-system-level sandbox
-or container mode that confines writes and network; a way to lock that configuration so the user and the agent
-cannot change it; a fail-closed option; and per-session credential injection. If the harness lacks them, run
-it inside a container or virtual machine you control and apply the five properties there.
+For unattended sessions,
+[`permissions.denyInsteadOfPrompting`](https://code.claude.com/docs/en/settings-reference#permissions-denyinsteadofprompting)
+(user or managed settings) or [`dontAsk`](https://code.claude.com/docs/en/permission-modes) mode denies anything
+that would prompt, so a session with no person present never waits on a prompt.
 
-**No harness: CI only.** An agent that cannot be confined on the developer machine can still be contained at
-the merge path. Run it only in an ephemeral CI job or container with no secrets beyond a scoped token, push to
-a branch that cannot merge itself, and require checks and a human review before merge. This holds the outcome.
-It does not stop what the agent does on the machine before then.
+**No harness: CI only.** Run the agent only in an ephemeral CI job or container with no secrets beyond a scoped
+token, push to a branch that cannot merge itself, and require checks and a human review before merge. This holds
+the outcome, not what the agent does on the machine before then.
 
 ### Anti-Pattern
 
-- Treating a hook or deny rule as the boundary. It is a nudge with the same limits as a regex.
-- Mounting the host Docker socket so stack tests work.
-- Running with the sandbox on but `allowUnsandboxedCommands` left open, so the agent retries blocked commands
-  outside it.
-- Storing the boundary's configuration in a file the agent can edit.
+- Running in auto mode before the boundary exists.
+- Leaving `allowUnsandboxedCommands` open, so the agent retries blocked commands outside the sandbox.
 - Skipping the negative test. A boundary nobody has tried to cross is an assumption.
 
-### Cross-References
+The [threat model](cross-cutting/threat-model.md) lists what the boundary protects.
 
-- [Pattern 2.3 — Hook Automation](#pattern-23--hook-automation) — what hooks cannot hold
-- [Pattern 2.10 — Least Agency and Session Composition](#pattern-210--least-agency-and-session-composition) —
-  what a session holds inside the boundary
-- [Pattern 2.11 — Agent Identity and Delegation](#pattern-211--agent-identity-and-delegation) — credentials
-  outside the boundary
-- [Pattern 1.4 — Container Isolation](L1-patterns/1.4-container-isolation.md) — isolating test runs from each other
-- [Threat model](cross-cutting/threat-model.md) — what the boundary protects
-
-**Evidence:** Partial — consistent first-party guidance and one company report, no independent comparison
-(PL-14, PL-15, PL-17, SG-10, SG-12, AN-9, AN-11)
+**Evidence:** Partial — Anthropic describes its own practice consistently across its docs and posts, and one company
+reports the same; no independent comparison (PL-14, PL-15, PL-17, SG-12, AN-9, AN-11)
 
 ---
 
@@ -800,50 +421,30 @@ It does not stop what the agent does on the machine before then.
 
 ### Problem
 
-An agent session becomes dangerous when it combines three things: untrusted input (a web page, an issue, a
-source read during [design rinsing](L1-feedback-loops.md), tool output), access to private data or
-credentials, and a way to act outside (send a request, push, post). With all three, text an attacker plants in
-the input can steer the agent to leak the data or take the action. Simon Willison named the combination the
-lethal trifecta ([SG-1](references/sources.md)). Meta's Agents Rule of Two says a session should hold at most
-two of the three unless a gate sits between them ([SG-2](references/sources.md)). OWASP lists excessive agency
-(too much functionality, permission or autonomy) among the top risks for LLM applications
-([SG-16](references/sources.md)). A research design from Google DeepMind and ETH Zurich separates untrusted
-data from control flow by construction ([SG-3](references/sources.md)).
-
-This pattern is **Strong** as a design rule. Independent sources agree. No study measures teams that apply it.
+An agent session is dangerous when it combines three things: untrusted input (a web page, an issue, a source read
+during [design rinsing](L1-feedback-loops.md), tool output), access to private data or credentials, and a way to
+act outside. With all three, text an attacker plants in the input can steer the agent to leak the data or take the
+action: Simon Willison's lethal trifecta ([SG-1](references/sources.md)). Meta's Agents Rule of Two allows at most
+two of the three without a gate between them ([SG-2](references/sources.md)); OWASP's excessive agency risk and a
+Google DeepMind and ETH Zurich design that separates untrusted data from control flow make the same point ([SG-16,
+SG-3](references/sources.md)).
 
 ### Solution
 
-Give each session type the least agency it needs, and declare which of the three properties it holds.
-
-**Contract.** For every session type (rinse, implement, review, triage, release), write down:
-
-| Property | Question |
-|----------|----------|
-| Untrusted input | Does the session read content an outsider can write? |
-| Sensitive access | Can it read secrets, private code or customer data? |
-| External action | Can it send, push, publish or change a system outside the boundary? |
-
-A session may hold two. A session that holds all three needs a deterministic gate or a human approval between
-the input and the action, and the gate sits outside the model.
+Give each session type the least agency it needs. For every session type (rinse, implement, review, triage,
+release), record whether it reads content an outsider can write (untrusted input), can read secrets, private code
+or customer data (sensitive access), and can send, push, publish or change a system outside the boundary
+(external action). A session may hold two. A session that holds all three needs a deterministic gate or a human
+approval between the input and the action, outside the model.
 
 **Defaults.**
 
 - Tools are read-only until a task needs a write.
 - A session that reads untrusted input gets no credentials and no external action.
-- Output of an untrusted-input session passes to the next session as reviewed text, not as live context.
-
-**Apply it to design rinsing.** [Rinsing](L1-feedback-loops.md) reads outside sources: repositories,
-transcripts, articles. Run it as a session with untrusted input and nothing else. It has read access to the
-source, no write access to the target project, no credentials and no network beyond the source. A person
-reviews the distilled notes before the design session reads them.
-
-**Apply it to Pattern 2.8.** A learning an agent writes is untrusted until reviewed. See [Pattern
-2.8](#pattern-28--compound-engineering).
+- Output of an untrusted-input session, learnings included ([Pattern 2.8](#pattern-28--compound-engineering)),
+  passes to the next session as reviewed text, not as live context.
 
 ### In Practice
-
-A session register for a small team:
 
 | Session | Untrusted input | Sensitive access | External action | Gate |
 |---------|:---:|:---:|:---:|------|
@@ -852,46 +453,29 @@ A session register for a small team:
 | Triage public issues | yes | no | draft comment only | A person posts the comment |
 | Release | no | yes | yes | Human approval, scoped token ([2.11](#pattern-211--agent-identity-and-delegation)) |
 
-If a session needs all three, split it: one session reads the input and writes a plain summary; a second
-session, with the credentials, reads only the summary.
+A rinse session has read access to the source, no write access to the target project, no credentials and no
+network beyond the source. If a session needs all three properties, split it: one session reads the input and
+writes a plain summary; a second session, with the credentials, reads only the summary.
 
 ### Bindings
 
-**Claude Code.** Compose the session from documented settings:
+**Claude Code.** For a read-only rinse session, add `permissions.deny` entries for `Edit` (which also covers
+`Write`; [permissions](https://code.claude.com/docs/en/permissions)) and `Bash`. If you allow `Bash` for read-only
+commands, limit `sandbox.network.allowedDomains` to the source host; that allowlist covers shell commands only,
+so also deny `WebFetch` or restrict it with a rule such as
+`WebFetch(domain:example.com)`. Turn auto memory off for the session ([Pattern
+2.8](#pattern-28--compound-engineering)). Credential and MCP server keys are in [Pattern
+2.9](#pattern-29--contain-before-you-relax) and [Pattern 2.12](#pattern-212--skill-plugin-and-mcp-supply-chain).
 
-- Read-only rinse session: `permissions.deny` entries for `Edit` (which also covers `Write`) and `Bash`. If you
-  allow `Bash` for read-only commands, limit `sandbox.network.allowedDomains` to the source host. That allowlist
-  covers shell commands only, so in either case deny `WebFetch` or restrict it to the source domain with a
-  permission rule such as `WebFetch(domain:example.com)`.
-- No credentials: do not set them in the environment; use `sandbox.credentials` entries with mode `deny`
-  ([Pattern 2.9](#pattern-29--contain-before-you-relax)).
-- MCP servers are session inputs and capabilities. Restrict them with `allowedMcpServers` and
-  `deniedMcpServers`, and make the managed list the only one with `allowManagedMcpServersOnly` ([Pattern
-  2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)).
-- Unattended sessions: `permissions.denyInsteadOfPrompting`.
-
-**Another harness.** Look for per-session tool allowlists, a read-only or plan mode that is enforced and not
-advisory, and per-session network policy. If a harness cannot enforce them, run that session type in a
-separate container with only the access the row of the register allows.
-
-**No harness: CI only.** Run untrusted-input sessions in a CI job with no secrets and a read-only checkout
-token. Run the credentialed job as a separate job that consumes only the first job's reviewed output.
+**No harness: CI only.** Run untrusted-input sessions in a CI job with no secrets and a read-only checkout token.
+Run the credentialed job separately, consuming only the first job's reviewed output.
 
 ### Anti-Pattern
 
 - One long-lived session that reads the issue tracker, holds a deploy token and can push.
 - Giving a session every tool "in case". Each tool is capability an injected instruction can use.
-- Asking the model to refuse injected instructions, as the only control. A deterministic gate holds; a prompt
-  reduces risk.
+- Asking the model to refuse injected instructions, as the only control.
 - Letting a rinse session read from or write into the target project.
-
-### Cross-References
-
-- [Pattern 2.9 — Contain Before You Relax](#pattern-29--contain-before-you-relax) — the boundary the session runs in
-- [Pattern 2.12 — Skill, Plugin and MCP Supply Chain](#pattern-212--skill-plugin-and-mcp-supply-chain) — tool
-  inputs that carry untrusted content
-- [Design rinsing](L1-feedback-loops.md) — the read-only rinse session
-- [Threat model](cross-cutting/threat-model.md) — untrusted entry points
 
 **Evidence:** Strong — independent sources agree on the design rule; no study of its use by teams (SG-1, SG-2,
 SG-3, SG-16)
@@ -902,62 +486,55 @@ SG-3, SG-16)
 
 ### Problem
 
-Agents usually act with the developer's own keys. Logs then show the developer, and nobody can tell which
-commits, API calls or deploys came from an agent. A leaked key grants everything the developer can do, for as
-long as the key lives.
-
-This pattern is **Partial**. The direction (short-lived, narrowly scoped, audience-bound credentials) is well
-supported by standards drafts and vendor guidance. Agent-specific identity is still being drafted ([PL-5,
-PL-6](references/sources.md)), and no source evaluates it in coding-agent teams.
+Agents usually act with the developer's own keys. Logs then show the developer, and nobody can tell which commits,
+API calls or deploys came from an agent. A leaked key grants everything the developer can do, for as long as the
+key lives. Agent-specific identity standards are drafts ([PL-5, PL-6](references/sources.md)).
 
 ### Solution
 
-Give each agent, or each agent session, its own identity and its own credentials. Record who the agent acted for.
+Give each agent, or each agent session, its own identity and credentials, and record who it acted for.
 
 **Contract.**
 
-1. **Own identity.** An agent has an identifier distinct from any person. Its actions appear under that identifier.
+1. **Own identity.** An agent has an identifier distinct from any person, and its actions appear under it.
 2. **Short-lived credentials.** Tokens expire in minutes or hours and are issued per session or per task.
-3. **Narrow scope and audience.** A token names the one service it works for and the actions it allows. A token
-   for service A is rejected by service B.
-4. **Delegation is visible.** Each action records "agent X for person Y": the agent identifier, the requesting
-   person, and the task. Prefer exchanging a person's token for a narrower agent token over reusing the person's
-   token. OAuth token exchange defines this pattern ([PL-7](references/sources.md)).
-5. **No passthrough.** A tool or server never forwards a token it received to another service. The MCP
-   authorization specification and security guidance forbid this ([PL-8, SG-14](references/sources.md)).
+3. **Narrow scope and audience.** A token names the one service it works for and the actions it allows.
+4. **Delegation is visible.** Each action records the agent, the requesting person and the task. Prefer
+   exchanging a person's token for a narrower agent token, as OAuth token exchange defines
+   ([PL-7](references/sources.md)), over reusing the person's token.
+5. **No passthrough.** A tool or server never forwards a token it received to another service ([PL-8,
+   SG-14](references/sources.md)).
 6. **Credentials stay outside the boundary** ([Pattern 2.9](#pattern-29--contain-before-you-relax)). An issuer
    outside the agent's reach mints them.
 
-Microsoft's agent identity guidance adds a **sponsor**: a named person accountable for each agent identity,
-who answers for it and renews or retires it ([PO-10, PO-11](references/sources.md)). [Pattern
-4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) records sponsors.
+Microsoft's agent identity guidance adds a **sponsor**: a named person accountable for each agent identity, who
+renews or retires it ([PO-10, PO-11](references/sources.md)). The register records sponsors ([Pattern
+A.1](earned-autonomy.md#pattern-a1--autonomy-register)).
 
 ### In Practice
 
-A coding agent that opens pull requests:
-
-- The CI or launcher mints a token valid for one hour, scoped to one repository, with permission to push to
-  branches and open pull requests, and no permission to merge or change settings.
-- Commits carry a trailer naming the agent and the requester. Pull requests are opened by the agent identity,
-  and the requester is the author of record ([Pattern
-  4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)).
-- Branch protection stops the agent identity from merging. A person other than the requester approves ([Pattern
-  2.13](#pattern-213--risk-tiered-review)).
+A coding agent that opens pull requests: the CI or launcher mints a one-hour token scoped to one repository, able
+to push branches and open pull requests, not to change settings. The requester is the commit author and author of
+record, and a `Co-Authored-By:` trailer names the agent ([Pattern
+4.7](L4-standards-measurement.md#pattern-47--author-of-record)). The agent identity never
+approves; it merges only at A4 and above, and only the classes the [risk
+model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) lists for its grant.
 
 ### Bindings
 
-**Claude Code.** Claude Code does not issue identities. Supply them from outside: a launcher script or CI job
-that mints the short-lived token, passes it to the session at start, and keeps long-lived keys out of the
-environment. Mark `sandbox.credentials` entries for long-lived files and variables with mode `deny` ([Pattern
-2.9](#pattern-29--contain-before-you-relax)). Put the "agent for person" trailer in the instruction file as a
-rule and check it in CI, because the model may omit it.
+**Claude Code** does not issue identities. A launcher script or CI job mints the short-lived token, passes it to
+the session at start, and keeps long-lived keys out (`sandbox.credentials` in [Pattern
+2.9](#pattern-29--contain-before-you-relax)). Put the `Co-Authored-By:` trailer rule ([Pattern
+4.7](L4-standards-measurement.md#pattern-47--author-of-record)) in the instruction file. The model may omit it, and no
+job in this library checks for it, so a commit without it under a person identity passes `autonomy check` as human.
 
-**Another harness.** Look for a way to inject credentials per session from a secret manager, and a trace or
-log that records the session and the requesting user. If the harness cannot, wrap the launch in a script that
-does both.
+A Claude Code cloud scheduled task acts through its owner's connected GitHub identity and connectors: its commits
+and pull requests carry the owner's GitHub user, on `claude/`-prefixed branches
+([scheduled tasks](https://code.claude.com/docs/en/routines)). For an unattended workflow, run it from CI under a
+dedicated app identity, or require a reviewer other than the owner on every branch it can push to.
 
-**No harness: CI only.** Use the CI platform's workload identity (OIDC tokens issued per job) to get
-short-lived cloud credentials. Run agent jobs under a dedicated service account, separate from any person.
+**No harness: CI only.** Use the CI platform's workload identity (OIDC tokens per job) for short-lived cloud
+credentials, under a service account separate from any person.
 
 ### Anti-Pattern
 
@@ -966,17 +543,8 @@ short-lived cloud credentials. Run agent jobs under a dedicated service account,
 - Logs that record "deploy by service account" with no link to the requesting person.
 - Forwarding a user's token through an MCP server to a downstream API.
 
-### Cross-References
-
-- [Pattern 2.9 — Contain Before You Relax](#pattern-29--contain-before-you-relax) — credentials outside the boundary
-- [Pattern 2.13 — Risk-Tiered Review](#pattern-213--risk-tiered-review) — who may approve
-- [Pattern 4.7 — Author of Record and Agent
-  Register](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) — owner and sponsor per
-  agent
-- [Threat model](cross-cutting/threat-model.md) — secrets
-
-**Evidence:** Partial — strong direction in standards drafts and vendor guidance; no evaluation in
-coding-agent teams (PL-5, PL-6, PL-7, PL-8, PO-10, PO-11, SG-14, SG-20)
+**Evidence:** Partial — strong direction in standards drafts and vendor guidance; no evaluation in coding-agent
+teams (PL-5, PL-6, PL-7, PL-8, PO-10, PO-11, SG-14, SG-20)
 
 ---
 
@@ -984,95 +552,66 @@ coding-agent teams (PL-5, PL-6, PL-7, PL-8, PO-10, PO-11, SG-14, SG-20)
 
 ### Problem
 
-Skills, plugins, hooks and MCP servers run with the agent's privileges. A skill is instructions the model
-follows. A plugin can bundle skills, hooks and servers. An MCP server is code that runs on the machine and
-returns text the model reads. Installing one is adding a dependency that can read files, run commands and
-steer the agent.
+Skills, plugins, hooks and MCP servers run with the agent's privileges. A skill is instructions the model follows;
+a plugin can bundle skills, hooks and servers; an MCP server is code on the machine that returns text the model
+reads. Installing one adds a dependency that can read files, run commands and steer the agent.
 
-The threat is documented. Snyk scanned public skills and reported that 13.4% of 3,984 had a critical issue
-([SG-28](references/sources.md)). That is a vendor's own scan. An MCP email server was taken over in an update
-and began copying mail to an attacker ([SG-29](references/sources.md)). The Thoughtworks Technology Radar has
-entries on agent plugin marketplaces and on agent skills ([IS-13](references/sources.md)).
-
-This pattern is **Strong** as a statement of the threat. The inspection practice below has less evidence behind it.
+Snyk scanned 3,984 skills from ClawHub and skills.sh, reported that 13.4% had a critical issue, and confirmed 76
+as malicious on human review ([SG-28](references/sources.md)); that is a vendor's own scan. An unofficial npm
+package that imitated Postmark's MCP email server shipped 15 clean versions, then added a line in version 1.0.16
+that blind-copied every sent email to an attacker ([SG-29](references/sources.md)). The Thoughtworks Technology
+Radar has entries on agent plugin marketplaces and on agent skills ([IS-13](references/sources.md)).
 
 ### Solution
 
 Treat every skill, plugin, hook pack and MCP server as a third-party dependency.
 
-**Contract.**
-
 1. **Allowlist.** A written list of approved sources and items. Anything else is not installed.
 2. **Pin.** Install a specific version or commit hash, not a moving branch or `latest`.
-3. **Read before install.** A person reads the instruction text and the code or scripts. Skills are prose that
-   steers the model, so read them as you would a shell script.
-4. **Review updates as diffs.** An update is a new change. Read the diff before accepting it.
-5. **Treat fetched content as untrusted.** What a server returns is input ([Pattern
-   2.10](#pattern-210--least-agency-and-session-composition)).
-6. **Record owner and provenance.** Each item has a named owner, a source and a review date in the register
-   ([Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)).
+3. **Read before install.** A person reads the instruction text and the code. Read a skill as you would a shell
+   script.
+4. **Review updates as diffs.**
+5. **Treat fetched content as untrusted** ([Pattern 2.10](#pattern-210--least-agency-and-session-composition)).
+6. **Record owner and provenance.** Each item has an owner, a source, a pinned version and a review date in the
+   allowlist. Agent workflows are listed separately, in the register `.autonomy.yaml` ([Pattern
+   A.1](earned-autonomy.md#pattern-a1--autonomy-register)).
 7. **Enforce outside the agent.** The list lives where the agent cannot edit it.
 
 ### In Practice
 
-Apply the contract to this library's own recommendations. The documents here point to rig, superpowers, the
-compound-engineering plugin, RTK and jcodemunch. Each is a dependency for your project:
-
-| Item | Runs as | Review before install | Note |
-|------|---------|----------------------|------|
-| rig | Hooks, skills, agents | Hook scripts and settings it writes | Written by this library's author |
-| superpowers | Skills and plugin | Skill text; any hook or script it adds | |
-| compound-engineering plugin | Skills, commands, agents | Skill text; where `/ce:compound` writes | Its output feeds later prompts ([Pattern 2.8](#pattern-28--compound-engineering)) |
-| RTK | A command proxy on your shell commands | Source and what it rewrites | Sees every command it proxies |
-| jcodemunch | An MCP server that indexes your repository | Source; what it stores and sends | Licensed for non-commercial use; commercial use needs a paid licence ([README at github.com/jgravelle/jcodemunch-mcp](https://github.com/jgravelle/jcodemunch-mcp)). Read the licence before using it at work |
-
-Where this library tells you to install any of these, the instruction assumes you have done this review.
+This library's own recommendations are dependencies too. rig, superpowers, the compound-engineering plugin,
+[RTK](https://github.com/rtk-ai/rtk) and [jcodemunch](https://github.com/jgravelle/jcodemunch-mcp) run with your
+agent's privileges; review each with the steps above before installing. jcodemunch's README states a
+non-commercial license; commercial use needs a paid license.
 
 ### Bindings
 
-**Claude Code.** Documented settings that enforce the list:
+**Claude Code.**
 
-- `strictKnownMarketplaces` (managed settings only) allowlists the marketplace sources users can add.
-- `enabledPlugins` turns plugins on or off per scope; `extraKnownMarketplaces` registers marketplaces for a
-  repository or organization.
-- `allowedMcpServers` and `deniedMcpServers` allow or block servers by URL, command or name.
-  `allowManagedMcpServersOnly` (managed settings only) makes the managed list the only one.
-- `allowManagedHooksOnly` (managed settings) blocks user, project, local and plugin hooks, except plugins
-  force-enabled in managed `enabledPlugins`.
-- `allowManagedPermissionRulesOnly` limits permission rules to managed ones.
+- [`strictKnownMarketplaces`](https://code.claude.com/docs/en/settings-reference#strictknownmarketplaces) (managed only) allowlists the marketplace sources users can add.
+- [`enabledPlugins`](https://code.claude.com/docs/en/settings-reference#enabledplugins) turns plugins on or off per scope; [`extraKnownMarketplaces`](https://code.claude.com/docs/en/settings-reference#extraknownmarketplaces) registers marketplaces.
+- [`allowedMcpServers`](https://code.claude.com/docs/en/settings-reference#allowedmcpservers) and [`deniedMcpServers`](https://code.claude.com/docs/en/settings-reference#deniedmcpservers) allow or block servers by URL, command or
+  name; [`allowManagedMcpServersOnly`](https://code.claude.com/docs/en/settings-reference#allowmanagedmcpserversonly) (managed only) makes the managed list the only one.
+- [`allowManagedHooksOnly`](https://code.claude.com/docs/en/settings-reference#allowmanagedhooksonly) (managed only) blocks user, project, local and plugin hooks, except hooks from
+  plugins force-enabled in managed `enabledPlugins` ([hooks reference](https://code.claude.com/docs/en/hooks)).
+- [`allowManagedPermissionRulesOnly`](https://code.claude.com/docs/en/settings-reference#allowmanagedpermissionrulesonly) (managed only) limits permission rules to managed ones.
 
-Project `.claude/settings.json` is a file the agent can edit. A repository can therefore propose a plugin or
-server, and managed settings decide whether it installs. Pin by naming a commit or version in the source you
-install from.
+Project `.claude/settings.json` is a file the agent can edit, so a repository can propose a plugin or server and
+managed settings decide whether it installs.
 
-**Another harness.** Look for an allowlist of tool servers and skill sources that an administrator controls, a
-way to disable user-installed extensions, and version pinning in the install source. Where these are missing,
-install through a package manager or vendored directory that CI checks.
-
-**No harness: CI only.** Vendor skills and plugins into the repository at a pinned commit, so every update is
-a pull request diff. Add a CODEOWNERS entry for the vendored directory and a CI job that fails if installed
-versions differ from the pinned list.
+**No harness: CI only.** Vendor skills and plugins into the repository at a pinned commit, so every update is a
+pull request diff, with a CODEOWNERS entry for the directory and a CI job that fails if installed versions differ
+from the pinned list.
 
 ### Anti-Pattern
 
 - Installing from a README one-liner without reading what it adds.
 - Following a moving branch, so an update arrives unreviewed.
 - Letting the agent install its own skills and servers.
-- A marketplace allowlist set in a file the agent can edit.
-- No record of who owns each installed item.
+- A marketplace allowlist in a file the agent can edit.
 
-### Cross-References
-
-- [Pattern 2.10 — Least Agency and Session Composition](#pattern-210--least-agency-and-session-composition) —
-  what a server's output can do
-- [Pattern 2.8 — Compound Engineering](#pattern-28--compound-engineering) — learnings as an untrusted source
-- [Pattern 4.7 — Author of Record and Agent
-  Register](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) — owner and provenance
-  per item
-- [Threat model](cross-cutting/threat-model.md) — dependencies and MCP output
-
-**Evidence:** Partial — the threat is Strong (vendor scan and a reported incident), prevalence is Partial, and
-the inspection practice is Thin (no study of review practice) (SG-28, SG-29, IS-13)
+**Evidence:** Partial — the threat is documented by a vendor scan and a reported incident; no study measures review
+practice (SG-28, SG-29, IS-13)
 
 ---
 
@@ -1080,66 +619,70 @@ the inspection practice is Thin (no study of review practice) (SG-28, SG-29, IS-
 
 ### Problem
 
-Uniform approval produces approval fatigue. When every command asks for confirmation, people approve without
-reading, and the prompt stops being a control. Thoughtworks calls review that exists without real oversight
-"human-in-the-loop theater" ([OM-18](references/sources.md)). Analyst commentary reported by ITPro says one
-governance setting for all agents fails in practice ([SG-26](references/sources.md)). Anthropic describes an
-auto mode that uses a classifier to reduce prompts ([SG-9](references/sources.md)). A model's approval is not
-a person's approval, and a requester who approves their own change adds nothing.
-
-This pattern is **Partial**: one vendor's telemetry, one company's review design and analyst corroboration
-([AN-29](references/sources.md)).
+Uniform approval produces approval fatigue: people approve without reading, and the prompt stops being a control.
+Thoughtworks calls review without real oversight "human-in-the-loop theater" ([OM-18](references/sources.md)).
+Analyst commentary reported by ITPro says one governance setting for all agents fails in practice
+([SG-26](references/sources.md)). A model's approval is not a person's approval, and a requester who approves
+their own change adds nothing: GitHub does not count the requester's approval of its agent's pull request
+([PO-20](references/sources.md)), and Stripe's engineers request review from another engineer
+([PL-17](references/sources.md)).
 
 ### Solution
 
-Tier changes and actions by reversibility and blast radius. Spend human attention where mistakes are costly.
+Tier changes and actions by reversibility and blast radius, and spend human attention where mistakes are costly.
+The [risk model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) gives each class its review tier, and
+the [approvals table](../README.md#how-the-scales-fit-together) states what each tier needs. Low tier is R0-R2 at
+B0. An R2 change merges with no person only at A5, on named paths.
 
-**Contract.**
+Below A4, which includes every workflow in a repository capped below C4, a person merges at every tier, and every
+tier needs an approval from someone other than the requester. One person working alone meets none of them: the
+required checks are the only independent control, and high-tier changes stay human-made ([Path
+E](cross-cutting/adoption-guide.md#path-e-one-person-attended-sessions)). At A4 and above, low-tier changes merge
+on required checks alone through the CODEOWNERS-scoped ruleset in the [risk
+model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model). Its setting of 0 required approvals also removes
+the platform approval for medium-tier changes, for low-tier changes from workflows below A4 and for human pull
+requests; the person who merges them holds that approval.
 
-| Tier | Examples | Control |
-|------|----------|---------|
-| Low | Reversible, local, covered by tests: a docs edit, a refactor behind passing stack tests | Automated checks only |
-| Medium | Reversible but shared: a normal feature change | One human reviewer who is not the requester, plus checks |
-| High | Irreversible or externally visible: migrations, permission changes, payments, deploys, publishing | A second human approver, a scoped credential, and a downstream control |
+Rules at every tier:
 
-Rules that hold at every tier:
-
-1. **The requester cannot approve.** Approval comes from someone other than the person who asked the agent for
-   the change.
-2. **An agent's approval never counts as human approval.** A review agent can add findings. It cannot satisfy a
-   rule that needs a person.
-3. **Human approval is for a short named list.** Name the irreversible and externally visible actions that need a
-   person. Everything else is checked by machines.
-4. **Measure the approve rate.** If people approve nearly every prompt, the prompt is not a control. Remove it or
-   move the rule to a boundary.
+1. **The requester cannot approve.**
+2. **An agent's approval never counts, and neither does the agent's identity.** A review agent can add findings.
+3. **Approval prompts are for a short named list** of irreversible and externally visible actions. Machines check
+   everything else in the session; the tier and grant set the pull request review.
+4. **Measure the approve rate.** A prompt people approve nearly every time is not a control. Remove it or move
+   the rule to a boundary. Count the `claude_code.tool_decision` events a person made at a prompt, per tool
+   ([Pattern 2.3](#pattern-23--hook-automation)).
 5. **Review depth follows test coverage.** A change covered by a [stack test](L1-patterns/1.1-stack-tests.md) of
-   the journey it touches needs less reading than one that is not.
+   the journey it touches needs less reading.
 
 ### In Practice
 
-- Write the high-tier list in the instruction file: "migrations, `.github/workflows/`, permission or role
-  changes, release publishing".
-- Map the list to paths and commands, so the tier is decided by rule, not by judgement in the moment.
-- Review the approve rate for each prompt monthly. A prompt that people approve almost every time is a candidate
-  for removal or for a boundary.
+Write the high-tier list in the instruction file ([Pattern
+0.4](L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution)): "migrations,
+`.github/workflows/`, permission or role changes, release publishing", mapped to paths and commands, so a rule
+decides the tier. Review the approve rate for each prompt monthly. At review, check:
+
+- The author of record is named and is not the approver ([Pattern
+  4.7](L4-standards-measurement.md#pattern-47--author-of-record)).
+- A new or updated skill, plugin, hook or MCP server is pinned and on the allowlist ([Pattern
+  2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)).
 
 ### Bindings
 
-**Claude Code.** Use `permissions.ask` for the named actions (`Bash(git push *)`, `Bash(npm publish *)`),
-`permissions.deny` for actions nobody should do, and `permissions.denyInsteadOfPrompting` (user or managed
-settings; Claude Code v2.1.319 or later) for unattended sessions. Auto mode uses a model-based classifier to
-reduce prompts ([SG-9](references/sources.md)). Treat its decisions as automation, not as human approval.
-Because these rules match strings, put the real control for high-tier actions downstream: protected branches
-and scoped tokens ([Pattern 2.11](#pattern-211--agent-identity-and-delegation)).
+**Claude Code.** Use `permissions.ask` for the named actions (`Bash(git push *)`, `Bash(npm publish *)`) and
+`permissions.deny` for actions nobody should do. These rules match strings, so put the real control for
+high-tier actions downstream: protected branches and scoped tokens ([Pattern
+2.11](#pattern-211--agent-identity-and-delegation)).
 
-**Another harness.** Look for an approval policy that is configurable per tool or action, a way to run without
-prompts inside a sandbox, and a log of approvals. Keep the tier list in the instruction file so it is
-harness-independent.
+Auto mode uses a classifier model to reduce prompts ([SG-9](references/sources.md)); treat its decisions as
+automation, not human approval. By default it blocks merging a pull request no human has approved, production
+deploys and migrations, and after 3 blocks in a row or 20 in total it pauses and Claude Code resumes prompting
+([permission modes](https://code.claude.com/docs/en/permission-modes)).
 
-**No harness: CI only.** Branch protection holds the tiers: required status checks for low, one required
-non-author review for medium, CODEOWNERS plus two approvals for high-tier paths. Enable "Require approval of
-the most recent reviewable push", so that someone other than the pusher approves the last commit. Add "Dismiss
-stale pull request approvals when new commits are pushed", so that each new commit needs fresh approval.
+**No harness: CI only.** A ruleset sees paths, not classes; the GitHub ruleset is in the [risk
+model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model). The repair gate classifies repair changes; nothing
+else does. No CI check in this library compares a pull request's files with the low-tier paths, so for an A4
+workflow add one as a required check.
 
 ### Anti-Pattern
 
@@ -1147,39 +690,15 @@ stale pull request approvals when new commits are pushed", so that each new comm
 - A review agent's "approved" counted toward required human reviews.
 - The requester merging their own agent-written change.
 - A high-tier list that lives only in someone's head.
-- Never measuring how often prompts are approved.
 
-### Cross-References
+The optional skill chain scales to these tiers ([Pattern 2.1](#pattern-21--skill-overlay-architecture)).
 
-- [Pattern 2.2 — The Skill Chain](#pattern-22--the-skill-chain) — the scaling-by-risk table uses the same tiers
-- [Pattern 2.9 — Contain Before You Relax](#pattern-29--contain-before-you-relax) — approvals inside a boundary
-- [Pattern 2.11 — Agent Identity and Delegation](#pattern-211--agent-identity-and-delegation) — downstream controls
-- [Pattern 4.7 — Author of Record and Agent
-  Register](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) — who answers for the
-  change
-
-**Evidence:** Partial — vendor telemetry and design, analyst corroboration (SG-9, SG-26, OM-18, AN-29)
+**Evidence:** Partial — vendor telemetry and design, a platform rule, one company's practice and analyst
+corroboration. Anthropic's review design (AN-29) tiers by risk like this pattern but counts the requester as one
+of the required reviewers; this library does not (SG-9, SG-26, OM-18, PO-20, PL-17, AN-29)
 
 ---
 
-## Summary
-
-Put each rule at the weakest enforcement point that can hold it. Prose carries guidance. Hooks apply deterministic policy
-inside the harness: PreToolUse can prevent a structured violation, PostToolUse detects after the fact. CI holds
-invariants on the merge path. The sandbox, credential scope and downstream authorisation hold what must never
-happen. Skills overlay project rules on base capabilities; the skill chain and phase tracker are optional and
-scale with risk. Zero-defect tolerance keeps feedback unambiguous, and compound engineering feeds reviewed
-learnings back into context. Containment comes first: start the agent inside a boundary and relax approvals only
-inside it. Each session holds at most two of untrusted input, sensitive access and external action. Agents get their
-own short-lived credentials, skills and servers are vetted dependencies, and human review is tiered by risk.
-
-## Practitioner Insight
-
-> "Spend a lot of time planning out the work the agent will do."
-> — Peter Steinberger, creator of OpenClaw
-
-Planning is worth its cost when the change is large or risky. The plan becomes the contract that verification and review check against; for small reversible changes, a short plan or none is proportionate.
-
----
-
-**Previous:** [L1: Closed Loop Design and Verification](L1-feedback-loops.md) | **Next:** [L3: Optimization (Optional)](L3-optimization.md) | [Back to Overview](../README.md)
+**Previous:** [L1: Closed Loop Design and Verification](L1-feedback-loops.md) | **Next:** [L4: Standards and
+Measurement](L4-standards-measurement.md) ([L3: Optimization](L3-optimization.md) is optional) | [Back to
+Overview](../README.md)

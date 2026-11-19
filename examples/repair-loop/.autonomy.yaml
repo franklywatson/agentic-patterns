@@ -1,6 +1,6 @@
 # Autonomy register for the repair-loop example. Owner, sponsor, identity and dates below are example
 # values for illustration, not real people or accounts. Schema: examples/autonomy/schema/autonomy.schema.json;
-# design: docs/refresh/reviews/review-autonomy.md (pattern A.1). The cap check needs a census profile
+# pattern: docs/earned-autonomy.md (Pattern A.1). The cap check needs a census profile
 # that this example does not ship. The repair workflow is granted
 # A3: changes pass the required checks before a person sees them, and a person merges.
 # The example shows the gate. It does not grant A4.
@@ -42,6 +42,6 @@ workflows:
     stop:
       mechanism: "engage the stop switch in the breaker state; revoke the app installation token"
       authority: [team-platform, "@oncall"]
-      last_tested: 2026-11-18      # exercised by stack test 05
+      last_tested: 2026-11-18      # example value; stack test 05 exercises the stop switch in the breaker state
     review_date: 2027-02-18
     stop_rule: "retire if fewer than 2 confirmed repairs in 90 days, or any repair is reverted twice"

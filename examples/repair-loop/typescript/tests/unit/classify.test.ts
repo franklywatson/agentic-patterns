@@ -114,3 +114,69 @@ describe('classify', () => {
     expect(classify(parseDiff(text), rules)).toMatchObject({ reversibility: 'R2', blast: 'B1' });
   });
 });
+
+describe('parseDiff reads names from headers, git lines and binary lines (r10 C2)', () => {
+  const paths = (lines: string[]) => parseDiff(`${lines.join('\n')}\n`).map((f) => (f.unparsed ? `unparsed: ${f.path}` : `${f.status} ${f.path}`));
+
+  test('a Binary files line splits on the " and " that names one path on both sides', () => {
+    expect(paths(['Binary files base/tests/a and X/app/y.bin and cand/tests/a and X/app/y.bin differ'])).toEqual(['modified tests/a and X/app/y.bin']);
+    expect(paths(['Binary files /dev/null and b/app/a and b.bin differ'])).toEqual(['modified app/a and b.bin']);
+  });
+
+  test('a Binary files line with no single reading is unparsed', () => {
+    expect(paths(['Binary files base/app/a and cand/b and base/app/c differ'])).toEqual(['unparsed: Binary files base/app/a and cand/b and base/app/c differ']);
+    expect(paths(['Binary files /dev/null and b/x and /dev/null differ'])).toEqual(['unparsed: Binary files /dev/null and b/x and /dev/null differ']);
+  });
+
+  test('a header with a tab inside the name is unparsed; a quoted header is read with C escapes', () => {
+    expect(paths(['--- base/app/a\tb.ts\t2026-01-01', '+++ cand/app/a\tb.ts\t2026-01-01', '@@ -0,0 +1 @@', '+x'])).toEqual(['unparsed: +++ cand/app/a\tb.ts\t2026-01-01']);
+    expect(paths(['--- /dev/null', '+++ "b/app/caf\\303\\251\\tx.ts"', '@@ -0,0 +1 @@', '+x'])).toEqual(['added app/café\tx.ts']);
+    expect(paths(['--- /dev/null', '+++ "b/app/bad\\q.ts"', '@@ -0,0 +1 @@', '+x'])).toEqual(['unparsed: +++ "b/app/bad\\q.ts"']);
+  });
+
+  test('a git rename lists both paths, from the rename lines', () => {
+    expect(paths(['diff --git a/tests/x.ts b/app/x.ts', 'similarity index 100%', 'rename from tests/x.ts', 'rename to app/x.ts'])).toEqual(['modified app/x.ts', 'deleted tests/x.ts']);
+    expect(paths(['diff --git a/tests/x.ts b/app/x.ts', 'rename from tests/x.ts', 'rename to app/x.ts', '--- a/tests/x.ts', '+++ b/app/x.ts', '@@ -1 +1 @@', '-a', '+b'])).toEqual(['modified app/x.ts', 'deleted tests/x.ts']);
+  });
+
+  test('a git diff header with spaces is read when both sides agree; a GIT binary patch block is skipped', () => {
+    expect(paths(['diff --git a/app/a b.bin b/app/a b.bin', 'new file mode 100644', 'index 0000000..1111111', 'GIT binary patch', 'literal 4', 'LcmZQzWMT#Y01f~L', '', 'literal 0', 'HcmV?d00001', '', 'diff --git a/app/c.ts b/app/c.ts', '--- a/app/c.ts', '+++ b/app/c.ts', '@@ -1 +1 @@', '-a', '+b'])).toEqual(['modified app/a b.bin', 'modified app/c.ts']);
+  });
+
+  test('a line diff -r prints for a type change is unparsed', () => {
+    expect(paths(['File base/app/x is a regular file while file cand/app/x is a directory'])).toEqual(['unparsed: File base/app/x is a regular file while file cand/app/x is a directory']);
+  });
+
+  test('an unparsed entry classifies as unknown', () => {
+    const c = classify(parseDiff('Binary files base/app/a and cand/b and base/app/c differ\n'), rules);
+    expect([c.reversibility, c.blast]).toEqual(['R4', 'B3']);
+    expect(c.reasons.join('\n')).toContain('cannot be read as one file path');
+  });
+});
+
+describe('instruction and tool-config surfaces at any depth and in any case are medium tier (B1)', () => {
+  test.each([
+    'CLAUDE.md', 'app/CLAUDE.md', 'CLAUDE.local.md', 'app/claude.LOCAL.md', 'AGENTS.md', 'docs/agents.md', 'GEMINI.md', 'app/Gemini.md',
+    '.claude/rules/x.md', 'app/.claude/skills/x/SKILL.md', 'app/.claude/skills/x/run.sh', '.claude/agents/r.md', '.claude/commands/c.md',
+    '.mcp.json', 'app/.mcp.json',
+  ])('%s is R0/B1', (path) => {
+    const c = classify(parseDiff(makeDiff(path, ['text'])), rules);
+    expect([c.reversibility, c.blast]).toEqual(['R0', 'B1']);
+  });
+
+  test.each(['.claude/settings.json', '.claude/settings.local.json', 'app/.claude/settings.json', '.claude/hooks/guard.sh', 'app/.claude/hooks/x.sh'])(
+    '%s is high tier (R4/B3)',
+    (path) => {
+      const c = classify(parseDiff(makeDiff(path, ['{}'])), rules);
+      expect([c.reversibility, c.blast]).toEqual(['R4', 'B3']);
+    },
+  );
+});
+
+test('a glob wildcard does not match a line terminator, in either language', () => {
+  for (const path of ['app/src/routes/\rx.ts', 'app/src/routes/x .ts', 'app/src/routes/a\nb.ts']) {
+    expect(globMatch('app/src/routes/**', path)).toBe(false);
+    expect(globMatch('app/src/routes/*', path)).toBe(false);
+  }
+  expect(globMatch('app/src/routes/**', 'app/src/routes/a/b.ts')).toBe(true);
+});

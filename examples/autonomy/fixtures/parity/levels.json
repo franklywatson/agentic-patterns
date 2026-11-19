@@ -1,0 +1,517 @@
+{
+  "description": "Level edge cases shared by the TypeScript and Python level tests, evaluated at `now`. A level is an integer from 1 to 5 (3.0 counts as 3). A capping dimension or grant that is not a level counts as 1; a demotion override that is present but not a level counts as 1.",
+  "now": "2026-11-18T00:00:00Z",
+  "cases": [
+    {
+      "name": "dimension-levels-written-as-floats",
+      "workflow": {
+        "id": "w",
+        "review_date": "2027-02-01",
+        "access_expires": "2027-02-01",
+        "stop": {
+          "last_tested": "2026-11-10"
+        },
+        "granted_level": 4
+      },
+      "profile": {
+        "generated": "2026-11-17T00:00:00Z",
+        "dimensions": {
+          "platform": {
+            "level": 3.0
+          },
+          "governance": {
+            "level": 3.0
+          },
+          "ownership": {
+            "level": 3.0
+          },
+          "measuring": {
+            "level": 3.0
+          }
+        }
+      },
+      "state": null,
+      "expect": {
+        "granted": 4,
+        "cap": 3,
+        "effective": 3
+      }
+    },
+    {
+      "name": "dimension-level-a-fraction",
+      "workflow": {
+        "id": "w",
+        "review_date": "2027-02-01",
+        "access_expires": "2027-02-01",
+        "stop": {
+          "last_tested": "2026-11-10"
+        },
+        "granted_level": 4
+      },
+      "profile": {
+        "generated": "2026-11-17T00:00:00Z",
+        "dimensions": {
+          "platform": {
+            "level": 2.5
+          },
+          "governance": {
+            "level": 2.5
+          },
+          "ownership": {
+            "level": 2.5
+          },
+          "measuring": {
+            "level": 2.5
+          }
+        }
+      },
+      "state": null,
+      "expect": {
+        "granted": 4,
+        "cap": 1,
+        "effective": 1
+      }
+    },
+    {
+      "name": "dimension-level-true",
+      "workflow": {
+        "id": "w",
+        "review_date": "2027-02-01",
+        "access_expires": "2027-02-01",
+        "stop": {
+          "last_tested": "2026-11-10"
+        },
+        "granted_level": 4
+      },
+      "profile": {
+        "generated": "2026-11-17T00:00:00Z",
+        "dimensions": {
+          "platform": {
+            "level": true
+          },
+          "governance": {
+            "level": true
+          },
+          "ownership": {
+            "level": true
+          },
+          "measuring": {
+            "level": true
+          }
+        }
+      },
+      "state": null,
+      "expect": {
+        "granted": 4,
+        "cap": 1,
+        "effective": 1
+      }
+    },
+    {
+      "name": "grant-written-as-a-float",
+      "workflow": {
+        "id": "w",
+        "review_date": "2027-02-01",
+        "access_expires": "2027-02-01",
+        "stop": {
+          "last_tested": "2026-11-10"
+        },
+        "granted_level": 3.0
+      },
+      "profile": {
+        "generated": "2026-11-17T00:00:00Z",
+        "dimensions": {
+          "platform": {
+            "level": 4
+          },
+          "governance": {
+            "level": 4
+          },
+          "ownership": {
+            "level": 4
+          },
+          "measuring": {
+            "level": 4
+          }
+        }
+      },
+      "state": null,
+      "expect": {
+        "granted": 3,
+        "cap": 4,
+        "effective": 3
+      }
+    },
+    {
+      "name": "grant-a-string",
+      "workflow": {
+        "id": "w",
+        "review_date": "2027-02-01",
+        "access_expires": "2027-02-01",
+        "stop": {
+          "last_tested": "2026-11-10"
+        },
+        "granted_level": "4"
+      },
+      "profile": {
+        "generated": "2026-11-17T00:00:00Z",
+        "dimensions": {
+          "platform": {
+            "level": 4
+          },
+          "governance": {
+            "level": 4
+          },
+          "ownership": {
+            "level": 4
+          },
+          "measuring": {
+            "level": 4
+          }
+        }
+      },
+      "state": null,
+      "expect": {
+        "granted": 1,
+        "cap": 4,
+        "effective": 1
+      }
+    },
+    {
+      "name": "grant-null",
+      "workflow": {
+        "id": "w",
+        "review_date": "2027-02-01",
+        "access_expires": "2027-02-01",
+        "stop": {
+          "last_tested": "2026-11-10"
+        },
+        "granted_level": null
+      },
+      "profile": {
+        "generated": "2026-11-17T00:00:00Z",
+        "dimensions": {
+          "platform": {
+            "level": 4
+          },
+          "governance": {
+            "level": 4
+          },
+          "ownership": {
+            "level": 4
+          },
+          "measuring": {
+            "level": 4
+          }
+        }
+      },
+      "state": null,
+      "expect": {
+        "granted": 1,
+        "cap": 4,
+        "effective": 1
+      }
+    },
+    {
+      "name": "grant-missing",
+      "workflow": {
+        "id": "w",
+        "review_date": "2027-02-01",
+        "access_expires": "2027-02-01",
+        "stop": {
+          "last_tested": "2026-11-10"
+        }
+      },
+      "profile": {
+        "generated": "2026-11-17T00:00:00Z",
+        "dimensions": {
+          "platform": {
+            "level": 4
+          },
+          "governance": {
+            "level": 4
+          },
+          "ownership": {
+            "level": 4
+          },
+          "measuring": {
+            "level": 4
+          }
+        }
+      },
+      "state": null,
+      "expect": {
+        "granted": 1,
+        "cap": 4,
+        "effective": 1
+      }
+    },
+    {
+      "name": "grant-a-word",
+      "workflow": {
+        "id": "w",
+        "review_date": "2027-02-01",
+        "access_expires": "2027-02-01",
+        "stop": {
+          "last_tested": "2026-11-10"
+        },
+        "granted_level": "three"
+      },
+      "profile": {
+        "generated": "2026-11-17T00:00:00Z",
+        "dimensions": {
+          "platform": {
+            "level": 4
+          },
+          "governance": {
+            "level": 4
+          },
+          "ownership": {
+            "level": 4
+          },
+          "measuring": {
+            "level": 4
+          }
+        }
+      },
+      "state": null,
+      "expect": {
+        "granted": 1,
+        "cap": 4,
+        "effective": 1
+      }
+    },
+    {
+      "name": "grant-out-of-range",
+      "workflow": {
+        "id": "w",
+        "review_date": "2027-02-01",
+        "access_expires": "2027-02-01",
+        "stop": {
+          "last_tested": "2026-11-10"
+        },
+        "granted_level": 7
+      },
+      "profile": {
+        "generated": "2026-11-17T00:00:00Z",
+        "dimensions": {
+          "platform": {
+            "level": 4
+          },
+          "governance": {
+            "level": 4
+          },
+          "ownership": {
+            "level": 4
+          },
+          "measuring": {
+            "level": 4
+          }
+        }
+      },
+      "state": null,
+      "expect": {
+        "granted": 1,
+        "cap": 4,
+        "effective": 1
+      }
+    },
+    {
+      "name": "grant-true",
+      "workflow": {
+        "id": "w",
+        "review_date": "2027-02-01",
+        "access_expires": "2027-02-01",
+        "stop": {
+          "last_tested": "2026-11-10"
+        },
+        "granted_level": true
+      },
+      "profile": {
+        "generated": "2026-11-17T00:00:00Z",
+        "dimensions": {
+          "platform": {
+            "level": 4
+          },
+          "governance": {
+            "level": 4
+          },
+          "ownership": {
+            "level": 4
+          },
+          "measuring": {
+            "level": 4
+          }
+        }
+      },
+      "state": null,
+      "expect": {
+        "granted": 1,
+        "cap": 4,
+        "effective": 1
+      }
+    },
+    {
+      "name": "demotion-written-as-a-float",
+      "workflow": {
+        "id": "w",
+        "review_date": "2027-02-01",
+        "access_expires": "2027-02-01",
+        "stop": {
+          "last_tested": "2026-11-10"
+        },
+        "granted_level": 4
+      },
+      "profile": {
+        "generated": "2026-11-17T00:00:00Z",
+        "dimensions": {
+          "platform": {
+            "level": 4
+          },
+          "governance": {
+            "level": 4
+          },
+          "ownership": {
+            "level": 4
+          },
+          "measuring": {
+            "level": 4
+          }
+        }
+      },
+      "state": {
+        "workflows": {
+          "w": {
+            "demotion_override": 2.0
+          }
+        }
+      },
+      "expect": {
+        "granted": 4,
+        "cap": 4,
+        "effective": 2
+      }
+    },
+    {
+      "name": "demotion-not-a-level",
+      "workflow": {
+        "id": "w",
+        "review_date": "2027-02-01",
+        "access_expires": "2027-02-01",
+        "stop": {
+          "last_tested": "2026-11-10"
+        },
+        "granted_level": 4
+      },
+      "profile": {
+        "generated": "2026-11-17T00:00:00Z",
+        "dimensions": {
+          "platform": {
+            "level": 4
+          },
+          "governance": {
+            "level": 4
+          },
+          "ownership": {
+            "level": 4
+          },
+          "measuring": {
+            "level": 4
+          }
+        }
+      },
+      "state": {
+        "workflows": {
+          "w": {
+            "demotion_override": "x"
+          }
+        }
+      },
+      "expect": {
+        "granted": 4,
+        "cap": 4,
+        "effective": 1
+      }
+    },
+    {
+      "name": "demotion-null",
+      "workflow": {
+        "id": "w",
+        "review_date": "2027-02-01",
+        "access_expires": "2027-02-01",
+        "stop": {
+          "last_tested": "2026-11-10"
+        },
+        "granted_level": 4
+      },
+      "profile": {
+        "generated": "2026-11-17T00:00:00Z",
+        "dimensions": {
+          "platform": {
+            "level": 4
+          },
+          "governance": {
+            "level": 4
+          },
+          "ownership": {
+            "level": 4
+          },
+          "measuring": {
+            "level": 4
+          }
+        }
+      },
+      "state": {
+        "workflows": {
+          "w": {
+            "demotion_override": null
+          }
+        }
+      },
+      "expect": {
+        "granted": 4,
+        "cap": 4,
+        "effective": 1
+      }
+    },
+    {
+      "name": "demotion-absent",
+      "workflow": {
+        "id": "w",
+        "review_date": "2027-02-01",
+        "access_expires": "2027-02-01",
+        "stop": {
+          "last_tested": "2026-11-10"
+        },
+        "granted_level": 4
+      },
+      "profile": {
+        "generated": "2026-11-17T00:00:00Z",
+        "dimensions": {
+          "platform": {
+            "level": 4
+          },
+          "governance": {
+            "level": 4
+          },
+          "ownership": {
+            "level": 4
+          },
+          "measuring": {
+            "level": 4
+          }
+        }
+      },
+      "state": {
+        "workflows": {
+          "w": {}
+        }
+      },
+      "expect": {
+        "granted": 4,
+        "cap": 4,
+        "effective": 4
+      }
+    }
+  ]
+}

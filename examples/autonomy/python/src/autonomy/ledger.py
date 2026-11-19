@@ -62,7 +62,7 @@ def build_report(wf: dict, runs_all: list[dict], profile: dict | None, state: di
     merged_at_level = [r for r in at_level if r.get("outcome") == "merged"]
     cost = sum(r.get("cost_usd") or 0 for r in at_level)
     cost_per = None if not merged_at_level else round4(cost / len(merged_at_level))
-    cap = cap_of(profile)
+    cap = cap_of(profile, now)
     entry = ((state or {}).get("workflows") or {}).get(wf["id"]) or {}
     demoted_at = entry.get("demoted_at")
     cooldown_ok = demoted_at is None or age_days(now, parse_time(demoted_at)) >= COOLDOWN_DAYS

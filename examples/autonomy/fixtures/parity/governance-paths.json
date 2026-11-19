@@ -1,0 +1,195 @@
+{
+  "description": "Governance path cases shared by the TypeScript and Python check tests. `class` is locked, workflow or none. Paths are compared after NFKC normalization, lower casing with ß as ss, and removal of trailing dots and spaces from each name.",
+  "cases": [
+    {
+      "path": ".claude/ſettings.json",
+      "class": "locked",
+      "why": "long s for s"
+    },
+    {
+      "path": ".claude/settings.jſon",
+      "class": "locked",
+      "why": "long s for s"
+    },
+    {
+      "path": "CODEOWNERſ",
+      "class": "locked",
+      "why": "long s for s"
+    },
+    {
+      "path": "docs/CODEOWNERſ",
+      "class": "locked",
+      "why": "long s for s"
+    },
+    {
+      "path": ".claude/hookſ/guard.sh",
+      "class": "locked",
+      "why": "long s for s"
+    },
+    {
+      "path": ".harneß.yaml",
+      "class": "locked",
+      "why": "sharp s for ss"
+    },
+    {
+      "path": ".harneẞ.yaml",
+      "class": "locked",
+      "why": "capital sharp s for ss"
+    },
+    {
+      "path": ".claude/hooKs/guard.sh",
+      "class": "locked",
+      "why": "Kelvin sign for k"
+    },
+    {
+      "path": ".github/worKflows/ci.yml",
+      "class": "workflow",
+      "why": "Kelvin sign for k"
+    },
+    {
+      "path": ".github/workflowſ/new.yml",
+      "class": "workflow",
+      "why": "long s for s"
+    },
+    {
+      "path": ".ＡＵＴＯＮＯＭＹ.yaml",
+      "class": "locked",
+      "why": "fullwidth letters"
+    },
+    {
+      "path": "．autonomy/state.json",
+      "class": "locked",
+      "why": "fullwidth full stop"
+    },
+    {
+      "path": ".claude/ＳＥＴＴＩＮＧＳ.json",
+      "class": "locked",
+      "why": "fullwidth letters"
+    },
+    {
+      "path": "CODEOWNERS.",
+      "class": "locked",
+      "why": "trailing dot"
+    },
+    {
+      "path": "CODEOWNERS ",
+      "class": "locked",
+      "why": "trailing space"
+    },
+    {
+      "path": ".claude./settings.json",
+      "class": "locked",
+      "why": "trailing dot on a folder"
+    },
+    {
+      "path": ".claude/settings.json. ",
+      "class": "locked",
+      "why": "trailing dot and space"
+    },
+    {
+      "path": ".claude /hooks/guard.sh",
+      "class": "locked",
+      "why": "trailing space on a folder"
+    },
+    {
+      "path": ".harness.yaml..",
+      "class": "locked",
+      "why": "trailing dots"
+    },
+    {
+      "path": ".github./workflows/ci.yml",
+      "class": "workflow",
+      "why": "trailing dot on a folder"
+    },
+    {
+      "path": ".github/workflows /ci.yml",
+      "class": "workflow",
+      "why": "trailing space on a folder"
+    },
+    {
+      "path": ".Claude/Settings.Local.JSON",
+      "class": "locked",
+      "why": "mixed case"
+    },
+    {
+      "path": ".AUTONOMY.yaml",
+      "class": "locked",
+      "why": "upper case"
+    },
+    {
+      "path": "Docs/CodeOwners",
+      "class": "locked",
+      "why": "mixed case"
+    },
+    {
+      "path": ".GitHub/Workflows/ci.yml",
+      "class": "workflow",
+      "why": "mixed case"
+    },
+    {
+      "path": ".github/actions/setup/action.yml",
+      "class": "workflow",
+      "why": "composite action"
+    },
+    {
+      "path": ".GitHub/Actions/setup/action.yml",
+      "class": "workflow",
+      "why": "composite action, mixed case"
+    },
+    {
+      "path": ".autonomy/profile.json",
+      "class": "locked",
+      "why": "plain"
+    },
+    {
+      "path": ".claude/settings.json",
+      "class": "locked",
+      "why": "plain"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "class": "workflow",
+      "why": "plain"
+    },
+    {
+      "path": "src/autonomy.ts",
+      "class": "none",
+      "why": "not governance"
+    },
+    {
+      "path": "docs/autonomy.md",
+      "class": "none",
+      "why": "not governance"
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "class": "none",
+      "why": "not governance"
+    },
+    {
+      "path": ".claude/commands/review.md",
+      "class": "none",
+      "why": "behavior surface, not locked"
+    },
+    {
+      "path": ".claude/settings.md",
+      "class": "none",
+      "why": "not a settings JSON file"
+    },
+    {
+      "path": "docs/ſettings.json",
+      "class": "none",
+      "why": "folding does not invent a governance path"
+    },
+    {
+      "path": "../.claude/settings.json",
+      "class": "none",
+      "why": "outside the project: a stated limit"
+    },
+    {
+      "path": "..",
+      "class": "none",
+      "why": "dots only"
+    }
+  ]
+}

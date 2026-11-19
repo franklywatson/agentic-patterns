@@ -11,6 +11,46 @@
       "blast": "B0"
     },
     {
+      "glob": "**/CLAUDE.md",
+      "reversibility": "R0",
+      "blast": "B1"
+    },
+    {
+      "glob": "**/CLAUDE.local.md",
+      "reversibility": "R0",
+      "blast": "B1"
+    },
+    {
+      "glob": "**/AGENTS.md",
+      "reversibility": "R0",
+      "blast": "B1"
+    },
+    {
+      "glob": "**/GEMINI.md",
+      "reversibility": "R0",
+      "blast": "B1"
+    },
+    {
+      "glob": "**/.claude/settings*.json",
+      "reversibility": "R4",
+      "blast": "B3"
+    },
+    {
+      "glob": "**/.claude/hooks/**",
+      "reversibility": "R4",
+      "blast": "B3"
+    },
+    {
+      "glob": "**/.claude/**",
+      "reversibility": "R0",
+      "blast": "B1"
+    },
+    {
+      "glob": "**/.mcp.json",
+      "reversibility": "R0",
+      "blast": "B1"
+    },
+    {
       "glob": "**/*.md",
       "reversibility": "R0",
       "blast": "B0"

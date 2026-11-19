@@ -76,6 +76,15 @@ test("the hook settings examples name SessionStart and PreToolUse and call the h
   }
 });
 
+test("every hook binding in the settings examples sets onFailure to block", () => {
+  for (const file of ["settings.typescript.example.json", "settings.python.example.json"]) {
+    const settings = JSON.parse(readFileSync(join(FIXTURES, "..", "hooks", file), "utf8"));
+    const handlers = Object.values(settings.hooks).flatMap((groups) => (groups as { hooks: { onFailure?: string }[] }[]).flatMap((g) => g.hooks));
+    assert.equal(handlers.length, 2);
+    for (const handler of handlers) assert.equal(handler.onFailure, "block", file);
+  }
+});
+
 test("check without commits and without --no-commits fails instead of printing ok", () => {
   const run = cli(["check", "--dir", fixture("registers", "valid"), "--now", NOW, "--json"]);
   assert.equal(run.status, 1);

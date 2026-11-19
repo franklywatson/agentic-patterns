@@ -1,15 +1,18 @@
 # Containment Example
 
-Two layers, and tests that show which one is the control.
+Two enforcement points, and tests that show which one is the control. Run it to see why [Pattern
+2.9](../../docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) puts the boundary in a container or
+sandbox rather than in a hook. The tests do not run Claude Code. Run them once if you doubt that a hook cannot hold
+a boundary; to configure your own machine, go straight to the [binding](#claude-code-binding).
 
-- **Policy layer.** `decide(tool_call)` returns `allow`, `deny` or `ask`. It reads its rules from [`rules.json`](rules.json). It runs inside the agent's environment and matches strings.
-- **Boundary layer.** A container with the project mounted read-only, `--network none`, a non-root user, all capabilities dropped. It does not parse commands.
+- **Policy check (hook enforcement point).** `decide(tool_call)` returns `allow`, `deny` or `ask`. It reads its rules from [`rules.json`](rules.json). It runs inside the agent's environment and matches strings.
+- **Boundary (sandbox enforcement point).** A container with the project mounted read-only, `--network none`, a non-root user, all capabilities dropped. It does not parse commands.
 
-The tests run each bypass command through both layers. The policy misses eight of the nine write commands and both network commands. The boundary stops all of them.
+The tests run each bypass command through both enforcement points. The policy misses eight of the nine write commands and both network commands. The boundary stops all of them.
 
 ## Run
 
-TypeScript (Node 21 or later, Docker running):
+TypeScript (Node 22 or later, Docker running):
 
 ```bash
 cd examples/containment/typescript
@@ -33,8 +36,8 @@ The first run pulls `python:3.12-slim`. Each run creates a private Docker networ
 |------|---------|
 | `rules.json` | Policy rules shared by both languages |
 | `cases.json` | The bypass commands and the policy result expected for each |
-| `typescript/src/policy.ts`, `python/containment/policy.py` | Policy layer |
-| `typescript/src/boundary.ts`, `python/containment/boundary.py` | Boundary layer: `run_in_container` and a fixture HTTP server |
+| `typescript/src/policy.ts`, `python/containment/policy.py` | Policy check |
+| `typescript/src/boundary.ts`, `python/containment/boundary.py` | Boundary: `run_in_container` and a fixture HTTP server |
 | `claude-code/settings.json` | Claude Code binding |
 
 ## Policy rules
@@ -52,7 +55,7 @@ The first run pulls `python:3.12-slim`. Each run creates a private Docker networ
 
 The egress allowlist is `github.com` and `registry.npmjs.org`.
 
-## What each layer proves
+## What each enforcement point proves
 
 The policy tests (`policy.test.ts`, `test_policy.py`) assert the exact decision and rule name for each command. They show what the rules catch and what they miss.
 
@@ -61,7 +64,7 @@ The boundary tests (`boundary.test.ts`, `test_boundary.py`) run each command twi
 1. **Control run.** A permissive container: project mounted read-write, or a network with the fixture server. The command must succeed and change the file, or fetch `containment-ok`. If it does not, the test fails, so a command that never worked cannot pass as "blocked".
 2. **Boundary run.** The read-only, no-network container. The file must be unchanged and stderr must report `Read-only file system`. For network commands the request must fail and `containment-ok` must not appear in stdout.
 
-Together they show that the policy layer alone does not stop these commands, and that the boundary does.
+Together they show that the policy check alone does not stop these commands, and that the boundary does.
 
 ## Results
 
@@ -85,22 +88,33 @@ Adding one regex to `rules.json` would make the policy catch `sed --in-place`. T
 
 ## Claude Code binding
 
-[`claude-code/settings.json`](claude-code/settings.json) expresses the same two layers in Claude Code settings. It uses only keys documented at <https://code.claude.com/docs/en/settings> and <https://code.claude.com/docs/en/sandboxing>.
+[`claude-code/settings.json`](claude-code/settings.json) expresses the same two enforcement points in Claude Code settings. It uses only keys documented in the [settings reference](https://code.claude.com/docs/en/settings-reference) and on the [sandboxing](https://code.claude.com/docs/en/sandboxing) page.
 
-| Layer | Setting |
-|-------|---------|
-| Policy | `permissions.deny` with `Read(./.env)`, `Read(./.env.*)` and `Bash(sed -i *)`; `permissions.blockWritesOutsideWorkingDirectories` (needs Claude Code v2.1.314 or later) |
+| Enforcement point | Setting |
+|-------------------|---------|
+| Policy | `permissions.deny` with `Read(./.env)`, `Read(./.env.*)` and `Bash(sed -i *)`; `permissions.blockWritesOutsideWorkingDirectories` |
 | Boundary | `sandbox.enabled`, `sandbox.failIfUnavailable`, `sandbox.allowUnsandboxedCommands: false` |
-| Credentials | `sandbox.filesystem.denyRead`, `sandbox.credentials.files`, `sandbox.credentials.envVars` |
+| Credentials | `sandbox.filesystem.denyRead`, `sandbox.credentials.files`, `sandbox.credentials.envVars`; `permissions.blockReadsOutsideWorkingDirectories` |
 | Egress | `sandbox.network.allowedDomains` |
 
-The `Bash(sed -i *)` deny rule is a string rule with the same limits as the policy layer above. The sandbox settings are the control.
+`sandbox.filesystem.denyRead` covers shell commands only. `permissions.blockReadsOutsideWorkingDirectories` makes the `Read`, `Grep`, `Glob` and `LSP` tools refuse paths outside the working directories, so the file tools cannot open `~/.ssh` or `~/.aws/credentials`; Pattern 2.9's "Reads bounded" property needs both. `permissions.blockWritesOutsideWorkingDirectories` also removes the `EnterWorktree` and `ExitWorktree` tools ([settings reference](https://code.claude.com/docs/en/settings-reference#permissions-blockwritesoutsideworkingdirectories)).
 
-Managed settings: a key set in managed settings, delivered as a `managed-settings.json` file, an MDM policy or server-managed settings, takes precedence over user, project and command-line settings. Put `sandbox.enabled`, `sandbox.failIfUnavailable` and `sandbox.allowUnsandboxedCommands: false` there so a developer cannot switch the sandbox off. The sandboxing page also documents `allowManagedDomainsOnly` under `sandbox.network`, and the settings page documents `allowManagedPermissionRulesOnly`. Both restrict which entries Claude Code honors to those set in managed settings.
+The allowlist holds only `github.com` and `registry.npmjs.org`. Add the package registries, container registries and API hosts your project uses, or installs and image pulls fail inside the sandbox.
 
-Not verified, so left out: file locations of `managed-settings.json` per operating system, and the default for `autoAllowBashIfSandboxed` (the sandboxing page names the key without a type or example).
+The `Read(./.env.*)` deny rule also blocks `.env.example`, which the policy check allows. The `Bash(sed -i *)` deny rule is a string rule with the same limits as the policy check above. The sandbox settings are the control.
 
-This example does not run Claude Code. The settings file is checked in as a reference and is not covered by the tests.
+Where to put the keys:
+
+- **Precedence.** A key in managed settings (a `managed-settings.json` file, an MDM policy or server-managed settings) takes precedence over user, project and command-line settings. The [managed settings page](https://code.claude.com/docs/en/managed-settings) lists the delivery mechanisms and where each file lives.
+- **What goes there.** Put `sandbox.enabled`, `sandbox.failIfUnavailable` and `sandbox.allowUnsandboxedCommands: false` in managed settings so a developer cannot switch the sandbox off, with `requiredMinimumVersion` set to the version in the Minimum version row of [Pattern 2.9](../../docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax); that key is read from managed settings only. Without managed settings, use user settings (`~/.claude/settings.json`), which sit outside the project tree.
+- **Restricting keys.** [`sandbox.network.allowManagedDomainsOnly`](https://code.claude.com/docs/en/settings-reference#sandbox-network-allowmanageddomainsonly) and [`allowManagedPermissionRulesOnly`](https://code.claude.com/docs/en/settings-reference#allowmanagedpermissionrulesonly) make Claude Code honor only the domains and permission rules set in managed settings.
+
+The sandbox already denies writes to `hooks` and `config` inside the working directory's `.git` ([protected
+paths](https://code.claude.com/docs/en/sandboxing#protected-paths)). A `./` sandbox path resolves "to the project root
+for project settings, or to `~/.claude` for user settings" ([sandbox path
+prefixes](https://code.claude.com/docs/en/settings-reference#sandbox-path-prefixes)), so user and managed settings
+need `~/` or absolute paths. The settings file is a reference. No test loads it or
+runs Claude Code with it.
 
 ## Limits
 

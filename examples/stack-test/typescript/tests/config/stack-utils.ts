@@ -5,10 +5,10 @@
  * - Dynamic port allocation
  * - Unique container naming
  * - Per-test compose file generation
- * - Aggressive cleanup
+ * - Aggressive cleanup that reports failures
  */
 
-import { execSync, spawn } from 'child_process';
+import { execSync } from 'child_process';
 import { randomBytes } from 'crypto';
 import axios, { type AxiosInstance } from 'axios';
 import { readFileSync, unlinkSync, writeFileSync, existsSync } from 'fs';
@@ -75,19 +75,36 @@ export class StackTestUtils {
   }
 
   /**
-   * Clean up the stack aggressively
+   * Remove the stack's containers, volumes, networks and orphans, then delete the
+   * generated compose file. The file is deleted even when `docker compose down`
+   * fails; every failure is reported in one error so a leaked stack fails the run.
+   * After a failed `down` the project name is kept, so a second call retries
+   * `docker compose -p <name> down` without the file.
    */
   async cleanup(): Promise<void> {
-    if (this.composeFile && existsSync(this.composeFile)) {
-      console.log(`Cleaning up stack: ${this.composeFile}`);
+    const name = this.projectName;
+    const failures: string[] = [];
+    if (name) {
+      const file = this.composeFile !== null && existsSync(this.composeFile) ? this.composeFile : null;
+      console.log(`Cleaning up stack: ${name}`);
       try {
-        execSync(`docker compose -p "${this.projectName}" -f "${this.composeFile}" down -v --remove-orphans`, {
-          stdio: 'inherit',
-        });
+        const fileOption = file === null ? '' : ` -f "${file}"`;
+        execSync(`docker compose -p "${name}"${fileOption} down -v --remove-orphans`, { stdio: 'inherit' });
+        this.projectName = '';
       } catch (error) {
-        console.error('Error during cleanup:', error);
+        failures.push(`docker compose down: ${error instanceof Error ? error.message : String(error)}`);
       }
-      unlinkSync(this.composeFile);
+    }
+    if (this.composeFile !== null) {
+      try {
+        if (existsSync(this.composeFile)) unlinkSync(this.composeFile);
+        this.composeFile = null;
+      } catch (error) {
+        failures.push(`remove ${this.composeFile}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`Cleanup of stack ${name} failed; containers or volumes may remain: ${failures.join('; ')}`);
     }
   }
 
@@ -148,7 +165,7 @@ export class StackTestUtils {
 
       while (!allocated && attempts < maxAttempts) {
         const port = Math.floor(Math.random() * (maxPort - minPort + 1)) + minPort;
-        if (await this.isPortAvailable(port)) {
+        if (!ports.includes(port) && (await this.isPortAvailable(port))) {
           ports.push(port);
           allocated = true;
         }

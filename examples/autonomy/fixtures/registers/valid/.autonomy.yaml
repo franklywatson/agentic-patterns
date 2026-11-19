@@ -17,7 +17,7 @@ workflows:
     identity: github-app:deps-bot
     access_expires: 2027-02-01
     permitted_actions:
-      tools: ["Read", "Edit", "Bash(npm install*)", "Bash(npm test*)"]
+      tools: ["Read", "Edit", "Bash(npm install*)", "Bash(npm test*)", "Bash(git *)", "Bash(gh pr *)"]
       paths: ["package.json", "package-lock.json"]
       git: [branch, commit, open_pr, auto_merge]
       network: ["registry.npmjs.org"]

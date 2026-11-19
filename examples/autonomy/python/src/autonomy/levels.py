@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from autonomy.util import age_days, parse_time
+from autonomy.util import age_days, parse_time, try_parse_time
 
 CAPPING_DIMENSIONS = ("platform", "governance", "ownership", "measuring")
 ALL_DIMENSIONS = (
@@ -32,28 +32,52 @@ class Effective:
     reasons: list[str] = field(default_factory=list)
 
 
-def dimension_level(profile: dict | None, dimension: str) -> int:
-    entry = ((profile or {}).get("dimensions") or {}).get(dimension)
-    if entry is None:
-        return 2
-    level = entry.get("level")
-    return level if isinstance(level, int) and not isinstance(level, bool) and 1 <= level <= 5 else 2
+def _as_dict(value: Any) -> dict:
+    return value if isinstance(value, dict) else {}
 
 
-def cap_of(profile: dict | None) -> int:
+def as_level(value: Any) -> int | None:
+    """A level is an integer from 1 to 5 (`3.0` counts as 3); anything else is None."""
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
+    return value if isinstance(value, int) and not isinstance(value, bool) and 1 <= value <= 5 else None
+
+
+def dimension_level(profile: Any, dimension: str) -> int:
+    """Level of one capping dimension: an absent, unknown or invalid entry counts as 1."""
+    entry = _as_dict(_as_dict(profile).get("dimensions")).get(dimension)
+    if not isinstance(entry, dict):
+        return 1
+    level = as_level(entry.get("level"))
+    return 1 if level is None else level
+
+
+def _is_missing(profile: Any, now: int) -> bool:
+    """A profile is missing when there is none, it is not an object, or its `generated` time is absent, not an
+    ISO date or time, or later than `now`."""
+    if not isinstance(profile, dict):
+        return True
+    generated = try_parse_time(profile.get("generated"))
+    return generated is None or generated > now
+
+
+def cap_of(profile: Any, now: int) -> int:
+    """Lowest capping dimension; a missing profile caps at 1, because nothing has been measured."""
+    if _is_missing(profile, now):
+        return 1
     return min(dimension_level(profile, d) for d in CAPPING_DIMENSIONS)
 
 
-def profile_status(profile: dict | None, now: int) -> str:
-    if profile is None or not isinstance(profile.get("generated"), str):
+def profile_status(profile: Any, now: int) -> str:
+    if _is_missing(profile, now):
         return "missing"
     return "stale" if age_days(now, parse_time(profile["generated"])) > PROFILE_MAX_AGE_DAYS else "ok"
 
 
-def _freshness_reasons(wf: dict, defaults: dict | None, now: int) -> list[str]:
+def _freshness_reasons(wf: dict, granted: int, defaults: dict | None, now: int) -> list[str]:
     reasons: list[str] = []
     max_age = (defaults or {}).get("stop_test_max_age_days", 30)
-    if wf["granted_level"] >= 4:
+    if granted >= 4:
         tested = (wf.get("stop") or {}).get("last_tested")
         if tested is None or age_days(now, parse_time(tested)) > max_age:
             reasons.append("stop-test-overdue")
@@ -64,18 +88,20 @@ def _freshness_reasons(wf: dict, defaults: dict | None, now: int) -> list[str]:
     return reasons
 
 
-def effective_level(wf: dict, profile: dict | None, state: dict | None, defaults: dict | None, now: int) -> Effective:
-    granted = wf["granted_level"]
-    cap = cap_of(profile)
+def effective_level(wf: dict, profile: Any, state: Any, defaults: dict | None, now: int) -> Effective:
+    """The level a workflow runs at: the lowest of its grant, the cap, freshness, harness and demotion limits. A
+    grant that is not a level counts as 1; a demotion override that is present but not a level counts as 1."""
+    granted = as_level(wf.get("granted_level")) or 1
+    cap = cap_of(profile, now)
     stale = profile_status(profile, now)
-    fresh = _freshness_reasons(wf, defaults, now)
+    fresh = _freshness_reasons(wf, granted, defaults, now)
     if stale != "ok":
         fresh.append(f"profile-{stale}")
     freshness = FRESHNESS_LEVEL if fresh else 5
-    entry = ((state or {}).get("workflows") or {}).get(wf["id"]) or {}
+    entry = _as_dict(_as_dict(_as_dict(state).get("workflows")).get(wf["id"]))
     harness_hash = entry.get("harness_hash")
     harness = HARNESS_LEVEL if isinstance(harness_hash, str) and harness_hash != entry.get("task_bank_passed_hash") else 5
-    override = entry["demotion_override"] if isinstance(entry.get("demotion_override"), int) else 5
+    override = 5 if "demotion_override" not in entry else as_level(entry["demotion_override"]) or 1
     effective = min(granted, cap, freshness, harness, override)
     reasons: list[str] = []
     if cap < granted:

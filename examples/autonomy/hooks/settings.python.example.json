@@ -5,7 +5,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/examples/autonomy/python\" autonomy hook session-start"
+            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/examples/autonomy/python\" autonomy hook session-start",
+            "onFailure": "block"
           }
         ]
       }
@@ -16,7 +17,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/examples/autonomy/python\" autonomy hook pre-tool-use"
+            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/examples/autonomy/python\" autonomy hook pre-tool-use",
+            "onFailure": "block"
           }
         ]
       }

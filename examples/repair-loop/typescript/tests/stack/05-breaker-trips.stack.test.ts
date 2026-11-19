@@ -5,8 +5,6 @@
  * regressed build. The breaker drops the grant, the next attempt goes to a person, and
  * the stop switch halts the loop before any stack starts.
  */
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { engageStop, restoreGrant } from '../../src/breaker';
 import { gate } from '../../src/gate';
 import { fingerprintsFromLog } from '../../src/incident';
@@ -18,6 +16,7 @@ import { cleanup, incident, outboxOf, patchPath, repairWith } from './support';
 describe('Stack Test 05: the breaker trips on a recurrence', () => {
   let first: Awaited<ReturnType<typeof repairWith>>;
   let afterRecurrence: ReturnType<typeof observeRecurrence>;
+  let regressedFingerprints: string[];
 
   beforeAll(async () => {
     first = await repairWith('INC-001.fix.patch');
@@ -25,7 +24,7 @@ describe('Stack Test 05: the breaker trips on a recurrence', () => {
     const regressed = await first.env.deploy(first.outcome.base!);
     try {
       await axios.get(`${regressed.baseUrl}${incident().request.path}`, { validateStatus: () => true });
-      expect(fingerprintsFromLog(regressed.logs())).toContain(incident().fingerprint);
+      regressedFingerprints = fingerprintsFromLog(regressed.logs());
       afterRecurrence = observeRecurrence(first.outcome.breaker, incident(), regressed.logs(), first.env.now() + 3600_000, first.policy);
     } finally {
       regressed.stop();
@@ -33,6 +32,10 @@ describe('Stack Test 05: the breaker trips on a recurrence', () => {
   }, 900000);
 
   afterAll(() => cleanup(first?.outcome));
+
+  test('the regressed build logs the fingerprint of the repaired incident', () => {
+    expect(regressedFingerprints).toContain(incident().fingerprint);
+  });
 
   test('primary: the first repair was confirmed, then the recurrence dropped the grant', () => {
     expect(first.outcome.state).toBe('CONFIRMED');
@@ -67,7 +70,7 @@ describe('Stack Test 05: the breaker trips on a recurrence', () => {
     }
   });
 
-  test('third order: the stop switch halts the loop and the drill is recorded', async () => {
+  test('third order: the stop switch halts the loop before any stack starts', async () => {
     const { createEnvironment } = await import('../../src/runtime');
     const env = createEnvironment();
     const stopped = engageStop(afterRecurrence, 'oncall-alice', env.now());
@@ -82,11 +85,6 @@ describe('Stack Test 05: the breaker trips on a recurrence', () => {
     expect(outcome.reasons).toEqual(['stopped by oncall-alice']);
     expect(env.runs).toEqual([]);
     expect(gate({ ...first.outcome.bundle!, stopEngaged: true }, first.policy).decision).toBe('block');
-
-    const drill = join(first.outcome.base!.dir, '.repair', 'stop-drill.json');
-    mkdirSync(join(first.outcome.base!.dir, '.repair'), { recursive: true });
-    writeFileSync(drill, JSON.stringify({ workflow: 'repair-loop', last_tested: new Date().toISOString().slice(0, 10), result: 'halted' }));
-    expect(JSON.parse(readFileSync(drill, 'utf-8')).result).toBe('halted');
   });
 
   test('third order: restoring the grant needs a named human and a run of clean repairs', () => {

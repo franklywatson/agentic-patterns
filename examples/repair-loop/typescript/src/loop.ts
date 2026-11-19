@@ -178,7 +178,7 @@ export async function runRepair(env: RepairEnvironment, input: RepairInput): Pro
 
     move('gate_auto', detail);
     move('gate_auto', 'evidence bundle attached to a pull request');
-    env.emit(base, { kind: 'pr', incidentId: incident.id, title: `${incident.id}: repair with evidence bundle`, owner: policy.owner, detail: [`classification ${bundle.classification.reversibility}/${bundle.classification.blast}`, 'merge by a person: the grant is below A4'] });
+    env.emit(base, { kind: 'pr', incidentId: incident.id, title: `${incident.id}: repair with evidence bundle`, owner: policy.owner, detail: [`classification ${bundle.classification.reversibility}/${bundle.classification.blast}`, `merge: ${result.merge === 'unattended' ? 'unattended at' : 'a person merges at'} grant ${bundle.grant}`] });
     const traffic = await env.traffic(candidateDeployment, incident, policy.confirm.minSamples);
     const confirmation = evaluateConfirmation(traffic, policy.confirm);
     if (confirmation === 'confirmed') {

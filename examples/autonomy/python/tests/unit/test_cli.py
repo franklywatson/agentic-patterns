@@ -78,6 +78,14 @@ def test_the_hook_settings_examples_name_sessionstart_and_pretooluse_and_call_th
         assert settings["hooks"]["PreToolUse"][0]["hooks"][0]["type"] == "command"
 
 
+def test_every_hook_binding_in_the_settings_examples_sets_onfailure_to_block():
+    for name in ("settings.typescript.example.json", "settings.python.example.json"):
+        settings = json.loads((fixture("..", "hooks", name)).read_text())
+        handlers = [h for groups in settings["hooks"].values() for g in groups for h in g["hooks"]]
+        assert len(handlers) == 2
+        assert all(h.get("onFailure") == "block" for h in handlers), name
+
+
 def test_check_without_commits_and_without_no_commits_fails_instead_of_printing_ok(cli):
     run = cli(["check", "--dir", str(fixture("registers", "valid")), "--now", NOW, "--json"])
     assert run.returncode == 1

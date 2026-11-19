@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { approvedPrefixes, commitsFromGit, formatCheck, isAgentCommit, isGovernanceFile, isTier1File, isTier2File, runCheck } from "../../src/check.js";
+import { approvedPrefixes, commitsFromGit, formatCheck, isAgentCommit, isGovernanceFile, isLockedFile, isWorkflowFile, runCheck } from "../../src/check.js";
 import type { Commit } from "../../src/check.js";
 import { parseTime } from "../../src/util.js";
 import { NOW, copyFixture, fixture, readFixtureJson } from "../helpers.js";
@@ -33,10 +33,42 @@ test("check fails when the profile is missing", () => {
   const result = runCheck({ dir, now });
   assert.deepEqual(result.failures, [
     { code: "profile-missing" },
-    { code: "grant-exceeds-cap", workflow: "dep-bump", granted: 4, cap: 2 },
-    { code: "grant-exceeds-cap", workflow: "flaky-test-triage", granted: 3, cap: 2 },
-    { code: "grant-exceeds-cap", workflow: "interactive", granted: 3, cap: 2 },
+    { code: "grant-exceeds-cap", workflow: "dep-bump", granted: 4, cap: 1 },
+    { code: "grant-exceeds-cap", workflow: "flaky-test-triage", granted: 3, cap: 1 },
+    { code: "grant-exceeds-cap", workflow: "interactive", granted: 3, cap: 1 },
   ]);
+});
+
+const MISSING_FAILURES = [
+  { code: "profile-missing" },
+  { code: "grant-exceeds-cap", workflow: "dep-bump", granted: 4, cap: 1 },
+  { code: "grant-exceeds-cap", workflow: "flaky-test-triage", granted: 3, cap: 1 },
+  { code: "grant-exceeds-cap", workflow: "interactive", granted: 3, cap: 1 },
+];
+
+for (const [name, text] of [
+  ["a JSON array", "[]"],
+  ["a JSON string", "\"x\""],
+  ["a date that is not ISO", "{\"generated\":\"November 18, 2026\"}"],
+  ["a date in the future", "{\"generated\":\"2099-01-01\",\"dimensions\":{\"platform\":{\"level\":5},\"governance\":{\"level\":5},\"ownership\":{\"level\":5},\"measuring\":{\"level\":5}}}"],
+] as const) {
+  test(`a profile that is ${name} counts as missing and does not throw`, () => {
+    const dir = copyFixture("registers", "valid");
+    writeFileSync(join(dir, ".autonomy", "profile.json"), text);
+    const result = runCheck({ dir, now });
+    assert.equal(result.cap, 1);
+    assert.equal(result.profile_age_days, null);
+    assert.deepEqual(result.failures, MISSING_FAILURES);
+  });
+}
+
+test("a profile with no capping dimensions caps at 1 without being missing", () => {
+  const dir = copyFixture("registers", "valid");
+  writeFileSync(join(dir, ".autonomy", "profile.json"), JSON.stringify({ generated: "2026-11-17T00:00:00Z", dimensions: {} }));
+  const result = runCheck({ dir, now });
+  assert.equal(result.cap, 1);
+  assert.equal(result.profile_age_days, 1);
+  assert.deepEqual(result.failures, MISSING_FAILURES.slice(1));
 });
 
 test("check reports schema errors and stops", () => {
@@ -150,11 +182,30 @@ test("governance patterns are case-insensitive and cover hook configuration", ()
   assert.equal(isGovernanceFile(".claude/commands/review.md"), false);
 });
 
-test("a profile path that escapes the repository is an error", () => {
-  const dir = copyFixture("registers", "valid");
-  const path = join(dir, ".autonomy.yaml");
-  writeFileSync(path, readFileSync(path, "utf8").replace("profile: .autonomy/profile.json", "profile: ../../elsewhere/profile.json"));
-  assert.throws(() => runCheck({ dir, now }), /escapes the repository/);
+test("a profile path outside .autonomy/ is a schema error, so the cap file stays a locked file", () => {
+  for (const profile of ["../../elsewhere/profile.json", "docs/profile.json", ".autonomy/../docs/profile.json", ".autonomy/..", "/etc/profile.json"]) {
+    const dir = copyFixture("registers", "valid");
+    const path = join(dir, ".autonomy.yaml");
+    writeFileSync(path, readFileSync(path, "utf8").replace("profile: .autonomy/profile.json", `profile: "${profile}"`));
+    assert.deepEqual(runCheck({ dir, now }).failures, [{ code: "schema", path: "/profile", keyword: "pattern" }], profile);
+  }
+});
+
+// Shared with the Python suite: fixtures/parity/governance-paths.json.
+test("governance paths are compared after Unicode folding and trailing dot and space removal", () => {
+  for (const c of readFixtureJson("parity", "governance-paths.json").cases) {
+    const got = isLockedFile(c.path) ? "locked" : isWorkflowFile(c.path) ? "workflow" : "none";
+    assert.equal(got, c.class, `${JSON.stringify(c.path)}: ${c.why}`);
+  }
+});
+
+test("an agent commit to a folded governance name or a composite action fails the check", () => {
+  const result = runCheck({ dir: fixture("registers", "valid"), now, commits: [agentCommit([".claude/\u017fettings.json", ".harne\u00df.yaml", ".github/actions/setup/action.yml"])] });
+  assert.deepEqual(result.failures.map((f) => [f.code, f.file]), [
+    ["governance-file-changed-by-agent", ".claude/\u017fettings.json"],
+    ["governance-file-changed-by-agent", ".harne\u00df.yaml"],
+    ["workflow-change-unacknowledged", ".github/actions/setup/action.yml"],
+  ]);
 });
 
 test("an impossible calendar date is a schema error, not a crash", () => {
@@ -172,47 +223,47 @@ const A2 = "b2c3d4e5f60718293a4b5c6d7e8f901234567890";
 const H1 = "c3d4e5f60718293a4b5c6d7e8f90123456789012";
 const unacknowledged = (commit: string, file: string) => ({ code: "workflow-change-unacknowledged", commit, file });
 
-test("a tier 1 file still fails when a later human commit carries an acknowledgement line", () => {
-  const result = checkCommits("governance-tier1-with-ack");
+test("a locked file still fails when a later human commit carries an acknowledgement line", () => {
+  const result = checkCommits("governance-locked-with-ack");
   assert.deepEqual(result.failures, [{ code: "governance-file-changed-by-agent", commit: A1, file: ".autonomy.yaml" }]);
   assert.deepEqual(result.acknowledged, []);
 });
 
 test("an unacknowledged agent change to a workflow fails with workflow-change-unacknowledged", () => {
-  assert.deepEqual(checkCommits("governance-tier2-unacknowledged").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
+  assert.deepEqual(checkCommits("governance-workflow-unacknowledged").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
 });
 
 test("a workflow change acknowledged by a later human commit passes and is reported", () => {
-  const result = checkCommits("governance-tier2-acknowledged");
+  const result = checkCommits("governance-workflow-acknowledged");
   assert.equal(result.ok, true);
   assert.deepEqual(result.acknowledged, [{ commit: A1, file: ".github/workflows/ci.yml", by: H1 }]);
   assert.match(formatCheck(result), /^governance: a1b2c3d changed \.github\/workflows\/ci\.yml \(acknowledged by c3d4e5f\)$/m);
 });
 
 test("an acknowledgement by an agent commit does not count", () => {
-  assert.deepEqual(checkCommits("governance-tier2-ack-by-agent").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
+  assert.deepEqual(checkCommits("governance-workflow-ack-by-agent").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
 });
 
 test("an acknowledgement that comes before the agent commit does not count", () => {
-  assert.deepEqual(checkCommits("governance-tier2-ack-before").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
+  assert.deepEqual(checkCommits("governance-workflow-ack-before").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
 });
 
 test("an acknowledgement with a 6 character prefix does not count", () => {
-  assert.deepEqual(checkCommits("governance-tier2-ack-short-prefix").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
+  assert.deepEqual(checkCommits("governance-workflow-ack-short-prefix").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
 });
 
 test("an acknowledgement for a different sha does not count", () => {
-  assert.deepEqual(checkCommits("governance-tier2-ack-wrong-sha").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
+  assert.deepEqual(checkCommits("governance-workflow-ack-wrong-sha").failures, [unacknowledged(A1, ".github/workflows/ci.yml")]);
 });
 
-test("a case-variant workflow path is tier 2", () => {
-  assert.equal(isTier2File(".GitHub/Workflows/x.yml"), true);
-  assert.equal(isTier1File(".GitHub/Workflows/x.yml"), false);
-  assert.deepEqual(checkCommits("governance-tier2-case-variant").failures, [unacknowledged(A1, ".GitHub/Workflows/x.yml")]);
+test("a case-variant workflow path is a workflow file", () => {
+  assert.equal(isWorkflowFile(".GitHub/Workflows/x.yml"), true);
+  assert.equal(isLockedFile(".GitHub/Workflows/x.yml"), false);
+  assert.deepEqual(checkCommits("governance-workflow-case-variant").failures, [unacknowledged(A1, ".GitHub/Workflows/x.yml")]);
 });
 
 test("with two agent commits, only the acknowledged one passes", () => {
-  const result = checkCommits("governance-tier2-two-agents-one-acked");
+  const result = checkCommits("governance-workflow-two-agents-one-acked");
   assert.deepEqual(result.failures, [unacknowledged(A2, ".github/workflows/release.yml")]);
   assert.deepEqual(result.acknowledged, [{ commit: A1, file: ".github/workflows/ci.yml", by: H1 }]);
 });
@@ -245,24 +296,24 @@ const WF = ".github/workflows/ci.yml";
 const B1 = "a1b2c3d0e5f60718293a4b5c6d7e8f9012345678";
 
 test("an acknowledgement prefix that matches two agent commits acknowledges neither", () => {
-  const result = checkCommits("governance-tier2-ack-ambiguous-prefix");
+  const result = checkCommits("governance-workflow-ack-ambiguous-prefix");
   assert.deepEqual(result.failures, [unacknowledged(A1, WF), unacknowledged(B1, ".github/workflows/release.yml")]);
   assert.deepEqual(result.acknowledged, []);
 });
 
 test("a longer prefix that names one agent commit acknowledges only that commit", () => {
-  const result = checkCommits("governance-tier2-ack-disambiguated-prefix");
+  const result = checkCommits("governance-workflow-ack-disambiguated-prefix");
   assert.deepEqual(result.failures, [unacknowledged(B1, ".github/workflows/release.yml")]);
   assert.deepEqual(result.acknowledged, [{ commit: A1, file: WF, by: H1 }]);
 });
 
 for (const name of [
-  "governance-tier2-ack-subject-line",
-  "governance-tier2-ack-cr",
-  "governance-tier2-ack-crlf",
-  "governance-tier2-ack-line-separator",
-  "governance-tier2-ack-by-anthropic-coauthor",
-  "governance-tier2-ack-by-agent-committer",
+  "governance-workflow-ack-subject-line",
+  "governance-workflow-ack-cr",
+  "governance-workflow-ack-crlf",
+  "governance-workflow-ack-line-separator",
+  "governance-workflow-ack-by-anthropic-coauthor",
+  "governance-workflow-ack-by-agent-committer",
 ]) {
   test(`${name} does not acknowledge`, () => {
     const result = checkCommits(name);
@@ -271,8 +322,8 @@ for (const name of [
   });
 }
 
-test("one commit that touches both tiers fails tier 1 and still reports the acknowledged tier 2 file", () => {
-  const result = checkCommits("governance-both-tiers-one-commit");
+test("one commit that touches a locked and a workflow file fails the locked file and still reports the acknowledged workflow file", () => {
+  const result = checkCommits("governance-locked-and-workflow-one-commit");
   assert.deepEqual(result.failures, [{ code: "governance-file-changed-by-agent", commit: A1, file: ".autonomy.yaml" }]);
   assert.deepEqual(result.acknowledged, [{ commit: A1, file: WF, by: H1 }]);
 });
@@ -296,7 +347,7 @@ const repoWith = (author = "Alice") => {
   return { dir, run };
 };
 
-test("non-ASCII and tab paths are listed unquoted and match the tiers", () => {
+test("non-ASCII and tab paths are listed unquoted and match the governance lists", () => {
   const { dir, run } = repoWith("deps-bot[bot]");
   mkdirSync(join(dir, ".github", "workflows"), { recursive: true });
   mkdirSync(join(dir, ".autonomy", "ledger"), { recursive: true });
@@ -331,7 +382,7 @@ test("a commit message with record separators cannot forge a commit or an acknow
   assert.deepEqual(result.failures, [unacknowledged(sha, ".github/workflows/ci.yml")]);
 });
 
-test("files an agent adds in a merge commit are listed and fail tier 1", () => {
+test("files an agent adds in a merge commit are listed and fail as locked files", () => {
   const { dir, run } = repoWith("Alice");
   run("Alice", ["checkout", "-q", "-b", "side"]);
   writeFileSync(join(dir, "side.txt"), "side\n");

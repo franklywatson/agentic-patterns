@@ -3,6 +3,9 @@ name: savings
 description: "Report rtk and jcodemunch token savings for the current session."
 argument-hint: ""
 user-invocable: true
+metadata:
+  owner: franklywatson
+  reviewed: 2026-11-19
 ---
 
 <!-- rig-generated -->
@@ -22,7 +25,7 @@ Report token savings from rtk and jcodemunch usage during this session.
 3. Compute the rtk session delta: `current total_saved - baseline totalSaved`.
 4. For jcodemunch: call `mcp__jcodemunch__get_session_stats` and read
    `session_tokens_saved`, `session_calls`, `total_tokens_saved`, and
-   `tool_breakdown` directly. These are reliable per-session counters
+   `tool_breakdown` directly. These are per-session counters
    maintained by the MCP server process. If jcodemunch MCP is not available,
    skip jcodemunch reporting.
 5. Format and print the report (see Output Format below). Do NOT write any
@@ -32,22 +35,22 @@ Report token savings from rtk and jcodemunch usage during this session.
 
 With session data (baseline + delta available):
 
-```
+```text
 [rig] Session Savings
   rtk: X.XM saved (N calls, +XK this session)
-  jcodemunch: XK saved (N queries, 150M total all-time)
+  jcodemunch: XK saved (N queries, XM total all-time)
 ```
 
 Without session data (no cache file found):
 
-```
+```text
 [rig] Session Savings (all-time)
   rtk: X.XM saved (N commands, XX.X% avg savings)
 ```
 
 If rtk is not installed:
 
-```
+```text
 [rig] Session Savings
   rtk: not installed
 ```

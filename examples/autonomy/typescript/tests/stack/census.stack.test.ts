@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { appendFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import { cli, NOW, gitFixtureRepo, readFixtureJson } from "../helpers.js";
@@ -84,3 +85,140 @@ test("check passes after the grant is lowered to the cap", () => {
   writeFileSync(path, lowered);
   assert.equal(cli(["check", "--dir", dir, "--now", NOW, "--no-commits"]).status, 0);
 });
+
+const RULES_CASES: Array<[string, boolean]> = [
+  ["rules-import", true],
+  ["rules-claude-only", true],
+  ["rules-agents-only", true],
+  ["rules-agents-not-imported", false],
+  ["rules-none", false],
+];
+
+for (const [name, expected] of RULES_CASES) {
+  test(`constitutional-rules probe on ${name} is ${expected ? "met" : "not met"}`, () => {
+    const dir = gitFixtureRepo(name);
+    cli(["census", "--dir", dir, "--now", NOW]);
+    const profile = JSON.parse(readFileSync(join(dir, ".autonomy", "profile.json"), "utf8"));
+    assert.equal(profile.dimensions.governance.evidence.includes("constitutional-rules"), expected);
+    assert.equal(profile.dimensions.governance.level, expected ? 2 : 1);
+  });
+}
+
+const STUB_BASELINES: Record<string, object | string> = {
+  "empty flow object": { captured: "2026-10-20", flow: {}, stability: { change_failure_rate: 0.08 } },
+  "empty stability object": { captured: "2026-10-20", flow: { median_cycle_hours: 31 }, stability: {} },
+  "flow that is not an object": { captured: "2026-10-20", flow: "fast", stability: { change_failure_rate: 0.08 } },
+  "missing stability": { captured: "2026-10-20", flow: { median_cycle_hours: 31 } },
+  "null values only": { captured: "2026-10-20", flow: { x: null }, stability: { y: null } },
+  "placeholder strings": { captured: "2026-10-20", flow: { lead_time: "TBD" }, stability: { change_failure_rate: "TBD" } },
+  "a capture date in the future": { captured: "2099-01-01", flow: { median_cycle_hours: 31 }, stability: { change_failure_rate: 0.08 } },
+  "a capture date that is not ISO": { captured: "October 20, 2026", flow: { median_cycle_hours: 31 }, stability: { change_failure_rate: 0.08 } },
+  "a file that is not an object": "[1]",
+};
+
+for (const [name, baseline] of Object.entries(STUB_BASELINES)) {
+  test(`a baseline.json with ${name} does not satisfy the baseline probe`, () => {
+    const dir = gitFixtureRepo("adopter");
+    writeFileSync(join(dir, ".autonomy", "baseline.json"), typeof baseline === "string" ? baseline : JSON.stringify(baseline));
+    cli(["census", "--dir", dir, "--now", NOW]);
+    const measuring = JSON.parse(readFileSync(join(dir, ".autonomy", "profile.json"), "utf8")).dimensions.measuring;
+    assert.equal(measuring.level, 2);
+    assert.ok(!measuring.evidence.includes("baseline"));
+    assert.ok(measuring.missing_for_next.includes("baseline"));
+  });
+}
+
+// Shared with the Python suite: fixtures/census/non-author-approval.json.
+const APPROVAL_CASES: Array<{ name: string; ruleset: object | string; files: Record<string, string | null>; met: boolean }> =
+  readFixtureJson("census", "non-author-approval.json").cases;
+
+for (const c of APPROVAL_CASES) {
+  test(`non-author-approval on ${c.name} is ${c.met ? "met" : "not met"}`, () => {
+    const dir = gitFixtureRepo("adopter");
+    writeFileSync(join(dir, ".github", "rulesets", "main.json"), typeof c.ruleset === "string" ? c.ruleset : JSON.stringify(c.ruleset));
+    for (const [path, text] of Object.entries(c.files)) {
+      if (text === null) rmSync(join(dir, path));
+      else writeFileSync(join(dir, path), text);
+    }
+    assert.equal(cli(["census", "--dir", dir, "--now", NOW]).status, 0);
+    const governance = JSON.parse(readFileSync(join(dir, ".autonomy", "profile.json"), "utf8")).dimensions.governance;
+    assert.equal(governance.evidence.includes("non-author-approval"), c.met);
+    assert.equal(governance.missing_for_next.includes("non-author-approval"), !c.met);
+  });
+}
+
+const commitAt = (dir: string, date: string) => {
+  const env = { ...process.env, GIT_AUTHOR_DATE: date, GIT_COMMITTER_DATE: date };
+  const run = (args: string[]) => execFileSync("git", ["-c", "user.name=fixture", "-c", "user.email=fixture@example.invalid", ...args], { cwd: dir, env, stdio: "ignore" });
+  run(["add", "-A"]);
+  run(["commit", "-q", "-m", "change"]);
+};
+const sharedContext = (dir: string) => {
+  assert.equal(cli(["census", "--dir", dir, "--now", NOW]).status, 0);
+  return JSON.parse(readFileSync(join(dir, ".autonomy", "profile.json"), "utf8")).dimensions;
+};
+
+test("claude-md-fresh follows @AGENTS.md: a recent AGENTS.md change keeps an old CLAUDE.md fresh", () => {
+  const dir = gitFixtureRepo("rules-import", "2026-01-01T00:00:00Z");
+  assert.ok(sharedContext(dir).shared_context.missing_for_next.includes("claude-md-fresh"));
+  appendFileSync(join(dir, "AGENTS.md"), "2. Every change has a test.\n");
+  commitAt(dir, "2026-11-01T00:00:00Z");
+  assert.ok(!sharedContext(dir).shared_context.missing_for_next.includes("claude-md-fresh"));
+});
+
+test("claude-md-fresh ignores an AGENTS.md that CLAUDE.md does not import", () => {
+  const dir = gitFixtureRepo("rules-agents-not-imported", "2026-01-01T00:00:00Z");
+  appendFileSync(join(dir, "AGENTS.md"), "2. Every change has a test.\n");
+  commitAt(dir, "2026-11-01T00:00:00Z");
+  assert.ok(sharedContext(dir).shared_context.missing_for_next.includes("claude-md-fresh"));
+});
+
+test("claude-md-short counts CLAUDE.md and the imported AGENTS.md together against 200 lines", () => {
+  const dir = gitFixtureRepo("rules-import");
+  const claudeLines = readFileSync(join(dir, "CLAUDE.md"), "utf8").split("\n").length - 1;
+  const agentsLines = readFileSync(join(dir, "AGENTS.md"), "utf8").split("\n").length - 1;
+  writeFileSync(join(dir, "AGENTS.md"), `${readFileSync(join(dir, "AGENTS.md"), "utf8")}${"- rule\n".repeat(200 - claudeLines - agentsLines)}`);
+  assert.ok(!sharedContext(dir).shared_context.missing_for_next.includes("claude-md-short"));
+  appendFileSync(join(dir, "AGENTS.md"), "- one more\n");
+  assert.ok(sharedContext(dir).shared_context.missing_for_next.includes("claude-md-short"));
+});
+
+test("check-command and author-trailer read the AGENTS.md that CLAUDE.md imports", () => {
+  const dir = gitFixtureRepo("adopter");
+  writeFileSync(join(dir, "AGENTS.md"), readFileSync(join(dir, "CLAUDE.md"), "utf8"));
+  writeFileSync(join(dir, "CLAUDE.md"), "# Adopter project\n\n@AGENTS.md\n");
+  const dims = sharedContext(dir);
+  assert.equal(dims.platform.level, 3);
+  assert.ok(dims.platform.evidence.includes("check-command"));
+  assert.equal(dims.ownership.level, 3);
+  assert.ok(dims.ownership.evidence.includes("author-trailer"));
+});
+
+test("the census text output names the probes that block each dimension's next position", () => {
+  const dir = gitFixtureRepo("bare");
+  const lines = cli(["census", "--dir", dir, "--now", NOW]).stdout.trim().split("\n");
+  assert.deepEqual(lines.slice(1, 10), [
+    "cap: 1",
+    "platform: 1 (next: agent-config)",
+    "shared_context: 2 (next: claude-md-owner, decision-log, blocking-hook-tested)",
+    "operating_model: 1 (next: ci-tests-lint)",
+    "governance: 1 (next: constitutional-rules)",
+    "ownership: 1 (next: register-owners)",
+    "skill: unknown (next: worksheet:skill)",
+    "measuring: 1 (next: outcome-tracking)",
+    `worksheet: ${join(dir, ".autonomy", "worksheet.json")}`,
+  ]);
+});
+
+// Shared with the Python suite: fixtures/census/odd-inputs.json.
+for (const c of readFixtureJson("census", "odd-inputs.json").cases) {
+  test(`census reads ${c.name} the same way in both languages`, () => {
+    const dir = gitFixtureRepo("adopter");
+    for (const [path, content] of Object.entries(c.files as Record<string, { text?: string; hex?: string }>)) {
+      writeFileSync(join(dir, path), content.hex !== undefined ? Buffer.from(content.hex, "hex") : (content.text as string));
+    }
+    assert.equal(cli(["census", "--dir", dir, "--now", NOW]).status, 0);
+    const dims = JSON.parse(readFileSync(join(dir, ".autonomy", "profile.json"), "utf8")).dimensions;
+    assert.deepEqual(Object.fromEntries(Object.entries(dims).map(([k, v]) => [k, (v as { level: unknown }).level])), c.levels);
+  });
+}

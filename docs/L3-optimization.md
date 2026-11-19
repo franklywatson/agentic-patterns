@@ -3,14 +3,15 @@ last-validated-model: claude-opus-5-5
 reviewed: 2026-11-19
 ---
 
-# L3: Optimization (Optional)
+# L3: Optimization (optional)
 
-**Layer**: Optimization (L3)
-**Prerequisites**: [L2 Guardrails](./L2-behavioral-guardrails.md)
+L3 is optional. It reduces the tokens an agent spends on exploration and tool output. It is not on the path to
+verified or unattended work: L0, L1, L2 and L4 carry that. Adopt L3 when token cost or context noise is a measured
+problem, and measure the effect in tokens on your own sessions. It uses the hook mechanism of
+[Pattern 2.3](L2-behavioral-guardrails.md#pattern-23--hook-automation).
 
-L3 is optional. It reduces the tokens an agent spends on exploration and tool output. It is not on the path to verified or unattended work: L0, L1, L2 and L4 carry that. Adopt L3 when token cost or context noise is a measured problem, and measure the effect in tokens on your own sessions.
-
-The patterns here share one idea: a tool that returns a short, typed answer costs less context than a raw dump the agent has to parse.
+The patterns share one idea: a tool that returns a short, typed answer costs less context than a raw dump the
+agent has to parse.
 
 ---
 
@@ -18,22 +19,40 @@ The patterns here share one idea: a tool that returns a short, typed answer cost
 
 ### Problem
 
-Agents reach for shell commands out of habit. `grep -r` over a repository returns hundreds of unranked lines. `cat` reads a whole file when one function is needed. `sed -i` edits files in place and bypasses the editor tool's checks.
+Agents reach for shell commands out of habit. `grep -r` over a repository returns hundreds of unranked lines.
+`cat` reads a whole file when one function is needed. `sed -i` edits files in place and bypasses the editor
+tool's checks.
 
 ### Solution
 
-Route shell commands to the native or structured tool that does the same job, and block in-place edits. A pre-execution hook classifies each command and returns one of three results: allow, advise (use this tool instead), or block.
+Route a shell command to a structured tool that does the same job, when that tool exists in the session, and block
+in-place edits. A pre-execution hook classifies each command and returns one of three results: allow, advise (use
+this tool instead), or block.
 
-| Command | Preferred tool | Result |
-|---------|----------------|--------|
-| `grep`, `rg` | Grep tool, or an indexed symbol search | advise |
-| `cat` | Read tool, with a line range | advise |
-| `find` | Glob tool | advise |
-| `sed -i`, `awk ... > file` | Edit tool | block |
-| `docker ...` | none | allow |
-| anything else | none | allow |
+The preferred tool depends on what the session has, so the hook checks before it advises. A structured tool is
+any tool that returns records instead of text: a language-server (code intelligence) tool, an indexed
+symbol-search server, or a file reader that takes a line range.
 
-Classify each segment of a compound command (split on `&&`, `||`, `;`, `|`). Check destructive patterns first, so `sed -i` is never classified as a text search.
+| Command | Advise when the session has | Otherwise |
+|---------|-----------------------------|-----------|
+| `grep`, `rg` | an indexed symbol or text search tool | allow |
+| `cat` | a file reader that takes a line range | allow |
+| `find` | an indexed file or symbol listing | allow |
+| `sed -i`, `awk ... > file` | not applicable | block |
+| anything else | not applicable | allow |
+
+Do not advise a tool the session lacks. In Claude Code, the Grep and Glob tools are absent by default on macOS,
+Linux and WSL. Claude searches with `find` and `grep` through the Bash tool, where they run embedded versions of
+`bfs` and `ugrep`. Those searches reach hooks and permission rules as Bash calls
+([tools reference](https://code.claude.com/docs/en/tools-reference#glob-tool-behavior)). An advice to "use the
+Grep tool" there points at a tool that is not present. The same page lists an `LSP` tool for jumping to
+definitions and finding references; it is a candidate target when the session has it.
+
+Classify each segment of a compound command (split on `&&`, `||`, `;`, `|`). Check destructive patterns first,
+so `sed -i` is never classified as a text search.
+
+Detect the available tools once per session, write the result to a file (a hook process starts fresh for each
+call), and fall back to allow when a specialized tool is missing.
 
 ### In Practice
 
@@ -58,15 +77,18 @@ search_symbols("process", kind="function")
 ]
 ```
 
-String matching is a nudge, not a control. The classifier's anchored pattern, `/^\s*sed\s+(-i|--in-place)\b/`
-(`examples/guardrails/src/core/intent.ts`), misses `/usr/bin/sed -i` and `sed -E -i`. The example router's
-unanchored rule, `/\bsed\s+(-i|--in-place)\b/` (`examples/guardrails/src/config/routing.config.ts`), catches
-the absolute-path form but still misses `sed -E -i`, and it blocks harmless text such as `echo sed -i`.
-Neither catches `perl -pi`, `python -c` file writes or `$(...)` substitution. The `docker` rule allows every
-Docker command, and Docker socket access is root-equivalent. Use a sandbox or credential scope for limits that
-must hold ([Pattern 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
+String matching is a nudge, not a control. The classifier matches strings and misses other spellings
+(`/usr/bin/sed -i`, `sed -E -i`, `perl -pi`) and blocks harmless text such as `echo sed -i`. Limits that must hold go in
+a sandbox or credential scope ([Pattern 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
 
-The [guardrails example](../examples/guardrails/) implements the classifier and routing table in TypeScript, with tests.
+The [guardrails example](../examples/guardrails/) implements the classifier, the tool detection
+(`src/core/environment.ts`, an in-process cache) and a data-driven routing table in TypeScript, with tests. A fuller
+implementation is in the [rig](https://github.com/franklywatson/claude-rig) repository, which is by this
+repository's author: [`src/router`](https://github.com/franklywatson/claude-rig/tree/master/src/router) for
+environment-aware resolution and [`src/session`](https://github.com/franklywatson/claude-rig/tree/master/src/session)
+for session-start detection. These links track the `master` branch and can drift; pin a commit if you depend on
+them. rig installs hooks and skills, and RTK ([Further Reading](references/further-reading.md#rtk-rust-token-killer)) proxies your shell commands, so review either before you install it
+([Pattern 2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)).
 
 ### Anti-Pattern
 
@@ -75,12 +97,12 @@ The [guardrails example](../examples/guardrails/) implements the classifier and 
 if (/grep|sed|awk/.test(cmd)) return 'text_search';
 ```
 
-Cross-References:
+### Cross-References
 
-- [L2: Hook Automation](L2-behavioral-guardrails.md#pattern-23--hook-automation) for how pre-execution hooks work
-- [L4: Context Eval](L4-standards-measurement.md#pattern-46--context-eval) for scoring routing decisions against expected outcomes
+- [Pattern 2.3: Hook Automation](L2-behavioral-guardrails.md#pattern-23--hook-automation) for how pre-execution hooks work
+- [Pattern 4.6: Context Eval](L4-standards-measurement.md#pattern-46--context-eval) for testing a routing rule as one decision in a task bank
 
-**Evidence:** Thin — token savings come from tool documentation and are unmeasured here; measurement guidance cautions against them (MV-1, MV-20)
+**Evidence:** Thin — tools publish their own savings figures on their own benchmarks; none is measured here. Measure on your own sessions. The environment detection and rig router are this project's own designs (n=1).
 
 ---
 
@@ -88,13 +110,20 @@ Cross-References:
 
 ### Problem
 
-Exploration fills the main session with search results and file contents the implementation does not need. Later steps then run with less usable context.
+Exploration fills the main session with search results and file contents the implementation does not need. Later
+steps then run with less usable context.
 
 ### Solution
 
-Delegate exploration to a sub-agent and have it return a short map: relevant files, entry points, key symbols and their dependencies. The main session reads the map and acts on it.
+Delegate exploration to a subagent and have it return a short map: relevant files, entry points, key symbols and
+their dependencies. The main session reads the map and acts on it.
 
-This is the Isolate strategy of the WISC framework (Write, Isolate, Select, Compress; Cole Medin, adapted by DIY Smart Code). The framework's claim that most agent failures come from context management rests on a single video and a single uncontrolled source, so treat it as Thin evidence.
+Claude Code ships a read-only built-in `Explore` subagent for this, with Write and Edit denied
+([subagents](https://code.claude.com/docs/en/sub-agents)). The rules below apply to it and to a scout you define.
+
+This is the Isolate strategy of the WISC framework (Write, Isolate, Select, Compress; Cole Medin, adapted by DIY
+Smart Code). The framework's claim that most agent failures come from context management rests on a single video
+and a single uncontrolled source, so treat it as Thin evidence.
 
 ### In Practice
 
@@ -106,79 +135,21 @@ This is the Isolate strategy of the WISC framework (Write, Isolate, Select, Comp
 
 Running broad `grep` and `find` commands in the main session, then carrying every match forward.
 
-Cross-References:
+### Cross-References
 
 - [Further reading: WISC](references/further-reading.md)
 - [WISC video](https://youtu.be/gyo0eRgsUWk) and [WISC repository](https://github.com/coleam00/context-engineering-intro/tree/main/use-cases/ai-coding-wisc-framework)
 
-**Evidence:** Partial — vendor guidance on isolating exploration in sub-agents; no measured comparison (SC-1, OM-8)
-
----
-
-## Pattern 3.3 — Environment-Aware Routing and Session Lifecycle
-
-Routing should depend on which tools exist: an indexed repository can use symbol search, and a machine without the indexer should fall back to the Grep tool. Detect available tools once per session, cache the result, and degrade to the native tool when a specialized one is missing.
-
-This guide does not reproduce the detection and caching code. The reference implementations are in the
-[rig](https://github.com/franklywatson/claude-rig) repository:
-[`src/router`](https://github.com/franklywatson/claude-rig/tree/main/src/router) for environment-aware
-resolution and [`src/session`](https://github.com/franklywatson/claude-rig/tree/main/src/session) for
-session-start detection and caching. rig is by this repository's author. It installs hooks and skills, so
-review it before you install it ([Pattern
-2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)). The same applies to RTK,
-which proxies your shell commands, and to the jcodemunch MCP server, which is licensed for non-commercial use
-and needs a paid licence for commercial use.
-
-**Evidence:** Thin — design from rig (first-party, n=1); no study of detection caching
-
----
-
-## Pattern 3.4 — Cross-Repo Architecture Alignment
-
-This pattern is the author's opinion. It is a judgement about trade-offs, not an evidenced pattern.
-
-### Problem
-
-A monorepo keeps related services aligned, and it also loads every service into each agent session. Unrelated code adds context and search noise.
-
-### Solution
-
-An agent can read several repositories and check them for consistency without a shared filesystem. It reads the API contract in one repo, the event schema in another, and the types in a third, then reports mismatches. This makes several smaller repositories more workable than before.
-
-| Concern | Monorepo | Multi-repo with agent alignment |
-|---------|----------|---------------------------------|
-| Contract consistency | Shared types enforce it | Agent checks it on each change |
-| Context size | All code visible | Each repo loads alone |
-| Build coupling | Shared pipeline | Independent pipelines |
-| Discovery | File tree | Each repo's AGENTS.md or CLAUDE.md |
-
-### In Practice
-
-Multi-repo works when services have clear owners and independent deploys, and when each repo keeps its own entry-point file with its public interfaces. A monorepo remains the better choice when services share internal types that change often, or when build tooling assumes one.
-
-Workflow:
-
-1. Each repo documents its API contracts and public interfaces in its entry-point file.
-2. When a service changes its API, the agent reads the dependent repos' entry-point files to find breakage.
-3. The agent proposes coordinated changes, and tests in each repo verify them.
-
-### Anti-Pattern
-
-Splitting into repos without an entry-point file in each. The agent then cannot find anything. Do not break up a monorepo that works.
-
-Cross-References:
-
-- [Pattern 0.2 — Progressive Disclosure](L0-foundation.md#pattern-02--progressive-disclosure)
-- [Pattern 3.2 — Context Isolation](#pattern-32--context-isolation-scout)
-
-**Evidence:** Thin — reasoned trade-off; no source compares multi-repo with monorepo for agents
+**Evidence:** Partial — vendor guidance on isolating exploration in subagents; no measured comparison (SC-1, OM-8)
 
 ---
 
 ## Example Implementation
 
-[examples/guardrails](../examples/guardrails/) illustrates Pattern 3.1 in TypeScript: an intent classifier, an environment detector, a router and a data-driven routing table. Run its tests with `cd examples/guardrails && npm install && npm test` (Node.js 21 or later).
+[examples/guardrails](../examples/guardrails/) illustrates Pattern 3.1 in TypeScript: an intent classifier, an
+environment detector, a router and a data-driven routing table. Run its tests with
+`cd examples/guardrails && npm install && npm test` (Node.js 22 or later).
 
 ---
 
-**Previous:** [L2: Behavioral Guardrails](L2-behavioral-guardrails.md) | **Next:** [L4: Standards & Measurement](L4-standards-measurement.md) | [Back to Overview](../README.md)
+**Previous:** [L2: Behavioral Guardrails](L2-behavioral-guardrails.md) | **Next:** [L4: Standards and Measurement](L4-standards-measurement.md) | [Back to Overview](../README.md)

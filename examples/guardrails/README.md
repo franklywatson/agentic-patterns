@@ -1,14 +1,12 @@
 # Guardrail Middleware Example
 
-A simplified implementation demonstrating tool routing and intent classification for token-optimized agent behavior.
-
-This is a single-language (TypeScript) example for the optional [L3: Optimization](../../docs/L3-optimization.md) layer. It illustrates Pattern 3.1, Prefer Native Structured Tools; Block Destructive Edits.
+Pattern 3.1 in TypeScript: a hook that routes `grep`, `cat` and `find` to structured tools when the session has them and blocks `sed -i`. For a team whose token cost is a measured problem; it is optional ([L3](../../docs/L3-optimization.md)).
 
 ## Overview
 
 This example shows the core routing logic:
 
-1. **Intent Classification** — Parse bash commands to detect what the agent is trying to do
+1. **Intent Classification** — Parse Bash commands to detect what the agent is trying to do
 2. **Environment Detection** — Check available tools (RTK, jcodemunch) at session start
 3. **Native Structured Tool Routing** — Route commands to the native or structured tool for the job, based on intent + environment
 4. **Resolution** — Return `allow`, `advise` (use different tool), or `block`
@@ -19,7 +17,7 @@ This example shows the core routing logic:
 
 ## File Structure
 
-```
+```text
 src/
 ├── core/
 │   ├── intent.ts        # Intent classifier (command → intent)
@@ -34,7 +32,8 @@ src/
 ```typescript
 import { classifyCommand } from './core/intent.js';
 import { getEnvironment } from './core/environment.js';
-import { findMatchingRule, resolve } from './core/router.js';
+import { resolve } from './core/router.js';
+import { findMatchingRule } from './config/routing.config.js';
 
 // Agent issues a command
 const command = 'grep -r "export.*function" ./src';
@@ -64,10 +63,10 @@ if (resolution.action === 'advise') {
 
 ## Build and Test
 
-Requires Node.js 21 or later (the test script passes a quoted glob to `node --test`).
+Requires Node.js 22 or later (the test script passes a quoted glob to `node --test`).
 
 ```bash
-npm install
+npm ci
 npm test        # runs `npm run build` (tsc) first, then node:test on dist/**/*.test.js
 ```
 
@@ -85,14 +84,18 @@ Use a containment boundary for limits that must hold.
 
 ## Intent Types
 
-| Intent | Description | Default Resolution |
-|--------|-------------|-------------------|
-| `file_read` | Reading file contents (`cat`, `head`) | Advise Read tool |
-| `text_search` | Searching text (`grep`, `rg`) | Advise Grep/jcodemunch |
-| `file_discovery` | Finding files (`find`, `fd`) | Advise Glob/jcodemunch |
-| `file_modify` | Destructive edits (`sed -i`, `awk > file`) | **BLOCK** |
-| `docker` | Container operations | Allow (pass-through) |
-| `pass_through` | Unknown/benign commands | Allow |
+A rule's resolution depends on the environment. The router returns the first of `rtk` (if RTK is installed),
+`jcodemunch` (if the repository is indexed), `general`, `fallback` and `_` that the rule defines. The search and
+discovery rules define no `general` entry, so they fall to `fallback` (allow) when neither RTK nor an index applies.
+
+The intents and their rules are data in [`src/config/routing.config.ts`](src/config/routing.config.ts): `file_read`
+(advise the Read tool), `text_search` and `file_discovery` (advise an RTK or jcodemunch tool when present),
+`file_modify` (`sed -i`, `awk` with a redirect: block in every environment), `docker` and `pass_through` (allow).
+
+No rule advises Claude Code's Grep or Glob tools. On macOS, Linux and WSL Claude Code leaves both out of the default
+tool set and runs `grep` and `find` through Bash (see the
+[tools reference](https://code.claude.com/docs/en/tools-reference)). Add a `general` entry that names a tool only
+if your session has it.
 
 ### Docker is default-allow
 
@@ -105,59 +108,28 @@ Relax](../../docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-rel
 
 ## Routing Rules
 
-Rules are defined in `src/config/routing.config.ts`. Each rule specifies:
-
-- **Pattern**: RegExp to match commands
-- **Intent**: Classification type
-- **Resolutions**: Per-environment actions (rtk, jcodemunch, general, fallback)
-
-Example rule for `grep`:
-
-```typescript
-{
-  match: /\b(grep[rx]?|rg)\b/,
-  intent: 'text_search',
-  resolutions: {
-    rtk: { action: 'advise', tool: 'rtk grep', reason: 'structured output' },
-    jcodemunch: { action: 'advise', tool: 'search_text', reason: 'indexed search' },
-    general: { action: 'advise', tool: 'Grep tool', reason: 'structured output' },
-    fallback: { action: 'allow' },
-  },
-}
-```
+Each rule in `src/config/routing.config.ts` has a `match` RegExp, an `intent` and per-environment `resolutions`
+(`rtk`, `jcodemunch`, `general`, `fallback`).
 
 ## Integration with Claude Code
 
-To integrate this middleware with Claude Code:
+This example has no hook script. To use the middleware in Claude Code, register a `PreToolUse` command hook on
+the `Bash` tool. Claude Code passes the tool call as JSON on stdin; the command is in `tool_input.command`
+([hooks guide](https://code.claude.com/docs/en/hooks-guide)). The hook:
 
-1. **Hook Implementation**: Create a Claude Code hook that intercepts bash commands
-2. **Session Setup**: Run environment detection once per session
-3. **Command Interception**: Before each bash call, classify + route
-4. **Resolution Handling**: Apply `advise` and `block` resolutions
+1. Reads the JSON and extracts `tool_input.command`.
+2. Runs `findMatchingRule(command)` and `resolve(rule, environment)`. Detect the environment once per session
+   and write the result to a file, because the hook process starts fresh for each call and the in-memory cache
+   in `environment.ts` does not survive between calls.
+3. For `block`, and for `advise` when the advised tool should replace the command, exits 2 with the reason on
+   stderr, or exits 0 with JSON `{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision":
+   "deny", "permissionDecisionReason": "<reason>"}}`. Claude Code cancels the call and returns the reason to
+   Claude, which then uses the advised tool.
+4. For `allow`, exits 0 with no output.
 
-Example hook flow:
-
-```typescript
-// In your Claude Code hook
-async function beforeBash(command: string): Promise<boolean> {
-  const rule = findMatchingRule(command);
-  if (!rule) return true; // allow
-
-  const resolution = resolve(rule, sessionEnvironment);
-
-  if (resolution.action === 'block') {
-    console.error(`BLOCKED: ${resolution.reason}`);
-    return false; // prevent execution
-  }
-
-  if (resolution.action === 'advise') {
-    console.warn(`Advising: Use ${resolution.tool} instead`);
-    // Could auto-retry with advised tool
-  }
-
-  return true; // allow execution
-}
-```
+[Pattern 2.3](../../docs/L2-behavioral-guardrails.md#pattern-23--hook-automation) shows a complete hook script and the exit-code contract.
+A hook that crashes or exits with a code other than 0 or 2 does not block the call unless it is configured to
+(`onFailure: "block"`), so a hook that must hold needs that setting and a test that shows the block.
 
 ## Adapting for Other Projects
 
@@ -179,4 +151,4 @@ Savings depend on the repository, the query, and the tools installed. Measure th
 RTK proxies your shell commands and jcodemunch is an MCP server that indexes your repository. Treat both as
 dependencies: read the source before installing and pin a version ([Pattern
 2.12](../../docs/L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)). jcodemunch is
-free for non-commercial use; commercial use needs a paid licence.
+free for non-commercial use; commercial use needs a paid license.

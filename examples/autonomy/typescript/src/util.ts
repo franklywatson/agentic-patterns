@@ -12,11 +12,30 @@ const here = dirname(fileURLToPath(import.meta.url));
 export const AUTONOMY_ROOT = join(here, "..", "..", "..");
 export const SCHEMA_PATH = join(AUTONOMY_ROOT, "schema", "autonomy.schema.json");
 
+/** ISO 8601 as this tooling writes it: a date, or a date and time with `Z` or an offset. */
+const ISO_TIME = /^(\d{4})-(\d{2})-(\d{2})(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,6})?)?(?:Z|[+-]\d{2}:\d{2}))?$/;
+
+/** Parse an ISO date or time to epoch milliseconds; throws on anything else, including 2027-02-31. */
 export function parseTime(value: string): number {
-  const text = /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00Z` : value;
-  const ms = Date.parse(text);
+  const m = typeof value === "string" ? ISO_TIME.exec(value) : null;
+  if (m === null) throw new Error(`invalid date: ${value}`);
+  const [year, month, day] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const calendar = new Date(Date.UTC(year, month - 1, day));
+  if (calendar.getUTCFullYear() !== year || calendar.getUTCMonth() !== month - 1 || calendar.getUTCDate() !== day) {
+    throw new Error(`invalid date: ${value}`);
+  }
+  const ms = Date.parse(value.length === 10 ? `${value}T00:00:00Z` : value);
   if (Number.isNaN(ms)) throw new Error(`invalid date: ${value}`);
   return ms;
+}
+
+/** Parse a time, or return null when it is not an ISO date or time. */
+export function tryParseTime(value: unknown): number | null {
+  try {
+    return parseTime(value as string);
+  } catch {
+    return null;
+  }
 }
 
 export function nowMs(arg?: string): number {
@@ -58,6 +77,10 @@ export function readJsonIfExists(path: string): Json | null {
   return existsSync(path) ? readJson(path) : null;
 }
 
+// A glob wildcard never matches a line terminator, in either language.
+const ANY = "[^\\n\\r\\u2028\\u2029]";
+const SEGMENT = "[^/\\n\\r\\u2028\\u2029]";
+
 /** Translate a glob to a RegExp. `*` stays inside one path segment unless `anySlash`. */
 export function globToRegExp(glob: string, anySlash: boolean): RegExp {
   let out = "";
@@ -65,13 +88,13 @@ export function globToRegExp(glob: string, anySlash: boolean): RegExp {
     const ch = glob[i];
     if (ch === "*") {
       if (glob[i + 1] === "*") {
-        out += ".*";
+        out += `${ANY}*`;
         i++;
       } else {
-        out += anySlash ? ".*" : "[^/]*";
+        out += anySlash ? `${ANY}*` : `${SEGMENT}*`;
       }
     } else if (ch === "?") {
-      out += anySlash ? "." : "[^/]";
+      out += anySlash ? ANY : SEGMENT;
     } else {
       out += ch.replace(/[.+^${}()|[\]\\]/g, "\\$&");
     }

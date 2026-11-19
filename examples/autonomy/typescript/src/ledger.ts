@@ -77,7 +77,7 @@ export function buildReport(wf: Json, runsAll: Json[], profile: Json | null, sta
   const mergedAtLevel = atLevel.filter((r) => r.outcome === "merged");
   const cost = atLevel.reduce((sum, r) => sum + (r.cost_usd ?? 0), 0);
   const costPer = mergedAtLevel.length === 0 ? null : round4(cost / mergedAtLevel.length);
-  const cap = capOf(profile);
+  const cap = capOf(profile, now);
   const entry = state?.workflows?.[wf.id] ?? {};
   const cooldownOk = entry.demoted_at === undefined || ageDays(now, parseTime(entry.demoted_at)) >= COOLDOWN_DAYS;
   const stopAge = wf.stop?.last_tested === undefined ? null : ageDays(now, parseTime(wf.stop.last_tested));

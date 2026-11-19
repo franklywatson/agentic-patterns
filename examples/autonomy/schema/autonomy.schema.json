@@ -47,7 +47,7 @@
     },
     "profile": {
       "type": "string",
-      "minLength": 1
+      "pattern": "^\\.autonomy/(?!(?:[^/]*/)*\\.\\.?(?:/|(?![\\s\\S])))[^\\\\]+(?![\\s\\S])"
     },
     "workflows": {
       "type": "array",

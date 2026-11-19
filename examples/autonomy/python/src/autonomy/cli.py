@@ -85,7 +85,10 @@ def _run(argv: list[str]) -> int:
         if as_json:
             print(json.dumps(profile, indent=2))
         else:
-            dims = "\n".join(f"{d}: {v['level']}" for d, v in profile["dimensions"].items())
+            def line(d: str, v: dict) -> str:
+                return f"{d}: {v['level']}" + (f" (next: {', '.join(v['missing_for_next'])})" if v["missing_for_next"] else "")
+
+            dims = "\n".join(line(d, v) for d, v in profile["dimensions"].items())
             print(f"wrote {path}\ncap: {profile['cap']}\n{dims}\nworksheet: {directory / '.autonomy' / 'worksheet.json'}")
         return 0
     if command == "ledger":

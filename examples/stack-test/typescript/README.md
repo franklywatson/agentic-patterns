@@ -1,13 +1,13 @@
 # Stack Test Example — TypeScript
 
-A minimal, working example of stack tests in TypeScript using Jest and Playwright. Each test models one **atomic user journey** — a complete interaction from the user's perspective.
+A minimal, working example of stack tests in TypeScript using Jest and Playwright. Each test models one **atomic user journey** — a complete interaction from the user's perspective. For a team writing its first stack test; run it before adapting [Pattern 1.1](../../../docs/L1-patterns/1.1-stack-tests.md).
 
 ## What This Demonstrates
 
 - **User journey framing**: Each test is one complete user interaction, not a component check
 - **Dynamic port allocation**: Ports assigned from available range (10000-65535)
 - **Unique compose project**: `docker compose -p stack-test-{pid}-{hex}` isolates containers, network and volumes; the compose file sets no fixed `container_name`
-- **Transient volumes**: Data disappears when containers stop
+- **Transient volumes**: Data is removed with `docker compose down -v` at cleanup
 - **Per-test compose files**: generated as `docker-compose-stack-test-{pid}-{hex}-{timestamp}.yml` from the template and deleted on cleanup
 - **Full-loop assertions**: Primary response, second-order cross-API verification, third-order audit/observability
 - **Sequential ordering**: Tests numbered `01-`, `02-` to establish dependency ladder
@@ -15,11 +15,11 @@ A minimal, working example of stack tests in TypeScript using Jest and Playwrigh
 
 ## Two Test Modes
 
-This example demonstrates two complementary approaches to stack testing, both running against the same Docker stack with the same no-mock philosophy.
+This example demonstrates two complementary approaches to stack testing, both running against the same Docker stack with real dependencies and no mocks.
 
 ### API-Level Tests (Jest)
 
-API-level tests drive the stack through HTTP calls — the same interface a mobile app or API consumer would use. They are fast, deterministic, and provide precise diagnostic signal through structured assertion layering.
+API-level tests drive the stack through HTTP calls — the same interface a mobile app or API consumer would use. They are faster than browser tests and give a precise diagnostic signal through layered assertions.
 
 **When to use:** Backend services, API contracts, internal system behavior, data integrity checks.
 
@@ -27,11 +27,7 @@ API-level tests drive the stack through HTTP calls — the same interface a mobi
 
 Browser-level tests drive the stack through a real browser — the same interface an end user would use. They catch problems API tests cannot: broken JavaScript, missing CSS assets, rendering failures, and client-side logic errors.
 
-This maps to the **"Beyond API Testing"** concept from [L1 Closed Loop Design](../../../docs/L1-patterns/1.1-stack-tests.md#beyond-api-testing):
-
-> Stack tests are not limited to driving backend APIs directly. For web applications, the same pattern applies with a browser automation layer like Playwright: spin up the full stack, then drive user journeys through the actual UI — form submissions, page transitions, rendered output — to verify that the combined frontend and backend work correctly end-to-end. The principle remains the same: real system, real dependencies, no mocks. Only the entry point changes from HTTP API calls to browser interactions.
-
-**When to use:** Web applications with significant frontend logic, critical user flows that span page transitions, visual regression testing.
+**When to use:** Web applications with significant frontend logic, critical user flows that span page transitions. See [Pattern 1.1, Beyond API Testing](../../../docs/L1-patterns/1.1-stack-tests.md#beyond-api-testing).
 
 ### How They Complement Each Other
 
@@ -39,7 +35,7 @@ This maps to the **"Beyond API Testing"** concept from [L1 Closed Loop Design](.
 |---------|----------------|---------------------------|
 | Backend logic | Verified directly | Verified through UI rendering |
 | Frontend rendering | Not tested | Verified via DOM assertions |
-| JavaScript execution | Not tested | Verified via console error checks |
+| JavaScript execution | Not tested | Not exercised here (the pages have no JavaScript); console error checks catch it in an app that has some |
 | CSS/asset loading | Not tested | Verified via network request monitoring |
 | Form validation (server) | Verified via HTTP responses | Verified via UI error messages |
 | Form validation (client) | Not tested | Verified via DOM interaction |
@@ -50,10 +46,11 @@ A healthy test suite uses both: API tests for fast feedback on backend changes, 
 
 ## File Structure
 
-```
+```text
 .
 ├── package.json              # Dependencies (Jest + Playwright)
-├── jest.config.cjs           # Jest config: 300s timeout, runInBand
+├── jest.config.cjs           # Stack-test Jest config: 300s timeout, runInBand
+├── jest.unit.config.cjs      # Unit-test Jest config for tests/unit
 ├── playwright.config.ts      # Playwright config: Chromium, sequential
 ├── docker-compose.test.yml   # Template stack: app, postgres, redis
 ├── app/                      # Express + PostgreSQL + Redis app under test
@@ -62,6 +59,8 @@ A healthy test suite uses both: API tests for fast feedback on backend changes, 
 ├── tests/
 │   ├── config/
 │   │   └── stack-utils.ts    # StackTestUtils class (API test helpers)
+│   ├── unit/
+│   │   └── stack-utils.test.ts  # Unit tests for StackTestUtils (child_process replaced, no Docker)
 │   └── stack/
 │       ├── 01-app-startup.stack.test.ts        # API: system comes online
 │       ├── 02-user-registration.stack.test.ts  # API: user signs up
@@ -79,14 +78,17 @@ Run all commands from `examples/stack-test/typescript/`.
 npm install
 npx playwright install chromium
 
+# Unit tests for StackTestUtils: no Docker needed
+npm test
+
 # API-level stack tests (Jest). Each test file starts its own stack
 # (unique compose project and ports) and removes it afterwards.
 npm run test:stack
 ```
 
-Expected result: `Test Suites: 2 passed, 2 total` and `Tests: 9 passed, 9 total`.
+Expected result: every suite and test passes, with no failures or warnings.
 
-Browser-level tests share one running stack. Start it, run Playwright, then remove it:
+Browser-level tests share one running stack, so they use fixed host ports; pick free ones. Start it, run Playwright, then remove it:
 
 ```bash
 export APP_PORT=13000 POSTGRES_PORT=15432 REDIS_PORT=16379
@@ -95,7 +97,7 @@ BASE_URL=http://localhost:13000 npm run test:browser
 docker compose -p ts-browser-stack -f docker-compose.test.yml down -v --remove-orphans
 ```
 
-Expected result: `8 passed`. Without the `APP_PORT`/`POSTGRES_PORT`/`REDIS_PORT` overrides the stack binds ports 3000, 5432 and 6379, and `BASE_URL` defaults to `http://localhost:3000`.
+Expected result: every browser test passes. Without the `APP_PORT`/`POSTGRES_PORT`/`REDIS_PORT` overrides the stack binds ports 3000, 5432 and 6379, and `BASE_URL` defaults to `http://localhost:3000`.
 
 ```bash
 # Run a specific browser test file (stack must be running)
@@ -105,12 +107,12 @@ npx playwright test --config=playwright.config.ts tests/stack/browser/01-app-sta
 npx playwright test --config=playwright.config.ts --ui
 ```
 
-`npm run test:all` runs `test:stack` and then `test:browser`; the browser step needs the stack from the commands above (default ports) to be running.
+`StackTestUtils.cleanup()` runs `docker compose down`, deletes the generated compose file and throws one error that names every failure (`down` and the file removal), so a leaked stack fails the run. After a failed `down` it keeps the project name, so a second call retries `docker compose -p <name> down` without the file. The unit tests in `tests/unit` check this with `child_process` replaced. `npm run test:all` runs `test`, `test:stack` and then `test:browser`; the browser step needs the stack from the commands above (default ports) to be running.
 
 ## Requirements
 
 - Docker and Docker Compose v2 installed
-- Node.js 20+
+- Node.js 22+
 - Free ports: 10000-65535 for `npm run test:stack` (allocated dynamically); 13000, 15432 and 16379 for the browser commands above (3000, 5432 and 6379 without the overrides)
 - Chromium browser (installed via `npx playwright install chromium`)
 
@@ -122,10 +124,10 @@ Tests are numbered `01-`, `02-` etc. to enforce ordering. Each test assumes all 
 
 ### 2. Full-Loop Assertions
 
-Each test verifies at multiple levels:
+Each test asserts in three layers:
 
 - **Primary**: API response status and body (API tests) or page content (browser tests)
-- **Second-order**: Derived effects verified through DIFFERENT API endpoints or pages than the one that performed the action
+- **Second-order**: Derived effects verified through a different API endpoint or page than the one that performed the action
 - **Third-order**: Cross-functional verification — audit logs, console errors, network request failures, cross-page consistency
 
 ### 3. Container Isolation

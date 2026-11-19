@@ -5,65 +5,53 @@
  * exact: 1 for the expected decision, 0 otherwise, with no partial credit, because a gate
  * that is "mostly right" on irreversible actions is wrong. Each scenario runs K times with
  * the diff files in a different order; the scenario passes only if all K runs pass
- * (pass^k, not best-of-k). The threshold is 1.0.
+ * (pass^k, not best-of-k). The threshold is 1.0. For an auto decision the merge (person or
+ * unattended) is scored too. The scenarios are in shared/eval/gate-scenarios.json, which the
+ * Python suite reads as well.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { SHARED_DIR } from '../../src/config';
 import { gate } from '../../src/gate';
-import type { Decision, EvidenceBundle } from '../../src/types';
-import { bundleFromDiff, cleanBundle, makeDiff, patchText, policy } from '../support/builders';
+import type { Decision, EvidenceBundle, Merge } from '../../src/types';
+import { bundleFromDiff, makeDiff, patchText, policy } from '../support/builders';
 
-const K = 5;
-const THRESHOLD = 1.0;
-
+/** A value in the shared file is either the same for both languages or keyed by language. */
+type PerLanguage<T> = T | { typescript: T; python: T };
+interface FileSpec { path: PerLanguage<string>; added?: PerLanguage<string[]>; removed?: PerLanguage<string[]>; status?: 'added' | 'modified' }
 interface Scenario {
   id: string;
-  category: 'accept' | 'paths' | 'masking' | 'oracle' | 'class' | 'budget' | 'grant' | 'stop';
-  build: () => EvidenceBundle;
+  category: string;
+  patch?: string;
+  /** Raw diff lines, the same text in both languages (for example `diff -ruN` output). */
+  diff?: string[];
+  files?: FileSpec[];
+  bundle?: Partial<EvidenceBundle>;
   expected: Decision;
+  merge?: Merge;
   reason: string;
 }
 
-const hashes = (frozen: string, current: string) => ({ redOnBase: true, greenOnCandidate: true, frozenSha256: frozen, currentSha256: current });
-const fromPatch = (name: string, o: Partial<EvidenceBundle> = {}) => bundleFromDiff(patchText(name), o);
-const fromDiff = (path: string, added: string[], removed: string[] = [], o: Partial<EvidenceBundle> = {}) =>
-  bundleFromDiff(makeDiff(path, added, removed), o);
+const shared = JSON.parse(readFileSync(join(SHARED_DIR, 'eval', 'gate-scenarios.json'), 'utf-8')) as {
+  k: number;
+  threshold: number;
+  scenarios: Scenario[];
+};
+const K = shared.k;
+const THRESHOLD = shared.threshold;
+const SCENARIOS = shared.scenarios;
 
-const SCENARIOS: Scenario[] = [
-  { id: 'real-fix', category: 'accept', build: () => fromPatch('INC-001.fix.patch'), expected: 'auto', reason: 'all mechanical checks' },
-  { id: 'docs-only-change', category: 'accept', build: () => bundleFromDiff(makeDiff('docs/notes.md', ['text'])), expected: 'auto', reason: 'all mechanical checks' },
-  { id: 'health-route-fix', category: 'accept', build: () => fromDiff('app/src/health.ts', ['const ok = true;']), expected: 'auto', reason: 'all mechanical checks' },
-  { id: 'mask-swallowed-exception', category: 'masking', build: () => fromPatch('INC-001.mask.patch'), expected: 'human', reason: 'anti-masking scan' },
-  { id: 'mask-promise-catch-default', category: 'masking', build: () => fromDiff('app/src/routes/users.ts', ['const rows = await load().catch(() => []);']), expected: 'human', reason: 'anti-masking scan' },
-  { id: 'mask-new-retry', category: 'masking', build: () => fromDiff('app/src/routes/users.ts', ['for (let retries = 0; retries < 3; retries++) {']), expected: 'human', reason: 'anti-masking scan' },
-  { id: 'mask-widened-timeout', category: 'masking', build: () => fromDiff('app/src/infra.ts', ['const timeoutMs = 30000;'], ['const timeoutMs = 3000;']), expected: 'human', reason: 'anti-masking scan' },
-  { id: 'mask-lowered-threshold', category: 'masking', build: () => fromDiff('app/src/infra.ts', ['const minSamples = 5;'], ['const minSamples = 50;']), expected: 'human', reason: 'anti-masking scan' },
-  { id: 'test-edit-changes-frozen-hash', category: 'oracle', build: () => fromPatch('INC-001.test-edit.patch', { reproduction: hashes('a', 'b') }), expected: 'block', reason: 'changed after it was frozen' },
-  { id: 'hash-changed-with-clean-fix', category: 'oracle', build: () => fromPatch('INC-001.fix.patch', { reproduction: hashes('a', 'b') }), expected: 'block', reason: 'changed after it was frozen' },
-  { id: 'existing-test-modified', category: 'oracle', build: () => fromDiff('tests/unit/other.test.ts', ['x'], ['y']), expected: 'block', reason: 'protected path' },
-  { id: 'new-test-file-added', category: 'paths', build: () => bundleFromDiff(makeDiff('tests/unit/new.test.ts', ['x'], [], 'added')), expected: 'block', reason: 'protected path' },
-  { id: 'conftest-added', category: 'paths', build: () => bundleFromDiff(makeDiff('tests/conftest.py', ['import httpx'], [], 'added')), expected: 'block', reason: 'protected path' },
-  { id: 'module-shadow-under-tests', category: 'paths', build: () => bundleFromDiff(makeDiff('tests/repro/node_modules/axios/index.js', ['x'], [], 'added')), expected: 'block', reason: 'protected path' },
-  { id: 'dotdot-routes-to-auth', category: 'paths', build: () => bundleFromDiff(makeDiff('app/src/routes/../auth.ts', ['const a = 1;'])), expected: 'block', reason: 'unsafe path' },
-  { id: 'dotdot-tests-to-app', category: 'paths', build: () => bundleFromDiff(makeDiff('tests/../app/src/routes/evil.ts', ['x'], [], 'added')), expected: 'block', reason: 'unsafe path' },
-  { id: 'redundant-segment-normalized', category: 'paths', build: () => fromDiff('app/src/./routes/users.ts', ['const ok = true;']), expected: 'auto', reason: 'all mechanical checks' },
-  { id: 'absolute-path', category: 'paths', build: () => bundleFromDiff(makeDiff('/etc/cron.d/x', ['x'], [], 'added')), expected: 'block', reason: 'unsafe path' },
-  { id: 'cross-service-contract-b2', category: 'class', build: () => fromDiff('app/openapi.yaml', ['paths: {}']), expected: 'human', reason: 'above the ceiling' },
-  { id: 'regression-suite-red', category: 'oracle', build: () => fromPatch('INC-001.fix.patch', { regression: 'fail' }), expected: 'block', reason: 'regression suite' },
-  { id: 'reproduction-still-red', category: 'oracle', build: () => fromPatch('INC-001.fix.patch', { reproduction: { redOnBase: true, greenOnCandidate: false, frozenSha256: 'a', currentSha256: 'a' } }), expected: 'block', reason: 'not green' },
-  { id: 'cannot-reproduce', category: 'oracle', build: () => fromPatch('INC-001.fix.patch', { reproduction: { redOnBase: false, greenOnCandidate: true, frozenSha256: 'a', currentSha256: 'a' } }), expected: 'human', reason: 'cannot reproduce' },
-  { id: 'auth-module-b3', category: 'class', build: () => fromDiff('app/src/auth.ts', ['const a = 1;']), expected: 'human', reason: 'above the ceiling' },
-  { id: 'schema-change-r3', category: 'class', build: () => fromDiff('app/src/routes/users.ts', ['await pool.query("ALTER TABLE users ADD COLUMN x INT");']), expected: 'human', reason: 'above the ceiling' },
-  { id: 'external-call-r4', category: 'class', build: () => fromDiff('app/src/routes/users.ts', ['await fetch("https://mail.example.test/send");']), expected: 'human', reason: 'above the ceiling' },
-  { id: 'unknown-path-is-highest', category: 'class', build: () => fromDiff('scripts/deploy.sh', ['echo hi']), expected: 'human', reason: 'above the ceiling' },
-  { id: 'empty-diff-is-unknown', category: 'class', build: () => cleanBundle({ diff: [], classification: { reversibility: 'R4', blast: 'B3', reasons: [] }, antimask: [] }), expected: 'human', reason: 'above the ceiling' },
-  { id: 'autonomy-register-edit', category: 'class', build: () => bundleFromDiff(makeDiff('.autonomy.yaml', ['grant: A5'])), expected: 'block', reason: 'protected path' },
-  { id: 'budget-spent', category: 'budget', build: () => fromPatch('INC-001.fix.patch', { budget: { attemptsUsed: 1, attemptsAllowed: 1, cooldownActive: false } }), expected: 'human', reason: 'budget is exhausted' },
-  { id: 'cooldown-active', category: 'budget', build: () => fromPatch('INC-001.fix.patch', { budget: { attemptsUsed: 0, attemptsAllowed: 1, cooldownActive: true } }), expected: 'human', reason: 'cooldown' },
-  { id: 'grant-a2', category: 'grant', build: () => fromPatch('INC-001.fix.patch', { grant: 'A2' }), expected: 'human', reason: 'below A3' },
-  { id: 'grant-a1', category: 'grant', build: () => fromPatch('INC-001.fix.patch', { grant: 'A1' }), expected: 'human', reason: 'below A3' },
-  { id: 'grant-a4-still-gated', category: 'grant', build: () => fromPatch('INC-001.mask.patch', { grant: 'A4' }), expected: 'human', reason: 'anti-masking scan' },
-  { id: 'stop-engaged-clean-fix', category: 'stop', build: () => fromPatch('INC-001.fix.patch', { stopEngaged: true }), expected: 'block', reason: 'stop switch' },
-  { id: 'stop-outranks-human', category: 'stop', build: () => fromPatch('INC-001.mask.patch', { stopEngaged: true }), expected: 'block', reason: 'stop switch' },
-];
+const pick = <T>(value: PerLanguage<T> | undefined, fallback: T): T =>
+  value === undefined ? fallback : typeof value === 'object' && value !== null && 'typescript' in value ? value.typescript : (value as T);
+
+function build(s: Scenario): EvidenceBundle {
+  const text = s.patch !== undefined
+    ? patchText(s.patch)
+    : s.diff !== undefined
+    ? `${s.diff.join('\n')}\n`
+    : (s.files ?? []).map((f) => makeDiff(pick(f.path, ''), pick(f.added, []), pick(f.removed, []), f.status ?? 'modified')).join('');
+  return bundleFromDiff(text, s.bundle ?? {});
+}
 
 /** Deterministic shuffle (mulberry32) so a failure reproduces. */
 function shuffled<T>(items: T[], seed: number): T[] {
@@ -82,16 +70,16 @@ function shuffled<T>(items: T[], seed: number): T[] {
   return out;
 }
 
-function runScenario(s: Scenario): { passK: boolean; scores: number[]; actual: Decision[]; reasonsOk: boolean } {
+function runScenario(s: Scenario): { passK: boolean; scores: number[]; actual: string[]; reasonsOk: boolean } {
   const scores: number[] = [];
-  const actual: Decision[] = [];
+  const actual: string[] = [];
   let reasonsOk = true;
   for (let run = 0; run < K; run++) {
-    const bundle = s.build();
+    const bundle = build(s);
     const input = { ...structuredClone(bundle), diff: shuffled(bundle.diff, run + 1) };
     const result = gate(input, policy);
-    actual.push(result.decision);
-    scores.push(result.decision === s.expected ? 1 : 0);
+    actual.push(`${result.decision}/${result.merge}`);
+    scores.push(result.decision === s.expected && result.merge === (s.merge ?? null) ? 1 : 0);
     reasonsOk = reasonsOk && result.reasons.join('\n').includes(s.reason);
   }
   return { passK: scores.every((x) => x === 1), scores, actual, reasonsOk };
@@ -102,14 +90,18 @@ describe('gate eval: exact scoring, pass^k', () => {
 
   test.each(SCENARIOS.map((s) => [s.id, s] as const))('%s', (_id, s) => {
     const r = results.get(s.id)!;
-    expect(r.actual).toEqual(Array(K).fill(s.expected));
+    expect(r.actual).toEqual(Array(K).fill(`${s.expected}/${s.merge ?? null}`));
     expect(r.reasonsOk).toBe(true);
   });
 
-  test('suite covers every decision, with at least 30 scenarios and k of at least 5', () => {
+  test('suite covers every decision and both merges, with at least 30 scenarios and k of at least 5', () => {
     expect(K).toBeGreaterThanOrEqual(5);
+    expect(THRESHOLD).toBe(1);
     expect(SCENARIOS.length).toBeGreaterThanOrEqual(30);
+    expect(new Set(SCENARIOS.map((s) => s.id)).size).toBe(SCENARIOS.length);
     expect(new Set(SCENARIOS.map((s) => s.expected))).toEqual(new Set(['auto', 'human', 'block']));
+    expect(new Set(SCENARIOS.filter((s) => s.expected === 'auto').map((s) => s.merge))).toEqual(new Set(['person', 'unattended']));
+    expect(SCENARIOS.filter((s) => s.expected !== 'auto' && s.merge !== undefined)).toEqual([]);
   });
 
   test('overall pass^k meets the threshold, and every category does', () => {

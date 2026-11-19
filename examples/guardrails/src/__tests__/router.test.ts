@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { findMatchingRule } from '../config/routing.config.js';
+import { findMatchingRule, ROUTING_RULES } from '../config/routing.config.js';
 import { resolve, requiresAction, formatResolution, type Resolution } from '../core/router.js';
 import { formatEnvironment, type Environment } from '../core/environment.js';
 
@@ -40,9 +40,9 @@ describe('environment-aware resolution for grep', () => {
     assert.equal((resolution as { tool: string }).tool, 'rtk grep');
   });
 
-  it('advises the Grep tool when neither is available', () => {
-    const resolution = route('grep foo', env());
-    assert.equal((resolution as { tool: string }).tool, 'Grep tool');
+  it('allows grep when neither RTK nor an index is available, and never advises the Grep tool', () => {
+    assert.deepEqual(route('grep foo', env()), { action: 'allow' });
+    assert.deepEqual(route('rg foo', env()), { action: 'allow' });
   });
 });
 
@@ -55,16 +55,16 @@ describe('environment-aware resolution for other intents', () => {
     );
   });
 
-  it('advises jcodemunch get_file_tree for find when indexed, Glob tool otherwise', () => {
+  it('advises jcodemunch get_file_tree for find when indexed, allows it otherwise', () => {
     assert.equal(
       (route('find . -name x', env({ jcodemunchIndexed: true })) as { tool: string }).tool,
       'jcodemunch get_file_tree',
     );
-    assert.equal((route('find . -name x', env()) as { tool: string }).tool, 'Glob tool');
+    assert.deepEqual(route('find . -name x', env()), { action: 'allow' });
   });
 
-  it('advises the Glob tool for fd', () => {
-    assert.equal((route('fd pattern', env()) as { tool: string }).tool, 'Glob tool');
+  it('allows fd and never advises the Glob tool', () => {
+    assert.deepEqual(route('fd pattern', env()), { action: 'allow' });
   });
 });
 
@@ -183,5 +183,14 @@ describe('formatting helpers', () => {
       formatEnvironment(env({ rtkAvailable: true, jcodemunchIndexed: true, stackTestActive: true })),
       'RTK available, jcodemunch indexed, stack test active',
     );
+  });
+});
+
+describe('tools absent by default on macOS, Linux and WSL', () => {
+  it('no rule resolution advises the Grep or Glob tool', () => {
+    const advised = ROUTING_RULES.flatMap((rule) => Object.values(rule.resolutions))
+      .flatMap((res) => (res && res.action === 'advise' ? [res.tool] : []));
+    assert.ok(advised.length > 0);
+    assert.deepEqual(advised.filter((tool) => /^(Grep|Glob)\b/.test(tool)), []);
   });
 });
