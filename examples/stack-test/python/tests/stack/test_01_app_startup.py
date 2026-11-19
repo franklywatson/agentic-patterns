@@ -86,8 +86,10 @@ class TestAppStartup:
 
         assert response.status_code == 200
 
-        details = response.json()["details"]
+        details = response.json()["services"]
         assert details["postgres"]["connected"] is True
+        assert details["postgres"]["latency_ms"] >= 0
         assert details["postgres"]["version"]
         assert details["redis"]["connected"] is True
+        assert details["redis"]["latency_ms"] >= 0
         assert details["redis"]["version"]

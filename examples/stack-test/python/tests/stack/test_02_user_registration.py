@@ -219,7 +219,7 @@ class TestUserSignUpJourney:
         ]
         assert failed_attempts == []
 
-    def test_audit_trail_is_complete(self, http_client, created_user_id):
+    def test_audit_trail_is_complete(self, http_client, created_user_id, auth_token):
         """
         Third-order: audit log contains complete trail with timestamps and metadata.
         Both USER_CREATED and USER_LOGIN events are present, in correct order.

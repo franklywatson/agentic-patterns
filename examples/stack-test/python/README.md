@@ -35,9 +35,9 @@ A minimal, working example of stack tests in Python using pytest. Each test mode
 Run all commands from `examples/stack-test/python/`.
 
 ```bash
-# Create the virtual environment and install test dependencies
+# Create the virtual environment and install the locked test dependencies
 uv venv
-uv sync
+uv sync --frozen
 
 # Run all stack tests. The session fixture builds the app image, starts a
 # uniquely named compose project on free ports, and removes it (down -v) at the end.
@@ -47,7 +47,9 @@ uv run pytest tests/stack/
 uv run pytest tests/stack/test_01_app_startup.py
 ```
 
-Without uv: `python3 -m venv .venv && .venv/bin/pip install pytest pytest-timeout httpx && .venv/bin/pytest tests/stack/`.
+`uv.lock` is committed and `--frozen` installs exactly the locked versions, so a new dependency release cannot introduce warnings (pytest runs with `filterwarnings = error`). The app image installs the pinned `app/requirements.txt`.
+
+Without uv (unlocked versions): `python3 -m venv .venv && .venv/bin/pip install pytest pytest-timeout httpx && .venv/bin/pytest tests/stack/`.
 
 Expected result: `18 passed`.
 
@@ -91,7 +93,7 @@ Assertions use direct `assert` statements. No conditional checks, no try-catch t
 
 `app/` is a minimal FastAPI application backed by real PostgreSQL 16 and Redis 7. It implements exactly what the tests exercise. Docker Compose builds it from `app/Dockerfile`.
 
-- `GET /health` — status, timestamp and a `services` map; `GET /health?mode=test` adds a `details` block with PostgreSQL and Redis connectivity, version and latency
+- `GET /health` — status, timestamp and a `services` map; `GET /health?mode=test` replaces `services` with per-dependency objects (`postgres`, `redis`: `connected`, `version`, `latency_ms`), the same shape as the TypeScript app
 - `GET /health/db` — PostgreSQL connectivity and version
 - `GET /health/cache` — Redis connectivity and version
 - `POST /users` — create user (PostgreSQL; writes an audit entry and a notification record in the same transaction; 409 on duplicate email)
@@ -114,7 +116,7 @@ Both examples demonstrate the same concepts:
 |---------|-----------|--------|
 | Test runner | Jest | pytest |
 | Fixtures | beforeAll/beforeEach | pytest fixtures |
-| Async support | async/await | pytest-asyncio |
+| Async support | async/await | Synchronous tests with `httpx.Client` |
 | Isolation | Per-test-file stack | Per-session stack |
 | Assertion style | expect().toBe() | assert == |
 

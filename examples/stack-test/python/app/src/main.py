@@ -25,6 +25,7 @@ TOKEN_TTL_SECONDS = 3600
 async def lifespan(_: FastAPI):
     infra.init_schema()
     yield
+    infra.redis_client.close()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -56,7 +57,7 @@ def probe_db() -> dict:
 
 def probe_cache() -> dict:
     started = time.perf_counter()
-    client = infra.connect_redis()
+    client = infra.redis_client
     version = client.info("server")["redis_version"]
     client.ping()
     return {"connected": True, "version": version,
@@ -65,7 +66,7 @@ def probe_cache() -> dict:
 
 @app.get("/health")
 def health(mode: str | None = None):
-    """Overall health. `?mode=test` adds per-service diagnostics (Pattern 1.1)."""
+    """Overall health. `?mode=test` replaces `services` with per-service diagnostics (Pattern 1.1)."""
     db, cache = probe_db(), probe_cache()
     body = {
         "status": "ok",
@@ -73,7 +74,7 @@ def health(mode: str | None = None):
         "services": {"app": "healthy", "database": "healthy", "cache": "healthy"},
     }
     if mode == "test":
-        body["details"] = {"postgres": db, "redis": cache}
+        body["services"] = {"postgres": db, "redis": cache}
         body["env"] = "test"
     return body
 
@@ -118,7 +119,7 @@ def current_user_id(authorization: str | None) -> str | None:
         claims = jwt.decode(token, infra.JWT_SECRET, algorithms=["HS256"])
     except jwt.InvalidTokenError:
         return None
-    if infra.connect_redis().get(f"session:{claims['jti']}") != claims["sub"]:
+    if infra.redis_client.get(f"session:{claims['jti']}") != claims["sub"]:
         return None
     return claims["sub"]
 
@@ -227,7 +228,7 @@ def login(payload: Login):
     token = jwt.encode(
         {"sub": row["id"], "jti": jti, "exp": expires}, infra.JWT_SECRET, algorithm="HS256"
     )
-    infra.connect_redis().set(f"session:{jti}", row["id"], ex=TOKEN_TTL_SECONDS)
+    infra.redis_client.set(f"session:{jti}", row["id"], ex=TOKEN_TTL_SECONDS)
     return {"token": token, "userId": row["id"], "expiresIn": TOKEN_TTL_SECONDS}
 
 

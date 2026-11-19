@@ -51,12 +51,11 @@ def connect_db() -> psycopg.Connection:
     )
 
 
-def connect_redis() -> redis.Redis:
-    return redis.Redis(
-        host=os.environ["REDIS_HOST"],
-        port=int(os.environ["REDIS_PORT"]),
-        decode_responses=True,
-    )
+redis_client = redis.Redis(
+    host=os.environ["REDIS_HOST"],
+    port=int(os.environ["REDIS_PORT"]),
+    decode_responses=True,
+)
 
 
 def init_schema() -> None:
