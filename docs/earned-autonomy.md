@@ -111,7 +111,7 @@ The schema rules, enforced by `autonomy check` (Pattern A.3):
 
 - A grant of A4 or above requires `stop.last_tested`, `review_date`, `limits`, an `identity` that is not a person, `risk.reversible: true` and `risk.verification: mechanical`.
 - A5 additionally requires `stop_rule`, a baseline file and a target.
-- A workflow with all three trifecta flags true ([Pattern 2.10](#prerequisites-by-grant)) is rejected at A3 or above unless a deterministic gate is named.
+- A workflow with all three trifecta flags true (Pattern 2.10) is rejected at A3 or above unless a deterministic gate is named.
 - `owner` must resolve in CODEOWNERS. `sponsor` must be a current member.
 
 Keep the register separate from the harness configuration. The harness file is tuned by developers per rule. The register has different owners, and mixing the two lets a routine harness edit change a grant.
@@ -327,7 +327,7 @@ The stop needs an authority: the register names who may invoke it. The authority
 - [Pattern A.3](#pattern-a3--promotion-demotion-and-the-cap-gate): an overdue drill lowers the freshness gate.
 - `examples/autonomy/README.md` documents `drill`.
 
-**Evidence:** Thin — vendor guidance asks for rehearsed rollback but not a tested stop for the agent itself, and the research baseline found nothing on whether kill switches work; the drill is this library's design (AN-27)
+**Evidence:** Thin — vendor guidance asks for rehearsed rollback but not a tested stop for the agent itself, and published research found nothing on whether kill switches work; the drill is this library's design (AN-27)
 
 ## Pattern A.6 — Enforcement Through Hooks
 
@@ -340,7 +340,7 @@ A grant in a file is a statement. If the tool layer does not enforce it, the age
 Bind the register to the harness. Three hooks and one eval suite make the effective grant real.
 
 - **SessionStart** resolves the workflow id (from `AUTONOMY_WORKFLOW` in CI, otherwise `interactive`), loads the register, the profile and the state file, computes the effective grant and prints it with the reason for any reduction.
-- **PreToolUse** denies any tool call outside `permitted_actions` or inside `forbidden_actions`. The grant sets the limits: A1 and A2 block `git push`, merging and network egress beyond the allowlist. A3 allows pushing to unprotected branches and opening pull requests, and blocks merging. A4 allows auto-merge only within the diff-size and path limits. A session that has read untrusted input and holds sensitive data cannot take an external action without the named gate.
+- **PreToolUse** denies any tool call outside `permitted_actions` or inside `forbidden_actions`. The grant sets the limits: A1 and A2 block `git push`, merging and network egress beyond the allowlist, so an A2 change reaches a branch only through a route a human applies or CI runs. A3 allows pushing to unprotected branches and opening pull requests, and blocks merging. A4 allows auto-merge only within the diff-size and path limits. A session that has read untrusted input and holds sensitive data cannot take an external action without the named gate.
 - **PostToolUse** appends to `.autonomy/audit/<session>.jsonl`: agent identity, requesting human, tool, a hash of the parameters and the outcome.
 - **Context eval** gains an `autonomy` suite covering A2, A3, A4, a cap below the grant, a stale stop and a trifecta session. It scores exactly, not on a graduated scale. It tests the gate, so a refactor cannot widen grants silently.
 

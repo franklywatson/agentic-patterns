@@ -84,7 +84,7 @@ Three dimensions that cap unattended work are not covered, or are covered only i
 - **Security and governance.** L2 covers enforcement and containment. It does not cover supply-chain controls, data handling, audit retention or approval policy.
 - **Measuring value against a baseline.** L4 describes metrics. It does not describe how to set a baseline before adopting a pattern or how to compare against it afterwards.
 
-Earned autonomy, the way a grant is earned and withdrawn on evidence, now has its own pattern doc: [Earned Autonomy](docs/earned-autonomy.md). Its upper grants (A4, A5) still depend on the capping dimensions above.
+Earned autonomy, the way a grant is earned and withdrawn on evidence, has its own pattern doc: [Earned Autonomy](docs/earned-autonomy.md). Its upper grants (A4, A5) still depend on the capping dimensions above.
 
 The consequence: a team that adopts every pattern in this library is capped at C1 for unattended work, because the lowest capping dimension sets the cap. Phases 2 to 4 of the refresh add these dimensions. This section is updated as each phase lands. The plan is in [docs/refresh/synthesis.md](docs/refresh/synthesis.md).
 
