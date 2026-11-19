@@ -3,8 +3,9 @@ name: tdd+
 description: "Invoke AFTER plan+ is approved. Wraps superpowers:test-driven-development with full-loop assertions, real-dependency rules for stack tests, zero-defect, stale test detection, and scoped test runs. Implements plan tasks with RED-GREEN-REFACTOR discipline."
 argument-hint: "[plan file path or task range]"
 user-invocable: true
-owner: franklywatson
-reviewed: 2026-11-19
+metadata:
+  owner: franklywatson
+  reviewed: 2026-11-19
 ---
 
 <!-- rig-generated -->

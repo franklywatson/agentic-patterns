@@ -198,8 +198,9 @@ def run_repair(
         move("gate_auto", detail)
         move("gate_auto", "evidence bundle attached to a pull request")
         c = bundle.classification
+        merge = "unattended at" if result.merge == "unattended" else "a person merges at"
         env.emit(base, OutboxEntry("pr", incident.id, f"{incident.id}: repair with evidence bundle", policy.owner,
-                                   [f"classification {c.reversibility}/{c.blast}", "merge by a person: the grant is below A4"]))
+                                   [f"classification {c.reversibility}/{c.blast}", f"merge: {merge} grant {bundle.grant}"]))
         samples, fingerprint_count = env.traffic(deployment, incident, policy.confirm_min_samples)
         confirmation = evaluate_confirmation(samples, fingerprint_count, policy)
         if confirmation == "confirmed":

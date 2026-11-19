@@ -54,7 +54,7 @@ ecommerce-app/
 
 ---
 
-### After — Deep, Conceptual Organization
+### After — Deep, Grouped by Domain
 
 ```
 ecommerce-app/
@@ -83,10 +83,13 @@ ecommerce-app/
 │   │   └── stores.ts
 │   └── index.ts
 ├── tests/
-│   └── stack-test/                 # Full-stack tests only
+│   ├── unit/                       # Contract per module (Pattern 0.5)
+│   │   ├── orders.test.ts
+│   │   ├── inventory.test.ts
+│   │   └── pricing.test.ts
+│   └── stack/                      # Full-stack tests (Pattern 1.1)
 │       ├── orders.test.ts
-│       ├── inventory.test.ts
-│       └── pricing.test.ts
+│       └── inventory.test.ts
 ├── AGENTS.md                        # Agent contract (CLAUDE.md imports it)
 ├── README.md                        # Overview
 ├── package.json
@@ -153,6 +156,7 @@ ecommerce_bot/
 │   │   ├── processor.py
 │   │   ├── fulfillment.py
 │   │   ├── models.py
+│   │   ├── validators.py           # Order validation stays in the orders domain
 │   │   └── utils/
 │   │       ├── tax.py
 │   │       └── discounts.py
@@ -169,13 +173,15 @@ ecommerce_bot/
 │   │   └── alerts.py
 │   ├── config/
 │   │   ├── __init__.py
+│   │   ├── constants.py            # Constants live with the config they belong to
 │   │   └── stores.py
-│   ├── shared/
-│   │   ├── constants.py
-│   │   └── validators.py
 │   └── bot.py
 ├── tests/
-│   └── stack/                      # Full-stack tests
+│   ├── unit/                       # Contract per module (Pattern 0.5)
+│   │   ├── test_orders.py
+│   │   ├── test_inventory.py
+│   │   └── test_pricing.py
+│   └── stack/                      # Full-stack tests (Pattern 1.1)
 │       ├── test_orders.py
 │       └── test_inventory.py
 ├── AGENTS.md                        # Agent contract (CLAUDE.md imports it)
@@ -189,7 +195,8 @@ ecommerce_bot/
 - Clear domain boundaries
 - `__init__.py` exports controlled public interface
 - Related code co-located
-- Easy to discover: start at domain, drill down as needed
+- Start at the domain directory, then open the module you need
+- No `shared/` or `utils.py` at the top level: code used by one domain lives in that domain
 
 ---
 
@@ -201,12 +208,12 @@ ecommerce_bot/
 | **Exports** | Many functions, leaking internals | 3-5 exports per module |
 | **Discovery** | Flat or scattered | Progressive disclosure |
 | **Navigation** | File paths meaningless | File paths signal domain |
-| **Testing** | Unit/integration split | Stack tests at domain boundaries |
+| **Testing** | Unit tests beside a few unscoped integration tests | Unit tests as each module's contract, stack tests at domain boundaries |
 
 ---
 
 ## See Also
 
-- [L0 Foundation](../../docs/L0-foundation.md) — Deep modules, progressive disclosure, conceptual organization
+- [L0 Foundation](../../docs/L0-foundation.md) — Deep modules, progressive disclosure, grouping by domain
 - [L1 Closed Loop Design](../../docs/L1-feedback-loops.md) — Stack tests at module boundaries
 - [L2 Behavioral Guardrails](../../docs/L2-behavioral-guardrails.md) — Skills that carry structural conventions

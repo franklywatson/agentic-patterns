@@ -14,7 +14,6 @@ the public source behind each ID. A claim that rests on the baseline alone, with
 |--------------------|---------|---------------|
 | `MC-11`, `PL-5`, `SC-8`, `OM-7`, `SG-28`, `PO-10`, `IS-6`, `MV-1` | A source cited by the research baseline | [Baseline sources](#baseline-sources) |
 | `AN-27` | An Anthropic publication | [Anthropic sources](#anthropic-sources-an-n) |
-| `baseline 3.7` | A section of the baseline | [Baseline structure](#baseline-structure) |
 | `A1`-`A5` | Autonomy grants | Not sources |
 
 Some sources carry more than one ID because more than one baseline chapter cites them; the row says "Same source
@@ -39,7 +38,7 @@ carries one of the source IDs listed below; statements that are its own synthesi
 | 3.3 | Where they disagree, and recurring flaws (levels defined by tool or agent count; single ladders; self-report; presence mistaken for practice) |
 | 3.4 | Evidence about the curve itself |
 | 3.5 | The proposed curve, the grid and the cap rule |
-| 3.6 | How to place an organization on the curve, using artefacts and records rather than self-report |
+| 3.6 | How to place an organization on the curve, using artifacts and records rather than self-report |
 | 3.7 | A defensible top of the curve |
 | 3.8 | Gaps for section 3 |
 | 4.1-4.7 | One chapter per dimension (see [Chapters](#chapters)) |
@@ -74,7 +73,6 @@ accessed on 17 November 2026 unless the entry says otherwise.
 | MC-11 | A Few Pages of Markdown: Committed AI Configuration and Lower Quality Cost after Coding-Agent Adoption (Denisov-Blanch et al.). arXiv, submitted 26 Aug 2026, revised 14 Sep 2026. RAMP (Repository AI Maturity Profile) is the model inside it; the authors call the findings hypothesis-generating. | Preprint. Read: Abstract; body (levels, adoption landscape). | <https://arxiv.org/abs/2608.25241> |
 | MC-20 | Measuring AI agent autonomy in practice. Anthropic, 18 Feb 2026. | Vendor research. Read: Section. | <https://www.anthropic.com/research/measuring-agent-autonomy> |
 | MC-21 | Coding Is No Longer the Constraint. Spotify Engineering, June 2026 (from the page address). | Practitioner (company account). Read: Full. | <https://engineering.atspotify.com/2026/6/code-with-claude-coding-is-no-longer-the-constraint> |
-| MC-22 | AI engineering maturity: what 1,300 engineers told us about how they really work with AI. Boye & Company, 29 Jun 2026. | Practitioner (self-assessment, one organization). Read: Full. | <https://www.boye-co.com/blog/2026/6/ai-engineering-maturity-what-1300-engineers-told-us-about-how-they-really-work-with-ai> |
 
 ### PL: 4.1 · Platform
 
@@ -142,12 +140,11 @@ accessed on 17 November 2026 unless the entry says otherwise.
 | PO-11 | Agent identity sponsor tasks in Lifecycle Workflows. Microsoft Learn, 25 Oct 2025 (page metadata). | Vendor. Read: Full. | <https://learn.microsoft.com/en-us/entra/id-governance/agent-sponsor-tasks> |
 | PO-12 | AGENTOPS03-BP01 Define an agent lifecycle with clear SME ownership, testing, and governance. AWS Well-Architected Agentic AI Lens; living page, no date shown. | Vendor (reference architecture). Read: Full. | <https://docs.aws.amazon.com/wellarchitected/latest/agentic-ai-lens/agentops03-bp01.html> |
 | PO-14 | Operational standards for AI agents. Microsoft Cloud Adoption Framework, 9 Nov 2026 (page metadata; accessed 19 Nov 2026). | Vendor. Read: Full. | <https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ai-agents/operational-standards> |
-| PO-15 | AI RMF Playbook: Govern. NIST; living page, no date shown. | Standards body. Read: Section (GOVERN 1.6, 1.7, 2.1, 2.3). | <https://airc.nist.gov/airmf-resources/playbook/govern/> |
 | PO-16 | AI Tool Use Policy. LLVM project; no date shown. | Practitioner (project policy). Read: Full. | <https://raw.githubusercontent.com/llvm/llvm-project/main/llvm/docs/AIToolPolicy.md> |
 | PO-17 | AI Coding Assistants (Documentation/process/coding-assistants.rst). Linux kernel; current master, no date shown. | Practitioner (project policy). Read: Full. | <https://raw.githubusercontent.com/torvalds/linux/master/Documentation/process/coding-assistants.rst> |
 | PO-19 | ASF Generative Tooling Guidance. Apache Software Foundation; no date shown (text refers to August 2026). | Practitioner (foundation policy). Read: Full. | <https://www.apache.org/legal/generative-tooling.html> |
 | PO-20 | Review output from Copilot; Responsible use of Copilot cloud agent. GitHub Docs; living pages, no date shown. | Vendor. Read: Full (review page); section (responsible-use page, co-author passage). | <https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/review-copilot-prs> |
-| PO-25 | Demystifying evals for AI agents. Anthropic, published 9 Jan 2026, modified 18 Oct 2026. Same source as MV-9 and AN-16. | Vendor. Read: Full. | <https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents> |
+| PO-25 | Demystifying evals for AI agents. Anthropic, published 9 Jan 2026. Same source as MV-9 and AN-16. | Vendor. Read: Full. | <https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents> |
 | PO-28 | AI in SRE: How Google is Engineering the Future of Reliable Operations. Google SRE; no date shown. | Vendor (position paper). Read: Full. | <https://sre.google/resources/practices-and-processes/ai-engineering-reliable-operations/> |
 
 ### IS: 4.6 · Individual and Team Skill
@@ -169,12 +166,12 @@ accessed on 17 November 2026 unless the entry says otherwise.
 | MV-2 | Measuring AI code assistants and agents (DX AI Measurement Framework). DX, 2025; no date shown. | Vendor (marketing research page). Read: Full. | <https://getdx.com/research/measuring-ai-code-assistants-and-agents/> |
 | MV-5 | The SPACE of Developer Productivity (Forsgren, Storey, Maddila, Zimmermann, Houck, Butler). ACM Queue 19(1), 2021. | Practitioner journal (origin). Read: Most of paper. | <https://doi.org/10.1145/3454122.3454124> |
 | MV-8 | How AI is transforming work at Anthropic. Anthropic, 2 Dec 2025. Same source as IS-4. | Vendor research (staff self-report). Read: Section. | <https://www.anthropic.com/research/how-ai-is-transforming-work-at-anthropic> |
-| MV-9 | Demystifying evals for AI agents. Anthropic, published 9 Jan 2026, modified 18 Oct 2026. Same source as PO-25 and AN-16. | Vendor. Read: Full. | <https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents> |
+| MV-9 | Demystifying evals for AI agents. Anthropic, published 9 Jan 2026. Same source as PO-25 and AN-16. | Vendor. Read: Full. | <https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents> |
 | MV-10 | Evaluation best practices. OpenAI; living page, no date shown. | Vendor. Read: Full. | <https://developers.openai.com/api/docs/guides/evaluation-best-practices.md> |
 
 ## Anthropic Sources (AN-n)
 
-These are Anthropic publications, so they are vendor material, not independent evidence. Labels: first-party
+These are Anthropic publications, so they are vendor material, not independent evidence. Labels: vendor practice
 (Anthropic on its own practice or products), guidance (advice to customers), marketing (a product article), measured
 (analysis of usage data), docs (product documentation, living pages with no date shown). These rows carry a tier but
 no read status.
@@ -183,10 +180,10 @@ no read status.
 |----|--------|----------------------|------|
 | AN-2 | How Claude Code works. Anthropic, no date shown. | Docs. | <https://code.claude.com/docs/en/how-claude-code-works.md> |
 | AN-3 | Best practices for Claude Code. Anthropic, no date shown. Same source as OM-7 and PL-16. | Docs. | <https://code.claude.com/docs/en/best-practices.md> |
-| AN-7 | The new rules of context engineering for Claude 5 generation models. Anthropic (claude.dev), 24 Jul 2026. | First-party. | <https://claude.dev/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models/> |
-| AN-9 | How we contain Claude across products. Anthropic Engineering, 25 May 2026. | First-party. | <https://www.anthropic.com/engineering/how-we-contain-claude> |
+| AN-7 | The new rules of context engineering for Claude 5 generation models. Anthropic (claude.dev), 24 Jul 2026. | Vendor practice. | <https://claude.dev/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models/> |
+| AN-9 | How we contain Claude across products. Anthropic Engineering, 25 May 2026. | Vendor practice. | <https://www.anthropic.com/engineering/how-we-contain-claude> |
 | AN-11 | Configure the sandboxed Bash tool. Anthropic, no date shown. | Docs. | <https://code.claude.com/docs/en/sandboxing.md> |
 | AN-16 | Demystifying evals for AI agents. Anthropic Engineering, 9 Jan 2026. Same source as PO-25 and MV-9. | Guidance. | <https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents> |
 | AN-27 | The AI-native SDLC playbook. Anthropic, 21 Aug 2026. | Guidance. | <https://claude.com/resources/articles/the-ai-native-sdlc-playbook> |
-| AN-29 | How the Claude Code team does code review. Anthropic (claude.dev), 15 Oct 2026. | First-party. | <https://claude.dev/blog/solving-code-review-at-anthropic/> |
+| AN-29 | How the Claude Code team does code review. Anthropic (claude.dev), 15 Oct 2026. | Vendor practice. | <https://claude.dev/blog/solving-code-review-at-anthropic/> |
 | AN-48 | A guide to cost visibility and control in Claude. Anthropic, 4 Aug 2026. | Marketing. | <https://claude.com/resources/articles/a-guide-to-cost-visibility-and-control-in-claude> |

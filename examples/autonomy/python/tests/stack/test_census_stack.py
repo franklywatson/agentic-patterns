@@ -93,3 +93,21 @@ def test_constitutional_rules_probe(cli, git_fixture_repo, name, expected):
     governance = census(cli, git_fixture_repo(name))["dimensions"]["governance"]
     assert ("constitutional-rules" in governance["evidence"]) is expected
     assert governance["level"] == (2 if expected else 1)
+
+
+STUB_BASELINES = {
+    "empty-flow": {"captured": "2026-10-20", "flow": {}, "stability": {"change_failure_rate": 0.08}},
+    "empty-stability": {"captured": "2026-10-20", "flow": {"median_cycle_hours": 31}, "stability": {}},
+    "flow-not-an-object": {"captured": "2026-10-20", "flow": "fast", "stability": {"change_failure_rate": 0.08}},
+    "missing-stability": {"captured": "2026-10-20", "flow": {"median_cycle_hours": 31}},
+}
+
+
+@pytest.mark.parametrize("name", STUB_BASELINES)
+def test_a_stub_baseline_does_not_satisfy_the_baseline_probe(cli, git_fixture_repo, name):
+    directory = git_fixture_repo("adopter")
+    (directory / ".autonomy" / "baseline.json").write_text(json.dumps(STUB_BASELINES[name]))
+    measuring = census(cli, directory)["dimensions"]["measuring"]
+    assert measuring["level"] == 2
+    assert "baseline" not in measuring["evidence"]
+    assert "baseline" in measuring["missing_for_next"]

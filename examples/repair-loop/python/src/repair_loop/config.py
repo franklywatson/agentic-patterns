@@ -36,6 +36,8 @@ def load_policy() -> RepairPolicy:
         owner=raw["owner"],
         min_grant_for_auto=raw["minGrantForAuto"],
         auto_ceiling=raw["autoCeiling"],
+        unattended_ceiling=raw["unattendedCeiling"],
+        unattended_r2_paths=raw["unattendedR2Paths"],
         protected_paths=raw["protectedPaths"],
         attempts_per_fingerprint=raw["budget"]["attemptsPerFingerprint"],
         cooldown_seconds=raw["budget"]["cooldownSeconds"],

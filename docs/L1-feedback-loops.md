@@ -5,30 +5,21 @@ reviewed: 2026-11-19
 
 # L1: Closed Loop Design and Verification
 
-**Layer 1** of the agentic patterns. L0 provides navigable structure: deep modules, progressive disclosure, the agent
-instruction file and unit tests as contract. L1 is where the agent uses that structure to gather evidence, form a
-design, implement it and verify the result in a closed loop.
-
-The loop is design, implement, verify, confirm, not only test, fix, test. Stack tests close it by confirming that the
-design intent was implemented. Every plan, bugfix and investigation begins by harvesting the context that shows what
-the system does, what it should do and what evidence supports the change.
+L1 is how an agent proves its own change works. Read it when agent changes pass review and then fail in use, or when
+"the agent says it passed" is the only evidence. The core is the stack test
+([Pattern 1.1](L1-patterns/1.1-stack-tests.md)): the whole application in Docker, real dependencies, one user journey per
+test, assertions on every effect. Before changing code, the agent gathers the context that shows what the system does
+and should do; after, a test a machine runs decides whether the change worked. Patterns 1.7 to 1.12 extend the same
+loop to production incidents in code you own.
 
 ---
 
 ## The REPL Fractal — Closed Loops at Every Scale
 
-L1's closed loop is a higher-order read-eval-print loop (REPL):
-
-- **Read**: context harvesting (docs, code, tests, logs)
-- **Eval**: design and implement
-- **Print**: stack test output
-- **Loop**: adjust the design and verify again
-
-The same loop runs at every scale: a line (read code, evaluate syntax), a function (read the contract, implement, run
-the unit test), a journey (read requirements, implement, run a stack test) and the system (read the architecture,
-make a cross-cutting change, run the full suite). Each level absorbs the lower ones. Unit tests become the contract
-that stack tests verify against. Brandon Waselnuk's [REPL is dead, long live REPL](https://getunblocked.com/blog/repl-is-dead-long-live-repl/)
-explores this view.
+The loop is design, implement, verify, confirm, not only test, fix, test. It runs at every scale, from one function's
+unit test to the full stack suite ([REPL is dead, long live REPL](https://getunblocked.com/blog/repl-is-dead-long-live-repl/),
+Brandon Waselnuk). Perfect tests confirm a wrong design with high confidence, which is why the agent understands the
+system before changing it.
 
 ---
 
@@ -58,16 +49,15 @@ before installing, per [Pattern 2.12](L2-behavioral-guardrails.md#pattern-212--s
 implements it as a skill chain with `plan+` for the design step; see
 [L2: Behavioral Guardrails](L2-behavioral-guardrails.md).
 
-If the design is wrong, perfect tests confirm the wrong thing with high confidence, which is why the agent understands
-the system before changing it.
+---
 
-### Design Rinsing — Cross-Domain Architectural Extraction
+## Design Rinsing — Cross-Domain Architectural Extraction
 
 **Design rinsing** directs an agent to analyze an *external* source (another codebase, a talk transcript, an article)
 and distill the reasoning behind its architecture: the failure modes that shaped it and the trade-offs considered. The
 agent translates those principles into the target project's language and constraints. The result is an adaptation,
 never a port. Context harvesting reads the current project to understand it; design rinsing reads outside material to
-extract transferable patterns before a design direction is set. It sits at the system level of the REPL fractal.
+extract transferable patterns before a design direction is set. It works at the system scale of the loop.
 
 ![Design Rinsing Workflow](diagrams/1.8-design-rinsing-workflow.png)
 
@@ -89,7 +79,7 @@ Rinse when another project has already solved the question, or the team is enter
 existing patterns solve the problem, the source is too distant (a game engine rarely informs a CRUD API) or the rinse
 costs more context than building the solution.
 
-**Evidence:** Thin — a reasoned technique from first-party use; no study of cross-domain extraction (first-party, n=1)
+**Evidence:** Thin — a reasoned technique from this project's own use; no study of cross-domain extraction (n=1)
 
 ---
 

@@ -73,6 +73,7 @@ describe('runRepair with a fake environment', () => {
     const outcome = await runRepair(env, input());
     expect(outcome.state).toBe('CONFIRMED');
     expect(outbox.map((e) => e.kind)).toEqual(['pr']);
+    expect(outbox[0].detail).toContain('merge: a person merges at grant A3');
     expect(deployed).toEqual(['start:base', 'stop:base', 'start:candidate', 'stop:candidate']);
     expect(outcome.breaker.confirmedAt[incident.fingerprint]).toBe(1_000_000);
   });

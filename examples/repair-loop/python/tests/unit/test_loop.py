@@ -122,6 +122,7 @@ def test_a_clean_fix_is_confirmed_and_both_stacks_are_stopped():
     outcome = repair(env)
     assert outcome.state == "CONFIRMED"
     assert [e.kind for e in env.outbox] == ["pr"]
+    assert "merge: a person merges at grant A3" in env.outbox[0].detail
     assert env.deployed == ["start:base", "stop:base", "start:candidate", "stop:candidate"]
     assert outcome.breaker.confirmed_at[incident.fingerprint] == 1_000_000
 

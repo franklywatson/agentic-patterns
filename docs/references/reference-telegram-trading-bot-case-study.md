@@ -4,7 +4,7 @@ reviewed: 2026-11-19
 
 # Reference Project: Telegram Trading Bot
 
-This case study is first-party, n=1: one private project by the author of these patterns, with no independent
+This case study is this project's own experience, n=1: one private project by the author of these patterns, with no independent
 replication. It describes what the project does; it is not evidence that a pattern works elsewhere.
 
 **Project:** Telegram trading bot: DEX swaps, bridges, limit orders, DCA strategies, stop-loss and trailing stops.

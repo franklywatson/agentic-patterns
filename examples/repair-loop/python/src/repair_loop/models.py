@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 Decision = Literal["auto", "human", "block"]
+Merge = Literal["person", "unattended"]  # who merges an auto change; human and block carry none
 REVERSIBILITY = ["R0", "R1", "R2", "R3", "R4"]
 BLAST = ["B0", "B1", "B2", "B3"]
 GRANTS = ["A1", "A2", "A3", "A4", "A5"]
@@ -81,6 +82,7 @@ class EvidenceBundle:
 class GateResult:
     decision: Decision
     reasons: list[str]
+    merge: Merge | None
 
 
 @dataclass(frozen=True)
@@ -90,6 +92,8 @@ class RepairPolicy:
     owner: str
     min_grant_for_auto: str
     auto_ceiling: dict[str, str]
+    unattended_ceiling: dict[str, dict[str, str]]  # highest class that merges unattended, per grant
+    unattended_r2_paths: list[str]  # an R2 change merges unattended only with every file on these paths
     protected_paths: list[str]
     attempts_per_fingerprint: int
     cooldown_seconds: int

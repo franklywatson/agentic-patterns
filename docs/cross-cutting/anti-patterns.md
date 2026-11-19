@@ -5,8 +5,8 @@ reviewed: 2026-11-19
 
 # Pattern Diagnostic Catalog
 
-Match a symptom you see to the pattern that is probably missing. Each pattern doc lists its own anti-patterns in its
-Anti-Pattern section; this page only points to them, then holds the two entries that other docs link to.
+Find a symptom you see, then open the pattern that is probably missing; its Anti-Pattern section lists the failure
+modes. Two anti-patterns that cut across layers are described in full at the end of this page.
 
 ## Symptom to Pattern
 
@@ -95,13 +95,13 @@ Changes in one repository that break a contract in another are an architecture q
 task each one fixed. The configuration was last changed before the current model generation.
 
 **Why it happens**: Each addition answered a real failure, so removing it feels like reintroducing the failure.
-Nothing measures an artefact's contribution, so it stays by default.
+Nothing measures an artifact's contribution, so it stays by default.
 
 **Fix**: Apply [Pattern 0.10](../L0-foundation.md#pattern-010--prune-and-re-baseline-context):
 
-- Give each artefact an owner and a `reviewed:` date
-- Run the [task bank](../references/task-bank.md) without the artefact at each model upgrade
-- Keep the artefact only if a task regresses, and record that task next to it
+- Give each artifact an owner and a `reviewed:` date
+- Run the [task bank](../references/task-bank.md) without the artifact at each model upgrade
+- Keep the artifact only if a task regresses, and record that task next to it
 - Move rules that must always hold into a command hook, deny rule or CI check
 
 ### Line Caps as a Proxy for Signal

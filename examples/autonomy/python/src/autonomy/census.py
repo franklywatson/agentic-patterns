@@ -128,11 +128,15 @@ def _pins_valid(c: Ctx) -> bool:
     return len(pins) > 0 and all(re.fullmatch(r"[0-9a-f]{64}", p.get("sha256") or "") for p in pins)
 
 
+def _non_empty_dict(value: Any) -> bool:
+    return isinstance(value, dict) and len(value) > 0
+
+
 def _baseline_fresh(c: Ctx) -> bool:
     try:
         b = json.loads(c.text(".autonomy/baseline.json"))
-        return "flow" in b and "stability" in b and age_days(c.now, parse_time(b["captured"])) <= FRESH_DAYS
-    except (json.JSONDecodeError, KeyError, ValueError, TypeError):
+        return _non_empty_dict(b.get("flow")) and _non_empty_dict(b.get("stability")) and age_days(c.now, parse_time(b["captured"])) <= FRESH_DAYS
+    except (json.JSONDecodeError, KeyError, ValueError, TypeError, AttributeError):
         return False
 
 

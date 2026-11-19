@@ -102,3 +102,22 @@ for (const [name, expected] of RULES_CASES) {
     assert.equal(profile.dimensions.governance.level, expected ? 2 : 1);
   });
 }
+
+const STUB_BASELINES: Record<string, object | string> = {
+  "empty flow object": { captured: "2026-10-20", flow: {}, stability: { change_failure_rate: 0.08 } },
+  "empty stability object": { captured: "2026-10-20", flow: { median_cycle_hours: 31 }, stability: {} },
+  "flow that is not an object": { captured: "2026-10-20", flow: "fast", stability: { change_failure_rate: 0.08 } },
+  "missing stability": { captured: "2026-10-20", flow: { median_cycle_hours: 31 } },
+};
+
+for (const [name, baseline] of Object.entries(STUB_BASELINES)) {
+  test(`a baseline.json with ${name} does not satisfy the baseline probe`, () => {
+    const dir = gitFixtureRepo("adopter");
+    writeFileSync(join(dir, ".autonomy", "baseline.json"), JSON.stringify(baseline));
+    cli(["census", "--dir", dir, "--now", NOW]);
+    const measuring = JSON.parse(readFileSync(join(dir, ".autonomy", "profile.json"), "utf8")).dimensions.measuring;
+    assert.equal(measuring.level, 2);
+    assert.ok(!measuring.evidence.includes("baseline"));
+    assert.ok(measuring.missing_for_next.includes("baseline"));
+  });
+}

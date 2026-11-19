@@ -8,16 +8,26 @@ start at [README.md](README.md); agents use the index below, from which every do
 
 ## Constitutional Rules (Never Violate)
 
-1. **Real dependencies in E2E/integration and stack tests** — Use real databases, services, and caches; mocks are appropriate in unit tests
+Each rule names its enforcement point ([Pattern 0.4](docs/L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution)).
+This repository has no hooks and no application code. Rules enforced by review are guidance until a person
+checks them.
+
+1. **Real dependencies in E2E/integration and stack tests** — Use real databases, services and caches; mocks are
+   appropriate in unit tests. Enforced by: reviewer. No CI job checks this.
 2. **Evidence-based claims only** — "Tests pass" shows the test output, and the reviewer reads the CI run; output
    the agent pastes with no CI run behind it is a claim, not evidence
-   ([Pattern 4.1](docs/L4-standards-measurement.md#pattern-41--evidence-based-claims))
-3. **Zero-defect tolerance** — Every error/warning must be addressed
-4. **Doc freshness mandatory** — Code changes require doc updates in same session
-5. **No conditional test assertions** — Tests that can silently pass are forbidden
-6. **Short, owned, tested, re-baselined** — This file has a named owner and a reviewed date, CI checks it (a warning
-   above about 200 lines), and it is pruned against the current model at each model upgrade by running the [task
-   bank](docs/references/task-bank.md) without each rule ([Pattern
+   ([Pattern 4.1](docs/L4-standards-measurement.md#pattern-41--evidence-based-claims)). Enforced by: reviewer, who
+   reads the CI run.
+3. **Zero-defect tolerance** — Every error and warning is addressed. Enforced by: the `Documentation Guardrails`
+   workflow jobs (`Markdown Lint`, `Link Integrity`, `Source IDs Resolve`, `Writing Conventions`) for docs; for
+   example code, the reviewer, because no CI job runs the example tests.
+4. **Doc freshness mandatory** — Code changes require doc updates in the same session. Enforced by: reviewer. No CI
+   job compares code changes with doc changes; the `Doc Freshness` job checks only review dates.
+5. **No conditional test assertions** — Tests that can silently pass are forbidden. Enforced by: reviewer, with
+   [Pattern 1.6](docs/L1-patterns/1.6-test-integrity.md) as the check to adopt.
+6. **Short, owned, tested, re-baselined** — This file has a named owner and a reviewed date. Enforced by: the
+   `Instruction File Length` job (warns above 200 lines), `Doc Reachability from AGENTS.md` and `Link Integrity`
+   in CI, and the task-bank re-baseline at each model upgrade, run by hand ([Pattern
    0.10](docs/L0-foundation.md#pattern-010--prune-and-re-baseline-context)). Link to docs for anything longer.
 
 ## Index
@@ -34,7 +44,7 @@ Pattern numbers are stable identifiers and are not contiguous.
 **L0 Foundation:**
 
 - [docs/L0-foundation.md](docs/L0-foundation.md) — Deep modules, progressive disclosure, agent instruction file,
-  prune and re-baseline context (Patterns 0.1, 0.2, 0.4 to 0.10)
+  prune and re-baseline context
 - [examples/project-structure/README.md](examples/project-structure/README.md) — Before and after directory layouts
 
 **L1 Closed Loop Design and Verification:**
@@ -59,27 +69,27 @@ Pattern numbers are stable identifiers and are not contiguous.
 **L2 Behavioral Guardrails:**
 
 - [docs/L2-behavioral-guardrails.md](docs/L2-behavioral-guardrails.md) — Skills, hooks, constitutional rules, zero-defect
-  tolerance, compound engineering (2.1, 2.3 to 2.5, 2.8); containment, least agency, identity, supply chain,
-  risk-tiered review (2.9 to 2.13)
+  tolerance, compound engineering; containment, least agency, identity, supply chain,
+  risk-tiered review
 - [examples/containment/README.md](examples/containment/README.md) — Runnable policy layer against a container boundary
   (TypeScript and Python)
 
 **L3 Optimization (optional):**
 
-- [docs/L3-optimization.md](docs/L3-optimization.md) — Token efficiency, tool routing, context isolation (3.1, 3.2)
+- [docs/L3-optimization.md](docs/L3-optimization.md) — Token efficiency, tool routing, context isolation
 - [examples/guardrails/README.md](examples/guardrails/README.md) — Token-optimization middleware (TypeScript)
 
 **L4 Standards and Measurement:**
 
 - [docs/L4-standards-measurement.md](docs/L4-standards-measurement.md) — Evidence-based claims, metrics, CI
-  guardrails, context eval (4.1, 4.4 to 4.6); author of record, deliberate practice (4.7, 4.9)
-- [docs/references/task-bank.md](docs/references/task-bank.md) — 15 tasks and a run log for re-baselining context
-  artefacts
+  guardrails, context eval, author of record, deliberate practice
+- [docs/references/task-bank.md](docs/references/task-bank.md) — Task bank and run log for re-baselining context
+  artifacts
 
 **Earned Autonomy:**
 
 - [docs/earned-autonomy.md](docs/earned-autonomy.md) — The curve and the cap, autonomy grants A1-A5, register,
-  evidence ledger, promotion and demotion, census, tested stop, hooks (A.1 to A.6)
+  evidence ledger, promotion and demotion, census, tested stop, hooks
 - [examples/autonomy/README.md](examples/autonomy/README.md) — Runnable register check, census, ledger, stop drill and hook
   (TypeScript and Python)
 
@@ -105,7 +115,7 @@ agentic-patterns/
 ├── docs/
 │   ├── L0-foundation.md         # Deep modules, progressive disclosure
 │   ├── L1-feedback-loops.md     # Closed loop design and verification (overview)
-│   ├── L1-patterns/             # Individual L1 patterns (1.1-1.12)
+│   ├── L1-patterns/             # Individual L1 patterns
 │   ├── L2-behavioral-guardrails.md  # Skills, hooks, constitutional rules, containment
 │   ├── L3-optimization.md       # Token efficiency, tool routing (optional)
 │   ├── L4-standards-measurement.md # Evidence, metrics, CI guardrails, context eval
@@ -130,11 +140,9 @@ agentic-patterns/
 - Working code only. No TODOs, no placeholders.
 - All examples must run as-is.
 - Examples require Node 22 or later.
-- Examples that exist: stack tests (Pattern 1.1, TypeScript and Python), containment (Pattern 2.9, TypeScript and
-  Python), repair loop (Patterns 1.7 to 1.11, TypeScript and Python), earned autonomy (Patterns A.1-A.6, TypeScript
-  and Python), guardrail middleware (Pattern 3.1, TypeScript only) and project structure (L0, documentation only).
-- A new example for a core pattern (L0-L2, L4 and the A-series) ships in TypeScript and Python; examples for the
-  optional L3 may be single-language.
+- Each example has a README and its own test suite; run the suite before you commit. A new example for a core
+  pattern (L0-L2, L4 and the A-series) ships in TypeScript and Python; examples for the optional L3 may be
+  single-language.
 
 **Doc freshness:**
 

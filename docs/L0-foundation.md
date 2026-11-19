@@ -47,7 +47,7 @@ sentence, it is too shallow.
 **Cross-References**: [Pattern 0.8](#pattern-08--aggressive-cleanup) keeps modules deep by removing what they no
 longer need.
 
-**Evidence:** Thin — the 3-5 export limit is a rule of thumb; Ousterhout gives no number (first-party, n=1)
+**Evidence:** Thin — the 3-5 export limit is a rule of thumb; Ousterhout gives no number (this project's own experience, n=1)
 
 ---
 
@@ -110,7 +110,8 @@ memory](https://code.claude.com/docs/en/memory#agents-md)). Keep the file short,
 - **Short**: link to docs for anything long. CI warns above 200 lines, the vendor's target for a CLAUDE.md file
   ([SC-8](references/sources.md)); instruction-following accuracy falls as instructions grow
   ([SC-6](references/sources.md)). Rules for one part of the tree can move to path-scoped rules (`.claude/rules/`
-  files with `paths:`), which Claude Code loads only when the agent works with matching files.
+  files with `paths:`), which Claude Code loads only when the agent works with matching files ([Claude Code
+  memory](https://code.claude.com/docs/en/memory#path-specific-rules)).
 - **Owned**: a named person owns the file and records a reviewed date in it.
 - **Tested**: CI checks the file's length, its links and the reachability of every doc.
 - **Re-baselined**: at each model upgrade, delete the rules that no longer change behavior ([Pattern
@@ -134,7 +135,7 @@ One sentence on what this project does, then a tree of the major directories.
 Every doc is reachable from AGENTS.md by following relative links, so it is the master index. Each rule names its
 enforcement point; a rule held only by prose is guidance ([Pattern
 2.4](L2-behavioral-guardrails.md#pattern-24--constitutional-rules)). Claude Code expands `@path` imports into context
-when the importing file loads, so imports do not reduce context cost: use plain links for the index, and `@` only for
+when the importing file loads ([imports](https://code.claude.com/docs/en/memory#import-additional-files)), so imports do not reduce context cost: use plain links for the index, and `@` only for
 content that must load in every session, such as `@AGENTS.md` in CLAUDE.md.
 
 **Anti-Pattern**: Tutorials in the instruction file; every line displaces context the task needs. A file with no
@@ -143,7 +144,7 @@ owner and no review date, whose rules nobody has re-tested since the last model 
 **Cross-References**: [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether the file succeeds.
 [Pattern 0.7](#pattern-07--documentation-as-system-map) keeps the index in sync with the docs.
 
-**Evidence:** Partial — instruction-file studies disagree on value; the 200-line warning follows vendor guidance (SC-4, SC-5, SC-8, SC-11)
+**Evidence:** Partial — instruction-file studies disagree on value; the 200-line warning follows vendor guidance (SC-4, SC-5, SC-6, SC-8, SC-11)
 
 ---
 
@@ -158,7 +159,7 @@ against them ([Pattern 0.7](#pattern-07--documentation-as-system-map)). Direct t
 (boundary conditions, error paths, module seams), not line coverage with trivial assertions.
 
 **In Practice**: in a refactoring session the agent reads the current tests to learn the contract, you review the
-test plan together in plan mode and close coverage gaps, the agent refactors against passing tests, and then adds
+test plan together in plan mode ([permission modes](https://code.claude.com/docs/en/permission-modes)) and close coverage gaps, the agent refactors against passing tests, and then adds
 tests for the behavior it changed. When debugging, have the agent reduce the failure to a small isolated test, fix
 the code, and keep the test if it guards behavior worth keeping. Mocks belong in unit tests; stack tests use real dependencies. The test tiers are
 compared in [Pattern 1.1](L1-patterns/1.1-stack-tests.md#comparison-test-types), and what to mock is in [Pattern
@@ -176,7 +177,7 @@ failure as a defect, unit or stack.
 
 ## Pattern 0.6 — Git Worktree-Based Development
 
-**Problem**: Several agents on one checkout overwrite each other's edits; switching branches leaves artefacts.
+**Problem**: Several agents on one checkout overwrite each other's edits; switching branches leaves artifacts.
 
 **Solution**: Give each task its own git worktree: a separate checkout on its own branch that shares the object
 store. Claude Code creates one per session with `claude --worktree <name>` ([Claude Code common
@@ -223,7 +224,7 @@ review for drift that a script can find.
 **Cross-References**: [Pattern 0.9](#pattern-09--ai-as-new-starter-standard) tests whether the map works for a reader
 with no context.
 
-**Evidence:** Thin — for documentation; most committed AI configuration (73.8% in one study of 441 repositories) is never changed after it is added, so presence is not practice (MC-11)
+**Evidence:** Thin — the same-commit and reachability rules are reasoned, and this repository's CI enforces them; no study measures their effect on agents (this project's own experience, n=1)
 
 ---
 
@@ -252,7 +253,7 @@ be using this" without searching. Removing a few imports and leaving large dead 
 4.1](L4-standards-measurement.md#pattern-41--evidence-based-claims) sets the standard for showing a cleanup broke
 nothing.
 
-**Evidence:** Thin — reasoned; the author's practice (first-party, n=1)
+**Evidence:** Thin — reasoned from context as a finite resource (SC-1); this project's own experience, n=1
 
 ---
 
@@ -292,7 +293,7 @@ the meeting"). Quick starts that fail because a step is missing.
 **Cross-References**: [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) specifies the
 AGENTS.md format.
 
-**Evidence:** Thin — a reasoned audit test with no study (first-party, n=1)
+**Evidence:** Thin — a reasoned audit test with no study (this project's own experience, n=1)
 
 ---
 
@@ -301,31 +302,31 @@ AGENTS.md format.
 **Problem**: Instruction files, skills, hooks and routing rules accumulate and are rarely removed. Each rule
 compensated for a weakness of the model of its day; when the model improves, the rule is noise or pushes the agent
 away from what the newer model does well. In one study of 441 repositories, 73.8% of committed AI configuration
-artefacts were never changed after they were added (MC-11, a preprint its authors call hypothesis-generating).
+artifacts were never changed after they were added (MC-11, a preprint its authors call hypothesis-generating).
 Anthropic reports removing over 80% of Claude Code's system prompt for a new model generation with no measurable loss
 on its coding evaluations, which are not published (AN-7).
 
-**Solution**: Give every context artefact an owner and a review date, and test each one by removing it. A **context
-artefact** is any file or setting that adds instructions to an agent session: the instruction file, a skill, a hook,
+**Solution**: Give every context artifact an owner and a review date, and test each one by removing it. A **context
+artifact** is any file or setting that adds instructions to an agent session: the instruction file, a skill, a hook,
 a deny rule, a routing note, a memory file.
 
-1. **Owner and `reviewed:` date, with an optional expiry.** Put them in the artefact's front matter. A hook or
+1. **Owner and `reviewed:` date, with an optional expiry.** Put them in the artifact's front matter. A hook or
    setting has none, so record them in the pinned allowlist of [Pattern
    2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain); agent workflows have theirs in
-   the register ([Pattern A.1](earned-autonomy.md#pattern-a1--autonomy-register)). An expired artefact is retired or
+   the register ([Pattern A.1](earned-autonomy.md#pattern-a1--autonomy-register)). An expired artifact is retired or
    re-reviewed.
 2. **A fixed task bank, run against a pinned model.** [Pattern
    4.6](L4-standards-measurement.md#pattern-46--context-eval) defines the bank, its scoring and its runner; this
    repository's bank is [the task bank](references/task-bank.md). Pin the model id so a difference between two runs
-   comes from the artefact, not the model.
-3. **Delete first at each model upgrade, and at least quarterly.** Run the bank without the artefact. If every task
+   comes from the artifact, not the model.
+3. **Delete first at each model upgrade, and at least quarterly.** Run the bank without the artifact. If every task
    passes, delete it. If a task regresses, restore it and record the justifying task next to it.
 4. **Classify each rule as guidance or invariant.** Guidance is prose and is prunable by step 3. An invariant must
    hold regardless of the model, so it lives in a command hook, a deny rule, a sandbox setting or a required CI
    check, never in prose only ([Pattern 2.4](L2-behavioral-guardrails.md#pattern-24--constitutional-rules)).
    Re-baselining removes prose duplicates of invariants; it does not remove the hook, rule or check.
 5. **Measure maintained configuration**: when each file last changed, how often each skill was invoked, and how many
-   rules have a justifying task. Fail CI on an artefact past its `reviewed:` limit or its `expires:` date.
+   rules have a justifying task. Fail CI on an artifact past its `reviewed:` limit or its `expires:` date.
 
 **In Practice**:
 
@@ -334,7 +335,7 @@ a deny rule, a routing note, a memory file.
 owner: platform-team
 reviewed: 2026-11-19
 expires: 2027-02-17      # optional
-justified-by: T-07       # the task-bank task that fails without this artefact
+justified-by: T-07       # the task-bank task that fails without this artifact
 ---
 ```
 
@@ -357,15 +358,15 @@ regresses nothing because no task exercises the rule, add the task before deleti
 
 **Anti-Pattern**: "We added it, so it must help"
 ([catalog](cross-cutting/anti-patterns.md#we-added-it-so-it-must-help)). A line cap used as a proxy for signal
-([catalog](cross-cutting/anti-patterns.md#line-caps-as-a-proxy-for-signal)). A bank written from the artefacts it
+([catalog](cross-cutting/anti-patterns.md#line-caps-as-a-proxy-for-signal)). A bank written from the artifacts it
 tests, so it passes with or without them; draw tasks from real work and incidents. Re-running only the tasks the
-artefact was written for; a removal can regress an unrelated task. Deleting an invariant because the model behaves
+artifact was written for; a removal can regress an unrelated task. Deleting an invariant because the model behaves
 without it; the hook or CI check holds the rule for the day it does not.
 
 **Cross-References**: [Pattern 0.4](#pattern-04--agent-instruction-file-as-project-constitution) sets the instruction
 file's owner and review date. [Pattern 0.8](#pattern-08--aggressive-cleanup) is the same discipline for code.
 
-**Evidence:** Partial — most committed AI config is never changed; a vendor cut 80% of a prompt (MC-11, AN-7, MV-9)
+**Evidence:** Partial — most committed AI config is never changed; a vendor cut over 80% of a prompt (MC-11, AN-7); task banks as the test (MV-9)
 
 ---
 

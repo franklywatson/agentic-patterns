@@ -6,6 +6,7 @@
       "Read(./.env.*)",
       "Bash(sed -i *)"
     ],
+    "blockReadsOutsideWorkingDirectories": true,
     "blockWritesOutsideWorkingDirectories": true
   },
   "sandbox": {

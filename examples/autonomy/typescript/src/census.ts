@@ -101,6 +101,7 @@ function build(dir: string, now: number): Ctx {
 const wfs = (c: Ctx): Json[] => c.register?.workflows ?? [];
 const sandbox = (c: Ctx): Json => c.settings.sandbox ?? {};
 const nonEmptyArray = (v: unknown) => Array.isArray(v) && v.length > 0;
+const nonEmptyObject = (v: unknown) => typeof v === "object" && v !== null && !Array.isArray(v) && Object.keys(v).length > 0;
 
 function codeownersSets(c: Ctx): Set<string> {
   const sets = new Set<string>();
@@ -138,7 +139,7 @@ function pinsValid(c: Ctx): boolean {
 function baselineFresh(c: Ctx): boolean {
   try {
     const b = JSON.parse(c.text(".autonomy/baseline.json"));
-    return b.flow !== undefined && b.stability !== undefined && ageDays(c.now, parseTime(b.captured)) <= FRESH_DAYS;
+    return nonEmptyObject(b.flow) && nonEmptyObject(b.stability) && ageDays(c.now, parseTime(b.captured)) <= FRESH_DAYS;
   } catch {
     return false;
   }

@@ -15,12 +15,11 @@ needs no register. Pick the path that matches the largest gap.
 
 ## How long before a workflow reaches A3 or A4?
 
-The library sets no calendar time. A grant is earned on conditions: A3 needs a stack test for the journey,
-required CI checks, an owner, a locked sandbox and a cap of C3 or higher. A4 also needs mechanical verification,
-a reversible action, a cap of C4 or higher and a stop drill within 30 days ([Prerequisites by
-Grant](../earned-autonomy.md#prerequisites-by-grant)). The cap comes from your team's census, not from the
-library; [The Curve and the Cap](../earned-autonomy.md#the-curve-and-the-cap) says how it is computed and what
-raises it.
+The library sets no calendar time. A grant is earned on conditions, listed once in [Prerequisites by
+Grant](../earned-autonomy.md#prerequisites-by-grant). The cap comes from the census of your repository, not from the
+library; [The Curve and the Cap](../earned-autonomy.md#the-curve-and-the-cap) says how it is computed. A new
+repository starts at C1, which allows only read-only A1; [Reaching C2](../earned-autonomy.md#reaching-c2) lists what
+lets an agent edit files.
 
 ## Can an agent repair production on its own?
 
@@ -93,11 +92,20 @@ Keep the monorepo when services share internal types that change often or when b
 split a monorepo that works, and do not split without an entry-point file in each new repository: the agent then
 finds nothing.
 
+If you keep the monorepo, put the rules for the whole tree in one AGENTS.md at the root, imported by the root
+CLAUDE.md. Claude Code loads a CLAUDE.md in a subdirectory when Claude reads, writes or edits a file there, and
+loads a subdirectory's AGENTS.md on a read only when that subdirectory has no CLAUDE.md, `.claude/CLAUDE.md` or
+`CLAUDE.local.md` of its own; `.claude/rules/` files with `paths:` load when matching files are used
+([Claude Code memory](https://code.claude.com/docs/en/memory)). Per-package rules can therefore sit beside each
+package. The example census reads one directory at a time, so run it per package root; it does not compute
+per-package caps. Make the test job a required check without a path filter
+([how to](adoption-guide.md#make-the-test-job-a-required-check)).
+
 ---
 
 ## These patterns focus on development. What about deployment?
 
-The patterns assume Docker for local development and testing. Production deployment is a separate concern that this pattern library deliberately doesn't prescribe — the right approach depends on your infrastructure, team structure, and scale.
+The patterns assume Docker for local development and testing. Production deployment is a separate concern that this library does not prescribe, because the right approach depends on your infrastructure, team structure and scale.
 
 In the reference project, deployment runs from a separate DevOps repository using Terraform. That repo has:
 
@@ -105,9 +113,9 @@ In the reference project, deployment runs from a separate DevOps repository usin
 - **Tooling to audit environment variables and config** across dev and ops repos for consistency.
 - **A commit-driven deployment model** — the DevOps repo reads GitHub commit changes to key application files, then follows a structured process for mapping those changes into infrastructure updates.
 
-The patterns from L0 to L4 apply equally to the DevOps repo — the agent instruction file, progressive disclosure, evidence-based claims all work in infrastructure code. The discipline transfers; the tooling doesn't have to.
+In this project's own experience (one project, not tested elsewhere), the DevOps repo uses the same agent instruction file, progressive disclosure and evidence rules as the application.
 
-This is a preference for this project's scale and team structure. Teams deploying to Kubernetes, serverless platforms, or managed services would adapt the deployment model to their context. What transfers is the discipline (evidence-based changes, structured context, clear contracts between repos), not the specific tools.
+This is a preference for this project's scale and team structure. Teams deploying to Kubernetes, serverless platforms or managed services would adapt the deployment model to their context.
 
 ---
 
@@ -141,7 +149,7 @@ Production repair sits on the line between the application repo and the DevOps r
 | Field | Content |
 |-------|---------|
 | `fingerprint` | A stable key for the failure: journey plus error class, not line numbers |
-| `journey` | The user journey that failed, in one sentence |
+| `journey` | The identifier of the user journey that failed |
 | `request` | The failing request with personal data removed |
 | `observed` / `expected` | What happened and what should have happened |
 | `dependencies` | Each dependency's state, copied from the production health response |

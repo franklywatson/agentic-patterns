@@ -3,8 +3,9 @@ name: plan+
 description: "Invoke AFTER brain+ design is approved. Wraps superpowers:writing-plans with constitutional rules, testing strategy per task, and mock policy. Creates bite-sized implementation plans."
 argument-hint: "[plan description]"
 user-invocable: true
-owner: franklywatson
-reviewed: 2026-11-19
+metadata:
+  owner: franklywatson
+  reviewed: 2026-11-19
 ---
 
 <!-- rig-generated -->

@@ -5,10 +5,10 @@
  * - Dynamic port allocation
  * - Unique container naming
  * - Per-test compose file generation
- * - Aggressive cleanup
+ * - Aggressive cleanup that reports failures
  */
 
-import { execSync, spawn } from 'child_process';
+import { execSync } from 'child_process';
 import { randomBytes } from 'crypto';
 import axios, { type AxiosInstance } from 'axios';
 import { readFileSync, unlinkSync, writeFileSync, existsSync } from 'fs';
@@ -75,19 +75,28 @@ export class StackTestUtils {
   }
 
   /**
-   * Clean up the stack aggressively
+   * Remove the stack's containers, volumes, networks and orphans, then delete the
+   * generated compose file. The file is deleted even when `docker compose down`
+   * fails, and the failure is rethrown so a leaked stack fails the run.
    */
   async cleanup(): Promise<void> {
-    if (this.composeFile && existsSync(this.composeFile)) {
-      console.log(`Cleaning up stack: ${this.composeFile}`);
-      try {
-        execSync(`docker compose -p "${this.projectName}" -f "${this.composeFile}" down -v --remove-orphans`, {
-          stdio: 'inherit',
-        });
-      } catch (error) {
-        console.error('Error during cleanup:', error);
-      }
-      unlinkSync(this.composeFile);
+    if (!this.composeFile || !existsSync(this.composeFile)) {
+      return;
+    }
+    console.log(`Cleaning up stack: ${this.composeFile}`);
+    let failure: unknown = null;
+    try {
+      execSync(`docker compose -p "${this.projectName}" -f "${this.composeFile}" down -v --remove-orphans`, {
+        stdio: 'inherit',
+      });
+    } catch (error) {
+      failure = error;
+    }
+    unlinkSync(this.composeFile);
+    this.composeFile = null;
+    if (failure !== null) {
+      const detail = failure instanceof Error ? failure.message : String(failure);
+      throw new Error(`Cleanup of stack ${this.projectName} failed; containers or volumes may remain: ${detail}`);
     }
   }
 
@@ -148,7 +157,7 @@ export class StackTestUtils {
 
       while (!allocated && attempts < maxAttempts) {
         const port = Math.floor(Math.random() * (maxPort - minPort + 1)) + minPort;
-        if (await this.isPortAvailable(port)) {
+        if (!ports.includes(port) && (await this.isPortAvailable(port))) {
           ports.push(port);
           allocated = true;
         }

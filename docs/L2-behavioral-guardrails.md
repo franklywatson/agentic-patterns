@@ -23,13 +23,13 @@ points for rules that must hold.
 | Hook | PreToolUse and PostToolUse handlers | Policy that matches structured tool arguments | Often. Hooks match tool calls, not what a permitted tool does once running, and project hook files are usually editable by the agent |
 | CI | Required checks on the merge path | Invariants that must hold for every change | No, if the check is required and the agent cannot edit the workflow or branch protection |
 | Sandbox | Filesystem and network isolation, credentials absent from the environment | What must never happen | No, if the sandbox is locked and fails closed |
-| Downstream | Authorisation in the system being called (scoped token, protected branch, approval) | Irreversible or external actions | No |
+| Downstream | Authorization in the system being called (scoped token, protected branch, approval) | Irreversible or external actions | No |
 
-What must never happen is prevented by the sandbox, credential scope or downstream authorisation. What must always
+What must never happen is prevented by the sandbox, credential scope or downstream authorization. What must always
 happen runs as a hook and a required CI check. Prompts and skills carry everything else; a skill guarantees
 nothing. A sandbox with credentials kept outside it holds what hooks such as "block `sed -i`" try to hold, so
 those hooks remain as ergonomic nudges and one more layer. Anthropic treats the sandbox as the hard boundary and
-keeps other defences around it ([AN-9, PL-15](references/sources.md)).
+keeps other defenses around it ([AN-9, PL-15](references/sources.md)).
 
 **Bindings.** Syntax here follows Claude Code; each pattern states the contract so another harness can bind it.
 In another harness, look for: an operating-system sandbox or container mode for writes and network; a lock so
@@ -81,8 +81,8 @@ the phase did its job.
 - Running five phases on a typo fix, or shipping a "small" change with no verification evidence or review.
 - Treating a phase visit as proof that verification evidence exists.
 
-**Evidence:** Thin — overlay and chain designs from superpowers, the trading-bot project and rig (first-party,
-n=1); no comparison against unchained work; inspect third-party skills before adopting (IS-13)
+**Evidence:** Thin — overlay and chain designs from superpowers, rig and this project's own experience (n=1); no
+comparison against unchained work; inspect third-party skills before adopting (IS-13)
 
 ---
 
@@ -114,8 +114,8 @@ edits, parsed test failures); they cannot prevent a call that already ran.
 - A regex over a free-text shell string is bypassable (quoting, variables, a script). Match structured arguments.
 - A project hook file is editable by the agent. Put policy hooks in managed settings with `allowManagedHooksOnly`
   ([Pattern 2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)).
-- Hooks run outside the Claude Code sandbox with the user's full access. Review a hook script as code that runs on
-  the machine.
+- Hooks run outside the Claude Code sandbox with the user's full access
+  ([sandboxing](https://code.claude.com/docs/en/sandboxing)). Review a hook script as code that runs on the machine.
 
 ### Composing Checks
 
@@ -171,20 +171,8 @@ call proceeds, unless the handler sets `"onFailure": "block"` (Claude Code v2.1.
 collector outside the agent's reach. It emits `claude_code.tool_decision` for each permission decision and
 `claude_code.tool_result` for each tool call, with arguments only when `OTEL_LOG_TOOL_DETAILS=1`; repository
 settings cannot turn it on or redirect it ([monitoring](https://code.claude.com/docs/en/monitoring-usage)). A
-minimal PostToolUse record, for a harness without telemetry:
-
-```bash
-#!/usr/bin/env bash
-# PostToolUse hook: append time, tool name and path after every Edit or Write.
-set -euo pipefail
-audit_dir="${HOME}/.local/state/agent-audit"
-mkdir -p "$audit_dir"
-python3 -c 'import json,sys,time; d=json.load(sys.stdin); print(json.dumps({"t":time.time(),"tool":d["tool_name"],"path":d["tool_input"].get("file_path")}))' \
-  >> "$audit_dir/tool-calls.jsonl"
-exit 0
-```
-
-The agent's shell can reach that file unless the sandbox denies writes to it, so it is a record, not evidence.
+harness without telemetry can append one JSON line per tool call from a PostToolUse hook. The agent's shell can
+reach that file unless the sandbox denies writes to it, so it is a record, not evidence.
 
 ### Anti-Pattern
 
@@ -197,8 +185,8 @@ The agent's shell can reach that file unless the sandbox denies writes to it, so
 See [L3: Optimization](L3-optimization.md) for hooks as ergonomic nudges.
 
 **Evidence:** Partial — Anthropic and Stripe put must-hold steps in deterministic code rather than prose, and
-OWASP puts authorisation outside the model; no study measures the effect; the composition design is first-party
-(OM-7, OM-12, SG-11, SG-16)
+OWASP puts authorization outside the model; no study measures the effect; the composition design is this
+project's own experience (OM-7, OM-12, SG-11, SG-16)
 
 ---
 
@@ -222,7 +210,7 @@ rule that needs exceptions is a convention and belongs in a skill.
 | Evidence-based claims only | Prompt, CI | Verification skill requires output; the CI result is the evidence the reviewer reads |
 | Zero-defect tolerance | CI | Required check fails on any test failure, lint error or warning |
 | Docs updated with code | CI | Required check fails when `examples/` changes without a `docs/` change |
-| No production credentials in the agent's environment | Sandbox, downstream | Credentials injected outside the sandbox; scoped, short-lived tokens; the production system authorises independently |
+| No production credentials in the agent's environment | Sandbox, downstream | Credentials injected outside the sandbox; scoped, short-lived tokens; the production system authorizes independently |
 | No writes outside the working tree, no unapproved network egress | Sandbox | Filesystem and network policy, locked and failing closed |
 | Never prune shared Docker state | Prompt, sandbox | Skill states the rule; the sandbox denies access to the host Docker socket |
 | Requester cannot approve their own change | Downstream | Branch protection requiring a non-author review |
@@ -241,7 +229,7 @@ The instruction file format is [Pattern
 1.5](L1-patterns/1.5-real-dependencies.md).
 
 **Evidence:** Partial — the case for deterministic checks rests on vendor guidance and one company report
-(Pattern 2.3); whether a declared rule list improves agent behaviour is contested; the rule list is this
+(Pattern 2.3); whether a declared rule list improves agent behavior is contested; the rule list is this
 library's design choice (SC-4, SC-5, SC-11)
 
 ---
@@ -295,8 +283,8 @@ from it: documented solutions (symptom, root cause, prevention), plans that surv
 decisions and failure modes, and constitutional amendments with an enforcement point ([Pattern
 2.4](#pattern-24--constitutional-rules)).
 
-Learnings are context. A wrong or stale learning degrades every later session, and the flywheel has to remove
-entries as well as add them ([IS-13](references/sources.md)). An agent-written learning is also untrusted input:
+Learnings are context. A wrong or stale learning degrades every later session, so the store of learnings has to
+lose entries as well as gain them ([IS-13](references/sources.md)). An agent-written learning is also untrusted input:
 the agent may have written it after reading content an outsider controls ([Pattern
 2.10](#pattern-210--least-agency-and-session-composition)), and a planted instruction that becomes a learning is
 read by every later session. Use a review step:
@@ -317,7 +305,7 @@ read by every later session. Use a review step:
 `~/.claude/projects/<project>/memory/`, shared by every worktree of the repository, and the first 200 lines or
 25KB of `MEMORY.md` load at the start of every conversation ([memory](https://code.claude.com/docs/en/memory)).
 That is an agent-written learning loaded with no review step. For a session that reads untrusted input, set
-`"autoMemoryEnabled": false` or `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`. Otherwise review `MEMORY.md` on the same
+`"autoMemoryEnabled": false` in user or managed settings, or `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` in the launcher. Otherwise review `MEMORY.md` on the same
 schedule as other learnings.
 
 The [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin's `/ce-compound`
@@ -331,8 +319,8 @@ above.
 - Agent-written entries loaded into every session without review and never removed. One injected instruction
   becomes a standing one.
 
-**Evidence:** Thin — vendor plugin claim; a flywheel must remove as well as add (IS-13); auto memory behaviour is
-from vendor documentation (SC-8)
+**Evidence:** Thin — the review step is this library's design; a learning store must remove as well as add
+(IS-13); auto memory behavior is from vendor documentation (SC-8)
 
 ---
 
@@ -350,8 +338,8 @@ The [containment example](../examples/containment/) shows the gap. A policy func
 fetches to a host outside the allowlist: eight of nine write commands and both network commands pass. A container
 with a read-only mount and no network stops all of them without parsing a command.
 
-Claude Code's defaults run the other way. From v2.1.283, auto mode is the built-in starting mode for interactive
-terminal and VS Code sessions, and the sandbox is off by default
+Claude Code's defaults run the other way. In Claude Code v2.1.283 or later, auto mode is the built-in starting mode
+for interactive terminal and VS Code sessions, and the sandbox is off by default
 ([permission modes](https://code.claude.com/docs/en/permission-modes),
 [sandboxing](https://code.claude.com/docs/en/sandboxing)). Out of the box, prompts are relaxed and nothing is
 contained; the vendor states that auto mode "does not guarantee safety".
@@ -391,30 +379,34 @@ the agent from the host.
 
 **Claude Code.**
 [`examples/containment/claude-code/settings.json`](../examples/containment/claude-code/settings.json) sets each
-property with keys from the [settings](https://code.claude.com/docs/en/settings) and
-[sandboxing](https://code.claude.com/docs/en/sandboxing) pages:
+property with keys from the [settings reference](https://code.claude.com/docs/en/settings-reference) and the
+[sandboxing](https://code.claude.com/docs/en/sandboxing) page:
 
 | Property | Setting |
 |----------|---------|
-| Writes confined | `sandbox.enabled`, `sandbox.filesystem.denyWrite`; `permissions.blockWritesOutsideWorkingDirectories` for the file tools (v2.1.314 or later) |
-| Reads bounded | `sandbox.filesystem.denyRead` for shell commands; for the file tools, which `denyRead` does not cover, `permissions.blockReadsOutsideWorkingDirectories` (v2.1.257 or later) and `permissions.deny` rules such as `Read(./.env)` |
+| Writes confined | `sandbox.enabled`, `sandbox.filesystem.denyWrite`; `permissions.blockWritesOutsideWorkingDirectories` for the file tools |
+| Reads bounded | `sandbox.filesystem.denyRead` for shell commands; `permissions.blockReadsOutsideWorkingDirectories` for the file tools, which `denyRead` does not cover, and for sandboxed commands; `permissions.deny` rules such as `Read(./.env)` |
 | Network allowlisted | `sandbox.network.allowedDomains` (shell commands only; restrict WebFetch with permission rules) |
-| Secrets outside | `sandbox.credentials.files` and `sandbox.credentials.envVars` with mode `deny`; mode `mask` lets a command use a credential on an allowed host without the session seeing the value (needs `network.tlsTerminate`; honoured only from user or managed settings or `--settings`) |
+| Secrets outside | `sandbox.credentials.files` and `sandbox.credentials.envVars` with mode `deny`; mode `mask` lets a command use a credential on an allowed host without the session seeing the value (needs `network.tlsTerminate`; honored only from user or managed settings or `--settings`) |
 | Failure closes | `sandbox.failIfUnavailable: true`, `sandbox.allowUnsandboxedCommands: false` |
-| Agent cannot edit it | Managed settings, which take precedence over user, project and command-line settings ([SG-12](references/sources.md)); `requiredMinimumVersion` set to the highest version a key above needs, so an older client refuses to start |
+| Agent cannot edit it | Managed settings, which take precedence over user, project and command-line settings ([SG-12](references/sources.md)) |
+| Minimum version | v2.1.257 for the reads key, v2.1.314 for the writes key; set `requiredMinimumVersion` (managed only) to `2.1.314` so an older client refuses to start |
 
 Without managed settings, put the keys in user settings (`~/.claude/settings.json`), which is outside the working
-tree the agent can write. Until the boundary holds, set `disableAutoMode` to `"disable"` or
-`permissions.defaultMode` to `"default"` there; a project file cannot make `auto` or `bypassPermissions` the
-default mode.
+tree the agent can write. Until the boundary holds, set
+[`permissions.disableAutoMode`](https://code.claude.com/docs/en/settings-reference#disableautomode) to `"disable"`
+or `permissions.defaultMode` to `"default"` there; a project file cannot make `auto` or `bypassPermissions` the
+default mode. The census ([Pattern A.4](earned-autonomy.md#pattern-a4--census)) reads only the project
+`.claude/settings.json`, so commit the same keys there too if you run it.
 
 The sandbox wraps shell commands only. The file tools, WebFetch, local MCP servers and hooks run outside it, under
 permission rules and managed settings. On native Windows, commands run unsandboxed; use WSL2. `docker` does not
 run inside the sandbox, and an `excludedCommands` entry runs it with full access. For Docker stack tests, run the
-whole session inside a container or virtual machine with its own daemon.
+whole session inside a container or virtual machine with its own daemon; the
+[FAQ](cross-cutting/faq.md#my-stack-tests-need-docker-how-do-i-run-them-inside-the-sandbox) compares the options.
 
 For unattended sessions, `permissions.denyInsteadOfPrompting` (user or managed settings; v2.1.319 or later) or
-`dontAsk` mode denies anything that would prompt, so a session with no person present stops instead of waiting.
+[`dontAsk`](https://code.claude.com/docs/en/permission-modes) mode denies anything that would prompt, so a session with no person present stops instead of waiting.
 
 **No harness: CI only.** Run the agent only in an ephemeral CI job or container with no secrets beyond a scoped
 token, push to a branch that cannot merge itself, and require checks and a human review before merge. This holds
@@ -429,8 +421,8 @@ the outcome, not what the agent does on the machine before then.
 
 The [threat model](cross-cutting/threat-model.md) lists what the boundary protects.
 
-**Evidence:** Partial — consistent first-party guidance and one company report, no independent comparison
-(PL-14, PL-15, PL-17, SG-10, SG-12, AN-9, AN-11)
+**Evidence:** Partial — Anthropic describes its own practice consistently across its docs and posts, and one company
+reports the same; no independent comparison (PL-14, PL-15, PL-17, SG-10, SG-12, AN-9, AN-11)
 
 ---
 
@@ -478,7 +470,7 @@ writes a plain summary; a second session, with the credentials, reads only the s
 ### Bindings
 
 **Claude Code.** For a read-only rinse session, add `permissions.deny` entries for `Edit` (which also covers
-`Write`) and `Bash`. If you allow `Bash` for read-only commands, limit `sandbox.network.allowedDomains` to the
+`Write`; [permissions](https://code.claude.com/docs/en/permissions)) and `Bash`. If you allow `Bash` for read-only commands, limit `sandbox.network.allowedDomains` to the
 source host; that allowlist covers shell commands only, so also deny `WebFetch` or restrict it with a rule such as
 `WebFetch(domain:example.com)`. Turn auto memory off for the session ([Pattern
 2.8](#pattern-28--compound-engineering)). Credential and MCP server keys are in [Pattern
@@ -602,8 +594,8 @@ This library's own recommendations are dependencies too:
 | rig | Hooks, skills, agents | Hook scripts and settings it writes | Written by this library's author |
 | superpowers | Skills and plugin | Skill text; any hook or script it adds | |
 | compound-engineering plugin | Skills, commands, agents | Skill text; where `/ce-compound` writes | Its output feeds later prompts ([Pattern 2.8](#pattern-28--compound-engineering)) |
-| RTK | A command proxy on your shell commands | Source and what it rewrites | Sees every command it proxies |
-| jcodemunch | An MCP server that indexes your repository | Source; what it stores and sends | Licensed for non-commercial use; commercial use needs a paid licence ([README at github.com/jgravelle/jcodemunch-mcp](https://github.com/jgravelle/jcodemunch-mcp)). Read the licence before using it at work |
+| [RTK](https://github.com/rtk-ai/rtk) | A command proxy on your shell commands | Source and what it rewrites | Sees every command it proxies |
+| [jcodemunch](https://github.com/jgravelle/jcodemunch-mcp) | An MCP server that indexes your repository | Source; what it stores and sends | Its README states a non-commercial license; commercial use needs a paid license |
 
 Where this library tells you to install any of these, the instruction assumes you have done this review.
 
@@ -611,13 +603,13 @@ Where this library tells you to install any of these, the instruction assumes yo
 
 **Claude Code.**
 
-- `strictKnownMarketplaces` (managed only) allowlists the marketplace sources users can add.
-- `enabledPlugins` turns plugins on or off per scope; `extraKnownMarketplaces` registers marketplaces.
-- `allowedMcpServers` and `deniedMcpServers` allow or block servers by URL, command or name;
-  `allowManagedMcpServersOnly` (managed only) makes the managed list the only one.
-- `allowManagedHooksOnly` (managed only) blocks user, project, local and plugin hooks, except hooks from plugins
-  force-enabled in managed `enabledPlugins` ([hooks reference](https://code.claude.com/docs/en/hooks)).
-- `allowManagedPermissionRulesOnly` limits permission rules to managed ones.
+- [`strictKnownMarketplaces`](https://code.claude.com/docs/en/settings-reference#strictknownmarketplaces) (managed only) allowlists the marketplace sources users can add.
+- [`enabledPlugins`](https://code.claude.com/docs/en/settings-reference#enabledplugins) turns plugins on or off per scope; [`extraKnownMarketplaces`](https://code.claude.com/docs/en/settings-reference#extraknownmarketplaces) registers marketplaces.
+- [`allowedMcpServers`](https://code.claude.com/docs/en/settings-reference#allowedmcpservers) and [`deniedMcpServers`](https://code.claude.com/docs/en/settings-reference#deniedmcpservers) allow or block servers by URL, command or
+  name; [`allowManagedMcpServersOnly`](https://code.claude.com/docs/en/settings-reference#allowmanagedmcpserversonly) (managed only) makes the managed list the only one.
+- [`allowManagedHooksOnly`](https://code.claude.com/docs/en/settings-reference#allowmanagedhooksonly) (managed only) blocks user, project, local and plugin hooks, except hooks from
+  plugins force-enabled in managed `enabledPlugins` ([hooks reference](https://code.claude.com/docs/en/hooks)).
+- [`allowManagedPermissionRulesOnly`](https://code.claude.com/docs/en/settings-reference#allowmanagedpermissionrulesonly) (managed only) limits permission rules to managed ones.
 
 Project `.claude/settings.json` is a file the agent can edit, so a repository can propose a plugin or server and
 managed settings decide whether it installs.
@@ -633,8 +625,8 @@ from the pinned list.
 - Letting the agent install its own skills and servers.
 - A marketplace allowlist in a file the agent can edit.
 
-**Evidence:** Partial — the threat is Strong (vendor scan and a reported incident), prevalence is Partial, and the
-inspection practice is Thin (no study of review practice) (SG-28, SG-29, IS-13)
+**Evidence:** Partial — the threat is documented by a vendor scan and a reported incident; no study measures review
+practice (SG-28, SG-29, IS-13)
 
 ---
 
@@ -655,18 +647,21 @@ their own change adds nothing: GitHub does not count the requester's approval of
 Tier changes and actions by reversibility and blast radius ([Pattern
 1.8](L1-patterns/1.8-reversibility-blast-radius.md)). Spend human attention where mistakes are costly.
 
-| Tier | 1.8 classes | Examples | Control |
-|------|-------------|----------|---------|
-| Low | R0-R2 at B0 | A docs edit, a refactor behind passing stack tests | Automated checks only |
-| Medium | R0-R2 at B1-B2 | A normal feature change | One human reviewer who is not the requester, plus checks |
-| High | R3, R4 or B3 | Migrations, permission changes, payments, deploys, publishing | A second human approver, a scoped credential and a downstream control |
+| Tier | 1.8 classes | Examples | Control | Grant |
+|------|-------------|----------|---------|-------|
+| Low | R0-R2 at B0 | A docs edit, a refactor behind passing stack tests | Automated checks, then one human approval | Checks alone, with no human, need A4 (R0, R1) or A5 (named R2 classes) |
+| Medium | R0-R2 at B1-B2 | A normal feature change | One human reviewer who is not the requester, plus checks | A human reviews at every grant |
+| High | R3, R4 or B3 | Migrations, permission changes, payments, deploys, publishing | A second human approver, a scoped credential and a downstream control | A human approves at every grant |
+
+A grant needs a cap ([The Grants](earned-autonomy.md#the-grants)). A workflow below A4, which includes every
+workflow in a repository capped at C2, keeps one human approval on every tier.
 
 Rules at every tier:
 
 1. **The requester cannot approve.**
 2. **An agent's approval never counts as human approval.** A review agent can add findings.
-3. **Human approval is for a short named list** of irreversible and externally visible actions. Machines check
-   everything else.
+3. **Approval prompts are for a short named list** of irreversible and externally visible actions. Machines check
+   everything else in the session; the tier and grant set the pull request review.
 4. **Measure the approve rate.** A prompt people approve nearly every time is not a control. Remove it or move
    the rule to a boundary.
 5. **Review depth follows test coverage.** A change covered by a [stack test](L1-patterns/1.1-stack-tests.md) of
@@ -676,7 +671,13 @@ Rules at every tier:
 
 Write the high-tier list in the instruction file ("migrations, `.github/workflows/`, permission or role changes,
 release publishing") and map it to paths and commands, so a rule decides the tier. Review the approve rate for
-each prompt monthly.
+each prompt monthly. At review, check:
+
+- The author of record is named and is not the approver ([Pattern
+  4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)).
+- A new or updated skill, plugin, hook or MCP server is pinned and on the allowlist ([Pattern
+  2.12](#pattern-212--skill-plugin-and-mcp-supply-chain)).
+- A high-tier change has a second human approver.
 
 ### Bindings
 
@@ -694,9 +695,10 @@ To measure the approve rate, export OpenTelemetry events ([Pattern 2.3](#pattern
 `claude_code.tool_decision` event carries `decision` (`accept` or `reject`) and `source`; count, per tool, the
 decisions a person made at a prompt.
 
-**No harness: CI only.** Branch protection holds the tiers: required status checks for low, one required
-non-author review for medium, CODEOWNERS plus two approvals for high-tier paths. Enable "Require approval of the
-most recent reviewable push" and "Dismiss stale pull request approvals when new commits are pushed".
+**No harness: CI only.** Branch protection holds the tiers: required status checks and one required non-author
+review for low and medium, CODEOWNERS plus two approvals for high-tier paths. Enable "Require approval of the most
+recent reviewable push" and "Dismiss stale pull request approvals when new commits are pushed" ([GitHub protected
+branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-pull-request-reviews-before-merging)).
 
 ### Anti-Pattern
 
@@ -705,9 +707,7 @@ most recent reviewable push" and "Dismiss stale pull request approvals when new 
 - The requester merging their own agent-written change.
 - A high-tier list that lives only in someone's head.
 
-The optional skill chain scales to these tiers ([Pattern 2.1](#pattern-21--skill-overlay-architecture)); the
-author of record answers for the change ([Pattern
-4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register)).
+The optional skill chain scales to these tiers ([Pattern 2.1](#pattern-21--skill-overlay-architecture)).
 
 **Evidence:** Partial — vendor telemetry and design, a platform rule, one company's practice and analyst
 corroboration. Anthropic's review design (AN-29) tiers by risk like this pattern but counts the requester as one

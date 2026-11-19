@@ -3,8 +3,9 @@ name: verify+
 description: "Invoke AFTER tdd+ implementation is complete. Wraps superpowers:verification-before-completion with evidence standards, spec drift check, and full-suite test run. This is the ONLY phase where full test suite runs are appropriate."
 argument-hint: "[plan file path]"
 user-invocable: true
-owner: franklywatson
-reviewed: 2026-11-19
+metadata:
+  owner: franklywatson
+  reviewed: 2026-11-19
 ---
 
 <!-- rig-generated -->
@@ -43,7 +44,7 @@ the same rules from this text. During this phase:
 1. Invoke `superpowers:verification-before-completion` with the plan context.
 
 2. Run the full test suite with the project's test command (listed in AGENTS.md; for this repository's
-   docs, the checks in `.github/workflows/docs.yml` and `npm run lint:md`). Show the output. Every test must pass. Zero failures. Zero errors.
+   docs, the checks in `.github/workflows/docs.yml` and `npm run lint:md`). Show the output and link the CI run (the required checks on this commit) for the same commit; pasted output alone is a claim ([Pattern 4.1](../../../docs/L4-standards-measurement.md)), and the reviewer reads the CI run. Every test must pass. Zero failures. Zero errors.
 
 3. For each acceptance criterion in the plan:
    - Show evidence that it is met (command output, file contents, test results)
@@ -64,6 +65,9 @@ the same rules from this text. During this phase:
 
    ### Test Suite
    [Full test output; all tests pass]
+
+   ### CI Run
+   [Link to the required checks on this commit]
 
    ### Acceptance Criteria
    - [ ] Criterion 1: [evidence]

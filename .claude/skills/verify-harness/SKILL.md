@@ -2,8 +2,9 @@
 name: verify-harness
 description: "Run after installing the rig hooks to verify the hooks and skills work in the live session."
 user-invocable: true
-owner: franklywatson
-reviewed: 2026-11-19
+metadata:
+  owner: franklywatson
+  reviewed: 2026-11-19
 ---
 
 <!-- rig-generated -->
@@ -30,8 +31,8 @@ Run each check and report PASS/FAIL with evidence.
 - [ ] **TR3**: Run `sed -i 's/old/new/g' file` — does the hook BLOCK it?
 - [ ] **TR4**: Run `git status` — does the hook advise rtk (if available)?
 - [ ] **TR5**: Run `Read` on a specific file — does it pass through?
-- [ ] **TR6**: Run `Grep` tool — does it advise jcodemunch (if indexed)?
-- [ ] **TR7**: Run `Glob` tool — does it advise jcodemunch (if indexed)?
+- [ ] **TR6**: Run `Grep` tool (Windows, or if the Grep tool is enabled) — does it advise jcodemunch (if indexed)?
+- [ ] **TR7**: Run `Glob` tool (Windows, or if the Glob tool is enabled) — does it advise jcodemunch (if indexed)?
 - [ ] **TR8**: Reference an external directory — does it trigger auto-index?
 
 ### Enforcement (PostToolUse Hook)
@@ -40,7 +41,7 @@ Run each check and report PASS/FAIL with evidence.
 - [ ] **E2**: Write a test with `jest.mock()` — does constitutional check fire?
 - [ ] **E3**: Run a test that fails — does zero-defect check fire?
 - [ ] **E4**: Edit source without test — does stale test warning appear?
-- [ ] **E5**: During tdd+ phase, run full suite — does scope redirect fire?
+- [ ] **E5**: During tdd+ phase, run full suite — does a warning appear after the run?
 - [ ] **E6**: During verify+ phase, run full suite — is it allowed?
 
 ### Skills

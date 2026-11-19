@@ -87,22 +87,22 @@ Use a containment boundary for limits that must hold.
 ## Intent Types
 
 A rule's resolution depends on the environment. The router returns the first of `rtk` (if RTK is installed),
-`jcodemunch` (if the repository is indexed), `general`, `fallback` and `_` that the rule defines. `fallback` is
-reached only by a rule with no `general` entry, so for the rules below it never applies.
+`jcodemunch` (if the repository is indexed), `general`, `fallback` and `_` that the rule defines. The search and
+discovery rules define no `general` entry, so they fall to `fallback` (allow) when neither RTK nor an index applies.
 
 | Intent | Matches | Resolution |
 |--------|---------|------------|
 | `file_read` | `cat <file>` (the classifier also labels `head` and `tail`, which have no router rule and pass through) | advise the Read tool |
-| `text_search` | `grep`, `grepr`, `grepx`, `rg` | `rtk`: advise `rtk grep`; `jcodemunch`: advise `jcodemunch search_text`; `general`: advise the Grep tool |
-| `file_discovery` | `find`, `fd` | `jcodemunch`: advise `get_file_tree` (`find` only); `general`: advise the Glob tool |
+| `text_search` | `grep`, `grepr`, `grepx`, `rg` | `rtk`: advise `rtk grep`; `jcodemunch`: advise `jcodemunch search_text`; otherwise allow |
+| `file_discovery` | `find`, `fd` | `jcodemunch`: advise `get_file_tree` (`find` only); otherwise allow |
 | `file_modify` | `sed -i`, `sed --in-place`, `awk` with a redirect | block in every environment |
 | `docker` | `docker`, `docker-compose` | allow |
 | `pass_through` | everything else | allow |
 
-The `general` advice names Claude Code's Grep and Glob tools. On macOS, Linux and WSL Claude Code leaves both out
-of the default tool set and runs `grep` and `find` through Bash (see the
-[tools reference](https://code.claude.com/docs/en/tools-reference)). Change the `tool` names in
-`routing.config.ts` to the tools your session has, or the advice points at a tool that does not exist.
+No rule advises Claude Code's Grep or Glob tools. On macOS, Linux and WSL Claude Code leaves both out of the default
+tool set and runs `grep` and `find` through Bash (see the
+[tools reference](https://code.claude.com/docs/en/tools-reference)). Add a `general` entry that names a tool only
+if your session has it.
 
 ### Docker is default-allow
 
@@ -130,7 +130,6 @@ Example rule for `grep`:
   resolutions: {
     rtk: { action: 'advise', tool: 'rtk grep', reason: 'structured output, filtered results' },
     jcodemunch: { action: 'advise', tool: 'jcodemunch search_text', reason: 'indexed search, faster' },
-    general: { action: 'advise', tool: 'Grep tool', reason: 'structured results, no artifacts' },
     fallback: { action: 'allow' },
   },
 }

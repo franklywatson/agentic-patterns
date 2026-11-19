@@ -50,7 +50,8 @@ A healthy test suite uses both: API tests for fast feedback on backend changes, 
 ```
 .
 ├── package.json              # Dependencies (Jest + Playwright)
-├── jest.config.cjs           # Jest config: 300s timeout, runInBand
+├── jest.config.cjs           # Stack-test Jest config: 300s timeout, runInBand
+├── jest.unit.config.cjs      # Unit-test Jest config for tests/unit
 ├── playwright.config.ts      # Playwright config: Chromium, sequential
 ├── docker-compose.test.yml   # Template stack: app, postgres, redis
 ├── app/                      # Express + PostgreSQL + Redis app under test
@@ -59,6 +60,8 @@ A healthy test suite uses both: API tests for fast feedback on backend changes, 
 ├── tests/
 │   ├── config/
 │   │   └── stack-utils.ts    # StackTestUtils class (API test helpers)
+│   ├── unit/
+│   │   └── stack-utils.test.ts  # Unit tests for StackTestUtils (child_process replaced, no Docker)
 │   └── stack/
 │       ├── 01-app-startup.stack.test.ts        # API: system comes online
 │       ├── 02-user-registration.stack.test.ts  # API: user signs up
@@ -75,6 +78,9 @@ Run all commands from `examples/stack-test/typescript/`.
 # Install dependencies and the Playwright browser
 npm install
 npx playwright install chromium
+
+# Unit tests for StackTestUtils: no Docker needed
+npm test
 
 # API-level stack tests (Jest). Each test file starts its own stack
 # (unique compose project and ports) and removes it afterwards.
@@ -102,7 +108,7 @@ npx playwright test --config=playwright.config.ts tests/stack/browser/01-app-sta
 npx playwright test --config=playwright.config.ts --ui
 ```
 
-`npm run test:all` runs `test:stack` and then `test:browser`; the browser step needs the stack from the commands above (default ports) to be running.
+`StackTestUtils.cleanup()` deletes the generated compose file and rethrows a failed `docker compose down`, so a leaked stack fails the run. `npm run test:all` runs `test`, `test:stack` and then `test:browser`; the browser step needs the stack from the commands above (default ports) to be running.
 
 ## Requirements
 

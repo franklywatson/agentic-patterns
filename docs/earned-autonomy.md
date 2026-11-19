@@ -7,20 +7,24 @@ reviewed: 2026-11-19
 
 This guide is for whoever decides how much an agent workflow may do without a person. A grant (A1 to A5) is what
 one workflow may do: a named person gives it, CI evidence supports it, and it falls automatically when the evidence
-stops. No grant may exceed the team's cap, the lowest of four positions on the curve C1 to C5. The layers L0 to L4
-make an agent's work verifiable; the curve and the cap say how far a team may let a workflow run without a person.
-Sources cited by ID are listed on [the sources page](references/sources.md).
+stops. No grant may exceed the repository's cap, the lowest of four positions on the curve C1 to C5. A new
+repository starts with a cap of C1, which allows only read-only A1 sessions; [Reaching C2](#reaching-c2) lists the
+four changes that allow an agent to edit files.
 
-Evidence is uneven. The grants A1 to A3 match published tiered-autonomy models (SG-26, SG-6). A4, A5, promotion,
-demotion, the census and the stop drill are this library's design, and every threshold here is illustrative: tune it
-from your own ledger.
+Evidence is uneven. The grants A1 to A3 match published tiered-autonomy models (SG-26, SG-6). A4, A5, the curve, the
+grid, the cap rule, promotion, demotion, the census and the stop drill are this library's design, drawn in part from
+the author's unpublished research synthesis; no published study validates them. Every threshold here is
+illustrative: tune it from your own ledger. Sources cited by ID are listed on [the sources page](references/sources.md).
 
 ## The Curve and the Cap
 
-The curve C1 to C5 places a team on each of seven dimensions separately. A grant says what one workflow may do; the
-curve says how far the team's own practice supports it. The curve, the grid and the cap rule are this library's
-design choices, drawn from the author's unpublished research synthesis ([sources page](references/sources.md)); no
-published study validates them.
+The curve C1 to C5 places a repository on each of seven dimensions separately. The census ([Pattern
+A.4](#pattern-a4--census)) reads one repository and writes its profile, and `autonomy check` compares that
+repository's register with that profile. A team that owns several repositories runs the census in each and compares
+the profiles; a workflow that acts in several repositories needs a grant within the cap of each.
+
+The top of the curve is the ability to raise a named workflow's grant on evidence, show the evidence, and lower it
+again. It is not "most agents" or "no humans".
 
 ### The Curve
 
@@ -34,73 +38,80 @@ published study validates them.
 
 ### The Grid
 
-Each row is one dimension, with the number of the synthesis chapter that covers it in brackets.
+Each row is one dimension. The [sources page](references/sources.md#chapters) names the synthesis chapter behind each.
 
 | Dimension | C1 | C2 | C3 | C4 | C5 |
 |-----------|----|----|----|----|----|
-| Platform (4.1) | Personal keys; agents cannot be listed | Agents and keys listed and mapped to teams | Agent identity from a template; one gateway; a check command CI runs | Isolation by default; delegated actions audited; loop alerts | Contribution path for tools and skills; vendor change touches configuration only |
-| Shared context (4.2) | Knowledge in heads and chats | Instruction files committed, often long and untested | Short, owned, tested files; hard rules in hooks | Governed connectors; permissions enforced at query time | Layered, owned, expiring; re-baselined when models change |
-| Team operating model (4.3) | Private use; no stated stance | Written stance; one human review per PR | Conventions as checks; automated plus human review | Review depth by risk; sandboxed loops; agent first-pass on incidents | Unattended work routine; process retired when its gap closes |
-| Security and governance (4.4) | Unvetted tools; broad access | Policy written; nearly every prompt approved | Sandboxed, scoped, vetted; agent PRs pass the same gates | Autonomy tiers; risky combinations gated; deterministic policy | Controls tested against adaptive attacks; tiers change with evidence |
-| Production ownership (4.5) | Nobody can list or stop agents | Inventory with individual owners | Sponsor per agent; expiring access; human author of record | Changes eval-gated and versioned; stop and restore authority assigned | Automatic handover and retirement; shared tooling owned as a product |
-| Individual and team skill (4.6) | Habit; nobody can say how output is checked | Engineers state what they hand over | Output checked against specs and tests; debugging practiced; reviewed skills shared | Work broken down for unattended agents; supervision by outcome and exception; failure drills | Pruning, protected practice, autonomy raised only with feedback loops |
-| Measuring value (4.7) | Counting use | Measuring speed | Flow and stability against a baseline | Task banks, leading indicators, maintained configuration | Baseline, target, review date and stop rule per investment |
+| Platform | Personal keys; agents cannot be listed | Agents and keys listed and mapped to teams | Agent identity from a template; one gateway; a check command CI runs | Isolation by default; delegated actions audited; loop alerts | Contribution path for tools and skills; vendor change touches configuration only |
+| Shared context | Knowledge in heads and chats | Instruction files committed, often long and untested | Short, owned, tested files; hard rules in hooks | Governed connectors; permissions enforced at query time | Layered, owned, expiring; re-baselined when models change |
+| Team operating model | Private use; no stated stance | Written stance; one human review per PR | Conventions as checks; automated plus human review | Review depth by risk; sandboxed loops; agent first-pass on incidents | Unattended work routine; process retired when its gap closes |
+| Security and governance | Unvetted tools; broad access | Policy written; nearly every prompt approved | Sandboxed, scoped, vetted; agent PRs pass the same gates | Autonomy tiers; risky combinations gated; deterministic policy | Controls tested against adaptive attacks; tiers change with evidence |
+| Production ownership | Nobody can list or stop agents | Inventory with individual owners | Sponsor per agent; expiring access; human author of record | Changes eval-gated and versioned; stop and restore authority assigned | Automatic handover and retirement; shared tooling owned as a product |
+| Individual and team skill | Habit; nobody can say how output is checked | Engineers state what they hand over | Output checked against specs and tests; debugging practiced; reviewed skills shared | Work broken down for unattended agents; supervision by outcome and exception; failure drills | Pruning, protected practice, autonomy raised only with feedback loops |
+| Measuring value | Counting use | Measuring speed | Flow and stability against a baseline | Task banks, leading indicators, maintained configuration | Baseline, target, review date and stop rule per investment |
 
 ### The Cap Rule
 
 Four dimensions cap unattended work: platform, security and governance, production ownership and measuring value.
-The cap is the lowest position among those four. No grant may exceed it. A team at C4 on operating model and C2 on
-production ownership has a cap of C2.
+The cap is the lowest position among those four, and no grant may exceed it: a repository at C4 on operating model and
+C2 on production ownership has a cap of C2. The cap has no exception field. A grant above the cap is a configuration
+error, and `autonomy check` fails CI ([Pattern A.3](#pattern-a3--promotion-demotion-and-the-cap-gate)).
 
-The cap has no exception field. A grant above the cap is a configuration error, and CI fails ([Pattern
-A.3](#pattern-a3--promotion-demotion-and-the-cap-gate)).
+The cap comes from the repository's own census, not from this library or from the patterns a team has adopted. A
+dimension whose probes find no evidence is at C1. Only individual skill, which no file shows, can be `unknown`; it
+counts as C2 and does not cap.
 
-The cap comes from the team's own census ([Pattern A.4](#pattern-a4--census)), not from this library or from the
-patterns a team has adopted. In the example census:
+### Reaching C2
 
-- A dimension whose probes find no evidence is at C1. Operating model has file probes like the others.
-- Only individual skill, which no file shows, can be `unknown`, counted as C2. Skill does not cap.
-- Measuring value reaches C2 with a ledger or a baseline file, and C3 only with a committed baseline
-  (`.autonomy/baseline.json`) captured within 90 days. This library does not describe how to build a baseline, so a
-  team that adopts only this library has a practical ceiling of C2, and grants up to A2, until a baseline exists.
+A new repository is at C1 on the four capping dimensions, so its cap is C1 and only A1 is allowed. In the example hook
+an A1 session may use read-only tools only, so an agent session that edits files needs A2, and A2 needs a cap of C2.
+Each capping dimension reaches C2 when one probe of the example census passes:
 
-### The Defensible Top
+| Dimension | Probe | Passes when | What it takes |
+|-----------|-------|-------------|---------------|
+| Platform | `agent-config` | `.claude/`, `AGENTS.md` or `.harness.yaml` exists | One committed file or directory |
+| Security and governance | `constitutional-rules` | "constitutional" appears in CLAUDE.md, in an AGENTS.md that CLAUDE.md imports with `@AGENTS.md`, or in AGENTS.md when there is no CLAUDE.md | A rules section whose rules each name an enforcement point ([Pattern 2.4](L2-behavioral-guardrails.md#pattern-24--constitutional-rules)) |
+| Production ownership | `register-owners` | `.autonomy.yaml` lists at least one workflow and each has an owner | A register entry per workflow, `interactive` included, with an owner who accepts the role ([Pattern A.1](#pattern-a1--autonomy-register)) |
+| Measuring value | `outcome-tracking` | `.autonomy/baseline.json` or a file in `.autonomy/ledger/` exists | A first baseline of the repository's flow and stability numbers, such as cycle time and revert rate ([Pattern 4.4](L4-standards-measurement.md#pattern-44--agentic-development-metrics)) |
 
-This library takes the top of the curve to be the ability to raise autonomy for a named workflow when evidence
-supports it, show that evidence, and lower it again. It is not "most agents" or "no humans". The closest published
-example of unattended work is Spotify's automated maintenance: more than 2.5 million maintenance pull requests, the
-vast majority merged with no human in the loop; the article does not say whether its coding agent's pull requests
-merge the same way (MC-21).
+Commit the four together, then run `autonomy census` and `autonomy check`. A register that does not list
+`interactive` grants it A2 (`defaults.interactive_level`), so `check` fails until the cap reaches C2. C3 on measuring
+value needs a baseline with non-empty `flow` and `stability` objects captured within 90 days; until one exists, the
+cap stays at C2 or below and no grant exceeds A2. What a passed probe proves is in [Pattern A.4](#pattern-a4--census).
 
 ## The Grants
 
 A grant belongs to one workflow, not to an agent or a team. One agent may run several workflows at different grants.
-An interactive developer session is a workflow too. In the example hook an A1 session may use read-only tools only, so
-a session that edits the working tree holds A2 or above.
+An interactive developer session is a workflow too.
 
 | Grant | Name | What the workflow may do | Needs a cap of at least |
 |-------|------|--------------------------|-------------------------|
-| A1 | Assisted | Suggest. A human applies the change. | none |
-| A2 | Reviewed | Edit and open pull requests. A human reads every change. | C2 |
-| A3 | Gated | Changes pass required checks before a human sees them. A human merges. Every change has a named owner. | C3 |
-| A4 | Unattended, reversible | Acts on an event, schedule or backlog within its permitted actions. Has an owner, limits, an audit record and a tested stop. | C4 |
-| A5 | Portfolio-managed | A4 plus a baseline, a target, a review date and a stop rule. The grant moves on evidence. The workflow can be retired. | C5 |
+| A1 | Assisted | Suggest, with read-only tools. A human applies the change. | none |
+| A2 | Reviewed | Edit files and commit in a working tree. A human reads every change, pushes the branch and opens the pull request. | C2 |
+| A3 | Gated | Pushes branches and opens pull requests. Changes pass required checks before a human sees them. A human merges. Every change has a named owner. | C3 |
+| A4 | Unattended, reversible | Acts on an event, schedule or backlog within its permitted actions, and may merge with no human. Has an owner, limits, an audit record and a tested stop. Unattended repair covers R0 and R1 changes at B0 ([Pattern 1.8](L1-patterns/1.8-reversibility-blast-radius.md)). | C4 |
+| A5 | Portfolio-managed | A4 plus a baseline, a target, a review date and a stop rule. The grant moves on evidence. The workflow can be retired. Unattended repair also covers R2 changes in named classes. | C5 |
 
-A4 applies only where verification is mechanical and the action is reversible. A5 grants no more power than A4: it is
-A4 managed as an investment. The register stores a grant as a number (`granted_level: 4` is A4), and the census
-profile stores a curve position the same way (`cap: 2` is C2).
+A4 applies only where verification is mechanical and the action is reversible. Apart from R2 repair, A5 grants no
+more power than A4: it is A4 managed as an investment. No grant repairs R3 or R4 changes unattended. A merge with no
+human, including the low tier of [Pattern 2.13](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review), needs
+A4 or above. The register stores a grant as a number (`granted_level: 4` is A4).
 
 ### Why Stack Tests Earn Autonomy
 
-Stack tests are what earn autonomy. A4 requires that verification is mechanical: a machine, not the agent and not a tired reviewer, decides whether the change worked. That condition holds only where the workflow's user journey has a stack test ([Pattern 1.1](L1-patterns/1.1-stack-tests.md)) with full-loop assertions ([Pattern 1.2](L1-patterns/1.2-full-loop-assertions.md)) that cannot pass silently ([Pattern 1.6](L1-patterns/1.6-test-integrity.md)). Where the journey has no stack test, verification is partial or a matter of judgment, and the workflow stays at A3 or below however long it has run cleanly.
-
-This is the library's reading of vendor guidance that an agent with a check to run does better work (AN-3, OM-9),
-and of one company's unattended maintenance, which runs where checks are mechanical (MC-21). L1 is the layer that
-turns "the agent says it worked" into a signal a machine can trust.
+In this library, stack tests are what earn autonomy. A4 requires mechanical verification: a machine, not the agent and
+not a tired reviewer, decides whether the change worked. That holds only where the workflow's user journey has a stack
+test ([Pattern 1.1](L1-patterns/1.1-stack-tests.md)) with full-loop assertions ([Pattern
+1.2](L1-patterns/1.2-full-loop-assertions.md)) that cannot pass silently ([Pattern
+1.6](L1-patterns/1.6-test-integrity.md)). Without one, verification is partial or a matter of judgment, and the
+workflow stays at A3 or below however long it has run cleanly. This reading rests on vendor guidance that an agent
+with a check to run does better work (AN-3, OM-9) and on one company's unattended maintenance, which runs where checks
+are mechanical (MC-21).
 
 ## Prerequisites by Grant
 
-A grant needs its row and every row above it.
+A grant needs its row, every row above it and the cap in [The Grants](#the-grants). This table is the readiness
+list for each grant; other docs link here and do not repeat it.
 
 | Grant | Layer patterns | Containment and ownership patterns | Patterns in this guide |
 |-------|----------------|------------------------------------|------------------------|
@@ -119,7 +130,7 @@ Autonomy is granted implicitly. Whoever configures a scheduled agent or turns on
 
 ### Solution
 
-One committed, schema-validated file per repository lists every agent workflow and its grant. The file is `.autonomy.yaml`. It is a governance artefact: CODEOWNERS protects it and no agent may write it (Pattern A.6).
+One committed, schema-validated file per repository lists every agent workflow and its grant. The file is `.autonomy.yaml`. It is a governance artifact: CODEOWNERS protects it and no agent may write it (Pattern A.6).
 
 Each entry records the owner, an accountable sponsor, the grant, a non-personal identity, permitted and forbidden
 actions, a risk class, limits, the stop mechanism with the date it was last tested, and a review date. A5 adds a
@@ -160,11 +171,8 @@ workflows:
     review_date: 2027-02-01
 ```
 
-The schema and its rules are in [examples/autonomy/README.md](../examples/autonomy/README.md#the-register): A4 and
-above need a stop command, a stop test date, a review date, limits, a non-person identity, and reversible,
-mechanically verified work; A5 adds a stop rule, a baseline and a target. `autonomy check` reads neither CODEOWNERS
-nor a membership list. Whether each owner appears in CODEOWNERS is a census probe (`owners-in-codeowners`), and no
-tool checks that a sponsor is current.
+The schema rules for each grant are in [the example README](../examples/autonomy/README.md#the-register). No tool
+checks that a sponsor is current; whether each owner appears in CODEOWNERS is a census probe, not a check.
 
 Keep the register separate from the harness configuration. The harness file is tuned by developers per rule. The register has different owners, and mixing the two lets a routine harness edit change a grant.
 
@@ -172,12 +180,10 @@ Keep the register separate from the harness configuration. The harness file is t
 
 - A register that lists agents instead of workflows. The same agent runs a low-risk and a high-risk job; one entry hides the difference.
 - A register an agent can edit. It can then promote itself.
-- Interactive sessions left off the list. They are the most common workflow and the one with the least review.
+- Interactive sessions left off the list. They are workflows too, and the one most developers run.
 
 ### Cross-References
 
-- [Pattern 2.4 — Constitutional Rules](L2-behavioral-guardrails.md#pattern-24--constitutional-rules): a constitutional
-  rule has no escape hatch, so the register has no exception field.
 - [Pattern 4.7](L4-standards-measurement.md#pattern-47--author-of-record-and-agent-register) names the human author of
   record for agent commits.
 
@@ -204,7 +210,7 @@ An append-only ledger per workflow, written only by CI and by scheduled jobs tha
  "reverted_at":null,"rework_commits_14d":0,"escaped_defect":false}
 ```
 
-The ledger lives at `.autonomy/ledger/<workflow>.jsonl` on a bot-only branch or in an artefact store, which keeps the main branch history clean.
+The ledger lives at `.autonomy/ledger/<workflow>.jsonl` on a bot-only branch or in an artifact store, which keeps the main branch history clean.
 
 Three fields arrive late. A nightly job fills `reverted_at` (it scans for reverts), `rework_commits_14d` (follow-up commits touching the same lines) and `escaped_defect` (issues linked to the merge commit). Revert count alone is easy to game: do not revert. Rework and escaped defects close that gap.
 
@@ -213,8 +219,8 @@ harness configuration. A change to it is a release of the workflow. The workflow
 bank](L4-standards-measurement.md#pattern-46--context-eval) passes on the new hash. The `context-eval` check in the
 record is the task-bank score that Pattern 4.6 defines: the share of tasks that pass at pass^k.
 
-The example `autonomy ledger` command reads a ledger and prints the evidence report that a promotion pull request
-attaches (Pattern A.3). It reads the fields its README lists and ignores the rest; it ships no nightly job.
+The example `autonomy ledger` command prints the evidence report a promotion pull request attaches (Pattern A.3); it
+ships no nightly job.
 
 ### Anti-Pattern
 
@@ -240,20 +246,15 @@ stays granted because nobody asked.
 ### Solution
 
 Promotion is slow and human. Demotion is fast and automatic. A scheduled review decides whether each workflow keeps
-its grant. A required CI check, `autonomy check`, ties every grant to the cap.
-
-The grant a workflow actually holds at runtime is the lowest of five values:
+its grant. The grant a workflow holds at runtime is the lowest of five values:
 
 ```text
-effective = min(
-  granted_level,
-  cap(profile),          # lowest of the four capping dimensions (Pattern A.4)
-  freshness_gate,        # A2 if the stop test is overdue, the review date or access has passed,
-                         # or the census profile is stale or missing
-  harness_gate,          # A3 until the task bank passes on the current harness_hash
-  demotion_override      # written by the demotion job or a failed stop drill
-)
+effective = min(granted_level, cap(profile), freshness_gate, harness_gate, demotion_override)
 ```
+
+The freshness gate is A2 when the stop test is overdue, the review date or access has passed, or the census profile is
+stale or missing. The harness gate is A3 until the task bank passes on the current `harness_hash`. The demotion
+override comes from the demotion job or a failed stop drill.
 
 ### In Practice
 
@@ -261,7 +262,8 @@ effective = min(
 
 - Only through a pull request that changes `granted_level` in the register.
 - CI attaches an evidence report computed from the ledger over the evidence window.
-- The owner team and someone other than the author approve. An agent identity never approves.
+- The owner team and someone other than the author approve after reading the evidence report and the census profile
+  (Pattern A.4). An agent identity never approves.
 - No promotion within 30 days of a demotion.
 - Thresholds use the Wilson 95% confidence bound, not the raw rate, so five lucky runs cannot promote.
 
@@ -290,17 +292,14 @@ review. A production demotion job also opens a pull request that reconciles the 
 
 **Review.** At each `review_date` a scheduled job opens one issue per workflow with the ledger trend, cost per merged
 outcome against the baseline, the demotion history and the stop rule evaluated. The owner records one decision: keep,
-promote, demote or retire. Retirement deletes the register entry and revokes the identity; version control is the
-archive ([Pattern 0.8](L0-foundation.md#pattern-08--aggressive-cleanup)). The review also prunes the skills and rules
-the workflow used ([Pattern 2.8](L2-behavioral-guardrails.md#pattern-28--compound-engineering)). A passed
-`review_date` lowers the freshness gate to A2. The example ships no review job; the census counts
-`.autonomy/reviews.jsonl` and `.autonomy/retirements.jsonl` as the record.
+promote, demote or retire. Retirement deletes the register entry and revokes the identity ([Pattern
+0.8](L0-foundation.md#pattern-08--aggressive-cleanup)); the review also prunes the skills and rules the workflow used
+([Pattern 2.8](L2-behavioral-guardrails.md#pattern-28--compound-engineering)). The example ships no review job; the
+census counts `.autonomy/reviews.jsonl` and `.autonomy/retirements.jsonl` as the record.
 
 **The cap gate.** `autonomy check` is a required status check. It fails when a grant exceeds the cap, the register
-fails its schema, the census profile is stale or missing, or an agent identity changed a governance file ([Pattern
-A.6](#pattern-a6--enforcement-through-hooks)). It needs `--commits`, `--git-range` or `--no-commits`, so a run cannot
-skip the commit scan by omission. The failure codes are in
-[examples/autonomy/README.md](../examples/autonomy/README.md#effective-grant).
+fails its schema, the census profile is stale or missing, or an agent identity changed a governance file (Pattern
+A.6). The failure codes are in [the example README](../examples/autonomy/README.md#effective-grant).
 
 ### Anti-Pattern
 
@@ -323,21 +322,22 @@ skip the commit scan by omission. The failure codes are in
 
 ### Problem
 
-Placing a team on the curve by questionnaire is weak: in one 2025 trial, self-reported speed ran opposite to measured
+Placing a repository on the curve by questionnaire is weak: in one 2025 trial, self-reported speed ran opposite to measured
 speed (IS-6), and most committed AI configuration files are never changed after they are added (MC-11), so a file's
-presence says little about practice. A repository can compute part of its own profile from its artefacts. It cannot
+presence says little about practice. A repository can compute part of its own profile from its artifacts. It cannot
 see everything.
 
 ### Solution
 
-A census command probes the repository and writes `.autonomy/profile.json`. A dimension's position is the highest
-whose probes all pass, with each lower position passing first; a dimension with no evidence is at C1. Some probes
-check practice as well as presence: the instruction file and decision records changed within 90 days, a check command
-that CI runs, a baseline captured within 90 days.
+A census command reads one repository's files and writes `.autonomy/profile.json`. A dimension's position is the
+highest whose probes all pass, with each lower position passing first; a dimension with no evidence is at C1. The
+census proves presence and recency, not quality: a probe checks that a file exists, has the expected keys, changed
+within 90 days or is named in a CI workflow, and a stub file can pass it. The profile is evidence a human reviews: the
+reviewer of a promotion pull request reads the files behind each passed probe.
 
-Individual skill has no file probe. The census writes a worksheet (a work sample and a perception survey) and records
-skill as `unknown`, counted as C2, until a dated result exists; a result older than 90 days reverts to `unknown`. The
-worksheet also lists human checks for other dimensions, such as a merge sample for operating model.
+Individual skill has no file probe. The census writes a worksheet (a work sample and a perception survey, plus human
+checks for other dimensions such as a merge sample) and records skill as `unknown` until a dated result exists; a
+result older than 90 days reverts to `unknown`.
 
 ### In Practice
 
@@ -348,36 +348,18 @@ The C3 probes for the capping dimensions in the example census:
 | Platform | A check command (`npm test`, `pytest`, `make check` and similar) is named in CLAUDE.md and in a CI workflow. CI uses no `*API_KEY` secret, or grants `id-token: write` (OIDC). The sandbox is enabled and `allowUnsandboxedCommands` is false in `.claude/settings.json`. |
 | Security and governance | The sandbox is locked as above. Permission deny rules exist. Skills, plugins and MCP servers are pinned by SHA-256 in `.claude/pins.json`. A committed ruleset requires an approving review. Secret scanning runs in CI. |
 | Production ownership | Every register owner appears in CODEOWNERS. Every workflow has a sponsor, and every A4 workflow an access expiry. CLAUDE.md names an author-of-record or `Co-Authored-By` trailer, or a `.gitmessage` exists. |
-| Measuring value | `.autonomy/baseline.json` holds flow and stability metrics captured within 90 days. |
+| Measuring value | `.autonomy/baseline.json` holds non-empty `flow` and `stability` objects captured within 90 days. |
 
-Limitation: `sandbox-locked` reads `.claude/settings.json`, which an agent can edit. `autonomy check` fails an agent
-commit that changes it and the example hook denies a hooked session's writes ([Pattern
-A.6](#pattern-a6--enforcement-through-hooks)), but the probe cannot see whether developer machines enforce the same
-keys. Hold them in managed settings too ([Pattern 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
-
-The example's adopter fixture (`fixtures/expected/census-adopter.json`), trimmed to the capping dimensions and skill:
-
-```json
-{
-  "dimensions": {
-    "platform":   {"level": 3, "missing_for_next": ["egress-allowlist", "audit-log"]},
-    "governance": {"level": 3, "missing_for_next": ["audit-names-agent"]},
-    "ownership":  {"level": 3, "missing_for_next": ["harness-eval-in-ci", "stop-authority"]},
-    "skill":      {"level": "unknown", "counted_as": 2, "missing_for_next": ["worksheet:skill"]},
-    "measuring":  {"level": 3, "missing_for_next": ["task-banks"]}
-  },
-  "cap": 3,
-  "workflows_over_cap": ["dep-bump"]
-}
-```
-
-The cap is C3 because every capping dimension is at C3. `dep-bump` holds A4, above the cap, so `autonomy check`
-fails. Each `missing_for_next` list is the work that raises that dimension.
+Limitation: `sandbox-locked` reads only the project `.claude/settings.json`, which an agent can edit. `autonomy
+check` fails an agent commit that changes it and the example hook denies a hooked session's writes (Pattern A.6), but
+the probe cannot see whether developer machines enforce the same keys. [Pattern
+2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) keeps the enforcing copy in managed or user
+settings, which the census cannot read; commit the same keys to the project file as the declaration the census reads.
 
 ### Anti-Pattern
 
-- Counting a file's existence as practice. An untouched instruction file proves nothing.
-- Hand-editing the profile. It is a measurement.
+- Reading a passed probe as practice. A stub file or an untouched instruction file passes and proves nothing.
+- Hand-editing the profile. The census writes it; a reviewer reads the files behind it.
 - Treating a computed profile as a full assessment. Culture, skill and judgment stay outside it.
 
 ### Cross-References
@@ -385,7 +367,7 @@ fails. Each `missing_for_next` list is the work that raises that dimension.
 - [Pattern 0.9 — AI-as-New-Starter Standard](L0-foundation.md#pattern-09--ai-as-new-starter-standard): a human audit complements the census.
 - [examples/autonomy/README.md](../examples/autonomy/README.md#census) lists every probe and the files it reads.
 
-**Evidence:** Partial — preferring artefacts to self-report is supported by one trial in which self-reported speed ran opposite to measured speed and by a study of committed AI configuration; the probe set and the cap rule are this library's design (IS-6, MC-11)
+**Evidence:** Partial — preferring artifacts to self-report is supported by one trial in which self-reported speed ran opposite to measured speed and by a study of committed AI configuration; the probe set and the cap rule are this library's design (IS-6, MC-11)
 
 ## Pattern A.5 — Tested Stop
 
@@ -404,12 +386,11 @@ also checks that the workflow's tokens are revoked and that the workflow can be 
 
 `autonomy drill` starts a canary (a process that writes a heartbeat file), runs the workflow's `stop.command`, and
 passes when the canary exits and the heartbeat stops within the bound (default 2 seconds). On success it writes
-today's date to `stop.last_tested`; on failure it writes a demotion override of A3. A person does not set the date.
-The example does not check token revocation or restore. Add both to your own drill: a stopped agent with a live token
-is still a risk.
+today's date to `stop.last_tested`; on failure it writes a demotion override of A3. The example does not check token
+revocation or restore; add both to your own drill, because a stopped agent with a live token is still a risk.
 
-The stop needs an authority: `stop.authority` in the register names who may invoke it. The authority must include
-someone reachable outside working hours.
+`stop.authority` in the register names who may invoke the stop; it must include someone reachable outside working
+hours.
 
 ### Anti-Pattern
 
@@ -432,36 +413,32 @@ A grant in a file is a statement. If no enforcement point enforces it, the agent
 
 ### Solution
 
-Bind the register to the harness. In the example, two command hooks and one eval suite make the effective grant real.
+Bind the register to the harness. In the example, two command hooks enforce the effective grant inside the harness
+and one eval suite tests them. Both handlers set `"onFailure": "block"` (Claude Code v2.1.295 or later, [hooks
+reference](https://code.claude.com/docs/en/hooks#block-the-action-when-a-hook-fails)), so a PreToolUse hook that
+cannot start, crashes or times out blocks the call instead of letting it through.
 
 - **SessionStart** resolves the workflow (`AUTONOMY_WORKFLOW`, default `interactive`), computes its effective grant
   from the register, the profile and the state file, and adds it to the session context with any reduction's reason.
 - **PreToolUse** denies a tool call outside `permitted_actions`, inside `forbidden_actions`, or writing a governance
-  file. The grant sets the limits: A1 allows read-only tools only; A2 and below block `git push`; A3 and below block
-  merging; A4 merges only with `auto_merge` and within the diff-size and path limits. Force pushes and pushes to
-  `main` are blocked at every grant. A session that has read untrusted input and holds sensitive data cannot take an
-  external action without a named gate. Each decision is appended to `.autonomy/audit/<session>.jsonl` with the
-  workflow id (`agent`), the requesting human (`human`, from `AUTONOMY_SPONSOR`), the tool, the decision and the deny
-  code. The record has no outcome; add a PostToolUse hook if the audit needs one.
+  file. A1 allows read-only tools only; A2 and below block `git push`; A3 and below block merging; A4 merges only with
+  `auto_merge` and within its limits. Each decision is appended to `.autonomy/audit/<session>.jsonl` with the workflow
+  id and the requesting human; the record has no outcome, so add a PostToolUse hook if the audit needs one.
 - **The eval suite** ([Pattern 4.6](L4-standards-measurement.md#pattern-46--context-eval)) replays 17 scenarios
   through the hook and scores a scenario only when all five runs match, so a refactor cannot widen grants silently.
 
 ### In Practice
 
-**Two tiers of governance files.** Tier 1 files define what an agent may do or could remove the hook: `.autonomy*`,
-CODEOWNERS, `.claude/settings*.json`, `.claude/hooks/*` and `.harness.yaml`. `autonomy check` fails any agent commit
-that changes one. Tier 2 is `.github/workflows/*`: an agent commit may change it when a later non-agent commit carries
-a `Governance-Approved: <sha>` line. The hook denies a hooked session's writes to both tiers, so the acknowledgement
-covers dependency bots and unhooked sessions. It is a trailer-based record, not a cryptographic control; the boundary
-that holds is CODEOWNERS with required non-author review. Matching rules:
-[examples/autonomy/README.md](../examples/autonomy/README.md#governance-files).
+**Two tiers of governance files.** An agent commit never changes tier 1 (the register, CODEOWNERS, Claude Code
+settings and hooks) and changes tier 2 (CI workflows) only with a later non-agent acknowledgement ([matching
+rules](../examples/autonomy/README.md#governance-files)). The boundary that holds is CODEOWNERS with required
+non-author review.
 
 A command hook is deterministic policy inside the harness. It is not a security boundary: a workflow that can run arbitrary code can route around it. Hooks hold the grant only together with the sandbox and credential scope of [Pattern 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) and the agent identity of [Pattern 2.11](L2-behavioral-guardrails.md#pattern-211--agent-identity-and-delegation).
 
 ### Anti-Pattern
 
 - Hooks that warn instead of block for grant limits.
-- Putting the register inside the harness configuration. A routine tuning change then edits a grant.
 - Relying on hooks alone where credentials can do the same work outside the harness.
 
 ### Cross-References
@@ -474,26 +451,21 @@ A command hook is deterministic policy inside the harness. It is not a security 
 
 ## Applied to This Repository
 
-This repository's register is [.autonomy.yaml](../.autonomy.yaml). It lists Claude Code sub-agents that edit docs
-and examples in git worktrees and push branches for pull requests, plus the default interactive workflow, both
-granted A1. The owner and sponsor are the maintainer, and the identity is the maintainer's login because no bot
-identity exists. Editing files and pushing branches exceed A1, which is all the cap of C1 allows. The hook is not
-bound here (`.claude/` holds skills only), so nothing at run time holds the sub-agents to A1: the gap is recorded, not
-enforced.
+This repository's register is [.autonomy.yaml](../.autonomy.yaml): Claude Code sub-agents that edit docs and examples
+in git worktrees and push branches, plus the interactive workflow, both granted A1, with the maintainer as owner,
+sponsor and identity because no bot identity exists. The `autonomy-check` job in
+[.github/workflows/docs.yml](../.github/workflows/docs.yml) runs `autonomy census` and then `autonomy check`, with
+`--git-range` over a pull request's commits and `--no-commits` on a push to main; its log prints the cap and each
+dimension's position.
 
-The `autonomy-check` job in [.github/workflows/docs.yml](../.github/workflows/docs.yml) runs `autonomy census` and
-then `autonomy check`, with `--git-range` over a pull request's commits and `--no-commits` on a push to main.
-
-The census profile: platform, shared context, governance and ownership at C2; operating model and measuring value at
-C1; skill unknown. Measuring value sets the cap of C1, because no ledger or baseline exists (`outcome-tracking`).
-Operating model misses `ci-tests-lint` (no CI workflow mentions `test`) but does not cap. Governance reaches C2
-because CLAUDE.md imports AGENTS.md, which holds the constitutional rules.
+On the commit this doc was reviewed at, measuring value has no ledger or baseline (`outcome-tracking`), so the cap is
+C1. Both workflows edit files, which exceeds A1, and the hook is not bound here (`.claude/` holds skills only): the
+violation is recorded, not enforced. The fix is [Reaching C2](#reaching-c2).
 
 ## Related Documents
 
-- [L4: Standards and Measurement](L4-standards-measurement.md): evidence, context eval, metrics.
 - [Threat Model](cross-cutting/threat-model.md): the entry points and capabilities a grant exposes.
-- [Adoption Guide](cross-cutting/adoption-guide.md): when a team is ready for A3 and A4.
+- [Adoption Guide](cross-cutting/adoption-guide.md): assessment and adoption paths.
 - [Glossary](cross-cutting/glossary.md): grant, register, ledger, census, cap, tested stop.
 - Runnable reference: [examples/autonomy/README.md](../examples/autonomy/README.md), with CLIs in
   [TypeScript](../examples/autonomy/typescript/) and [Python](../examples/autonomy/python/) that read one [register

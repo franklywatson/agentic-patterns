@@ -1,9 +1,28 @@
 import { exceeds } from './classify';
 import { globMatch, isUnsafePath, normalizePath } from './diff';
-import type { Decision, EvidenceBundle, GatePolicy, GateResult, Grant } from './types';
+import type { Decision, EvidenceBundle, GatePolicy, GateResult, Grant, Merge } from './types';
 
 const GRANT_ORDER: Grant[] = ['A1', 'A2', 'A3', 'A4', 'A5'];
 const SEVERITY: Record<Decision, number> = { auto: 0, human: 1, block: 2 };
+/** Pattern 1.11: nothing above R2, and nothing beyond B0, merges unattended at any grant. The policy cannot raise this. */
+const UNATTENDED_LIMIT = { reversibility: 'R2', blast: 'B0' } as const;
+
+/**
+ * Who merges an `auto` change (Pattern 1.11). A person, unless the grant is A4 or higher and
+ * the class is within that grant's unattended ceiling; an R2 change also needs every changed
+ * file on a named path.
+ */
+export function mergeFor(bundle: EvidenceBundle, policy: GatePolicy): Merge {
+  const ceiling = policy.unattendedCeiling[bundle.grant];
+  const { classification } = bundle;
+  if (!ceiling || exceeds(classification, ceiling) || exceeds(classification, UNATTENDED_LIMIT)) return 'person';
+  if (classification.reversibility === 'R2') {
+    const named = bundle.diff.length > 0 && bundle.diff.every((file) =>
+      !isUnsafePath(file.path) && policy.unattendedR2Paths.some((glob) => globMatch(glob, normalizePath(file.path))));
+    if (!named) return 'person';
+  }
+  return 'unattended';
+}
 
 /**
  * The production gate: a pure function of the evidence bundle and the policy. It returns
@@ -51,5 +70,6 @@ export function gate(bundle: EvidenceBundle, policy: GatePolicy): GateResult {
     'auto',
   );
   const reasons = findings.filter((f) => f.decision === decision).map((f) => f.reason);
-  return { decision, reasons: decision === 'auto' ? ['all mechanical checks passed within the ceiling'] : reasons };
+  if (decision !== 'auto') return { decision, reasons, merge: null };
+  return { decision, reasons: ['all mechanical checks passed within the ceiling'], merge: mergeFor(bundle, policy) };
 }

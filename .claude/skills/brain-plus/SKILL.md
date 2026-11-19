@@ -3,8 +3,9 @@ name: brain+
 description: "Invoke BEFORE any design or feature work. Wraps superpowers:brainstorming with codebase context harvesting, stack-first design considerations, and constitutional rule awareness. Asks questions one at a time to refine the design."
 argument-hint: "[feature description]"
 user-invocable: true
-owner: franklywatson
-reviewed: 2026-11-19
+metadata:
+  owner: franklywatson
+  reviewed: 2026-11-19
 ---
 
 <!-- rig-generated -->

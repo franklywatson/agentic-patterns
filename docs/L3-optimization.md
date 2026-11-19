@@ -77,13 +77,9 @@ search_symbols("process", kind="function")
 ]
 ```
 
-String matching is a nudge, not a control. The classifier's anchored pattern, `/^\s*sed\s+(-i|--in-place)\b/`
-(`examples/guardrails/src/core/intent.ts`), misses `/usr/bin/sed -i` and `sed -E -i`. The example router's
-unanchored rule, `/\bsed\s+(-i|--in-place)\b/` (`examples/guardrails/src/config/routing.config.ts`), catches
-the absolute-path form but still misses `sed -E -i`, and it blocks harmless text such as `echo sed -i`.
-Neither catches `perl -pi`, `python -c` file writes or `$(...)` substitution. The `docker` rule allows every
-Docker command, and Docker socket access is root-equivalent. Use a sandbox or credential scope for limits that
-must hold ([Pattern 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
+String matching is a nudge, not a control. The classifier matches strings and misses other spellings
+(`/usr/bin/sed -i`, `sed -E -i`, `perl -pi`) and blocks harmless text such as `echo sed -i`. Limits that must hold go in
+a sandbox or credential scope ([Pattern 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
 
 The [guardrails example](../examples/guardrails/) implements the classifier, the tool detection
 (`src/core/environment.ts`, 30-minute cache) and a data-driven routing table in TypeScript, with tests. A fuller
@@ -91,7 +87,7 @@ implementation is in the [rig](https://github.com/franklywatson/claude-rig) repo
 repository's author: [`src/router`](https://github.com/franklywatson/claude-rig/tree/master/src/router) for
 environment-aware resolution and [`src/session`](https://github.com/franklywatson/claude-rig/tree/master/src/session)
 for session-start detection. These links track the `master` branch and can drift; pin a commit if you depend on
-them. rig installs hooks and skills, and RTK proxies your shell commands, so review either before you install it
+them. rig installs hooks and skills, and RTK ([Further Reading](references/further-reading.md#rtk-rust-token-killer)) proxies your shell commands, so review either before you install it
 ([Pattern 2.12](L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain)).
 
 ### Anti-Pattern
@@ -106,7 +102,7 @@ if (/grep|sed|awk/.test(cmd)) return 'text_search';
 - [Pattern 2.3: Hook Automation](L2-behavioral-guardrails.md#pattern-23--hook-automation) for how pre-execution hooks work
 - [Pattern 4.6: Context Eval](L4-standards-measurement.md#pattern-46--context-eval) for testing a routing rule as one decision in a task bank
 
-**Evidence:** Thin — tools publish their own savings figures (jcodemunch reports 90-99% per lookup on its own benchmark); none is measured here. Measure on your own sessions. The environment detection and rig router are first-party designs (n=1).
+**Evidence:** Thin — tools publish their own savings figures on their own benchmarks; none is measured here. Measure on your own sessions. The environment detection and rig router are this project's own designs (n=1).
 
 ---
 

@@ -6,7 +6,7 @@ const decide = (overrides: Partial<EvidenceBundle> = {}) => gate(cleanBundle(ove
 
 describe('gate', () => {
   test('clean evidence within the ceiling returns auto', () => {
-    expect(decide()).toEqual({ decision: 'auto', reasons: ['all mechanical checks passed within the ceiling'] });
+    expect(decide()).toEqual({ decision: 'auto', reasons: ['all mechanical checks passed within the ceiling'], merge: 'person' });
   });
 
   test('a changed reproduction hash blocks', () => {
@@ -76,6 +76,7 @@ describe('gate', () => {
 
   test('a grant below A3 routes to a human', () => {
     expect(decide({ grant: 'A2' }).decision).toBe('human');
+    expect(decide({ grant: 'A2' }).reasons).toContain('grant A2 is below A3');
   });
 
   test('a spent budget and an active cooldown each route to a human', () => {
@@ -87,6 +88,38 @@ describe('gate', () => {
     const result = decide({ grant: 'A1', regression: 'fail' });
     expect(result.decision).toBe('block');
     expect(result.reasons).toEqual(['regression suite is not green on the candidate']);
+  });
+
+  test('below A4 a person merges every auto change', () => {
+    expect(decide({ grant: 'A3' }).merge).toBe('person');
+    expect(gate(bundleFromDiff(makeDiff('docs/notes.md', ['text'])), policy).merge).toBe('person');
+  });
+
+  test('at A4 only R0 and R1 at B0 merge unattended; an R2 fix is merged by a person', () => {
+    expect(gate(bundleFromDiff(makeDiff('docs/notes.md', ['text']), { grant: 'A4' }), policy).merge).toBe('unattended');
+    expect(decide({ grant: 'A4' })).toMatchObject({ decision: 'auto', merge: 'person' });
+  });
+
+  test('at A5 an R2 change merges unattended only at B0 and only when every file is on a named path', () => {
+    expect(decide({ grant: 'A5' }).merge).toBe('unattended');
+    expect(gate(bundleFromDiff(makeDiff('app/src/health.ts', ['const ok = true;']), { grant: 'A5' }), policy).merge).toBe('person');
+    const mixed = makeDiff('app/src/routes/users.ts', ['const ok = true;']) + makeDiff('docs/notes.md', ['text']);
+    expect(gate(bundleFromDiff(mixed, { grant: 'A5' }), policy).merge).toBe('person');
+  });
+
+  test('human and block decisions carry no merge', () => {
+    expect(decide({ grant: 'A2' }).merge).toBeNull();
+    expect(decide({ grant: 'A5', regression: 'fail' }).merge).toBeNull();
+  });
+
+  test('R3 and R4 never merge unattended, even under a policy that names a higher ceiling', () => {
+    const loose = {
+      ...policy,
+      autoCeiling: { reversibility: 'R4', blast: 'B3' } as const,
+      unattendedCeiling: { A5: { reversibility: 'R4', blast: 'B3' } as const },
+    };
+    const schema = bundleFromDiff(makeDiff('app/src/routes/users.ts', ['await pool.query("ALTER TABLE users ADD COLUMN x INT");']), { grant: 'A5' });
+    expect(gate(schema, loose)).toMatchObject({ decision: 'auto', merge: 'person' });
   });
 
   test('the gate does not mutate its inputs', () => {

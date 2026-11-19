@@ -1,6 +1,9 @@
 # Containment Example
 
-Two enforcement points, and tests that show which one is the control.
+Two enforcement points, and tests that show which one is the control. Run it to see why [Pattern
+2.9](../../docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) puts the boundary in a container or
+sandbox rather than in a hook. The tests do not run Claude Code; the [binding](#claude-code-binding) at the end
+configures it.
 
 - **Policy check (hook enforcement point).** `decide(tool_call)` returns `allow`, `deny` or `ask`. It reads its rules from [`rules.json`](rules.json). It runs inside the agent's environment and matches strings.
 - **Boundary (sandbox enforcement point).** A container with the project mounted read-only, `--network none`, a non-root user, all capabilities dropped. It does not parse commands.
@@ -85,20 +88,28 @@ Adding one regex to `rules.json` would make the policy catch `sed --in-place`. T
 
 ## Claude Code binding
 
-[`claude-code/settings.json`](claude-code/settings.json) expresses the same two enforcement points in Claude Code settings. It uses only keys documented at <https://code.claude.com/docs/en/settings> and <https://code.claude.com/docs/en/sandboxing>.
+[`claude-code/settings.json`](claude-code/settings.json) expresses the same two enforcement points in Claude Code settings. It uses only keys documented in the [settings reference](https://code.claude.com/docs/en/settings-reference) and on the [sandboxing](https://code.claude.com/docs/en/sandboxing) page.
 
 | Enforcement point | Setting |
 |-------------------|---------|
-| Policy | `permissions.deny` with `Read(./.env)`, `Read(./.env.*)` and `Bash(sed -i *)`; `permissions.blockWritesOutsideWorkingDirectories` (needs Claude Code v2.1.314 or later) |
+| Policy | `permissions.deny` with `Read(./.env)`, `Read(./.env.*)` and `Bash(sed -i *)`; `permissions.blockWritesOutsideWorkingDirectories` (Claude Code v2.1.314 or later) |
 | Boundary | `sandbox.enabled`, `sandbox.failIfUnavailable`, `sandbox.allowUnsandboxedCommands: false`, `sandbox.filesystem.denyWrite: ["./.git/hooks"]` |
-| Credentials | `sandbox.filesystem.denyRead`, `sandbox.credentials.files`, `sandbox.credentials.envVars` |
+| Credentials | `sandbox.filesystem.denyRead`, `sandbox.credentials.files`, `sandbox.credentials.envVars`; `permissions.blockReadsOutsideWorkingDirectories` (Claude Code v2.1.257 or later) |
 | Egress | `sandbox.network.allowedDomains` |
+
+`sandbox.filesystem.denyRead` covers shell commands only. `permissions.blockReadsOutsideWorkingDirectories` makes the `Read`, `Grep`, `Glob` and `LSP` tools refuse paths outside the working directories, so the file tools cannot open `~/.ssh` or `~/.aws/credentials`; Pattern 2.9's "Reads bounded" property needs both.
+
+The allowlist holds only `github.com` and `registry.npmjs.org`. Add the package registries, container registries and API hosts your project uses, or installs and image pulls fail inside the sandbox.
 
 The `Read(./.env.*)` deny rule also blocks `.env.example`, which the policy check allows. The `Bash(sed -i *)` deny rule is a string rule with the same limits as the policy check above. The sandbox settings are the control.
 
-Managed settings: a key set in managed settings (a `managed-settings.json` file, an MDM policy or server-managed settings) takes precedence over user, project and command-line settings. Put `sandbox.enabled`, `sandbox.failIfUnavailable` and `sandbox.allowUnsandboxedCommands: false` there so a developer cannot switch the sandbox off. The [managed settings page](https://code.claude.com/docs/en/managed-settings) lists the delivery mechanisms and where each file lives. Without managed settings, user settings (`~/.claude/settings.json`) sit outside the project tree. The sandboxing page documents `allowManagedDomainsOnly` under `sandbox.network`, and the settings reference documents `allowManagedPermissionRulesOnly`. Both restrict which entries Claude Code honors to those set in managed settings.
+Where to put the keys:
 
-This example does not run Claude Code. The settings file is checked in as a reference and is not covered by the tests.
+- **Precedence.** A key in managed settings (a `managed-settings.json` file, an MDM policy or server-managed settings) takes precedence over user, project and command-line settings. The [managed settings page](https://code.claude.com/docs/en/managed-settings) lists the delivery mechanisms and where each file lives.
+- **What goes there.** Put `sandbox.enabled`, `sandbox.failIfUnavailable` and `sandbox.allowUnsandboxedCommands: false` in managed settings so a developer cannot switch the sandbox off, with `requiredMinimumVersion` set to `"2.1.314"`; that key is read from managed settings only. Without managed settings, use user settings (`~/.claude/settings.json`), which sit outside the project tree.
+- **Restricting keys.** [`sandbox.network.allowManagedDomainsOnly`](https://code.claude.com/docs/en/settings-reference#sandbox-network-allowmanageddomainsonly) and [`allowManagedPermissionRulesOnly`](https://code.claude.com/docs/en/settings-reference#allowmanagedpermissionrulesonly) make Claude Code honor only the domains and permission rules set in managed settings.
+
+The settings file is a reference. No test loads it or runs Claude Code with it.
 
 ## Limits
 

@@ -19,7 +19,7 @@ cross-service contract, B3 money, auth, PII or audit. An unknown change is B3. S
 [Pattern 1.8](../L1-patterns/1.8-reversibility-blast-radius.md).
 
 **Cap** — The lowest curve position among the four dimensions that limit unattended work: platform, security and
-governance, production ownership and measuring value. The team's census computes it, and no grant may exceed it.
+governance, production ownership and measuring value. The census of one repository computes it, and no grant may exceed it.
 See [The Curve and the Cap](../earned-autonomy.md#the-curve-and-the-cap).
 
 **Census** — The command that reads a repository's files and writes a profile with one curve position per
@@ -50,7 +50,7 @@ volumes, so concurrent runs do not interfere. See [Pattern 1.4](../L1-patterns/1
 bounded, network allowlisted and credentials held outside. Approvals are relaxed only inside it. See
 [Pattern 2.9](../L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax).
 
-**Context Artefact** — Any file or setting that adds instructions to an agent session: instruction file, skill,
+**Context Artifact** — Any file or setting that adds instructions to an agent session: instruction file, skill,
 hook, deny rule, routing note or memory file. Each has an owner and a `reviewed:` date. See
 [Pattern 0.10](../L0-foundation.md#pattern-010--prune-and-re-baseline-context).
 
@@ -71,16 +71,17 @@ See [The Curve and the Cap](../earned-autonomy.md#the-curve-and-the-cap).
 **Deep Module** — A module with a small interface that hides a complex implementation. See
 [Pattern 0.1](../L0-foundation.md#pattern-01--deep-modules).
 
-**Delete-First Re-baselining** — At each model upgrade, run the task bank with a context artefact removed and keep
-the artefact only if a task regresses. See
+**Delete-First Re-baselining** — At each model upgrade, run the task bank with a context artifact removed and keep
+the artifact only if a task regresses. See
 [Pattern 0.10](../L0-foundation.md#pattern-010--prune-and-re-baseline-context).
 
 **Design Rinsing** — Extracting transferable design decisions from an external source in a read-only session, then
 translating them for the target project. See
 [L1](../L1-feedback-loops.md#design-rinsing--cross-domain-architectural-extraction).
 
-**Effective Grant** — The grant a workflow runs at: the lowest of its granted value, the cap and the stop-drill,
-harness and demotion gates. See [Pattern A.6](../earned-autonomy.md#pattern-a6--enforcement-through-hooks).
+**Effective Grant** — The grant a workflow runs at: the lowest of its granted value, the cap, the freshness gate
+(overdue stop test, passed review date, expired access, stale or missing census profile), the harness gate and any
+demotion override. See [Pattern A.3](../earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate).
 
 **Enforcement Point** — Where a rule holds: prompt, hook, CI, sandbox or downstream authorization. Enforcement
 points stack. Prose is guidance, command hooks are deterministic policy inside the harness, and containment and
@@ -91,7 +92,7 @@ the reviewer reads. Output the agent pastes with no CI run behind it is a claim,
 [Pattern 4.1](../L4-standards-measurement.md#pattern-41--evidence-based-claims).
 
 **Evidence Label** — The closing `**Evidence:**` line of a pattern: Strong (measured or corroborated by independent
-sources), Partial (support exists but is incomplete or contested) or Thin (reasoning, first-party experience or
+sources), Partial (support exists but is incomplete or contested) or Thin (reasoning, this project's own experience or
 unmeasured vendor claims), followed by the basis and source IDs. See [Sources](../references/sources.md).
 
 **Evidence Ledger** — The append-only record of workflow runs, written only by CI and after-the-fact jobs, from
@@ -194,16 +195,15 @@ the change's risk. See [Pattern 2.1](../L2-behavioral-guardrails.md#pattern-21--
 **Stack Test** — A test that runs the whole system in Docker and checks a user journey through the API, with no
 mocks for owned services. See [Pattern 1.1](../L1-patterns/1.1-stack-tests.md).
 
-**Task Bank** — A fixed set of representative tasks, each with a prompt, an expected artefact and a mechanical check,
+**Task Bank** — A fixed set of representative tasks, each with a prompt, an expected artifact and a mechanical check,
 run against a pinned model. See [Pattern 4.6](../L4-standards-measurement.md#pattern-46--context-eval); this
 repository's bank is the [Task Bank](../references/task-bank.md).
 
 **Test Integrity** — Rules that remove the ways a test can skip its assertions, such as conditional assertions and
 a catch without a rethrow. See [Pattern 1.6](../L1-patterns/1.6-test-integrity.md).
 
-**Tested Stop** — A way to halt an unattended workflow that a scheduled drill has used: a named person who can
-invoke it, a mechanism such as revoking credentials, and a named role that approves restart. A failed or overdue
-drill demotes the workflow. See [Pattern A.5](../earned-autonomy.md#pattern-a5--tested-stop).
+**Tested Stop** — A way to halt a workflow at grant A4 or higher that a scheduled drill has used: a named person
+who can invoke it and a mechanism such as revoking credentials. A failed or overdue drill demotes the workflow. See [Pattern A.5](../earned-autonomy.md#pattern-a5--tested-stop).
 
 **Token Efficiency** — Fewer tokens per task, measured on your own sessions. See [L3](../L3-optimization.md).
 

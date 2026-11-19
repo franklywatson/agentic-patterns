@@ -8,7 +8,7 @@ reviewed: 2026-11-19
 L4 checks that the other layers hold and measures what they change: claims backed by CI output, outcome metrics,
 required CI checks, a task bank that gates context and model changes, a named person for agent-written code, and the
 team's skill to supervise. Read it when "the agent says it passed" is the only evidence, or before a model or context
-change. Drift detection, the new-starter audit and pruning of context artefacts are in L0 ([Pattern
+change. Drift detection, the new-starter audit and pruning of context artifacts are in L0 ([Pattern
 0.7](L0-foundation.md#pattern-07--documentation-as-system-map), [Pattern
 0.9](L0-foundation.md#pattern-09--ai-as-new-starter-standard) and [Pattern
 0.10](L0-foundation.md#pattern-010--prune-and-re-baseline-context)).
@@ -21,7 +21,7 @@ change. Drift detection, the new-starter audit and pruning of context artefacts 
 
 Agents make claims without evidence. "Tests should pass" is a prediction, not evidence. An agent's report that it
 finished is a claim by the party being checked, and a person's report that AI made them faster is also a claim. Both
-can be wrong in ways their authors cannot see. In a 2025 randomised trial, 16 experienced open-source developers took
+can be wrong in ways their authors cannot see. In a 2025 randomized trial, 16 experienced open-source developers took
 longer to finish tasks with AI tools than without, while believing that the tools made them faster
 ([IS-6](references/sources.md)).
 
@@ -39,7 +39,7 @@ and the reviewer reads that result.
 3. **The agent cannot edit the evidence source.** It has no write access to the CI workflow, branch protection or
    the build signing step ([Pattern 2.3](L2-behavioral-guardrails.md#pattern-23--hook-automation), [Pattern
    2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
-4. **Productivity claims rest on artefacts.** Use cycle time, rework, revert rate and escaped defects from version
+4. **Productivity claims rest on artifacts.** Use cycle time, rework, revert rate and escaped defects from version
    control and CI. A survey adds context. It does not stand alone ([MV-8](references/sources.md)).
 5. **Configuration changes are releases.** A change to a skill, hook, prompt, instruction file or model version runs
    against the task bank before it ships ([Pattern 4.6](#pattern-46--context-eval)). Run each task more than once,
@@ -108,10 +108,10 @@ request that edits a skill or the instruction file attaches the task-bank run.
 
 - [Pattern 1.2 — Full-Loop Assertion Layering](L1-patterns/1.2-full-loop-assertions.md): the assertions whose output
   is the evidence
-- [Pattern 4.4 — Agentic Development Metrics](#pattern-44--agentic-development-metrics): artefact-based metrics
+- [Pattern 4.4 — Agentic Development Metrics](#pattern-44--agentic-development-metrics): artifact-based metrics
 
 **Evidence:** Partial — in one 2025 trial (16 developers), developers believed AI sped them up 20% while their
-measured time rose 19%; the authors have since marked that speed result out of date and have not re-tested the belief
+measured time rose 19%; METR marks that speed result out of date, and its February 2026 update does not re-test the belief
 gap. Eval-gated configuration releases rest on vendor guidance (IS-6, MV-8, PO-25)
 
 ---
@@ -130,7 +130,7 @@ practice works, where to focus next, and which practice to change. Tokens consum
 started measure activity, not outcomes.
 
 **Autonomy is a separate axis.** These metrics do not say how much autonomy an agent should hold for a workflow. That
-is a per-workflow grant, capped by the team's census position ([The Curve and the
+is a per-workflow grant, capped by the repository's census ([The Curve and the
 Cap](earned-autonomy.md#the-curve-and-the-cap)).
 
 **Metric categories:**
@@ -227,7 +227,7 @@ This repository has no application code and no coverage workflow; the example pr
 Markdown, `scripts/`, Python files, the lint config, `package.json`, the workflow itself, `.autonomy.yaml` or
 `examples/autonomy/`. It has eight jobs:
 
-| Job | Check | Failure behaviour |
+| Job | Check | Failure behavior |
 |-----|-------|-------------------|
 | Markdown Lint | `npm run lint:md` (markdownlint-cli2, config in `.markdownlint-cli2.jsonc`) | Fails the build |
 | Instruction File Length | `wc -l` on `AGENTS.md` and `CLAUDE.md`; warns above 200 lines | Warning only |
@@ -253,7 +253,7 @@ not one of these jobs.
 - [Pattern 4.1 — Evidence-Based Claims](#pattern-41--evidence-based-claims): CI output is the evidence
 
 **Evidence:** Partial — automated checks on every change are an independent practice; the scripts and thresholds are
-first-party, n=1 (PL-3)
+this project's own experience, n=1 (PL-3)
 
 ---
 
@@ -272,13 +272,13 @@ because two runs of the same configuration can differ ([PO-25](references/source
 Keep a **task bank**: a fixed set of tasks, scored by checks the agent cannot influence, run by a runner on every
 change to the agent's context and at each model upgrade. This pattern is the library's single definition of the task
 bank. [Pattern 0.10](L0-foundation.md#pattern-010--prune-and-re-baseline-context) runs it to decide which context
-artefacts to delete, and [Pattern A.2](earned-autonomy.md#pattern-a2--evidence-ledger) records its score in the
+artifacts to delete, and [Pattern A.2](earned-autonomy.md#pattern-a2--evidence-ledger) records its score in the
 evidence ledger.
 
 **The bank.** 10 to 30 tasks (this library's sizing) that represent the work agents do in the project. Each task has:
 
 - a prompt, given verbatim, that names no pattern, so the agent has to find what applies;
-- an expected artefact and where it is written;
+- an expected artifact and where it is written;
 - a check that does not read the agent's own report: a command's exit code, an exact comparison, an allow or deny
   decision;
 - the docs and examples it relies on.
@@ -300,9 +300,9 @@ A.3](earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate)); a sui
 decision requires exactly 1.
 
 **The runner.** For each task it copies the repository into a scratch directory without the expected values, plants
-any seed, removes each artefact under test, runs the harness command, scores the artefact and appends one line to a
+any seed, removes each artifact under test, runs the harness command, scores the artifact and appends one line to a
 run log. The harness command pins the model id and any effort or reasoning setting; the runner records the model id
-it is given but does not set it. A dry-run mode scores a known-good and a known-bad artefact per task, so a broken
+it is given but does not set it. A dry-run mode scores a known-good and a known-bad artifact per task, so a broken
 check is caught before a real run. Where the harness runs in CI, the runner is a required check on any pull request
 that changes a skill, a hook, the instruction file, the harness configuration or the model version ([Pattern
 4.5](#pattern-45--ci-guardrails)).
@@ -315,7 +315,7 @@ that changes a skill, a hook, the instruction file, the harness configuration or
 - **Decision-code evals** use the same scoring without an agent in the loop. The autonomy example's eval
   ([examples/autonomy](../examples/autonomy/README.md#eval-suite)) runs 17 scenarios through the real hook and
   requires a score of exactly 1 at pass^5. The repair-loop gate eval
-  ([examples/repair-loop](../examples/repair-loop/README.md)) runs 35 scenarios at pass^5.
+  ([examples/repair-loop](../examples/repair-loop/README.md)) runs 43 scenarios at pass^5.
 
 ### Anti-Pattern
 
@@ -325,7 +325,7 @@ that changes a skill, a hook, the instruction file, the harness configuration or
 - **A floor below 1 on a safety or governance suite.** One wrong allow on an irreversible action is a failure.
 - **Checks that read the agent's report**, or expected values the agent can read.
 - **Evaluating a mock of the decision code.** That tests the mock. Run the production code path.
-- **A bank that is never run.** A bank with no run in its log supports no claim about any artefact.
+- **A bank that is never run.** A bank with no run in its log supports no claim about any artifact.
 
 ### Cross-References
 
@@ -356,9 +356,10 @@ Name a person for every piece of agent-written code, and an owner for every agen
 
 **Author of record.** The person who asks an agent for a change is its author of record. They read it, they
 answer for it, and they cannot approve it ([Pattern
-2.13](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)). A different person approves. The LLVM
-project, the Linux kernel and the Apache Software Foundation state this rule for contributions made with AI
-tools: the human who submits is responsible ([PO-16, PO-17, PO-19](references/sources.md)). GitHub does not count
+2.13](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)). A different person approves. LLVM
+and the Linux kernel state that the human who submits AI-assisted work is responsible, and the Apache Software
+Foundation makes the contributor represent the work as original and disclose generated material
+([PO-16, PO-17, PO-19](references/sources.md)). GitHub does not count
 the requester's approval of its cloud agent's pull request; another reviewer must approve
 ([PO-20](references/sources.md)). Record the tool in a commit trailer, such as a co-author line, so reviewers and
 later readers can see which changes an agent wrote.
@@ -411,7 +412,7 @@ teams apply it (PO-16, PO-17, PO-19, PO-20)
 ### Problem
 
 Safe delegation depends on a person who can read what the agent wrote, debug it and judge whether it is right.
-Heavy delegation can erode that skill. In a randomised trial from Anthropic, people who used an AI assistant
+Heavy delegation can erode that skill. In a randomized trial from Anthropic, people who used an AI assistant
 to learn a new library scored lower on a comprehension test than people who coded by hand, and the gap
 depended on how they used the assistant ([IS-1](references/sources.md)). Anthropic's staff reported the same
 worry in a survey ([IS-4](references/sources.md)). Thoughtworks calls the team-level version codebase

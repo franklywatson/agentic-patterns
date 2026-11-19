@@ -1,6 +1,8 @@
 # Autonomy: Earned-Autonomy Tooling
 
-Small, runnable tooling for [Earned Autonomy](../../docs/earned-autonomy.md). A workflow holds an explicit grant (A1 to A5) in a committed register. The grant never exceeds a cap computed from the repository's own artefacts. It rises only on ledger evidence with human sign-off. It falls automatically.
+Small, runnable tooling for [Earned Autonomy](../../docs/earned-autonomy.md). A workflow holds an explicit grant (A1 to A5) in a committed register. The grant never exceeds a cap computed from the repository's own artifacts. It rises only on ledger evidence with human sign-off. It falls automatically.
+
+For a lead who wants a repository's cap, or a maintainer adding `autonomy check` to CI. Start with [Run Against Your Own Repository](#run-against-your-own-repository); a new repository's cap is C1, and [Reaching C2](../../docs/earned-autonomy.md#reaching-c2) lists the four changes that raise it to C2.
 
 The same behavior is implemented twice: [TypeScript](typescript/) and [Python](python/). Both read the same schema and fixtures and produce the same results.
 
@@ -51,7 +53,7 @@ uv run autonomy check --dir ../fixtures/registers/valid --now 2026-11-18T00:00:0
 
 ### Run Against Your Own Repository
 
-Build once in this repository, then point `--dir` at your repository's root. `census` needs no register; `check` needs `.autonomy.yaml` and a profile.
+Build once in this repository, then point `--dir` at your repository's root. The census reads one repository; to compare repositories, run it in each. `census` needs no register; `check` needs `.autonomy.yaml` and a profile.
 
 ```bash
 cd examples/autonomy/typescript
@@ -109,7 +111,7 @@ Demotion: not triggered
 | `defaults.stop_test_max_age_days` | Age at which a stop test counts as overdue (default 30) |
 | `defaults.review_cadence_days` | Review interval, informational |
 | `profile` | Path of the census profile (default `.autonomy/profile.json`) |
-| `workflows` | One entry per workflow |
+| `workflows` | One entry per workflow; at least one |
 
 ### Workflow fields
 
@@ -185,7 +187,7 @@ A commit is an agent commit when its author or committer name or email contains 
 
 ## Census
 
-`autonomy census` probes presence and practice for the seven dimensions: platform, shared context, operating model, governance, ownership, skill and measuring. Practice means last changed within 90 days (from git history) or referenced by CI. A dimension's position is the highest whose probes all pass, with each lower position passing first. C1 means C2 is not met, so a dimension with no evidence is C1.
+`autonomy census` probes the seven dimensions of one repository: platform, shared context, operating model, governance, ownership, skill and measuring. A probe checks that a file exists, has the expected keys, changed within 90 days (from git history) or is referenced by CI. It does not judge the content, so a stub file can pass ([Pattern A.4](../../docs/earned-autonomy.md#pattern-a4--census)). A dimension's position is the highest whose probes all pass, with each lower position passing first. C1 means C2 is not met, so a dimension with no evidence is C1.
 
 - Skill is the only dimension with no file probe. It is `unknown`, counted as C2, until a worksheet result is recorded.
 - Positions no file can show (for example shared context at C4) stop the climb and appear as `human-only:c4` in `missing_for_next`.
@@ -206,7 +208,7 @@ Probe ids per dimension (each id is the name shown in `evidence` and `missing_fo
 
 `constitutional-rules` passes when "constitutional" appears in CLAUDE.md, or in an AGENTS.md that CLAUDE.md imports with `@AGENTS.md`, or in AGENTS.md when no CLAUDE.md exists. The other CLAUDE.md probes read CLAUDE.md only. `sandbox-locked` reads `.claude/settings.json`, which an agent can edit; `autonomy check` and the hook protect it as a tier 1 governance file, but the probe cannot see whether developer machines enforce the same keys.
 
-Main files the probes read: `CLAUDE.md`, `AGENTS.md`, `CODEOWNERS`, `.claude/settings.json` (sandbox, permissions, hooks), `.claude/pins.json` (`{"pins": [{"name": "...", "sha256": "..."}]}`), `.github/workflows/*.yml`, `.github/rulesets/*.json`, `.autonomy.yaml`, `.autonomy/baseline.json` (`captured`, `flow`, `stability`), `.autonomy/audit/*.jsonl`, `.autonomy/ledger/*.jsonl`, `.autonomy/reviews.jsonl`, `.autonomy/retirements.jsonl`.
+Main files the probes read: `CLAUDE.md`, `AGENTS.md`, `CODEOWNERS`, `.claude/settings.json` (sandbox, permissions, hooks), `.claude/pins.json` (`{"pins": [{"name": "...", "sha256": "..."}]}`), `.github/workflows/*.yml`, `.github/rulesets/*.json`, `.autonomy.yaml`, `.autonomy/baseline.json` (`captured`, `flow`, `stability`; `outcome-tracking` needs the file to exist, `baseline` needs non-empty `flow` and `stability` objects and `captured` within 90 days), `.autonomy/audit/*.jsonl`, `.autonomy/ledger/*.jsonl`, `.autonomy/reviews.jsonl`, `.autonomy/retirements.jsonl`.
 
 ## Ledger
 
@@ -245,7 +247,7 @@ The drill runs `stop.command` through `sh -c` in the repository root with only `
 - `session-start` returns `additionalContext` naming the effective grant and the reasons for any reduction.
 - `pre-tool-use` returns `hookSpecificOutput` with `permissionDecision: "deny"` and a reason that starts with a code. An allowed call prints nothing, so the normal permission flow applies.
 
-Add `hooks/settings.typescript.example.json` or `hooks/settings.python.example.json` to `.claude/settings.json`. Both are command hooks whose path is `$CLAUDE_PROJECT_DIR/examples/autonomy/...`; in another repository, point the command at your built copy of the CLI.
+Add `hooks/settings.typescript.example.json` or `hooks/settings.python.example.json` to `.claude/settings.json`. Both are command hooks whose path is `$CLAUDE_PROJECT_DIR/examples/autonomy/...`; in another repository, point the command at your built copy of the CLI. Every handler in both bindings sets `"onFailure": "block"` (Claude Code v2.1.295 or later, [hooks reference](https://code.claude.com/docs/en/hooks#block-the-action-when-a-hook-fails)), so a `PreToolUse` hook that cannot start, crashes or times out blocks the tool call instead of letting it through; an unbuilt `dist/` or a missing `uv` environment then denies every call.
 
 | Rule | Code |
 |---|---|
@@ -267,7 +269,7 @@ Add `hooks/settings.typescript.example.json` or `hooks/settings.python.example.j
 
 Input that is not a JSON object with a string `tool_name` and an object `tool_input` exits with code 2, which blocks the call. Leading `VAR=x`, `env`, `command`, `sudo`, `time`, `timeout N`, `nice`, `nohup`, `exec` and git global options (`git -C dir`, `-c k=v`, `--git-dir`) are stripped before the git, merge and egress rules apply.
 
-The Bash rules match command strings. That is a nudge, not a boundary: a shell can reach the same effect through paths the matcher does not parse. The controls that hold are a `permitted_actions.tools` allow-list (Bash is default-deny once the list exists), CODEOWNERS with required review, `autonomy check` in CI, and the container or sandbox the agent runs in (see Pattern 2.3 in the L2 document: hooks reduce mistakes; isolation limits damage).
+The Bash rules match command strings. That is a nudge, not a boundary: a shell can reach the same effect through paths the matcher does not parse. The controls that hold are a `permitted_actions.tools` allowlist (Bash is default-deny once the list exists), CODEOWNERS with required review, `autonomy check` in CI, and the container or sandbox the agent runs in (see Pattern 2.3 in the L2 document: hooks reduce mistakes; isolation limits damage).
 
 The hook appends every decision to `.autonomy/audit/<session>.jsonl` with the fields `ts`, `agent` (the workflow id), `human` (from `AUTONOMY_SPONSOR`), `tool`, `decision` and `code`; the record has no outcome field. It records the untrusted-input flag in `.autonomy/sessions/<session>.json`. Both are runtime state, not source: keep `.autonomy/audit/` and `.autonomy/sessions/` out of version control. The Bash rules are a backstop. CODEOWNERS and `autonomy check` remain the control for governance files.
 
@@ -291,8 +293,8 @@ Both suites cover the same behavior.
 
 | Group | Location | What it shows |
 |---|---|---|
-| Unit | `tests/unit/` | Schema rules, effective grant, Wilson bounds, promote and demote thresholds, drill, hook decisions, CLI exit codes |
-| Stack | `tests/stack/` | `census` against committed fixture repositories (copied to a temporary git repository with a fixed commit date); asserts the profile and the cap; `check` then fails because a grant exceeds the cap |
+| Unit | `tests/unit/` | Schema rules, effective grant, Wilson bounds, promote and demote thresholds, drill, hook decisions, CLI exit codes, `onFailure: block` on every hook binding |
+| Stack | `tests/stack/` | `census` against committed fixture repositories (copied to a temporary git repository with a fixed commit date); asserts the profile and the cap, and that a baseline with an empty or missing `flow` or `stability` object stays at measuring C2; `check` then fails because a grant exceeds the cap |
 | Eval | `tests/eval/` | pass^k over the shared scenarios |
 
 Both suites compare results with the golden files in `fixtures/expected/`, so TypeScript and Python are held to the same output.

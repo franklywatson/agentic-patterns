@@ -16,6 +16,7 @@ def test_clean_evidence_within_the_ceiling_returns_auto():
     result = decide()
     assert result.decision == "auto"
     assert result.reasons == ["all mechanical checks passed within the ceiling"]
+    assert result.merge == "person"
 
 
 def test_a_changed_reproduction_hash_blocks():
@@ -85,6 +86,41 @@ def test_a_class_above_the_ceiling_routes_to_a_human():
 
 def test_a_grant_below_a3_routes_to_a_human():
     assert decide(grant="A2").decision == "human"
+    assert "grant A2 is below A3" in decide(grant="A2").reasons
+
+
+def test_below_a4_a_person_merges_every_auto_change():
+    assert decide(grant="A3").merge == "person"
+    assert gate(bundle_from_diff(make_diff("docs/notes.md", ["text"])), policy).merge == "person"
+
+
+def test_at_a4_only_r0_and_r1_at_b0_merge_unattended_and_an_r2_fix_is_merged_by_a_person():
+    assert gate(bundle_from_diff(make_diff("docs/notes.md", ["text"]), grant="A4"), policy).merge == "unattended"
+    result = decide(grant="A4")
+    assert (result.decision, result.merge) == ("auto", "person")
+
+
+def test_at_a5_an_r2_change_merges_unattended_only_at_b0_and_only_when_every_file_is_on_a_named_path():
+    assert decide(grant="A5").merge == "unattended"
+    assert gate(bundle_from_diff(make_diff("app/src/health.py", ["ok = True"]), grant="A5"), policy).merge == "person"
+    mixed = make_diff("app/src/routes/users.py", ["ok = True"]) + make_diff("docs/notes.md", ["text"])
+    assert gate(bundle_from_diff(mixed, grant="A5"), policy).merge == "person"
+
+
+def test_human_and_block_decisions_carry_no_merge():
+    assert decide(grant="A2").merge is None
+    assert decide(grant="A5", regression="fail").merge is None
+
+
+def test_r3_and_r4_never_merge_unattended_even_under_a_policy_that_names_a_higher_ceiling():
+    loose = replace(
+        policy,
+        auto_ceiling={"reversibility": "R4", "blast": "B3"},
+        unattended_ceiling={"A5": {"reversibility": "R4", "blast": "B3"}},
+    )
+    schema = bundle_from_diff(make_diff("app/src/routes/users.py", ['conn.execute("ALTER TABLE users ADD COLUMN x INT")']), grant="A5")
+    result = gate(schema, loose)
+    assert (result.decision, result.merge) == ("auto", "person")
 
 
 def test_a_spent_budget_and_an_active_cooldown_each_route_to_a_human():

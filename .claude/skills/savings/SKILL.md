@@ -3,8 +3,9 @@ name: savings
 description: "Report rtk and jcodemunch token savings for the current session."
 argument-hint: ""
 user-invocable: true
-owner: franklywatson
-reviewed: 2026-11-19
+metadata:
+  owner: franklywatson
+  reviewed: 2026-11-19
 ---
 
 <!-- rig-generated -->

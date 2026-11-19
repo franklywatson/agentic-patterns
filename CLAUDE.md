@@ -2,7 +2,7 @@
 
 @AGENTS.md
 
-When a CLAUDE.md exists, Claude Code reads CLAUDE.md files and not AGENTS.md; AGENTS.md is read only by default
-when no CLAUDE.md exists in the working directory or above
-([memory docs](https://code.claude.com/docs/en/memory#agents-md)). The import above loads the agent contract into
-this CLAUDE.md. Add Claude Code-specific lines below this one.
+Claude Code reads AGENTS.md when the repository has no CLAUDE.md or CLAUDE.local.md; when one exists it reads the
+CLAUDE.md files only, so this CLAUDE.md imports it with the one-line `@AGENTS.md` above ([Pattern
+0.4](docs/L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution), [Claude Code
+memory](https://code.claude.com/docs/en/memory#agents-md)). Add Claude Code-specific lines below this one.

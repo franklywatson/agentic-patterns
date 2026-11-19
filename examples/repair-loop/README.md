@@ -2,17 +2,19 @@
 
 A runnable repair loop with a deterministic gate, in TypeScript and Python. The loop takes an
 incident record, reproduces the failure, applies a candidate patch, verifies it, and asks a
-pure-function gate for one of three answers: `auto`, `human` or `block`. A fixed patch stands
-in for the repair agent, so every run is reproducible. No LLM is involved.
+pure-function gate for one of three answers: `auto`, `human` or `block`. For `auto` the gate also says who
+merges: a person, or nobody (unattended). A fixed patch stands in for the repair agent, so every run is
+reproducible. No LLM is involved.
 
-The example runs four candidate patches against one seeded defect (INC-001). The gate gives three answers:
+The example runs four candidate patches against one seeded defect (INC-001) at grant A3, so every `auto` is
+merged by a person:
 
 | Candidate patch | What it does | Gate answer |
 |-----------------|--------------|-------------|
-| `INC-001.fix.patch` | Validates the id before the query | `auto` |
+| `INC-001.fix.patch` | Validates the id before the query | `auto`, merged by a person |
 | `INC-001.mask.patch` | Wraps the handler in a catch-all that returns 404 | `human`, with a root-cause ticket |
 | `INC-001.test-edit.patch` | Edits the reproduction to expect the 500 | `block` |
-| `INC-001.partial.patch` | Guards only the literal id `undefined`: green on the oracle, still failing on `/users/null` | `auto`, then the confirmation window rolls it back |
+| `INC-001.partial.patch` | Guards only the literal id `undefined`: green on the oracle, still failing on `/users/null` | `auto`, merged by a person, then the confirmation window rolls it back |
 
 ## What Is Real and What Is Simulated
 
@@ -52,8 +54,9 @@ with every dimension at curve position 3 (C3) and `"cap": 3`, then run the auton
 `node dist/src/cli.js check --dir <that directory> --no-commits`. With that profile the check reports
 `workflow repair-loop: granted 3, effective 3` and `autonomy check: ok`.
 
-Out of scope: unattended repair of R3 (data-forward) or R4 (irreversible or external) changes. The
-gate sends every such change to a person, and the example never grants A4.
+Out of scope: unattended repair of R3 (data-forward) or R4 (irreversible or external) changes. The gate sends
+every such change to a person. The example never grants A4, so the loop never merges unattended; the gate eval
+scores the unattended rule at A4 and A5.
 
 ## The Loop
 
@@ -72,8 +75,8 @@ gate sends every such change to a person, and the example never grants A4.
    class (R0 to R4 by B0 to B3), the anti-masking scan result, the attempt budget and the grant.
 7. **Gate.** Return the most severe decision any check produces (block over human over auto) with the reasons.
 8. **Act on the decision.**
-    - `auto`: open a pull request with the evidence bundle in the outbox, then run the confirmation rule
-      (at least 50 samples, no fingerprint hits). Confirmed repairs are recorded in the breaker.
+    - `auto`: open a pull request with the evidence bundle and the gate's merge in the outbox, treat it as
+      merged, then run the confirmation rule (at least 50 samples, no fingerprint hits). Confirmed repairs are recorded in the breaker.
       A failed confirmation rolls back and pages the owner.
     - `human`: open a ticket. A masking change gets a root-cause ticket.
     - `block`: page the owner.
@@ -89,6 +92,17 @@ gate sends every such change to a person, and the example never grants A4.
 | `block` | Stop switch engaged. Reproduction hash differs from the frozen hash. The diff touches a protected path: anything under `tests/` (added, changed or deleted), `.autonomy.yaml`, `.github` or `shared/config`. The diff names an unsafe path (absolute, `..`, backslash). The reproduction is not green on the candidate. The regression suite is not green. |
 | `human` | Reproduction was not red on base. The anti-masking scan has a hit. The class is above R2/B1. The grant is below A3. The attempt budget is spent or a cooldown is active. |
 | `auto` | None of the above. |
+
+The merge for an `auto` result follows the grant table in [Pattern
+1.11](../../docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md#grants-and-repair-capability):
+
+| Grant | Merges unattended | Policy key |
+|-------|-------------------|------------|
+| A3 | Nothing: a person merges | no entry in `unattendedCeiling` |
+| A4 | R0 and R1 at B0 | `unattendedCeiling.A4` |
+| A5 | R0 and R1 at B0; R2 at B0 when every changed file is on a named path (`app/src/routes/**`) | `unattendedCeiling.A5`, `unattendedR2Paths` |
+
+The gate code refuses unattended merge above R2 or B0, whatever the policy says.
 
 Classification is deterministic and fails closed: a file with no path rule, and an empty diff, take the
 highest class (R4/B3). The rules are data in `shared/config/reversibility.json`. The policy, budgets and
@@ -117,6 +131,7 @@ examples/repair-loop/
   shared/
     incidents/INC-001.json   Incident record (fingerprint, journey, PII-free request, observed, expected)
     config/                  reversibility.json and repair-policy.json
+    eval/gate-scenarios.json Gate eval scenarios, read by both language suites
   typescript/                Node 22+, Jest
   python/                    Python 3.12+, uv, pytest
 ```
@@ -128,20 +143,21 @@ app/                  The minimal app (PostgreSQL and Redis) with the seeded def
 patches/              INC-001.fix, .mask, .test-edit and .partial
 src/                  incident, reproduce, classify, antimask, gate, breaker, loop, runtime
 tests/unit/           Module tests (mocks allowed)
-tests/eval/           Gate eval: 35 scenarios, exact scoring, pass^5
+tests/eval/           Gate eval: 43 scenarios, exact scoring of the decision and the merge, pass^5
 tests/stack/          01 startup, 02 repair, 03 masking rejected, 04 test edit blocked, 05 breaker trips, 06 confirmation rollback
 tests/regression/     Regression suite that the loop runs, from the base workspace, against every candidate
 docker-compose.yml    Stack template; ports bind to 127.0.0.1
 ```
 
-Patches differ per language because the app does. The incident record and the configuration are shared.
+Patches differ per language because the app does. The incident record, the configuration and the gate eval
+scenarios are shared; a scenario value that differs per language is keyed by language.
 
 ## Health Endpoint Shape
 
 The apps answer `GET /health` with `status` and `version`. With `?mode=test` or `?mode=prod` the response adds
 `services.postgres` and `services.redis`, each with `connected` and `latency_ms`. Both modes return the same
-test-mode shape. This is a demo simplification: Pattern 1.1 forbids it in production, where the response lists
-only `status` (`healthy`, `degraded` or `unhealthy`), one state per dependency and `version`, with no latency
+test-mode shape. This is a demo simplification: Pattern 1.1 recommends a smaller production response with only
+`status` (`healthy`, `degraded` or `unhealthy`), one state per dependency and `version`, with no latency
 figures or counts. No loop step reads the endpoint, so the simplification does not change what the example shows.
 
 ## The Seeded Defect
