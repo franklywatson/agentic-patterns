@@ -87,7 +87,7 @@ ecommerce-app/
 │       ├── orders.test.ts
 │       ├── inventory.test.ts
 │       └── pricing.test.ts
-├── CLAUDE.md                        # Agent contract
+├── AGENTS.md                        # Agent contract (CLAUDE.md imports it)
 ├── README.md                        # Overview
 ├── package.json
 └── tsconfig.json
@@ -178,7 +178,7 @@ ecommerce_bot/
 │   └── stack/                      # Full-stack tests
 │       ├── test_orders.py
 │       └── test_inventory.py
-├── CLAUDE.md                        # Agent contract
+├── AGENTS.md                        # Agent contract (CLAUDE.md imports it)
 ├── README.md                        # Overview
 ├── requirements.txt
 └── setup.py

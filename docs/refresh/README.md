@@ -23,7 +23,7 @@ Neither input is committed. The reviews name them by the plain-text extracts mad
 `research/industry-baseline.txt` and `research/anthropic-companion.txt`. Instead,
 [sources.md](../references/sources.md) restates the baseline's structure (curve, cap rule, findings, chapters) and
 lists every source the corpus cites, with its public URL, so every reference ID can be checked
-without the inputs. `python3 docs/refresh/tools/sourcecheck.py` confirms that each cited ID
+without the inputs. `python3 scripts/sourcecheck.py` confirms that each cited ID
 resolves.
 
 The synthesis is committed twice: as a page snapshot,
@@ -45,7 +45,7 @@ The synthesis is committed twice: as a page snapshot,
 | [reviews/review-adopter.md](reviews/review-adopter.md) | Adopter red team and model-generation realist |
 | [tools/linkcheck.py](tools/linkcheck.py) | Link and anchor checker used by the adopter review (`python3 docs/refresh/tools/linkcheck.py .`) |
 | [tools/anchors.py](tools/anchors.py) | Anchor-only checker used by the evidence review |
-| [tools/sourcecheck.py](tools/sourcecheck.py) | Checks that every reference ID cited anywhere under `docs/` resolves in [sources.md](../references/sources.md) |
+| [scripts/sourcecheck.py](../../scripts/sourcecheck.py) | Checks that every reference ID cited anywhere under `docs/` resolves in [sources.md](../references/sources.md) |
 
 The reviews are kept as written, apart from the edits noted at the top of each. Their line numbers refer to commit `a07ad93`, and some have moved
 since then. Two later commits are not on main yet: gstack removal and an L4 lint fix, both in

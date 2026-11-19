@@ -333,7 +333,7 @@ The stop needs an authority: the register names who may invoke it. The authority
 
 ### Problem
 
-A grant in a file is a statement. If the tool layer does not enforce it, the agent can exceed it, or edit the file that holds it.
+A grant in a file is a statement. If no enforcement point enforces it, the agent can exceed it, or edit the file that holds it.
 
 ### Solution
 

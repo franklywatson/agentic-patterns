@@ -2,7 +2,7 @@
 
 Suggested approaches for teams adopting agentic development patterns incrementally. Not a rigid plan — a set of paths teams have found useful.
 
-**Core principle:** Each pattern layer delivers value independently. L0 Foundation alone dramatically improves agent navigation. You don't need L4 to benefit from L0. Start where your gaps are, adopt what helps.
+**Core principle:** Each pattern layer delivers value independently. L0 Foundation alone gives agents a navigable structure and a documented entry point (evidence: first-party experience, no controlled comparison). You don't need L4 to benefit from L0. Start where your gaps are, adopt what helps.
 
 ---
 
@@ -60,7 +60,7 @@ Document every assumption they had to make. Each assumption is a gap.
 | **L1 Closed Loop Design** | Design-led verification with stack tests and focused integration tests | No stack tests, shallow assertions, no edge-case coverage for complex external deps | Add app-startup stack test |
 | **L2 Guardrails** | Skills, hooks, behavioral rules | No enforcement, agents make common errors | Add test-integrity skill |
 | **L3 Optimization (optional)** | Native structured tools, context isolation | Raw grep/cat commands, token waste | Route grep and cat to native tools |
-| **L4 Standards & Measurement** | Evidence, drift detection, metrics, context eval | Claims without evidence, spec drift | Establish evidence standard |
+| **L4 Standards & Measurement** | Evidence, metrics, CI guardrails, context eval | Claims without evidence, no outcome metrics | Establish evidence standard |
 
 ---
 
@@ -76,7 +76,7 @@ Start with L0, the highest-impact, lowest-effort starting point. Then build upwa
 2. **L1 Closed Loop Design** — Add stack tests for your most critical user journeys. See [L1-feedback-loops.md](../L1-feedback-loops.md) and the working examples in [examples/stack-test/](../../examples/stack-test/).
 3. **L2 Guardrails** — Add skills and hooks for your project's most common errors. See [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md).
 4. **L3 Optimization (optional)** — Reduce token spend with structured tools and context isolation, when token cost is a measured problem. See [L3-optimization.md](../L3-optimization.md) and the working example in [examples/guardrails/](../../examples/guardrails/).
-5. **L4 Standards & Measurement** — Add drift detection, metrics, and context eval when the earlier layers are stable. See [L4-standards-measurement.md](../L4-standards-measurement.md).
+5. **L4 Standards & Measurement** — Add metrics, CI guardrails, and context eval when the earlier layers are stable. Drift detection and the new-starter audit are in [Pattern 0.7](../L0-foundation.md#pattern-07--documentation-as-system-map) and [Pattern 0.9](../L0-foundation.md#pattern-09--ai-as-new-starter-standard). See [L4-standards-measurement.md](../L4-standards-measurement.md).
 
 ### Path B: Testing-First (Teams with Testing Gaps)
 
@@ -106,7 +106,7 @@ The pattern docs contain the detailed guidance. This guide links to them rather 
 | L1 | [L1-feedback-loops.md](../L1-feedback-loops.md) — Context harvesting, stack tests, full-loop assertions | [examples/stack-test/typescript/](../../examples/stack-test/typescript/) or [examples/stack-test/python/](../../examples/stack-test/python/) |
 | L2 | [L2-behavioral-guardrails.md](../L2-behavioral-guardrails.md) — Skills, hooks, constitutional rules | [superpowers](https://github.com/obra/superpowers) or [rig](https://github.com/franklywatson/claude-rig) |
 | L3 | [L3-optimization.md](../L3-optimization.md) — Native structured tools, context isolation | [examples/guardrails/](../../examples/guardrails/) |
-| L4 | [L4-standards-measurement.md](../L4-standards-measurement.md) — Evidence, drift detection, metrics, context eval | — |
+| L4 | [L4-standards-measurement.md](../L4-standards-measurement.md) — Evidence, metrics, CI guardrails, context eval | — |
 
 ### Readiness for A3 and A4
 
@@ -124,7 +124,7 @@ A workflow is ready for A3 (gated) when its journey has a stack test, required c
 ## Key Success Factors
 
 1. **Incremental adoption** — Each layer delivers value independently. Don't try to implement everything at once.
-2. **Start with L0 if unsure** — Structure and AGENTS.md have the highest ROI for the least effort.
+2. **Start with L0 if unsure** — Structure and AGENTS.md cost little and the later layers depend on them (evidence: first-party experience, not a measured ROI).
 3. **Update docs in the same task as code** — Deferred documentation is stale documentation. See [Pattern 0.7 — Documentation as System Map](../L0-foundation.md#pattern-07--documentation-as-system-map).
 4. **Remove dead code as you find it** — Cleanup is continuous, not periodic. See [Pattern 0.8 — Aggressive Cleanup](../L0-foundation.md#pattern-08--aggressive-cleanup).
 5. **Use the New Starter Test regularly** — It catches gaps that code review misses. See [Pattern 0.9 — AI-as-New-Starter Standard](../L0-foundation.md#pattern-09--ai-as-new-starter-standard).
@@ -144,6 +144,6 @@ A workflow is ready for A3 (gated) when its journey has a stack test, required c
 - [L1 Closed Loop Design](../L1-feedback-loops.md) — Design-led verification
 - [L2 Behavioral Guardrails](../L2-behavioral-guardrails.md) — Skills and hooks
 - [L3 Optimization](../L3-optimization.md) — Optional token efficiency
-- [L4 Standards & Measurement](../L4-standards-measurement.md) — Evidence, drift detection, metrics
+- [L4 Standards & Measurement](../L4-standards-measurement.md) — Evidence, metrics, CI guardrails, context eval
 - [Anti-Patterns](./anti-patterns.md) — Common mistakes to avoid
-- [Reference Implementation Case Study](../references/reference-telegram-trading-bot-case-study.md) — Production validation
+- [Reference Implementation Case Study](../references/reference-telegram-trading-bot-case-study.md) — Project walkthrough with commit statistics (descriptive, not evidence)
