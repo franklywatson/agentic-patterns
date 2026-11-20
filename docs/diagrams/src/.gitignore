@@ -1,0 +1,5 @@
+# archify output: regenerate from the JSON sources
+*.html
+*.delivery.json
+*.finalize*.json
+*.browser-check.json
