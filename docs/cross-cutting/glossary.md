@@ -2,7 +2,7 @@
 
 Terms used across the library, in alphabetical order. Each entry links to the doc that defines it.
 
-The [scales table](../../README.md#how-the-scales-fit-together) separates layer, enforcement point, review tier and
+The [scales table](../earned-autonomy.md#how-the-scales-fit-together) separates layer, enforcement point, review tier and
 grant.
 
 **Anti-Masking Scan** — A text scan of a repair diff for code that hides an error instead of fixing it, such as a

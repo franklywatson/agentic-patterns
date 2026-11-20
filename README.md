@@ -1,21 +1,14 @@
 # Agentic Patterns
 
-Patterns and runnable examples for letting AI coding agents change a codebase safely: how to structure a project so
-an agent can find its way, how the agent proves a change works, where each rule is enforced, and how far one
-workflow may run without a person. For teams using Claude Code or a similar agent harness.
+How much can you let an AI coding agent do without a person checking? This repo answers with layered checks, runnable
+examples, and a rule for earning more freedom as evidence builds. Without those checks, agents pass their own tests,
+swallow errors to turn checks green, and edit the rules that constrain them.
 
-## Start Here
-
-| You are | Read first | First action |
-|---------|-----------|--------------|
-| A developer who wants safer agent sessions this week | [FAQ: I work alone](docs/cross-cutting/faq.md#i-work-alone-where-does-the-sandbox-settings-file-go), [Pattern 2.9](docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax) | Copy the keys in the [containment binding](examples/containment/README.md#claude-code-binding) into user or managed settings and add your package registries to `allowedDomains`. In a session, `touch ~/outside-tree` and `curl -sI https://example.com` must both fail. Then [Path E](docs/cross-cutting/adoption-guide.md#path-e-one-person-attended-sessions) |
-| A lead deciding how far agents may run | [Path D](docs/cross-cutting/adoption-guide.md#path-d-containment-first-teams-moving-to-unattended-work), [The Curve and the Cap](docs/earned-autonomy.md#the-curve-and-the-cap), [threat model](docs/cross-cutting/threat-model.md) | Deliver the sandbox keys to every machine through [managed settings](https://code.claude.com/docs/en/managed-settings) ([Pattern 2.9](docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)). Then [run the census](examples/autonomy/README.md#run-against-your-own-repository) on one repository with `--json` and read `missing_for_next` per dimension. A repository without this library's files reads C1 |
-| A maintainer adding agents to a repository or monorepo with CI | [Pattern 0.4](docs/L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution), [Pattern 4.5](docs/L4-standards-measurement.md#pattern-45--ci-guardrails), [FAQ: monorepo](docs/cross-cutting/faq.md#monorepo-or-multi-repo-for-agents) | Write a short root AGENTS.md with an owner, a reviewed date and an enforcement point per rule; import it from CLAUDE.md with `@AGENTS.md`; make one unfiltered `tests` job a required check ([how to](docs/cross-cutting/adoption-guide.md#make-the-test-job-a-required-check)) |
-| Not sure where the gaps are | [Adoption Guide assessment](docs/cross-cutting/adoption-guide.md#assessment-where-are-you-now) | Pick a path |
+Written for teams using Claude Code or a similar agent harness.
 
 ## The Pattern Layers
 
-L1 verification needs L0's navigable structure, L2 enforcement needs L1's checks, and L4 checks and measures L0 to L2. L3 is optional and uses L2's hooks. When unsure, the [adoption guide](docs/cross-cutting/adoption-guide.md) starts with containment, then L0.
+L1 verification needs L0's navigable structure, L2 enforcement needs L1's checks, and L4 checks and measures L0 to L2. L3 is optional and uses L2's hooks.
 
 ![The five layers: L1 needs L0's navigable structure, L2 needs L1's checks, L4 checks and measures L0 to L2 and measures L3's cost, and optional L3 uses L2 hooks](docs/diagrams/layers-l0-l4.png)
 
@@ -31,53 +24,21 @@ L1 verification needs L0's navigable structure, L2 enforcement needs L1's checks
 
 **[L4: Standards & Measurement](docs/L4-standards-measurement.md)** — Evidence-based claims, metrics, CI guardrails, context eval, ownership of agent-written code, the team's skill to supervise and run records.
 
-## How the Scales Fit Together
+## Earned Autonomy
 
-| Scale | Values | Applies to | Question | Defined in |
-|-------|--------|-----------|----------|------------|
-| Layer | L0 to L4 | Pattern group | What do we build? | [The Pattern Layers](#the-pattern-layers) |
-| Enforcement point | prompt, hook, CI, sandbox, downstream | Rule | Where does this rule hold? | [L2](docs/L2-behavioral-guardrails.md) |
-| Review tier | low, medium, high, from reversibility (R0-R4) and blast radius (B0-B3) | Change | Who must approve it? | [Risk model](docs/L1-patterns/1.8-reversibility-blast-radius.md#risk-model) |
-| Grant, capped by the curve | A1 to A5, capped at C1 to C5 | Workflow, capped per repository | May this workflow act with no person? | [The Grants](docs/earned-autonomy.md#the-grants), [The Curve and the Cap](docs/earned-autonomy.md#the-curve-and-the-cap) |
+Finishing the layers does not let an agent run unattended. [Earned Autonomy](docs/earned-autonomy.md) sets that limit
+per workflow. A named person gives a workflow a grant, from A1 (suggest only) to A5 (merge low-risk changes with no
+person), on CI evidence. The repository caps every grant at what it has in place, and a grant falls when the evidence
+stops. [examples/autonomy](examples/autonomy/README.md) runs the register check, census, ledger and stop drill. The
+scales, grants and approval rules are in [How the Scales Fit
+Together](docs/earned-autonomy.md#how-the-scales-fit-together).
 
-A grant belongs to one workflow:
+## Where to Begin
 
-| Grant | The agent may | A person still | Needs cap |
-|-------|---------------|----------------|-----------|
-| A1 | Read and suggest | Applies every change | none |
-| A2 | Edit and commit | Pushes, opens the pull request, merges | C2 |
-| A3 | Push branches and open pull requests | Merges after required checks | C3 |
-| A4 | Act on an event or schedule; merge R0-R1 changes at B0 | Merges every other change; owns the tested stop | C4 |
-| A5 | A4, plus R2 at B0 on named paths, managed against a baseline, target, review date and stop rule | Decides at each review | C5 |
-
-This table is the one statement of approvals; the [risk
-model](docs/L1-patterns/1.8-reversibility-blast-radius.md#risk-model) defines the classes. Low tier is R0-R2 at B0.
-
-| Class | Review tier | Approvals before a person merges | Merges with no person |
-|-------|-------------|----------------------------------|-----------------------|
-| R0-R1 at B0 | Low | One, not the requester | At A4 and A5, on required checks |
-| R2 at B0 | Low | One, not the requester | At A5, on named paths only |
-| R0-R2 at B1 or B2 | Medium | One, not the requester | Never |
-| R3 or R4 at any reach, or any class at B3 | High | A code owner plus a second, neither the requester (a rule enforces the second only in organizations) | Never |
-
-Below A4 every tier needs an approval from someone other than the requester, so one person working alone meets none
-of them ([Pattern 2.13](docs/L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)). Instruction and tool
-configuration files (`CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `GEMINI.md` and `.mcp.json` at any depth, and anything under a `.claude/` folder except `.claude/settings*.json` and `.claude/hooks/**`)
-are medium tier. Only the repair gate classifies a change; for any other A4 workflow, a person or a CI check compares
-the pull request's files with the low-tier paths.
-
-Finishing the layers grants nothing. The cap is the lowest of four census dimensions (platform, security and
-governance, production ownership, measuring value), and no grant may exceed it. A repository without this library's
-files reads C1, which allows only A1. [Reaching C2](docs/earned-autonomy.md#reaching-c2)
-lists the four files that allow A2; A3 needs C3, whose probes are explained in [Pattern
-A.4](docs/earned-autonomy.md#pattern-a4--census) and [Pattern 4.4](docs/L4-standards-measurement.md#pattern-44--agentic-development-metrics).
-The census measures adoption of this library's files and wording, not governance in general.
-
-Grants bind only where you adopt the register (`.autonomy.yaml`) and make `autonomy check` a required check. The
-hook's Bash rules are a nudge; the boundary is the tools allow-list, CODEOWNERS, `autonomy check` in CI and
-containment. This repository's own agents act above its cap ([Applied to This
-Repository](docs/earned-autonomy.md#applied-to-this-repository)). One person working alone can skip the register
-([Path E](docs/cross-cutting/adoption-guide.md#path-e-one-person-attended-sessions)).
+- Not sure where your gaps are: the [adoption guide assessment](docs/cross-cutting/adoption-guide.md#assessment-where-are-you-now).
+- One person running attended sessions: [Path E](docs/cross-cutting/adoption-guide.md#path-e-one-person-attended-sessions).
+- A team moving to unattended work: [Path D](docs/cross-cutting/adoption-guide.md#path-d-containment-first-teams-moving-to-unattended-work).
+- A maintainer adding agents to a repository with CI: [Pattern 0.4](docs/L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution) and [Pattern 4.5](docs/L4-standards-measurement.md#pattern-45--ci-guardrails).
 
 ## What's in This Repo
 
