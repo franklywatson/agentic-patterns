@@ -17,6 +17,8 @@ workflow may run without a person. For teams using Claude Code or a similar agen
 
 Each layer depends on the ones below it: L1 verification needs L0's navigable structure, and L2 enforcement needs L1's checks. L3 is optional. When unsure, the [adoption guide](docs/cross-cutting/adoption-guide.md) starts with containment, then L0.
 
+![The five layers: L1 needs L0's navigable structure, L2 needs L1's checks, L4 checks and measures L0 to L2, and optional L3 uses L2 hooks](docs/diagrams/layers-l0-l4.png)
+
 ### Layer Overviews
 
 **[L0: Foundation](docs/L0-foundation.md)** — A codebase an agent with no prior context can navigate: deep modules, progressive disclosure, one AGENTS.md for every harness, unit tests as contract and aggressive cleanup.
