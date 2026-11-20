@@ -34,7 +34,8 @@ the library. They discriminate little between models and are included because a 
 ### T-01 Stack test for a new journey
 
 - **Prompt**: In `examples/stack-test/typescript`, add a stack test for the cart journey: add a product with a
-  form-encoded `POST /cart/add` (the app answers 303), then read the cart with `GET /cart`.
+  form-encoded `POST /cart/add` (the app answers 303), then read the cart with `GET /cart`. Add one new file under
+  `tests/stack/` and change no existing file.
 - **Artifact**: A new test file under `examples/stack-test/typescript/tests/stack/` and no change to existing files.
 - **Check**: Mechanical (needs Docker). Only new files under `tests/stack/`; the file passes `npm run test:stack`; it
   has no `jest.mock` and no `if` around an `expect`. Rubric: one assertion beyond the HTTP response.
@@ -43,7 +44,8 @@ the library. They discriminate little between models and are included because a 
 ### T-02 Stack test for a new journey in Python
 
 - **Prompt**: In `examples/stack-test/python`, add a stack test for the login journey: create a user, log in with
-  `POST /auth/login`, then read the profile with `GET /users/me`.
+  `POST /auth/login`, then read the profile with `GET /users/me`. Add one new file under `tests/stack/` and change
+  no existing file.
 - **Artifact**: A new test file under `examples/stack-test/python/tests/stack/`.
 - **Check**: Mechanical (needs Docker). Same conditions as T-01 with `uv run pytest tests/stack/`, and no
   `unittest.mock` or `monkeypatch` in the file.
@@ -103,7 +105,8 @@ the library. They discriminate little between models and are included because a 
 ### T-08 Read an incident and write the reproduction test
 
 - **Prompt**: Read `examples/repair-loop/shared/incidents/INC-001.json` and write the reproduction test for it as a
-  stack test against the repair-loop app, in TypeScript.
+  stack test against the repair-loop app, in TypeScript. Put it in one new file under
+  `examples/repair-loop/typescript/tests/stack/` and change no existing file.
 - **Artifact**: One new test file under `examples/repair-loop/typescript/tests/stack/`.
 - **Check**: Mechanical (needs Docker). The file sends the recorded request, asserts the expected status and body, and
   has no mock. The runner runs it against the base app, where it must fail, and with `INC-001.fix.patch` applied,
@@ -176,7 +179,7 @@ the library. They discriminate little between models and are included because a 
 ## Run Log
 
 One row per run. A run covers all 15 tasks with one set of artifacts removed; the first row of each
-re-baselining removes nothing and is its baseline. The table has no recorded run, so no baseline exists. The runner also appends one JSON line per run to `scripts/task-bank/run-log.jsonl`
+re-baselining removes nothing and is its baseline. The table holds the baseline below and no artifact comparison. The runner also appends one JSON line per run to `scripts/task-bank/run-log.jsonl`
 with the date, the `--model` value, the commit, the artifacts removed and the task ids passed, failed and skipped.
 It does not record the effort level or the harness; write those in this table by hand.
 
@@ -192,7 +195,26 @@ It does not record the effort level or the harness; write those in this table by
 
 | Date | Model | Effort | Harness | Commit | Artifacts removed | Task ids passed |
 |------|-------|--------|---------|--------|-------------------|-----------------|
-| (no run recorded) | | | | | | |
+| 2026-11-19 | claude-sonnet-5-5 | medium | Claude Code 2.1.329 | c91dd7c | none (baseline) | T-01 to T-07, T-09 to T-15 (14 of 15; 3 repeats each) |
+
+## Baseline Findings
+
+The baseline ran all 15 tasks three times with nothing removed. Auto memory was off; the user-level instruction file
+still loaded. The first pass passed 10 tasks in every repeat. T-01, T-02 and T-08 failed in every repeat, and T-06 and
+T-15 once each. Four causes, all fixed except the last:
+
+- Three prompts named no target file, so agents edited the README or put the test outside `tests/stack/`. The prompts
+  now name the file and forbid changes to existing files.
+- The runner counted `.pytest_cache` and similar folders as changes. It now skips them.
+- The scratch copy had no `node_modules` for the stack-test and repair-loop examples, so `npm run test:stack` exited
+  127 in some repeats. The runner now links them in.
+- T-08: the test the agent writes does not send the recorded request path `/users/undefined`, in every repeat. The task
+  is unchanged and still fails; it shows that the agent writes a different request than the recorded one even with
+  the repository's docs available ([Pattern 1.7](../L1-patterns/1.7-incident-to-stack-test.md)).
+
+After those fixes T-01, T-02, T-06 and T-15 passed every repeat. The row above counts a task as passed when it passed
+in every repeat of the final configuration. The first pass ran at commit e8c5f09 and the reruns at c91dd7c. The
+rubric items for each task are not answered. Removing one artifact at a time has not been run.
 
 ## Procedure for a Run
 
@@ -201,8 +223,9 @@ It does not record the effort level or the harness; write those in this table by
    (`~/.claude/CLAUDE.md`, `~/.claude/rules/`) and auto memory load into every Claude Code session
    ([memory](https://code.claude.com/docs/en/memory)), so run under a user profile without them, or set
    `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` and record what else loaded.
-2. Build the autonomy CLI once (`cd examples/autonomy/typescript && npm ci && npm run build`). Tasks that need Docker
-   need a running Docker daemon.
+2. Build the autonomy CLI once (`cd examples/autonomy/typescript && npm ci && npm run build`) and run `npm ci` in
+   `examples/stack-test/typescript` and `examples/repair-loop/typescript`; the runner links these `node_modules`
+   folders into each scratch copy. Tasks that need Docker need a running Docker daemon.
 3. Run `python3 scripts/task-bank/run.py --agent-cmd "<harness command>" --model <id>`. `--model` only writes the
    id to the run log; it is not passed to the harness command. The runner makes a fresh scratch copy of the
    repository for each task, without `scripts/task-bank/`, plants any seed, removes each path named by `--remove`,
@@ -229,4 +252,4 @@ says why.
 
 ---
 
-**Evidence:** Thin — no run, baseline included, is recorded in the run log; the method follows vendor guidance on task banks (MV-9)
+**Evidence:** Thin — the run log holds one baseline (one model, one effort level) and no artifact comparison; the method follows vendor guidance on task banks (MV-9)
