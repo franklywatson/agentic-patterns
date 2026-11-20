@@ -1,6 +1,6 @@
 ---
 last-validated-model: claude-opus-5-5
-reviewed: 2026-11-19
+reviewed: 2026-11-20
 ---
 
 # Earned Autonomy
@@ -110,6 +110,44 @@ workflow stays at A3 or below however long it has run cleanly.
 
 **Evidence:** Partial — vendor guidance on giving agents a check to run, and one company's unattended maintenance
 where checks are mechanical; the A4 rule is this library's design (AN-3, OM-9, MC-21)
+
+## How the Scales Fit Together
+
+| Scale | Values | Applies to | Question | Defined in |
+|-------|--------|-----------|----------|------------|
+| Layer | L0 to L4 | Pattern group | What do we build? | [The Pattern Layers](../README.md#the-pattern-layers) |
+| Enforcement point | prompt, hook, CI, sandbox, downstream | Rule | Where does this rule hold? | [L2](L2-behavioral-guardrails.md) |
+| Review tier | low, medium, high, from reversibility (R0-R4) and blast radius (B0-B3) | Change | Who must approve it? | [Risk model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) |
+| Grant, capped by the curve | A1 to A5, capped at C1 to C5 | Workflow, capped per repository | May this workflow act with no person? | [The Grants](#the-grants), [The Curve and the Cap](#the-curve-and-the-cap) |
+
+[The Grants](#the-grants) lists what each grant allows. This table is the one statement of approvals; the [risk
+model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) defines the classes. Low tier is R0-R2 at B0.
+
+| Class | Review tier | Approvals before a person merges | Merges with no person |
+|-------|-------------|----------------------------------|-----------------------|
+| R0-R1 at B0 | Low | One, not the requester | At A4 and A5, on required checks |
+| R2 at B0 | Low | One, not the requester | At A5, on named paths only |
+| R0-R2 at B1 or B2 | Medium | One, not the requester | Never |
+| R3 or R4 at any reach, or any class at B3 | High | A code owner plus a second, neither the requester (a rule enforces the second only in organizations) | Never |
+
+Below A4 every tier needs an approval from someone other than the requester, so one person working alone meets none
+of them ([Pattern 2.13](L2-behavioral-guardrails.md#pattern-213--risk-tiered-review)). Instruction and tool
+configuration files (`CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `GEMINI.md` and `.mcp.json` at any depth, and anything under a `.claude/` folder except `.claude/settings*.json` and `.claude/hooks/**`)
+are medium tier. Only the repair gate classifies a change; for any other A4 workflow, a person or a CI check compares
+the pull request's files with the low-tier paths.
+
+Finishing the layers grants nothing. The cap is the lowest of four census dimensions (platform, security and
+governance, production ownership, measuring value), and no grant may exceed it. A repository without this library's
+files reads C1, which allows only A1. [Reaching C2](#reaching-c2)
+lists the four files that allow A2; A3 needs C3, whose probes are explained in [Pattern
+A.4](#pattern-a4--census) and [Pattern 4.4](L4-standards-measurement.md#pattern-44--agentic-development-metrics).
+The census measures adoption of this library's files and wording, not governance in general.
+
+Grants bind only where you adopt the register (`.autonomy.yaml`) and make `autonomy check` a required check. The
+hook's Bash rules are a nudge; the boundary is the tools allow-list, CODEOWNERS, `autonomy check` in CI and
+containment. This repository's own agents act above its cap ([Applied to This
+Repository](#applied-to-this-repository)). One person working alone can skip the register
+([Path E](cross-cutting/adoption-guide.md#path-e-one-person-attended-sessions)).
 
 ## Prerequisites by Grant
 

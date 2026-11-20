@@ -64,7 +64,7 @@ Check this block before any team moves from attended work (a person watches each
 - [ ] Installed skills, plugins and MCP servers are on an allowlist, pinned and read ([Pattern
   2.12](../L2-behavioral-guardrails.md#pattern-212--skill-plugin-and-mcp-supply-chain))
 - [ ] A written high-tier list names the actions that need more than one approver, and the requester cannot approve
-  (approvals are in the [How the Scales Fit Together](../../README.md#how-the-scales-fit-together) table and [Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review))
+  (approvals are in the [How the Scales Fit Together](../earned-autonomy.md#how-the-scales-fit-together) table and [Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review))
 - [ ] Every agent-written change has an author of record, and every workflow has an owner in the register ([Pattern
   4.7](../L4-standards-measurement.md#pattern-47--author-of-record))
 - [ ] Completion evidence comes from CI, not from the agent's message ([Pattern
@@ -136,7 +136,7 @@ alone](faq.md#i-work-alone-where-does-the-sandbox-settings-file-go)), then add a
 0.4](../L0-foundation.md#pattern-04--agent-instruction-file-as-project-constitution)) and the test-integrity lint
 in CI ([Pattern 1.6](../L1-patterns/1.6-test-integrity.md)).
 
-Below A4, every tier in [Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review) needs an approval from someone other than the requester, so one person meets none of them. When you merge your own agent's change, the required checks are the only control that is not you. Make the test job and the test-integrity lint required checks, keep high-tier actions (migrations, CI workflows, publishing) human-made and reviewed by CI evidence only, and do not enable auto-merge. The register and grants are optional for one person; adopt them when a second person depends on the repository ([How the Scales Fit Together](../../README.md#how-the-scales-fit-together)).
+Below A4, every tier in [Pattern 2.13](../L2-behavioral-guardrails.md#pattern-213--risk-tiered-review) needs an approval from someone other than the requester, so one person meets none of them. When you merge your own agent's change, the required checks are the only control that is not you. Make the test job and the test-integrity lint required checks, keep high-tier actions (migrations, CI workflows, publishing) human-made and reviewed by CI evidence only, and do not enable auto-merge. The register and grants are optional for one person; adopt them when a second person depends on the repository ([How the Scales Fit Together](../earned-autonomy.md#how-the-scales-fit-together)).
 
 ---
 
@@ -187,7 +187,7 @@ The same `fetch-depth: 0` checkout is needed when a job runs `autonomy check --g
 
 ## How Far to Let Go
 
-The scales, grants, cap and review tiers are defined once in [How the Scales Fit Together](../../README.md#how-the-scales-fit-together). The census runs per repository, so each repository has its own cap and a workflow that acts in several repositories answers to each one. A repository that has adopted nothing reads C1; see [Reaching C2](../earned-autonomy.md#reaching-c2). A team that wants A3 or A4 closes the capping dimension that `autonomy census` reports as lowest, then promotes workflows one grant at a time on evidence ([Pattern A.3](../earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate)). The prerequisites for each grant are in [Prerequisites by Grant](../earned-autonomy.md#prerequisites-by-grant).
+The scales, grants, cap and review tiers are defined once in [How the Scales Fit Together](../earned-autonomy.md#how-the-scales-fit-together). The census runs per repository, so each repository has its own cap and a workflow that acts in several repositories answers to each one. A repository that has adopted nothing reads C1; see [Reaching C2](../earned-autonomy.md#reaching-c2). A team that wants A3 or A4 closes the capping dimension that `autonomy census` reports as lowest, then promotes workflows one grant at a time on evidence ([Pattern A.3](../earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate)). The prerequisites for each grant are in [Prerequisites by Grant](../earned-autonomy.md#prerequisites-by-grant).
 
 For many repositories, start with step 0 of [Path D](#path-d-containment-first-teams-moving-to-unattended-work).
 

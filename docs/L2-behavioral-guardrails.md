@@ -633,7 +633,7 @@ their own change adds nothing: GitHub does not count the requester's approval of
 
 Tier changes and actions by reversibility and blast radius, and spend human attention where mistakes are costly.
 The [risk model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) gives each class its review tier, and
-the [approvals table](../README.md#how-the-scales-fit-together) states what each tier needs. Low tier is R0-R2 at
+the [approvals table](earned-autonomy.md#how-the-scales-fit-together) states what each tier needs. Low tier is R0-R2 at
 B0. An R2 change merges with no person only at A5, on named paths.
 
 Below A4, which includes every workflow in a repository capped below C4, a person merges at every tier, and every
