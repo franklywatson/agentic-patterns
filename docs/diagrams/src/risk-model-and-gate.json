@@ -1,0 +1,385 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Risk Model and Repair Gate",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "docs/diagrams/src/risk-model-and-gate.html",
+    "repository": {
+      "url": "https://github.com/franklywatson/agentic-patterns",
+      "provider": "github",
+      "revision": "f367c87e2708efcb513e2e24889788296fb5df36"
+    }
+  },
+  "lanes": [
+    {
+      "id": "classify",
+      "label": "Classify (1.8)"
+    },
+    {
+      "id": "tier",
+      "label": "Review tier (1.8)"
+    },
+    {
+      "id": "gate",
+      "label": "Gate result (1.10)"
+    },
+    {
+      "id": "merge",
+      "label": "Who acts (1.11)"
+    },
+    {
+      "id": "prod",
+      "label": "Production (1.10)"
+    }
+  ],
+  "mainPath": [
+    "diff",
+    "classifier",
+    "low",
+    "auto",
+    "personMerges",
+    "rollout"
+  ],
+  "nodes": [
+    {
+      "id": "diff",
+      "lane": "classify",
+      "col": 0,
+      "type": "external",
+      "label": "Diff and target",
+      "sublabel": "not the commit message",
+      "sources": [
+        {
+          "path": "docs/L1-patterns/1.8-reversibility-blast-radius.md",
+          "line": 21,
+          "end_line": 22
+        }
+      ]
+    },
+    {
+      "id": "classifier",
+      "lane": "classify",
+      "col": 1,
+      "type": "security",
+      "label": "Classifier",
+      "sublabel": "R0-R4, B0-B3; fails closed",
+      "sources": [
+        {
+          "path": "docs/L1-patterns/1.8-reversibility-blast-radius.md",
+          "line": 21,
+          "end_line": 37
+        }
+      ]
+    },
+    {
+      "id": "evidence",
+      "lane": "classify",
+      "col": 4,
+      "type": "database",
+      "label": "Evidence bundle",
+      "sublabel": "frozen repro, anti-mask scan",
+      "sources": [
+        {
+          "path": "docs/L1-patterns/1.10-production-gate-progressive-confirmation.md",
+          "line": 60,
+          "end_line": 70
+        }
+      ]
+    },
+    {
+      "id": "low",
+      "lane": "tier",
+      "col": 1,
+      "type": "backend",
+      "label": "Low tier",
+      "sublabel": "R0-R2 at B0",
+      "sources": [
+        {
+          "path": "docs/L1-patterns/1.8-reversibility-blast-radius.md",
+          "line": 47,
+          "end_line": 48
+        }
+      ]
+    },
+    {
+      "id": "medium",
+      "lane": "tier",
+      "col": 2,
+      "type": "backend",
+      "label": "Medium tier",
+      "sublabel": "R0-R2 at B1 or B2",
+      "sources": [
+        {
+          "path": "docs/L1-patterns/1.8-reversibility-blast-radius.md",
+          "line": 49
+        }
+      ]
+    },
+    {
+      "id": "high",
+      "lane": "tier",
+      "col": 3,
+      "type": "security",
+      "label": "High tier",
+      "sublabel": "R3, R4, or any class at B3",
+      "sources": [
+        {
+          "path": "docs/L1-patterns/1.8-reversibility-blast-radius.md",
+          "line": 50
+        }
+      ]
+    },
+    {
+      "id": "auto",
+      "lane": "gate",
+      "col": 1,
+      "type": "backend",
+      "label": "auto",
+      "sublabel": "A3 and up; PR with bundle",
+      "sources": [
+        {
+          "path": "docs/L1-patterns/1.10-production-gate-progressive-confirmation.md",
+          "line": 26,
+          "end_line": 29
+        },
+        {
+          "path": "docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md",
+          "line": 50,
+          "end_line": 54
+        }
+      ]
+    },
+    {
+      "id": "human",
+      "lane": "gate",
+      "col": 3,
+      "type": "messagebus",
+      "label": "human",
+      "sublabel": "bundle to a named person",
+      "sources": [
+        {
+          "path": "docs/L1-patterns/1.10-production-gate-progressive-confirmation.md",
+          "line": 30
+        }
+      ]
+    },
+    {
+      "id": "block",
+      "lane": "gate",
+      "col": 5,
+      "type": "security",
+      "label": "block",
+      "sublabel": "a check failed",
+      "sources": [
+        {
+          "path": "docs/L1-patterns/1.10-production-gate-progressive-confirmation.md",
+          "line": 31
+        }
+      ]
+    },
+    {
+      "id": "noPerson",
+      "lane": "merge",
+      "col": 0,
+      "type": "cloud",
+      "label": "Merges with no person",
+      "sublabel": "A4, A5 only",
+      "sources": [
+        {
+          "path": "docs/L1-patterns/1.11-repair-budget-circuit-breaker-stop.md",
+          "line": 52,
+          "end_line": 54
+        }
+      ]
+    },
+    {
+      "id": "personMerges",
+      "lane": "merge",
+      "col": 1,
+      "type": "external",
+      "label": "A person merges",
+      "sublabel": "below A4, or above ceiling",
+      "sources": [
+        {
+          "path": "docs/L1-patterns/1.10-production-gate-progressive-confirmation.md",
+          "line": 26,
+          "end_line": 29
+        }
+      ]
+    },
+    {
+      "id": "personDecides",
+      "lane": "merge",
+      "col": 3,
+      "type": "external",
+      "label": "Named person decides",
+      "sublabel": "whether it goes on at all",
+      "sources": [
+        {
+          "path": "docs/L1-patterns/1.10-production-gate-progressive-confirmation.md",
+          "line": 30
+        }
+      ]
+    },
+    {
+      "id": "rejected",
+      "lane": "merge",
+      "col": 5,
+      "type": "security",
+      "label": "Rejected",
+      "sublabel": "reason returned",
+      "sources": [
+        {
+          "path": "docs/L1-patterns/1.10-production-gate-progressive-confirmation.md",
+          "line": 31
+        }
+      ]
+    },
+    {
+      "id": "rollout",
+      "lane": "prod",
+      "col": 1,
+      "type": "cloud",
+      "label": "Progressive delivery",
+      "sublabel": "canary, auto rollback",
+      "sources": [
+        {
+          "path": "docs/L1-patterns/1.10-production-gate-progressive-confirmation.md",
+          "line": 33,
+          "end_line": 43
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "diff-classify",
+      "from": "diff",
+      "to": "classifier",
+      "variant": "emphasis"
+    },
+    {
+      "id": "to-low",
+      "from": "classifier",
+      "to": "low",
+      "variant": "emphasis"
+    },
+    {
+      "id": "to-medium",
+      "from": "classifier",
+      "to": "medium"
+    },
+    {
+      "id": "to-high",
+      "from": "classifier",
+      "to": "high",
+      "variant": "security"
+    },
+    {
+      "id": "low-auto",
+      "from": "low",
+      "to": "auto",
+      "label": "checks pass",
+      "variant": "emphasis"
+    },
+    {
+      "id": "medium-auto",
+      "from": "medium",
+      "to": "auto",
+      "label": "B1"
+    },
+    {
+      "id": "medium-human",
+      "from": "medium",
+      "to": "human",
+      "label": "B2"
+    },
+    {
+      "id": "high-human",
+      "from": "high",
+      "to": "human",
+      "label": "always",
+      "variant": "security"
+    },
+    {
+      "id": "evidence-human",
+      "from": "evidence",
+      "to": "human",
+      "label": "anti-mask hit",
+      "role": "branch"
+    },
+    {
+      "id": "evidence-block",
+      "from": "evidence",
+      "to": "block",
+      "label": "repro changed or red",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "auto-unattended",
+      "from": "auto",
+      "to": "noPerson",
+      "label": "R0-R1 at B0",
+      "role": "branch"
+    },
+    {
+      "id": "auto-person",
+      "from": "auto",
+      "to": "personMerges",
+      "variant": "emphasis"
+    },
+    {
+      "id": "human-decides",
+      "from": "human",
+      "to": "personDecides"
+    },
+    {
+      "id": "block-rejected",
+      "from": "block",
+      "to": "rejected",
+      "variant": "security"
+    },
+    {
+      "id": "person-rollout",
+      "from": "personMerges",
+      "to": "rollout",
+      "variant": "emphasis"
+    },
+    {
+      "id": "unattended-rollout",
+      "from": "noPerson",
+      "to": "rollout"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Risk model (Pattern 1.8)",
+      "items": [
+        "Reversibility R0 inert to R4 external or irreversible; blast radius B0 one journey to B3 money, auth, PII or audit",
+        "The classifier reads the diff and fails closed: an unclassified change is R4 at B3, high tier"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Gate rules (Pattern 1.11)",
+      "items": [
+        "Most severe finding wins: block over human over auto",
+        "A1 and A2: the gate returns at most human; A3 and up: auto up to R2 at B1",
+        "R3, R4, B2 and B3 always get human; unattended repair of R3 and R4 is not supported at any grant"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Who merges an auto result",
+      "items": [
+        "Below A4 a person always merges",
+        "A4 and A5: R0 and R1 at B0 merge with no person; A5 adds R2 at B0 on named paths",
+        "Only auto changes reach production, through a canary with automatic rollback"
+      ]
+    }
+  ]
+}

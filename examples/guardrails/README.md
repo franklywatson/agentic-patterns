@@ -13,7 +13,7 @@ This example shows the core routing logic:
 
 ## Architecture
 
-![Guardrail Middleware Architecture](../../docs/diagrams/guardrail-middleware-architecture.png)
+![Guardrail middleware routing: findMatchingRule picks the first of eight rules for the whole Bash command, getEnvironment reports RTK and a jcodemunch index, and resolve returns block for sed -i or awk with a redirect, advise for grep, cat and find when a tool is present, or allow; classifyCommand runs separately and resolve does not read its result; the PreToolUse hook that exits 2 or denies, or exits 0, is not included](../../docs/diagrams/guardrail-middleware-architecture.png)
 
 ## File Structure
 

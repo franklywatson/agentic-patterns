@@ -59,8 +59,6 @@ agent translates those principles into the target project's language and constra
 never a port. Context harvesting reads the current project to understand it; design rinsing reads outside material to
 extract transferable patterns before a design direction is set. It works at the system scale of the loop.
 
-![Design Rinsing Workflow](diagrams/1.8-design-rinsing-workflow.png)
-
 1. **Identify the source** with architectural insight relevant to the design challenge.
 2. **Scope the rinse**: architecture, testing, agent coordination, error handling, state management.
 3. **Direct the agent** with specific questions ("How does this system handle multi-agent coordination?"), not
@@ -129,6 +127,8 @@ stoppable. Pattern 1.7 needs no autonomy. The others set limits before any repai
 - [Pattern 1.10 — Production Gate and Progressive Confirmation](L1-patterns/1.10-production-gate-progressive-confirmation.md): a deterministic gate outside the agent, a staged rollout, a pre-declared confirmation rule and automatic rollback.
 - [Pattern 1.11 — Repair Budget, Circuit Breaker and Stop Authority](L1-patterns/1.11-repair-budget-circuit-breaker-stop.md): attempt budgets, a breaker that lowers the grant and a named stop. Unattended repair of R3 and R4 changes is not supported at any grant.
 - [Pattern 1.12 — Self-Healing Tests vs Self-Healing Systems](L1-patterns/1.12-self-healing-tests-vs-systems.md): tests never heal themselves, and recovery without a repair ticket is a masked defect.
+
+![Risk model and repair gate: the classifier reads the diff and sets R0-R4 and B0-B3, failing closed to R4 at B3; at A3 and up the low tier gets auto and the medium tier auto at B1 and human at B2, the high tier always gets human, and a failed evidence check gets block; an auto result merges with no person only at A4 and A5 for R0-R1 at B0, a person merges the rest, and merged changes go through a canary with automatic rollback](diagrams/risk-model-and-gate.png)
 
 A runnable example of the gate is in [`examples/repair-loop/`](../examples/repair-loop/README.md) (TypeScript and
 Python). It simulates production confirmation and does not prove it.
