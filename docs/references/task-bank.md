@@ -34,7 +34,8 @@ the library. They discriminate little between models and are included because a 
 ### T-01 Stack test for a new journey
 
 - **Prompt**: In `examples/stack-test/typescript`, add a stack test for the cart journey: add a product with a
-  form-encoded `POST /cart/add` (the app answers 303), then read the cart with `GET /cart`.
+  form-encoded `POST /cart/add` (the app answers 303), then read the cart with `GET /cart`. Add one new file under
+  `tests/stack/` and change no existing file.
 - **Artifact**: A new test file under `examples/stack-test/typescript/tests/stack/` and no change to existing files.
 - **Check**: Mechanical (needs Docker). Only new files under `tests/stack/`; the file passes `npm run test:stack`; it
   has no `jest.mock` and no `if` around an `expect`. Rubric: one assertion beyond the HTTP response.
@@ -43,7 +44,8 @@ the library. They discriminate little between models and are included because a 
 ### T-02 Stack test for a new journey in Python
 
 - **Prompt**: In `examples/stack-test/python`, add a stack test for the login journey: create a user, log in with
-  `POST /auth/login`, then read the profile with `GET /users/me`.
+  `POST /auth/login`, then read the profile with `GET /users/me`. Add one new file under `tests/stack/` and change
+  no existing file.
 - **Artifact**: A new test file under `examples/stack-test/python/tests/stack/`.
 - **Check**: Mechanical (needs Docker). Same conditions as T-01 with `uv run pytest tests/stack/`, and no
   `unittest.mock` or `monkeypatch` in the file.
@@ -103,7 +105,8 @@ the library. They discriminate little between models and are included because a 
 ### T-08 Read an incident and write the reproduction test
 
 - **Prompt**: Read `examples/repair-loop/shared/incidents/INC-001.json` and write the reproduction test for it as a
-  stack test against the repair-loop app, in TypeScript.
+  stack test against the repair-loop app, in TypeScript. Put it in one new file under
+  `examples/repair-loop/typescript/tests/stack/` and change no existing file.
 - **Artifact**: One new test file under `examples/repair-loop/typescript/tests/stack/`.
 - **Check**: Mechanical (needs Docker). The file sends the recorded request, asserts the expected status and body, and
   has no mock. The runner runs it against the base app, where it must fail, and with `INC-001.fix.patch` applied,
