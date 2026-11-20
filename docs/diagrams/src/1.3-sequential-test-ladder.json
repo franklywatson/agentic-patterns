@@ -1,0 +1,185 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Sequential Test Ladder",
+    "output": "docs/diagrams/src/1.3-sequential-test-ladder.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Journey test"
+        },
+        "database": {
+          "label": "Fixture data"
+        },
+        "security": {
+          "label": "Failing test"
+        },
+        "frontend": {
+          "label": "Where to look"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "ladder",
+      "label": "Stack tests, run in dependency order"
+    },
+    {
+      "id": "diagnose",
+      "label": "Example: 05 fails",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "startup",
+    "bootstrap",
+    "auth",
+    "crud",
+    "domain",
+    "advanced"
+  ],
+  "nodes": [
+    {
+      "id": "startup",
+      "lane": "ladder",
+      "col": 0,
+      "type": "backend",
+      "label": "01 Startup",
+      "sublabel": "healthy, test mode"
+    },
+    {
+      "id": "bootstrap",
+      "lane": "ladder",
+      "col": 1,
+      "type": "database",
+      "label": "02 Bootstrap",
+      "sublabel": "fixture data"
+    },
+    {
+      "id": "auth",
+      "lane": "ladder",
+      "col": 2,
+      "type": "backend",
+      "label": "03 Authentication",
+      "sublabel": "register, log in, token"
+    },
+    {
+      "id": "crud",
+      "lane": "ladder",
+      "col": 3,
+      "type": "backend",
+      "label": "04 Basic flows",
+      "sublabel": "create, read, update, delete"
+    },
+    {
+      "id": "domain",
+      "lane": "ladder",
+      "col": 4,
+      "type": "backend",
+      "label": "05, 06 Domain operations",
+      "sublabel": "checkout, refund"
+    },
+    {
+      "id": "advanced",
+      "lane": "ladder",
+      "col": 5,
+      "type": "backend",
+      "label": "07 Advanced features",
+      "sublabel": "rate limiting, edge cases"
+    },
+    {
+      "id": "fail05",
+      "lane": "diagnose",
+      "col": 4,
+      "type": "security",
+      "label": "05 checkout fails",
+      "sublabel": "01 to 04 passed"
+    },
+    {
+      "id": "focus",
+      "lane": "diagnose",
+      "col": 5,
+      "type": "frontend",
+      "label": "Debug checkout",
+      "sublabel": "skip 06, 07: need checkout"
+    }
+  ],
+  "edges": [
+    {
+      "id": "s1-s2",
+      "from": "startup",
+      "to": "bootstrap",
+      "variant": "emphasis"
+    },
+    {
+      "id": "s2-s3",
+      "from": "bootstrap",
+      "to": "auth",
+      "variant": "emphasis"
+    },
+    {
+      "id": "s3-s4",
+      "from": "auth",
+      "to": "crud",
+      "variant": "emphasis"
+    },
+    {
+      "id": "s4-s5",
+      "from": "crud",
+      "to": "domain",
+      "variant": "emphasis"
+    },
+    {
+      "id": "s5-s6",
+      "from": "domain",
+      "to": "advanced",
+      "variant": "emphasis"
+    },
+    {
+      "id": "domain-fail",
+      "from": "domain",
+      "to": "fail05",
+      "label": "fails",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "fail-focus",
+      "from": "fail05",
+      "to": "focus",
+      "variant": "security",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Ordering",
+      "items": [
+        "Filenames enforce the order: 01- to 07-",
+        "Test N fails: tests 1 to N-1 passed"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Running",
+      "items": [
+        "Feature work: run the one journey alone",
+        "Before claiming completion: run the full suite",
+        "Passes alone, fails in the suite: a dependency bug"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "State",
+      "items": [
+        "Tests may rely on bootstrap fixture data",
+        "Not on records from a neighboring journey"
+      ]
+    }
+  ]
+}
