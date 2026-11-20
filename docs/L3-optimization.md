@@ -202,7 +202,7 @@ clear between unrelated tasks, and send work that needs another model to a subag
 | Spend and turns per unattended run | Harness: `--max-budget-usd` and `--max-turns` ([CLI flags](https://code.claude.com/docs/en/cli-reference#cli-flags)) | Apply to interactive sessions (print mode only). The budget is a client-side estimate and spend can pass it |
 | Cost per run of a registered workflow | `limits.max_cost_usd_per_run` in the [register](earned-autonomy.md#pattern-a1--autonomy-register), checked by `autonomy ledger` after the run; for an A4 or A5 workflow, `--apply-demotion` demotes it to A3 ([Pattern A.3](earned-autonomy.md#pattern-a3--promotion-demotion-and-the-cap-gate)) | Stop a run in progress |
 | Spend per workspace, organization, group or member | Billing: Console workspace spend limits, Team and Enterprise spend limits, cloud budget controls ([costs](https://code.claude.com/docs/en/costs#manage-costs-for-your-organization)) | Separate one workflow from another in the same scope |
-| A model or effort change that regresses work | CI: the task bank as a required check where the harness runs in CI ([Pattern 4.6](L4-standards-measurement.md#pattern-46--context-eval)) | Hold here: this repository has no such job and no recorded run |
+| A model or effort change that regresses work | CI: the task bank as a required check where the harness runs in CI ([Pattern 4.6](L4-standards-measurement.md#pattern-46--context-eval)) | Hold here: this repository has no such job; its run log holds one baseline and no artifact comparison |
 
 ### In Practice
 

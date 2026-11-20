@@ -179,7 +179,7 @@ the library. They discriminate little between models and are included because a 
 ## Run Log
 
 One row per run. A run covers all 15 tasks with one set of artifacts removed; the first row of each
-re-baselining removes nothing and is its baseline. The table has no recorded run, so no baseline exists. The runner also appends one JSON line per run to `scripts/task-bank/run-log.jsonl`
+re-baselining removes nothing and is its baseline. The table holds the baseline below and no artifact comparison. The runner also appends one JSON line per run to `scripts/task-bank/run-log.jsonl`
 with the date, the `--model` value, the commit, the artifacts removed and the task ids passed, failed and skipped.
 It does not record the effort level or the harness; write those in this table by hand.
 
@@ -195,7 +195,26 @@ It does not record the effort level or the harness; write those in this table by
 
 | Date | Model | Effort | Harness | Commit | Artifacts removed | Task ids passed |
 |------|-------|--------|---------|--------|-------------------|-----------------|
-| (no run recorded) | | | | | | |
+| 2026-11-19 | claude-sonnet-5-5 | medium | Claude Code 2.1.329 | c91dd7c | none (baseline) | T-01 to T-07, T-09 to T-15 (14 of 15; 3 repeats each) |
+
+## Baseline Findings
+
+The baseline ran all 15 tasks three times with nothing removed. Auto memory was off; the user-level instruction file
+still loaded. The first pass passed 10 tasks in every repeat. T-01, T-02 and T-08 failed in every repeat, and T-06 and
+T-15 once each. Four causes, all fixed except the last:
+
+- Three prompts named no target file, so agents edited the README or put the test outside `tests/stack/`. The prompts
+  now name the file and forbid changes to existing files.
+- The runner counted `.pytest_cache` and similar folders as changes. It now skips them.
+- The scratch copy had no `node_modules` for the stack-test and repair-loop examples, so `npm run test:stack` exited
+  127 in some repeats. The runner now links them in.
+- T-08: the test the agent writes does not send the recorded request path `/users/undefined`, in every repeat. The task
+  is unchanged and still fails; it shows that the agent writes a different request than the recorded one even with
+  the repository's docs available ([Pattern 1.7](../L1-patterns/1.7-incident-to-stack-test.md)).
+
+After those fixes T-01, T-02, T-06 and T-15 passed every repeat. The row above counts a task as passed when it passed
+in every repeat of the final configuration. The first pass ran at commit e8c5f09 and the reruns at c91dd7c. The
+rubric items for each task are not answered. Removing one artifact at a time has not been run.
 
 ## Procedure for a Run
 
@@ -233,4 +252,4 @@ says why.
 
 ---
 
-**Evidence:** Thin — no run, baseline included, is recorded in the run log; the method follows vendor guidance on task banks (MV-9)
+**Evidence:** Thin — the run log holds one baseline (one model, one effort level) and no artifact comparison; the method follows vendor guidance on task banks (MV-9)

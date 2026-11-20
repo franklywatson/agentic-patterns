@@ -31,7 +31,7 @@ required on `main`.
    jobs `Instruction File Length` (warns above 200 lines), `Doc Reachability from AGENTS.md` and `Link Integrity`;
    and the task-bank re-baseline at each model upgrade, run by hand ([Pattern
    0.10](docs/L0-foundation.md#pattern-010--prune-and-re-baseline-context)). The [run
-   log](docs/references/task-bank.md#run-log) has no recorded run. Link to docs for anything longer.
+   log](docs/references/task-bank.md#run-log) holds one baseline and no artifact comparison. Link to docs for anything longer.
 
 ## High-Tier Paths
 
