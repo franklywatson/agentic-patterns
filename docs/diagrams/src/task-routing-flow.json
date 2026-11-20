@@ -1,360 +1,389 @@
 {
-  "schema_version": 2,
-  "diagram_type": "workflow",
-  "meta": {
-    "title": "Model and Effort per Task",
-    "locale": "en",
-    "quality_profile": "showcase",
-    "output": "docs/diagrams/src/task-routing-flow.html",
-    "repository": {
-      "url": "https://github.com/franklywatson/agentic-patterns",
-      "provider": "github",
-      "revision": "f367c87e2708efcb513e2e24889788296fb5df36"
-    }
+ "schema_version": 2,
+ "diagram_type": "workflow",
+ "meta": {
+  "title": "Model and Effort per Task",
+  "locale": "en",
+  "quality_profile": "showcase",
+  "output": "docs/diagrams/src/task-routing-flow.html",
+  "repository": {
+   "url": "https://github.com/franklywatson/agentic-patterns",
+   "provider": "github",
+   "revision": "f367c87e2708efcb513e2e24889788296fb5df36"
   },
-  "lanes": [
+  "legend": {
+   "mode": "hidden"
+  }
+ },
+ "lanes": [
+  {
+   "id": "type",
+   "label": "Task type"
+  },
+  {
+   "id": "setting",
+   "label": "Starting setting"
+  },
+  {
+   "id": "risk",
+   "label": "Risk tier (1.8)"
+  },
+  {
+   "id": "run",
+   "label": "Run"
+  },
+  {
+   "id": "miss",
+   "label": "On a failed run",
+   "variant": "exception"
+  }
+ ],
+ "mainPath": [
+  "routine",
+  "mid",
+  "stepUp",
+  "setRun",
+  "fails",
+  "larger"
+ ],
+ "nodes": [
+  {
+   "id": "mechanical",
+   "lane": "type",
+   "col": 0,
+   "type": "external",
+   "label": "Mechanical edit",
+   "sublabel": "rename, format, scout",
+   "sources": [
     {
-      "id": "type",
-      "label": "Task type"
-    },
-    {
-      "id": "setting",
-      "label": "Starting setting"
-    },
-    {
-      "id": "risk",
-      "label": "Risk tier (1.8)"
-    },
-    {
-      "id": "run",
-      "label": "Run"
-    },
-    {
-      "id": "miss",
-      "label": "On a failed run",
-      "variant": "exception"
+     "path": "docs/L3-optimization.md",
+     "line": 170
     }
-  ],
-  "mainPath": [
-    "routine",
-    "mid",
-    "stepUp",
-    "setRun",
-    "fails",
-    "larger"
-  ],
-  "nodes": [
+   ],
+   "width": 132
+  },
+  {
+   "id": "routine",
+   "lane": "type",
+   "col": 1,
+   "type": "external",
+   "label": "Routine change",
+   "sublabel": "clear scope, tests",
+   "sources": [
     {
-      "id": "mechanical",
-      "lane": "type",
-      "col": 0,
-      "type": "external",
-      "label": "Mechanical edit",
-      "sublabel": "rename, format, extract, scout",
-      "sources": [
-        {
-          "path": "docs/L3-optimization.md",
-          "line": 170
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "routine",
-      "lane": "type",
-      "col": 1,
-      "type": "external",
-      "label": "Routine implementation",
-      "sublabel": "clear scope, existing tests",
-      "sources": [
-        {
-          "path": "docs/L3-optimization.md",
-          "line": 171
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "bugfix",
-      "lane": "type",
-      "col": 2,
-      "type": "external",
-      "label": "Bug fix",
-      "sublabel": "in existing code",
-      "sources": [
-        {
-          "path": "docs/L3-optimization.md",
-          "line": 172
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "design",
-      "lane": "type",
-      "col": 3,
-      "type": "external",
-      "label": "Design or review",
-      "sublabel": "unknown cause, security",
-      "sources": [
-        {
-          "path": "docs/L3-optimization.md",
-          "line": 173
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "small",
-      "lane": "setting",
-      "col": 0,
-      "type": "backend",
-      "label": "Small, low effort",
-      "sublabel": "or default effort",
-      "sources": [
-        {
-          "path": "docs/L3-optimization.md",
-          "line": 170
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "mid",
-      "lane": "setting",
-      "col": 1,
-      "type": "backend",
-      "label": "Mid, default effort",
-      "sublabel": "tests catch most misses",
-      "sources": [
-        {
-          "path": "docs/L3-optimization.md",
-          "line": 171
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "midHigh",
-      "lane": "setting",
-      "col": 2,
-      "type": "backend",
-      "label": "Mid, high effort",
-      "sublabel": "large if a mid run fails",
-      "sources": [
-        {
-          "path": "docs/L3-optimization.md",
-          "line": 172
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "large",
-      "lane": "setting",
-      "col": 3,
-      "type": "backend",
-      "label": "Large, high or above",
-      "sublabel": "no test catches the miss",
-      "sources": [
-        {
-          "path": "docs/L3-optimization.md",
-          "line": 173
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "stepUp",
-      "lane": "risk",
-      "col": 1,
-      "type": "security",
-      "label": "High-tier path?",
-      "sublabel": "then one model class up",
-      "sources": [
-        {
-          "path": "docs/L3-optimization.md",
-          "line": 179,
-          "end_line": 181
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "setRun",
-      "lane": "run",
-      "col": 1,
-      "type": "cloud",
-      "label": "Set before the run",
-      "sublabel": "subagent model, effort fields",
-      "sources": [
-        {
-          "path": "docs/L3-optimization.md",
-          "line": 207,
-          "end_line": 209
-        },
-        {
-          "path": "docs/L3-optimization.md",
-          "line": 188,
-          "end_line": 194
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "fails",
-      "lane": "miss",
-      "col": 1,
-      "type": "messagebus",
-      "label": "Run fails",
-      "sublabel": "check prompt, tools, context",
-      "sources": [
-        {
-          "path": "docs/L3-optimization.md",
-          "line": 177,
-          "end_line": 179
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "larger",
-      "lane": "miss",
-      "col": 2,
-      "type": "security",
-      "label": "Larger class",
-      "sublabel": "wrong answer, full context",
-      "sources": [
-        {
-          "path": "docs/L3-optimization.md",
-          "line": 178,
-          "end_line": 179
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "effort",
-      "lane": "miss",
-      "col": 0,
-      "type": "security",
-      "label": "Higher effort",
-      "sublabel": "skipped file or unrun test",
-      "sources": [
-        {
-          "path": "docs/L3-optimization.md",
-          "line": 179
-        }
-      ],
-      "width": 176
+     "path": "docs/L3-optimization.md",
+     "line": 171
     }
-  ],
-  "edges": [
+   ],
+   "width": 132
+  },
+  {
+   "id": "bugfix",
+   "lane": "type",
+   "col": 3,
+   "type": "external",
+   "label": "Bug fix",
+   "sublabel": "in existing code",
+   "sources": [
     {
-      "id": "mech-small",
-      "from": "mechanical",
-      "to": "small",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "routine-mid",
-      "from": "routine",
-      "to": "mid",
-      "variant": "emphasis"
-    },
-    {
-      "id": "bug-midhigh",
-      "from": "bugfix",
-      "to": "midHigh"
-    },
-    {
-      "id": "design-large",
-      "from": "design",
-      "to": "large"
-    },
-    {
-      "id": "small-step",
-      "from": "small",
-      "to": "stepUp"
-    },
-    {
-      "id": "mid-step",
-      "from": "mid",
-      "to": "stepUp",
-      "variant": "emphasis"
-    },
-    {
-      "id": "midhigh-step",
-      "from": "midHigh",
-      "to": "stepUp"
-    },
-    {
-      "id": "large-step",
-      "from": "large",
-      "to": "stepUp"
-    },
-    {
-      "id": "step-run",
-      "from": "stepUp",
-      "to": "setRun",
-      "variant": "emphasis"
-    },
-    {
-      "id": "run-fails",
-      "from": "setRun",
-      "to": "fails",
-      "label": "fails",
-      "variant": "security",
-      "role": "error"
-    },
-    {
-      "id": "fails-larger",
-      "from": "fails",
-      "to": "larger",
-      "variant": "security"
-    },
-    {
-      "id": "fails-effort",
-      "from": "fails",
-      "to": "effort",
-      "variant": "security"
-    },
-    {
-      "id": "larger-rerun",
-      "from": "larger",
-      "to": "setRun",
-      "label": "rerun",
-      "variant": "dashed",
-      "role": "return"
-    },
-    {
-      "id": "effort-rerun",
-      "from": "effort",
-      "to": "setRun",
-      "label": "rerun",
-      "variant": "dashed",
-      "role": "return"
+     "path": "docs/L3-optimization.md",
+     "line": 172
     }
-  ],
-  "cards": [
+   ],
+   "width": 132
+  },
+  {
+   "id": "design",
+   "lane": "type",
+   "col": 5,
+   "type": "external",
+   "label": "Design or review",
+   "sublabel": "unknown cause, security",
+   "sources": [
     {
-      "dot": "cyan",
-      "title": "Keep a step down only if it passes",
-      "items": [
-        "Run the task bank at the candidate setting and one step up, k of at least 3 each",
-        "Keep the cheaper setting only if it passes every task the stronger one passes",
-        "Judge a setting by cost per merged change, not tokens per session"
-      ]
+     "path": "docs/L3-optimization.md",
+     "line": 173
+    }
+   ],
+   "width": 140
+  },
+  {
+   "id": "small",
+   "lane": "setting",
+   "col": 0,
+   "type": "backend",
+   "label": "Small model",
+   "sublabel": "low or default effort",
+   "sources": [
+    {
+     "path": "docs/L3-optimization.md",
+     "line": 170
+    }
+   ],
+   "width": 132
+  },
+  {
+   "id": "mid",
+   "lane": "setting",
+   "col": 1,
+   "type": "backend",
+   "label": "Mid model",
+   "sublabel": "default effort",
+   "sources": [
+    {
+     "path": "docs/L3-optimization.md",
+     "line": 171
+    }
+   ],
+   "width": 132
+  },
+  {
+   "id": "midHigh",
+   "lane": "setting",
+   "col": 3,
+   "type": "backend",
+   "label": "Mid model",
+   "sublabel": "high effort",
+   "sources": [
+    {
+     "path": "docs/L3-optimization.md",
+     "line": 172
+    }
+   ],
+   "width": 132
+  },
+  {
+   "id": "large",
+   "lane": "setting",
+   "col": 5,
+   "type": "backend",
+   "label": "Large model",
+   "sublabel": "high effort or above",
+   "sources": [
+    {
+     "path": "docs/L3-optimization.md",
+     "line": 173
+    }
+   ],
+   "width": 132
+  },
+  {
+   "id": "stepUp",
+   "lane": "risk",
+   "col": 1,
+   "type": "security",
+   "label": "High-tier path?",
+   "sublabel": "risk model (1.8)",
+   "sources": [
+    {
+     "path": "docs/L3-optimization.md",
+     "line": 179,
+     "end_line": 181
+    }
+   ],
+   "width": 132
+  },
+  {
+   "id": "classUp",
+   "lane": "run",
+   "col": 3,
+   "type": "backend",
+   "label": "One class up",
+   "sublabel": "if a larger exists",
+   "sources": [
+    {
+     "path": "docs/L3-optimization.md",
+     "line": 179,
+     "end_line": 181
+    }
+   ],
+   "width": 132
+  },
+  {
+   "id": "setRun",
+   "lane": "run",
+   "col": 1,
+   "type": "cloud",
+   "label": "Set before run",
+   "sublabel": "subagent model, effort",
+   "sources": [
+    {
+     "path": "docs/L3-optimization.md",
+     "line": 207,
+     "end_line": 209
     },
     {
-      "dot": "amber",
-      "title": "Where the setting holds",
-      "items": [
-        "Model and effort in each subagent definition and unattended command; a table in the instruction file is guidance only",
-        "Managed settings restrict models and cap effort; --max-budget-usd and --max-turns bound an unattended run",
-        "A mid-session model switch re-reads the conversation uncached; send other-model work to a subagent"
-      ]
+     "path": "docs/L3-optimization.md",
+     "line": 188,
+     "end_line": 194
     }
-  ]
+   ],
+   "width": 140
+  },
+  {
+   "id": "fails",
+   "lane": "miss",
+   "col": 1,
+   "type": "security",
+   "label": "Run fails",
+   "sublabel": "check prompt, tools, context",
+   "sources": [
+    {
+     "path": "docs/L3-optimization.md",
+     "line": 177,
+     "end_line": 179
+    }
+   ],
+   "width": 164
+  },
+  {
+   "id": "larger",
+   "lane": "miss",
+   "col": 3,
+   "type": "backend",
+   "label": "Larger class",
+   "sublabel": "wrong answer, full context",
+   "sources": [
+    {
+     "path": "docs/L3-optimization.md",
+     "line": 178,
+     "end_line": 179
+    }
+   ],
+   "width": 156
+  },
+  {
+   "id": "effort",
+   "lane": "miss",
+   "col": 0,
+   "type": "backend",
+   "label": "Higher effort",
+   "sublabel": "skipped file, unrun test",
+   "sources": [
+    {
+     "path": "docs/L3-optimization.md",
+     "line": 179
+    }
+   ],
+   "width": 140
+  }
+ ],
+ "edges": [
+  {
+   "id": "mech-small",
+   "from": "mechanical",
+   "to": "small",
+   "fromSide": "bottom",
+   "toSide": "top"
+  },
+  {
+   "id": "routine-mid",
+   "from": "routine",
+   "to": "mid"
+  },
+  {
+   "id": "bug-midhigh",
+   "from": "bugfix",
+   "to": "midHigh"
+  },
+  {
+   "id": "design-large",
+   "from": "design",
+   "to": "large"
+  },
+  {
+   "id": "small-step",
+   "from": "small",
+   "to": "stepUp"
+  },
+  {
+   "id": "mid-step",
+   "from": "mid",
+   "to": "stepUp"
+  },
+  {
+   "id": "midhigh-step",
+   "from": "midHigh",
+   "to": "stepUp"
+  },
+  {
+   "id": "large-step",
+   "from": "large",
+   "to": "stepUp"
+  },
+  {
+   "id": "step-run",
+   "from": "stepUp",
+   "to": "setRun",
+   "label": "no"
+  },
+  {
+   "id": "step-up",
+   "from": "stepUp",
+   "to": "classUp",
+   "label": "yes",
+   "role": "branch",
+   "fromSide": "bottom",
+   "toSide": "top"
+  },
+  {
+   "id": "up-run",
+   "from": "classUp",
+   "to": "setRun"
+  },
+  {
+   "id": "run-fails",
+   "from": "setRun",
+   "to": "fails",
+   "label": "fails",
+   "variant": "security",
+   "role": "error"
+  },
+  {
+   "id": "fails-larger",
+   "from": "fails",
+   "to": "larger"
+  },
+  {
+   "id": "fails-effort",
+   "from": "fails",
+   "to": "effort"
+  },
+  {
+   "id": "larger-rerun",
+   "from": "larger",
+   "to": "setRun",
+   "label": "rerun",
+   "variant": "dashed",
+   "role": "return"
+  },
+  {
+   "id": "effort-rerun",
+   "from": "effort",
+   "to": "setRun",
+   "label": "rerun",
+   "variant": "dashed",
+   "role": "return"
+  }
+ ],
+ "cards": [
+  {
+   "dot": "cyan",
+   "title": "Keep a step down only if it passes",
+   "items": [
+    "Run the task bank at the candidate setting and one step up, k of at least 3 each",
+    "Keep the cheaper setting only if it passes every task the stronger one passes",
+    "Judge a setting by cost per merged change, not tokens per session"
+   ]
+  },
+  {
+   "dot": "amber",
+   "title": "Where the setting holds",
+   "items": [
+    "Model and effort in each subagent definition and unattended command; a table in the instruction file is guidance only",
+    "Managed settings restrict models and cap effort; --max-turns caps an unattended run's turns, and --max-budget-usd sets a client-side cost estimate that spend can pass",
+    "A mid-session model switch re-reads the conversation uncached; send other-model work to a subagent"
+   ]
+  }
+ ]
 }

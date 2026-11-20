@@ -9,7 +9,7 @@
     "legend": {
       "entries": {
         "backend": {
-          "label": "Layer on the path to verified and unattended work"
+          "label": "Layer on the path to verified or unattended work"
         },
         "external": {
           "label": "Optional layer"
@@ -29,8 +29,8 @@
         40
       ],
       "size": [
-        220,
-        76
+        280,
+        64
       ]
     },
     {
@@ -40,12 +40,12 @@
       "label": "L2 Behavioral Guardrails",
       "sublabel": "where each rule is enforced",
       "pos": [
-        360,
-        40
+        40,
+        184
       ],
       "size": [
-        300,
-        76
+        280,
+        64
       ]
     },
     {
@@ -55,12 +55,12 @@
       "label": "L1 Closed Loop Design and Verification",
       "sublabel": "the agent proves its own change works",
       "pos": [
-        360,
-        196
+        40,
+        328
       ],
       "size": [
-        300,
-        76
+        280,
+        64
       ]
     },
     {
@@ -70,12 +70,12 @@
       "label": "L0 Foundation",
       "sublabel": "a codebase an agent can navigate",
       "pos": [
-        360,
-        352
+        40,
+        472
       ],
       "size": [
-        300,
-        76
+        280,
+        64
       ]
     },
     {
@@ -85,12 +85,12 @@
       "label": "L4 Standards and Measurement",
       "sublabel": "evidence, metrics, CI checks, run records",
       "pos": [
-        820,
-        40
+        450,
+        184
       ],
       "size": [
-        240,
-        388
+        200,
+        352
       ]
     }
   ],
@@ -136,6 +136,15 @@
       "to": "l0",
       "label": "checks, measures",
       "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "l4-measures-l3",
+      "from": "l4",
+      "to": "l3",
+      "label": "measures cost",
+      "variant": "dashed",
+      "fromSide": "top",
       "toSide": "right"
     }
   ],

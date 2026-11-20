@@ -21,7 +21,7 @@
           "label": "Grant: a person merges every change"
         },
         "cloud": {
-          "label": "Grant: may merge low-tier changes with no person"
+          "label": "Grant: may merge some low-tier changes with no person"
         }
       }
     }
@@ -35,10 +35,10 @@
       "sublabel": "agent identity, gateway, isolation",
       "pos": [
         40,
-        107
+        82
       ],
       "size": [
-        240,
+        210,
         48
       ]
     },
@@ -47,13 +47,13 @@
       "type": "security",
       "icon": "none",
       "label": "Security and governance",
-      "sublabel": "sandbox, policy, grants per workflow",
+      "sublabel": "sandbox, policy, workflow grants",
       "pos": [
         40,
-        169
+        160
       ],
       "size": [
-        240,
+        210,
         48
       ]
     },
@@ -65,10 +65,10 @@
       "sublabel": "owners, stop and restore authority",
       "pos": [
         40,
-        231
+        238
       ],
       "size": [
-        240,
+        210,
         48
       ]
     },
@@ -80,10 +80,10 @@
       "sublabel": "baseline, flow and stability",
       "pos": [
         40,
-        293
+        316
       ],
       "size": [
-        240,
+        210,
         48
       ]
     },
@@ -95,10 +95,10 @@
       "sublabel": "instruction files, connectors",
       "pos": [
         40,
-        417
+        470
       ],
       "size": [
-        240,
+        220,
         48
       ]
     },
@@ -109,11 +109,11 @@
       "label": "Team operating model",
       "sublabel": "review practice, conventions",
       "pos": [
-        40,
-        479
+        280,
+        470
       ],
       "size": [
-        240,
+        220,
         48
       ]
     },
@@ -124,11 +124,11 @@
       "label": "Individual and team skill",
       "sublabel": "unknown counts as C2",
       "pos": [
-        40,
-        541
+        520,
+        470
       ],
       "size": [
-        240,
+        220,
         48
       ]
     },
@@ -137,9 +137,9 @@
       "type": "messagebus",
       "icon": "none",
       "label": "Cap C1-C5",
-      "sublabel": "lowest of the four",
+      "sublabel": "lowest of four; no evidence = C1",
       "pos": [
-        400,
+        300,
         50
       ],
       "size": [
@@ -152,13 +152,13 @@
       "type": "backend",
       "icon": "none",
       "label": "A1 Assisted",
-      "sublabel": "agent suggests; person applies each change",
+      "sublabel": "person applies each change",
       "pos": [
-        720,
+        610,
         40
       ],
       "size": [
-        350,
+        230,
         56
       ]
     },
@@ -167,13 +167,13 @@
       "type": "backend",
       "icon": "none",
       "label": "A2 Reviewed",
-      "sublabel": "agent edits, commits; person pushes, opens PR, merges",
+      "sublabel": "agent commits; person opens PR, merges",
       "pos": [
-        720,
+        610,
         118
       ],
       "size": [
-        350,
+        230,
         56
       ]
     },
@@ -182,13 +182,13 @@
       "type": "backend",
       "icon": "none",
       "label": "A3 Gated",
-      "sublabel": "agent pushes, opens PRs; person merges after checks",
+      "sublabel": "agent opens PRs; person merges",
       "pos": [
-        720,
+        610,
         196
       ],
       "size": [
-        350,
+        230,
         56
       ]
     },
@@ -197,13 +197,13 @@
       "type": "cloud",
       "icon": "none",
       "label": "A4 Unattended, reversible",
-      "sublabel": "merges R0-R1 at B0; person merges rest, owns stop",
+      "sublabel": "merges R0-R1 at B0; person the rest",
       "pos": [
-        720,
+        610,
         274
       ],
       "size": [
-        350,
+        230,
         56
       ]
     },
@@ -212,13 +212,13 @@
       "type": "cloud",
       "icon": "none",
       "label": "A5 Portfolio-managed",
-      "sublabel": "A4 plus R2 at B0 on named paths; reviewed on evidence",
+      "sublabel": "A4 plus R2 at B0 on named paths",
       "pos": [
-        720,
+        610,
         352
       ],
       "size": [
-        350,
+        230,
         56
       ]
     }
@@ -253,12 +253,16 @@
     {
       "id": "governance-cap",
       "from": "governance",
-      "to": "cap"
+      "to": "cap",
+      "fromSide": "right",
+      "toSide": "left"
     },
     {
       "id": "ownership-cap",
       "from": "ownership",
-      "to": "cap"
+      "to": "cap",
+      "fromSide": "right",
+      "toSide": "left"
     },
     {
       "id": "measuring-cap",

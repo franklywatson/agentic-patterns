@@ -128,7 +128,7 @@ stoppable. Pattern 1.7 needs no autonomy. The others set limits before any repai
 - [Pattern 1.11 — Repair Budget, Circuit Breaker and Stop Authority](L1-patterns/1.11-repair-budget-circuit-breaker-stop.md): attempt budgets, a breaker that lowers the grant and a named stop. Unattended repair of R3 and R4 changes is not supported at any grant.
 - [Pattern 1.12 — Self-Healing Tests vs Self-Healing Systems](L1-patterns/1.12-self-healing-tests-vs-systems.md): tests never heal themselves, and recovery without a repair ticket is a masked defect.
 
-![Risk model and repair gate: the classifier reads the diff and sets R0-R4 and B0-B3, failing closed to R4 at B3; at A3 and up the low tier gets auto and the medium tier auto at B1 and human at B2, the high tier always gets human, and a failed evidence check gets block; an auto result merges with no person only at A4 and A5 for R0-R1 at B0, a person merges the rest, and merged changes go through a canary with automatic rollback](diagrams/risk-model-and-gate.png)
+![Risk model and repair gate: the classifier reads the diff and sets R0-R4 and B0-B3, failing closed to R4 at B3; at A3 and up the low tier gets auto and the medium tier auto at B1 and human at B2, the high tier always gets human, and a failed evidence check gets block; an auto result merges with no person only at A4 and A5 for R0-R1 at B0, and at A5 for R2 at B0 on named paths; a person merges the rest, and merged changes go through a canary with automatic rollback](diagrams/risk-model-and-gate.png)
 
 A runnable example of the gate is in [`examples/repair-loop/`](../examples/repair-loop/README.md) (TypeScript and
 Python). It simulates production confirmation and does not prove it.

@@ -1,186 +1,195 @@
 {
-  "schema_version": 2,
-  "diagram_type": "workflow",
-  "meta": {
-    "title": "Full-Loop Assertion Layering",
-    "output": "docs/diagrams/src/1.2-full-loop-assertion-layering.html",
-    "quality_profile": "showcase",
-    "locale": "en",
-    "legend": {
-      "entries": {
-        "external": {
-          "label": "Action"
-        },
-        "backend": {
-          "label": "Assertion layer"
-        },
-        "frontend": {
-          "label": "Result"
-        },
-        "security": {
-          "label": "Subsystem to investigate"
-        }
-      }
+ "schema_version": 2,
+ "diagram_type": "workflow",
+ "meta": {
+  "title": "Full-Loop Assertion Layering",
+  "output": "docs/diagrams/src/1.2-full-loop-assertion-layering.html",
+  "quality_profile": "showcase",
+  "locale": "en",
+  "legend": {
+   "entries": {
+    "external": {
+     "label": "Action"
+    },
+    "backend": {
+     "label": "Assertion layer"
+    },
+    "frontend": {
+     "label": "Result"
+    },
+    "security": {
+     "label": "Subsystem to investigate"
     }
+   }
+  }
+ },
+ "lanes": [
+  {
+   "id": "layers",
+   "label": "One journey: act, then assert in order"
   },
-  "lanes": [
-    {
-      "id": "layers",
-      "label": "One journey: act, then assert in order"
-    },
-    {
-      "id": "stop",
-      "label": "Test stops",
-      "variant": "exception"
-    }
-  ],
-  "mainPath": [
-    "action",
-    "primary",
-    "second",
-    "third",
-    "pass"
-  ],
-  "nodes": [
-    {
-      "id": "action",
-      "lane": "layers",
-      "col": 0,
-      "type": "external",
-      "label": "Action",
-      "sublabel": "POST /orders"
-    },
-    {
-      "id": "primary",
-      "lane": "layers",
-      "col": 1,
-      "type": "backend",
-      "label": "1 Primary",
-      "sublabel": "status and body of the response"
-    },
-    {
-      "id": "second",
-      "lane": "layers",
-      "col": 2,
-      "type": "backend",
-      "label": "2 Second-order",
-      "sublabel": "a different endpoint: GET /cart"
-    },
-    {
-      "id": "third",
-      "lane": "layers",
-      "col": 3,
-      "type": "backend",
-      "label": "3 Third-order",
-      "sublabel": "admin API: audit log, totals"
-    },
-    {
-      "id": "pass",
-      "lane": "layers",
-      "col": 4,
-      "type": "frontend",
-      "label": "Journey passes",
-      "sublabel": "all three layers held"
-    },
-    {
-      "id": "fail1",
-      "lane": "stop",
-      "col": 1,
-      "type": "security",
-      "label": "Validation",
-      "sublabel": "routing or controller"
-    },
-    {
-      "id": "fail2",
-      "lane": "stop",
-      "col": 2,
-      "type": "security",
-      "label": "Persistence",
-      "sublabel": "or downstream effects"
-    },
-    {
-      "id": "fail3",
-      "lane": "stop",
-      "col": 3,
-      "type": "security",
-      "label": "Audit",
-      "sublabel": "observability, consistency"
-    }
-  ],
-  "edges": [
-    {
-      "id": "act-primary",
-      "from": "action",
-      "to": "primary",
-      "variant": "emphasis"
-    },
-    {
-      "id": "primary-second",
-      "from": "primary",
-      "to": "second",
-      "label": "holds",
-      "variant": "emphasis"
-    },
-    {
-      "id": "second-third",
-      "from": "second",
-      "to": "third",
-      "label": "holds",
-      "variant": "emphasis"
-    },
-    {
-      "id": "third-pass",
-      "from": "third",
-      "to": "pass",
-      "label": "holds",
-      "variant": "emphasis"
-    },
-    {
-      "id": "primary-fail",
-      "from": "primary",
-      "to": "fail1",
-      "label": "fails",
-      "variant": "security",
-      "role": "error",
-      "route": "drop"
-    },
-    {
-      "id": "second-fail",
-      "from": "second",
-      "to": "fail2",
-      "label": "fails",
-      "variant": "security",
-      "role": "error",
-      "route": "drop"
-    },
-    {
-      "id": "third-fail",
-      "from": "third",
-      "to": "fail3",
-      "label": "fails",
-      "variant": "security",
-      "role": "error",
-      "route": "drop"
-    }
-  ],
-  "cards": [
-    {
-      "dot": "rose",
-      "title": "Hard assertions only",
-      "items": [
-        "The failing layer names the subsystem to investigate",
-        "Every assertion is hard (Pattern 1.6)",
-        "No soft asserts or collect-all-failures",
-        "A failure at layer N means the layers before it held"
-      ]
-    },
-    {
-      "dot": "cyan",
-      "title": "API at every layer",
-      "items": [
-        "No direct database, Redis or internal service access",
-        "Third-order checks use admin or observability APIs"
-      ]
-    }
-  ]
+  {
+   "id": "stop",
+   "label": "Stops at first failure",
+   "variant": "exception"
+  }
+ ],
+ "mainPath": [
+  "action",
+  "primary",
+  "second",
+  "third",
+  "pass"
+ ],
+ "nodes": [
+  {
+   "id": "action",
+   "lane": "layers",
+   "col": 0,
+   "type": "external",
+   "label": "Action",
+   "sublabel": "POST /orders",
+   "width": 112
+  },
+  {
+   "id": "primary",
+   "lane": "layers",
+   "col": 1,
+   "type": "backend",
+   "label": "1 Primary",
+   "sublabel": "status and body",
+   "width": 112
+  },
+  {
+   "id": "second",
+   "lane": "layers",
+   "col": 2,
+   "type": "backend",
+   "label": "2 Second-order",
+   "sublabel": "GET /cart",
+   "width": 112
+  },
+  {
+   "id": "third",
+   "lane": "layers",
+   "col": 3,
+   "type": "backend",
+   "label": "3 Third-order",
+   "sublabel": "audit log, totals",
+   "width": 112
+  },
+  {
+   "id": "pass",
+   "lane": "layers",
+   "col": 5,
+   "type": "frontend",
+   "label": "Journey passes",
+   "sublabel": "all layers held",
+   "width": 112
+  },
+  {
+   "id": "fail1",
+   "lane": "stop",
+   "col": 1,
+   "type": "security",
+   "label": "Validation",
+   "sublabel": "routing, controller",
+   "width": 112
+  },
+  {
+   "id": "fail2",
+   "lane": "stop",
+   "col": 2,
+   "type": "security",
+   "label": "Persistence",
+   "sublabel": "downstream effects",
+   "width": 112
+  },
+  {
+   "id": "fail3",
+   "lane": "stop",
+   "col": 3,
+   "type": "security",
+   "label": "Audit",
+   "sublabel": "observability, consistency",
+   "width": 136
+  }
+ ],
+ "edges": [
+  {
+   "id": "act-primary",
+   "from": "action",
+   "to": "primary",
+   "variant": "emphasis"
+  },
+  {
+   "id": "primary-second",
+   "from": "primary",
+   "to": "second",
+   "label": "holds",
+   "variant": "emphasis"
+  },
+  {
+   "id": "second-third",
+   "from": "second",
+   "to": "third",
+   "label": "holds",
+   "variant": "emphasis"
+  },
+  {
+   "id": "third-pass",
+   "from": "third",
+   "to": "pass",
+   "label": "holds",
+   "variant": "emphasis"
+  },
+  {
+   "id": "primary-fail",
+   "from": "primary",
+   "to": "fail1",
+   "label": "fails",
+   "variant": "security",
+   "role": "error",
+   "route": "drop"
+  },
+  {
+   "id": "second-fail",
+   "from": "second",
+   "to": "fail2",
+   "label": "fails",
+   "variant": "security",
+   "role": "error",
+   "route": "drop"
+  },
+  {
+   "id": "third-fail",
+   "from": "third",
+   "to": "fail3",
+   "label": "fails",
+   "variant": "security",
+   "role": "error",
+   "route": "drop"
+  }
+ ],
+ "cards": [
+  {
+   "dot": "rose",
+   "title": "Hard assertions only",
+   "items": [
+    "The failing layer names the subsystem to investigate",
+    "Every assertion is hard (Pattern 1.6)",
+    "No soft asserts or collect-all-failures",
+    "A failure at layer N means the layers before it held"
+   ]
+  },
+  {
+   "dot": "cyan",
+   "title": "API at every layer",
+   "items": [
+    "No direct database, Redis or internal service access",
+    "Second-order: a different endpoint than the one that acted",
+    "Third-order: the audit log through the admin API; totals through a second user endpoint"
+   ]
+  }
+ ]
 }

@@ -8,12 +8,12 @@ This example shows the core routing logic:
 
 1. **Intent Classification** — Parse Bash commands to detect what the agent is trying to do
 2. **Environment Detection** — Check available tools (RTK, jcodemunch) at session start
-3. **Native Structured Tool Routing** — Route commands to the native or structured tool for the job, based on intent + environment
+3. **Native Structured Tool Routing** — Route commands to the native or structured tool for the job, based on the first matching rule and the environment
 4. **Resolution** — Return `allow`, `advise` (use different tool), or `block`
 
 ## Architecture
 
-![Guardrail middleware routing: findMatchingRule picks the first of eight rules for the whole Bash command, getEnvironment reports RTK and a jcodemunch index, and resolve returns block for sed -i or awk with a redirect, advise for grep, cat and find when a tool is present, or allow; classifyCommand runs separately and resolve does not read its result; the PreToolUse hook that exits 2 or denies, or exits 0, is not included](../../docs/diagrams/guardrail-middleware-architecture.png)
+![Guardrail middleware routing: findMatchingRule picks the first of eight rules for the whole Bash command, getEnvironment reports RTK and a jcodemunch index, and resolve returns block for sed -i or awk with a redirect, advise for grep, cat and find when a tool is present, or allow; classifyCommand runs separately and resolve does not read its result; the PreToolUse hook that exits 2 or denies for block or an advise that replaces the command, and otherwise exits 0, is not included](../../docs/diagrams/guardrail-middleware-architecture.png)
 
 ## File Structure
 
@@ -21,7 +21,7 @@ This example shows the core routing logic:
 src/
 ├── core/
 │   ├── intent.ts        # Intent classifier (command → intent)
-│   ├── router.ts        # Router (intent + env → resolution)
+│   ├── router.ts        # Router (rule + env → resolution)
 │   └── environment.ts   # Environment detector (RTK, jcodemunch)
 └── config/
     └── routing.config.ts # Data-driven routing rules
@@ -38,7 +38,7 @@ import { findMatchingRule } from './config/routing.config.js';
 // Agent issues a command
 const command = 'grep -r "export.*function" ./src';
 
-// 1. Classify intent
+// 1. Classify intent (informational: resolve() does not read it)
 const intents = classifyCommand(command);
 // → ['text_search']
 

@@ -15,9 +15,9 @@ workflow may run without a person. For teams using Claude Code or a similar agen
 
 ## The Pattern Layers
 
-Each layer depends on the ones below it: L1 verification needs L0's navigable structure, and L2 enforcement needs L1's checks. L3 is optional. When unsure, the [adoption guide](docs/cross-cutting/adoption-guide.md) starts with containment, then L0.
+L1 verification needs L0's navigable structure, L2 enforcement needs L1's checks, and L4 checks and measures L0 to L2. L3 is optional and uses L2's hooks. When unsure, the [adoption guide](docs/cross-cutting/adoption-guide.md) starts with containment, then L0.
 
-![The five layers: L1 needs L0's navigable structure, L2 needs L1's checks, L4 checks and measures L0 to L2, and optional L3 uses L2 hooks](docs/diagrams/layers-l0-l4.png)
+![The five layers: L1 needs L0's navigable structure, L2 needs L1's checks, L4 checks and measures L0 to L2 and measures L3's cost, and optional L3 uses L2 hooks](docs/diagrams/layers-l0-l4.png)
 
 ### Layer Overviews
 

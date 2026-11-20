@@ -1,7 +1,8 @@
 /**
  * Smart Router
  *
- * Routes commands to optimal tools based on intent and environment.
+ * Resolves the first matching routing rule against the environment.
+ * The rule's intent field is metadata; resolve() does not read it.
  * Returns resolutions: allow, advise (use different tool), or block.
  */
 

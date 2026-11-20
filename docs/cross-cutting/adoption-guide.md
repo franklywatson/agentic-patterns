@@ -6,10 +6,11 @@ reviewed: 2026-11-19
 # Adoption Guide
 
 For a team deciding what to adopt first. Run the assessment below, pick the path that matches your largest gap and
-follow its steps in order. The paths are this library's suggestions, not a record of what other teams did. The layers
-build on the ones below them, with L3 optional ([README](../../README.md#the-pattern-layers)), and they are not a
-maturity scale. Finishing L4 does not make any workflow ready to run unattended: each workflow's grant and the
-repository's cap decide that ([How Far to Let Go](#how-far-to-let-go)).
+follow its steps in order. The paths are this library's suggestions, not a record of what other teams did. L1 needs
+L0's structure, L2 needs L1's checks, L4 measures L0 to L2, and the optional L3 uses L2's hooks
+([README](../../README.md#the-pattern-layers)). The layers are not a maturity scale. Finishing L4 does not make
+any workflow ready to run unattended: each workflow's grant and the repository's cap decide that ([How Far to Let
+Go](#how-far-to-let-go)).
 
 ---
 

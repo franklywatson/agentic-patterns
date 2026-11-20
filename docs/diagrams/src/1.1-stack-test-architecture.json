@@ -19,6 +19,9 @@
         },
         "external": {
           "label": "Outside the stack"
+        },
+        "cloud": {
+          "label": "Starts and removes the project"
         }
       }
     }
@@ -31,25 +34,25 @@
       "sublabel": "Jest or pytest, one journey",
       "pos": [
         40,
-        60
+        186
       ],
       "size": [
-        230,
-        64
+        200,
+        56
       ]
     },
     {
       "id": "toolkit",
       "type": "backend",
       "label": "Stack toolkit",
-      "sublabel": "ports, compose, health, auth, cleanup",
+      "sublabel": "ports, health, auth, cleanup",
       "pos": [
         40,
-        200
+        370
       ],
       "size": [
-        230,
-        80
+        190,
+        64
       ]
     },
     {
@@ -58,12 +61,12 @@
       "label": "Application",
       "sublabel": "API under test, no mocks",
       "pos": [
-        430,
-        40
+        400,
+        140
       ],
       "size": [
-        160,
-        260
+        150,
+        196
       ]
     },
     {
@@ -72,12 +75,12 @@
       "label": "Database",
       "sublabel": "PostgreSQL",
       "pos": [
-        690,
-        40
+        610,
+        140
       ],
       "size": [
-        150,
-        64
+        130,
+        52
       ]
     },
     {
@@ -86,12 +89,12 @@
       "label": "Cache",
       "sublabel": "Redis",
       "pos": [
-        690,
-        138
+        610,
+        212
       ],
       "size": [
-        150,
-        64
+        130,
+        52
       ]
     },
     {
@@ -100,12 +103,27 @@
       "label": "Queue",
       "sublabel": "message queue",
       "pos": [
-        690,
-        236
+        610,
+        284
+      ],
+      "size": [
+        130,
+        52
+      ]
+    },
+    {
+      "id": "compose",
+      "type": "cloud",
+      "icon": "none",
+      "label": "docker compose -p",
+      "sublabel": "project name per run",
+      "pos": [
+        400,
+        376
       ],
       "size": [
         150,
-        64
+        52
       ]
     },
     {
@@ -114,12 +132,12 @@
       "label": "External dependency",
       "sublabel": "sandbox or testnet",
       "pos": [
-        430,
-        400
+        400,
+        40
       ],
       "size": [
-        160,
-        64
+        150,
+        52
       ]
     }
   ],
@@ -131,7 +149,8 @@
         "app",
         "db",
         "cache",
-        "queue"
+        "queue",
+        "compose"
       ]
     }
   ],
@@ -152,7 +171,7 @@
     {
       "id": "toolkit-stack",
       "from": "toolkit",
-      "to": "app",
+      "to": "compose",
       "label": "up, health, down -v",
       "variant": "dashed"
     },

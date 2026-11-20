@@ -1,311 +1,320 @@
 {
-  "schema_version": 2,
-  "diagram_type": "workflow",
-  "meta": {
-    "title": "Guardrail Middleware Routing",
-    "locale": "en",
-    "quality_profile": "showcase",
-    "output": "docs/diagrams/src/guardrail-middleware-architecture.html",
-    "repository": {
-      "url": "https://github.com/franklywatson/agentic-patterns",
-      "provider": "github",
-      "revision": "f367c87e2708efcb513e2e24889788296fb5df36"
-    }
+ "schema_version": 2,
+ "diagram_type": "workflow",
+ "meta": {
+  "title": "Guardrail Middleware Routing",
+  "locale": "en",
+  "quality_profile": "showcase",
+  "output": "docs/diagrams/src/guardrail-middleware-architecture.html",
+  "repository": {
+   "url": "https://github.com/franklywatson/agentic-patterns",
+   "provider": "github",
+   "revision": "f367c87e2708efcb513e2e24889788296fb5df36"
   },
-  "lanes": [
+  "legend": {
+   "mode": "hidden"
+  }
+ },
+ "lanes": [
+  {
+   "id": "input",
+   "label": "Input"
+  },
+  {
+   "id": "match",
+   "label": "Match"
+  },
+  {
+   "id": "env",
+   "label": "Environment"
+  },
+  {
+   "id": "resolve",
+   "label": "Resolve"
+  },
+  {
+   "id": "result",
+   "label": "Resolution"
+  },
+  {
+   "id": "hook",
+   "label": "Your hook (not included)",
+   "variant": "exception"
+  }
+ ],
+ "mainPath": [
+  "command",
+  "rule",
+  "resolveNode",
+  "advise"
+ ],
+ "nodes": [
+  {
+   "id": "command",
+   "lane": "input",
+   "col": 1,
+   "type": "external",
+   "label": "Bash command",
+   "sublabel": "tool_input.command",
+   "sources": [
     {
-      "id": "input",
-      "label": "Input"
-    },
-    {
-      "id": "match",
-      "label": "Match"
-    },
-    {
-      "id": "env",
-      "label": "Environment"
-    },
-    {
-      "id": "resolve",
-      "label": "Resolve"
-    },
-    {
-      "id": "result",
-      "label": "Resolution"
-    },
-    {
-      "id": "hook",
-      "label": "Your hook (not included)",
-      "variant": "exception"
+     "path": "examples/guardrails/README.md",
+     "line": 116,
+     "end_line": 120
     }
-  ],
-  "mainPath": [
-    "command",
-    "rule",
-    "resolveNode",
-    "advise"
-  ],
-  "nodes": [
+   ],
+   "width": 150
+  },
+  {
+   "id": "rule",
+   "lane": "match",
+   "col": 1,
+   "type": "backend",
+   "label": "findMatchingRule()",
+   "sublabel": "first of 8 rules, whole string",
+   "sources": [
     {
-      "id": "command",
-      "lane": "input",
-      "col": 1,
-      "type": "external",
-      "label": "Bash command",
-      "sublabel": "tool_input.command",
-      "sources": [
-        {
-          "path": "examples/guardrails/README.md",
-          "line": 116,
-          "end_line": 120
-        }
-      ],
-      "width": 176
+     "path": "examples/guardrails/src/config/routing.config.ts",
+     "line": 19,
+     "end_line": 121
     },
     {
-      "id": "rule",
-      "lane": "match",
-      "col": 1,
-      "type": "backend",
-      "label": "findMatchingRule()",
-      "sublabel": "first of 8 rules, whole string",
-      "sources": [
-        {
-          "path": "examples/guardrails/src/config/routing.config.ts",
-          "line": 19,
-          "end_line": 121
-        },
-        {
-          "path": "examples/guardrails/src/config/routing.config.ts",
-          "line": 129,
-          "end_line": 136
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "classify",
-      "lane": "match",
-      "col": 3,
-      "type": "backend",
-      "label": "classifyCommand()",
-      "sublabel": "Intent[]; resolve ignores it",
-      "sources": [
-        {
-          "path": "examples/guardrails/src/core/intent.ts",
-          "line": 32,
-          "end_line": 51
-        },
-        {
-          "path": "examples/guardrails/src/core/intent.ts",
-          "line": 90,
-          "end_line": 93
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "envNode",
-      "lane": "env",
-      "col": 2,
-      "type": "database",
-      "label": "getEnvironment()",
-      "sublabel": "which rtk; .jcodemunch/ dir",
-      "sources": [
-        {
-          "path": "examples/guardrails/src/core/environment.ts",
-          "line": 29,
-          "end_line": 58
-        },
-        {
-          "path": "examples/guardrails/src/core/environment.ts",
-          "line": 86,
-          "end_line": 122
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "resolveNode",
-      "lane": "resolve",
-      "col": 1,
-      "type": "security",
-      "label": "resolve(rule, env)",
-      "sublabel": "rtk > jcodemunch > general",
-      "sources": [
-        {
-          "path": "examples/guardrails/src/core/router.ts",
-          "line": 47,
-          "end_line": 77
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "block",
-      "lane": "result",
-      "col": 0,
-      "type": "security",
-      "label": "block",
-      "sublabel": "sed -i, awk > file",
-      "sources": [
-        {
-          "path": "examples/guardrails/src/config/routing.config.ts",
-          "line": 20,
-          "end_line": 40
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "advise",
-      "lane": "result",
-      "col": 1,
-      "type": "messagebus",
-      "label": "advise",
-      "sublabel": "grep, cat, find: a tool",
-      "sources": [
-        {
-          "path": "examples/guardrails/src/config/routing.config.ts",
-          "line": 42,
-          "end_line": 92
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "allow",
-      "lane": "result",
-      "col": 2,
-      "type": "cloud",
-      "label": "allow",
-      "sublabel": "docker, fd, anything else",
-      "sources": [
-        {
-          "path": "examples/guardrails/src/config/routing.config.ts",
-          "line": 93,
-          "end_line": 121
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "deny",
-      "lane": "hook",
-      "col": 0,
-      "type": "external",
-      "label": "Exit 2 or deny",
-      "sublabel": "reason back to Claude",
-      "sources": [
-        {
-          "path": "examples/guardrails/README.md",
-          "line": 124,
-          "end_line": 127
-        }
-      ],
-      "width": 176
-    },
-    {
-      "id": "run",
-      "lane": "hook",
-      "col": 2,
-      "type": "external",
-      "label": "Exit 0",
-      "sublabel": "the command runs",
-      "sources": [
-        {
-          "path": "examples/guardrails/README.md",
-          "line": 128
-        }
-      ],
-      "width": 176
+     "path": "examples/guardrails/src/config/routing.config.ts",
+     "line": 129,
+     "end_line": 136
     }
-  ],
-  "edges": [
+   ],
+   "width": 164
+  },
+  {
+   "id": "classify",
+   "lane": "match",
+   "col": 4,
+   "type": "backend",
+   "label": "classifyCommand()",
+   "sublabel": "Intent[]; resolve ignores it",
+   "sources": [
     {
-      "id": "command-rule",
-      "from": "command",
-      "to": "rule",
-      "variant": "emphasis"
+     "path": "examples/guardrails/src/core/intent.ts",
+     "line": 32,
+     "end_line": 51
     },
     {
-      "id": "command-classify",
-      "from": "command",
-      "to": "classify",
-      "label": "separate call",
-      "variant": "dashed",
-      "role": "branch"
-    },
-    {
-      "id": "rule-resolve",
-      "from": "rule",
-      "to": "resolveNode",
-      "label": "rule",
-      "variant": "emphasis"
-    },
-    {
-      "id": "env-resolve",
-      "from": "envNode",
-      "to": "resolveNode",
-      "label": "env"
-    },
-    {
-      "id": "resolve-block",
-      "from": "resolveNode",
-      "to": "block",
-      "variant": "security"
-    },
-    {
-      "id": "resolve-advise",
-      "from": "resolveNode",
-      "to": "advise",
-      "variant": "emphasis"
-    },
-    {
-      "id": "resolve-allow",
-      "from": "resolveNode",
-      "to": "allow"
-    },
-    {
-      "id": "block-deny",
-      "from": "block",
-      "to": "deny",
-      "variant": "security",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "advise-deny",
-      "from": "advise",
-      "to": "deny",
-      "label": "to replace",
-      "variant": "emphasis"
-    },
-    {
-      "id": "allow-run",
-      "from": "allow",
-      "to": "run"
+     "path": "examples/guardrails/src/core/intent.ts",
+     "line": 90,
+     "end_line": 93
     }
-  ],
-  "cards": [
+   ],
+   "width": 164
+  },
+  {
+   "id": "envNode",
+   "lane": "env",
+   "col": 3,
+   "type": "database",
+   "label": "getEnvironment()",
+   "sublabel": "which rtk; .jcodemunch/ dir",
+   "sources": [
     {
-      "dot": "cyan",
-      "title": "Routing table (routing.config.ts)",
-      "items": [
-        "sed -i and awk with a redirect: block in every environment",
-        "grep, rg: rtk grep if RTK is installed, jcodemunch search_text if the repo is indexed, else allow",
-        "cat: the Read tool; find: jcodemunch get_file_tree if indexed, else allow",
-        "fd, docker and every other command: allow"
-      ]
+     "path": "examples/guardrails/src/core/environment.ts",
+     "line": 29,
+     "end_line": 58
     },
     {
-      "dot": "amber",
-      "title": "What the code does not do",
-      "items": [
-        "No hook script ships; you write the PreToolUse hook on the Bash tool",
-        "The environment cache lives in process memory for 30 minutes; a hook starts fresh per call, so write detection to a file",
-        "String matching misses sed -E -i, perl -pi and commands built at runtime; docker is allowed unchecked"
-      ]
+     "path": "examples/guardrails/src/core/environment.ts",
+     "line": 86,
+     "end_line": 122
     }
-  ]
+   ],
+   "width": 150
+  },
+  {
+   "id": "resolveNode",
+   "lane": "resolve",
+   "col": 1,
+   "type": "security",
+   "label": "resolve(rule, env)",
+   "sublabel": "rtk > jcodemunch > general > fallback > _",
+   "sources": [
+    {
+     "path": "examples/guardrails/src/core/router.ts",
+     "line": 47,
+     "end_line": 77
+    }
+   ],
+   "width": 216
+  },
+  {
+   "id": "block",
+   "lane": "result",
+   "col": 0,
+   "type": "security",
+   "label": "block",
+   "sublabel": "sed -i, awk > file",
+   "sources": [
+    {
+     "path": "examples/guardrails/src/config/routing.config.ts",
+     "line": 20,
+     "end_line": 40
+    }
+   ],
+   "width": 150
+  },
+  {
+   "id": "advise",
+   "lane": "result",
+   "col": 1,
+   "type": "messagebus",
+   "label": "advise",
+   "sublabel": "grep, cat, find: a tool",
+   "sources": [
+    {
+     "path": "examples/guardrails/src/config/routing.config.ts",
+     "line": 42,
+     "end_line": 92
+    }
+   ],
+   "width": 150
+  },
+  {
+   "id": "allow",
+   "lane": "result",
+   "col": 3,
+   "type": "cloud",
+   "label": "allow",
+   "sublabel": "docker, fd, anything else",
+   "sources": [
+    {
+     "path": "examples/guardrails/src/config/routing.config.ts",
+     "line": 93,
+     "end_line": 121
+    }
+   ],
+   "width": 150
+  },
+  {
+   "id": "deny",
+   "lane": "hook",
+   "col": 0,
+   "type": "external",
+   "label": "Exit 2 or deny",
+   "sublabel": "reason back to Claude",
+   "sources": [
+    {
+     "path": "examples/guardrails/README.md",
+     "line": 124,
+     "end_line": 127
+    }
+   ],
+   "width": 150
+  },
+  {
+   "id": "run",
+   "lane": "hook",
+   "col": 3,
+   "type": "external",
+   "label": "Exit 0",
+   "sublabel": "the command runs",
+   "sources": [
+    {
+     "path": "examples/guardrails/README.md",
+     "line": 128
+    }
+   ],
+   "width": 150
+  }
+ ],
+ "edges": [
+  {
+   "id": "command-rule",
+   "from": "command",
+   "to": "rule",
+   "variant": "emphasis"
+  },
+  {
+   "id": "command-classify",
+   "from": "command",
+   "to": "classify",
+   "label": "separate call",
+   "variant": "dashed",
+   "role": "branch"
+  },
+  {
+   "id": "rule-resolve",
+   "from": "rule",
+   "to": "resolveNode",
+   "label": "rule",
+   "variant": "emphasis"
+  },
+  {
+   "id": "env-resolve",
+   "from": "envNode",
+   "to": "resolveNode",
+   "label": "env"
+  },
+  {
+   "id": "resolve-block",
+   "from": "resolveNode",
+   "to": "block",
+   "variant": "security"
+  },
+  {
+   "id": "resolve-advise",
+   "from": "resolveNode",
+   "to": "advise",
+   "variant": "emphasis"
+  },
+  {
+   "id": "resolve-allow",
+   "from": "resolveNode",
+   "to": "allow"
+  },
+  {
+   "id": "block-deny",
+   "from": "block",
+   "to": "deny",
+   "variant": "security",
+   "fromSide": "bottom",
+   "toSide": "top"
+  },
+  {
+   "id": "advise-deny",
+   "from": "advise",
+   "to": "deny",
+   "label": "to replace",
+   "variant": "emphasis"
+  },
+  {
+   "id": "allow-run",
+   "from": "allow",
+   "to": "run"
+  },
+  {
+   "id": "advise-run",
+   "from": "advise",
+   "to": "run",
+   "label": "otherwise"
+  }
+ ],
+ "cards": [
+  {
+   "dot": "cyan",
+   "title": "Routing table (routing.config.ts)",
+   "items": [
+    "sed -i and awk with a redirect: block in every environment",
+    "grep, rg: rtk grep if RTK is installed, jcodemunch search_text if the repo is indexed, else allow",
+    "cat: the Read tool; find: jcodemunch get_file_tree if indexed, else allow",
+    "fd, docker and every other command: allow"
+   ]
+  },
+  {
+   "dot": "amber",
+   "title": "What the code does not do",
+   "items": [
+    "No hook script ships; you write the PreToolUse hook on the Bash tool",
+    "The environment cache lives in process memory for 30 minutes; a hook starts fresh per call, so write detection to a file",
+    "String matching misses sed -E -i, perl -pi and commands built at runtime; docker is allowed unchecked"
+   ]
+  }
+ ]
 }

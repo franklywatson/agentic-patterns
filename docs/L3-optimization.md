@@ -180,7 +180,7 @@ larger class, and a skipped file, an unrun test or an unchecked result means hig
 high-tier paths of the [risk model](L1-patterns/1.8-reversibility-blast-radius.md#risk-model) up one model class is
 this library's design.
 
-![Model and effort per task: a mechanical edit starts on a small model at low effort, routine implementation on a mid model at default effort, a bug fix on a mid model at high effort and design or review on a large model at high effort or above; work on a high-tier path moves up one model class; model and effort are set before the run; when a run fails, check the prompt, tools and context, then rerun on a larger class for a wrong answer given full context or at higher effort for a skipped file or unrun test](diagrams/task-routing-flow.png)
+![Model and effort per task: a mechanical edit starts on a small model at low effort, routine implementation on a mid model at default effort, a bug fix on a mid model at high effort and design or review on a large model at high effort or above; work on a high-tier path moves up one model class when a larger one exists; model and effort are set before the run; when a run fails, check the prompt, tools and context, then rerun on a larger class for a wrong answer given full context or at higher effort for a skipped file or unrun test](diagrams/task-routing-flow.png)
 
 **Metric.** Judge a setting by cost per merged change ([Pattern
 4.4](L4-standards-measurement.md#pattern-44--agentic-development-metrics)), not tokens per session. Anthropic's
