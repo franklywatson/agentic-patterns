@@ -42,7 +42,12 @@ SEEDS = Path(__file__).resolve().parent / "seeds"
 DEFAULT_LOG = Path(__file__).resolve().parent / "run-log.jsonl"
 SKIP_DIRS = {".git", ".worktrees", "node_modules", ".superpowers", ".venv", ".pytest_cache", "__pycache__"}
 EXCLUDE = {"scripts/task-bank"}
-LINK_NODE_MODULES = ["node_modules", "examples/autonomy/typescript/node_modules"]
+LINK_NODE_MODULES = [
+    "node_modules",
+    "examples/autonomy/typescript/node_modules",
+    "examples/stack-test/typescript/node_modules",
+    "examples/repair-loop/typescript/node_modules",
+]
 COMMAND_TIMEOUT = 900
 
 

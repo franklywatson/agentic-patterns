@@ -204,8 +204,9 @@ It does not record the effort level or the harness; write those in this table by
    (`~/.claude/CLAUDE.md`, `~/.claude/rules/`) and auto memory load into every Claude Code session
    ([memory](https://code.claude.com/docs/en/memory)), so run under a user profile without them, or set
    `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` and record what else loaded.
-2. Build the autonomy CLI once (`cd examples/autonomy/typescript && npm ci && npm run build`). Tasks that need Docker
-   need a running Docker daemon.
+2. Build the autonomy CLI once (`cd examples/autonomy/typescript && npm ci && npm run build`) and run `npm ci` in
+   `examples/stack-test/typescript` and `examples/repair-loop/typescript`; the runner links these `node_modules`
+   folders into each scratch copy. Tasks that need Docker need a running Docker daemon.
 3. Run `python3 scripts/task-bank/run.py --agent-cmd "<harness command>" --model <id>`. `--model` only writes the
    id to the run log; it is not passed to the harness command. The runner makes a fresh scratch copy of the
    repository for each task, without `scripts/task-bank/`, plants any seed, removes each path named by `--remove`,
