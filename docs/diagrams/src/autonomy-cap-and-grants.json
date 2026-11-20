@@ -1,0 +1,323 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Autonomy Cap and Grants",
+    "output": "docs/diagrams/src/autonomy-cap-and-grants.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Capping dimension"
+        },
+        "external": {
+          "label": "Census dimension that does not cap"
+        },
+        "messagebus": {
+          "label": "Cap: lowest capping position"
+        },
+        "backend": {
+          "label": "Grant: a person merges every change"
+        },
+        "cloud": {
+          "label": "Grant: may merge some low-tier changes with no person"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "platform",
+      "type": "security",
+      "icon": "none",
+      "label": "Platform",
+      "sublabel": "agent identity, gateway, isolation",
+      "pos": [
+        40,
+        82
+      ],
+      "size": [
+        210,
+        48
+      ]
+    },
+    {
+      "id": "governance",
+      "type": "security",
+      "icon": "none",
+      "label": "Security and governance",
+      "sublabel": "sandbox, policy, workflow grants",
+      "pos": [
+        40,
+        160
+      ],
+      "size": [
+        210,
+        48
+      ]
+    },
+    {
+      "id": "ownership",
+      "type": "security",
+      "icon": "none",
+      "label": "Production ownership",
+      "sublabel": "owners, stop and restore authority",
+      "pos": [
+        40,
+        238
+      ],
+      "size": [
+        210,
+        48
+      ]
+    },
+    {
+      "id": "measuring",
+      "type": "security",
+      "icon": "none",
+      "label": "Measuring value",
+      "sublabel": "baseline, flow and stability",
+      "pos": [
+        40,
+        316
+      ],
+      "size": [
+        210,
+        48
+      ]
+    },
+    {
+      "id": "context",
+      "type": "external",
+      "icon": "none",
+      "label": "Shared context",
+      "sublabel": "instruction files, connectors",
+      "pos": [
+        40,
+        470
+      ],
+      "size": [
+        220,
+        48
+      ]
+    },
+    {
+      "id": "operating",
+      "type": "external",
+      "icon": "none",
+      "label": "Team operating model",
+      "sublabel": "review practice, conventions",
+      "pos": [
+        280,
+        470
+      ],
+      "size": [
+        220,
+        48
+      ]
+    },
+    {
+      "id": "skill",
+      "type": "external",
+      "icon": "none",
+      "label": "Individual and team skill",
+      "sublabel": "unknown counts as C2",
+      "pos": [
+        520,
+        470
+      ],
+      "size": [
+        220,
+        48
+      ]
+    },
+    {
+      "id": "cap",
+      "type": "messagebus",
+      "icon": "none",
+      "label": "Cap C1-C5",
+      "sublabel": "lowest of four; no evidence = C1",
+      "pos": [
+        300,
+        50
+      ],
+      "size": [
+        180,
+        346
+      ]
+    },
+    {
+      "id": "a1",
+      "type": "backend",
+      "icon": "none",
+      "label": "A1 Assisted",
+      "sublabel": "person applies each change",
+      "pos": [
+        610,
+        40
+      ],
+      "size": [
+        230,
+        56
+      ]
+    },
+    {
+      "id": "a2",
+      "type": "backend",
+      "icon": "none",
+      "label": "A2 Reviewed",
+      "sublabel": "agent commits; person opens PR, merges",
+      "pos": [
+        610,
+        118
+      ],
+      "size": [
+        230,
+        56
+      ]
+    },
+    {
+      "id": "a3",
+      "type": "backend",
+      "icon": "none",
+      "label": "A3 Gated",
+      "sublabel": "agent opens PRs; person merges",
+      "pos": [
+        610,
+        196
+      ],
+      "size": [
+        230,
+        56
+      ]
+    },
+    {
+      "id": "a4",
+      "type": "cloud",
+      "icon": "none",
+      "label": "A4 Unattended, reversible",
+      "sublabel": "merges R0-R1 at B0; person the rest",
+      "pos": [
+        610,
+        274
+      ],
+      "size": [
+        230,
+        56
+      ]
+    },
+    {
+      "id": "a5",
+      "type": "cloud",
+      "icon": "none",
+      "label": "A5 Portfolio-managed",
+      "sublabel": "A4 plus R2 at B0 on named paths",
+      "pos": [
+        610,
+        352
+      ],
+      "size": [
+        230,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Capping dimensions",
+      "wraps": [
+        "platform",
+        "governance",
+        "ownership",
+        "measuring"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Do not cap",
+      "wraps": [
+        "context",
+        "operating",
+        "skill"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "platform-cap",
+      "from": "platform",
+      "to": "cap"
+    },
+    {
+      "id": "governance-cap",
+      "from": "governance",
+      "to": "cap",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "ownership-cap",
+      "from": "ownership",
+      "to": "cap",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "measuring-cap",
+      "from": "measuring",
+      "to": "cap"
+    },
+    {
+      "id": "cap-a1",
+      "from": "cap",
+      "to": "a1",
+      "label": "any cap"
+    },
+    {
+      "id": "cap-a2",
+      "from": "cap",
+      "to": "a2",
+      "label": "cap C2+"
+    },
+    {
+      "id": "cap-a3",
+      "from": "cap",
+      "to": "a3",
+      "label": "cap C3+"
+    },
+    {
+      "id": "cap-a4",
+      "from": "cap",
+      "to": "a4",
+      "label": "cap C4+"
+    },
+    {
+      "id": "cap-a5",
+      "from": "cap",
+      "to": "a5",
+      "label": "cap C5"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Cap rule",
+      "items": [
+        "The cap is the lowest position among the four capping dimensions",
+        "A capping dimension that is absent, invalid or without evidence counts as C1",
+        "No grant may exceed the cap: autonomy check fails the CI job"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Grants",
+      "items": [
+        "A grant belongs to one workflow, not to an agent or a team",
+        "Below A4 a person merges every change",
+        "A repository without this library's files reads C1, which allows only A1"
+      ]
+    }
+  ]
+}

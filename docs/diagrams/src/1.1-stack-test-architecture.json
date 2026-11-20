@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Stack Test Architecture",
+    "output": "docs/diagrams/src/1.1-stack-test-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Application and test tooling"
+        },
+        "database": {
+          "label": "Data store"
+        },
+        "messagebus": {
+          "label": "Queue"
+        },
+        "external": {
+          "label": "Outside the stack"
+        },
+        "cloud": {
+          "label": "Starts and removes the project"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "runner",
+      "type": "external",
+      "label": "Stack test",
+      "sublabel": "Jest or pytest, one journey",
+      "pos": [
+        40,
+        186
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "toolkit",
+      "type": "backend",
+      "label": "Stack toolkit",
+      "sublabel": "ports, health, auth, cleanup",
+      "pos": [
+        40,
+        370
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "API under test, no mocks",
+      "pos": [
+        400,
+        140
+      ],
+      "size": [
+        150,
+        196
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Database",
+      "sublabel": "PostgreSQL",
+      "pos": [
+        610,
+        140
+      ],
+      "size": [
+        130,
+        52
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Cache",
+      "sublabel": "Redis",
+      "pos": [
+        610,
+        212
+      ],
+      "size": [
+        130,
+        52
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "Queue",
+      "sublabel": "message queue",
+      "pos": [
+        610,
+        284
+      ],
+      "size": [
+        130,
+        52
+      ]
+    },
+    {
+      "id": "compose",
+      "type": "cloud",
+      "icon": "none",
+      "label": "docker compose -p",
+      "sublabel": "project name per run",
+      "pos": [
+        400,
+        376
+      ],
+      "size": [
+        150,
+        52
+      ]
+    },
+    {
+      "id": "sandbox",
+      "type": "external",
+      "label": "External dependency",
+      "sublabel": "sandbox or testnet",
+      "pos": [
+        400,
+        40
+      ],
+      "size": [
+        150,
+        52
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Docker Compose project, one per run",
+      "wraps": [
+        "app",
+        "db",
+        "cache",
+        "queue",
+        "compose"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "runner-api",
+      "from": "runner",
+      "to": "app",
+      "label": "HTTP API only",
+      "variant": "emphasis"
+    },
+    {
+      "id": "runner-toolkit",
+      "from": "runner",
+      "to": "toolkit",
+      "label": "initialize, cleanup"
+    },
+    {
+      "id": "toolkit-stack",
+      "from": "toolkit",
+      "to": "compose",
+      "label": "up, health, down -v",
+      "variant": "dashed"
+    },
+    {
+      "id": "app-db",
+      "from": "app",
+      "to": "db",
+      "label": "SQL"
+    },
+    {
+      "id": "app-cache",
+      "from": "app",
+      "to": "cache",
+      "label": "cache"
+    },
+    {
+      "id": "app-queue",
+      "from": "app",
+      "to": "queue",
+      "label": "jobs"
+    },
+    {
+      "id": "app-sandbox",
+      "from": "app",
+      "to": "sandbox",
+      "label": "real API calls"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Test rules",
+      "items": [
+        "One atomic user journey per test",
+        "No mocks for services you own",
+        "Assert through the API; no direct database access",
+        "Toolkit is production code: unit-tested, throws on failure"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Run lifecycle",
+      "items": [
+        "Generate a compose file with dynamic ports",
+        "docker compose up -d, wait for health checks",
+        "Drive the journey over HTTP, assert effects",
+        "docker compose down -v"
+      ]
+    }
+  ]
+}

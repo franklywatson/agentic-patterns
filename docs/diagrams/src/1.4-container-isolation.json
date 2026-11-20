@@ -1,0 +1,216 @@
+{
+ "schema_version": 2,
+ "diagram_type": "workflow",
+ "meta": {
+  "title": "Container Isolation",
+  "output": "docs/diagrams/src/1.4-container-isolation.html",
+  "quality_profile": "showcase",
+  "locale": "en",
+  "legend": {
+   "entries": {
+    "backend": {
+     "label": "Test tooling step"
+    },
+    "cloud": {
+     "label": "docker compose command"
+    },
+    "external": {
+     "label": "Journeys"
+    },
+    "database": {
+     "label": "Volumes"
+    }
+   }
+  }
+ },
+ "lanes": [
+  {
+   "id": "project",
+   "label": "Compose project scoping"
+  },
+  {
+   "id": "file",
+   "label": "Per-run compose file"
+  },
+  {
+   "id": "ports",
+   "label": "Dynamic port allocation"
+  },
+  {
+   "id": "volumes",
+   "label": "Transient volumes"
+  }
+ ],
+ "phases": [
+  {
+   "id": "setup",
+   "label": "Set up",
+   "fromCol": 0,
+   "toCol": 2
+  },
+  {
+   "id": "run",
+   "label": "Run",
+   "fromCol": 3,
+   "toCol": 3,
+   "variant": "emphasis"
+  },
+  {
+   "id": "teardown",
+   "label": "Tear down, every test",
+   "fromCol": 4,
+   "toCol": 5
+  }
+ ],
+ "mainPath": [
+  "name",
+  "alloc",
+  "write",
+  "up",
+  "journeys",
+  "down",
+  "rm"
+ ],
+ "nodes": [
+  {
+   "id": "name",
+   "lane": "project",
+   "col": 0,
+   "type": "backend",
+   "label": "Name the project",
+   "sublabel": "stacktest-{pid}-{random}",
+   "width": 144
+  },
+  {
+   "id": "alloc",
+   "lane": "ports",
+   "col": 0,
+   "type": "backend",
+   "label": "Allocate ports",
+   "sublabel": "10000-65535, confirmed free",
+   "width": 152
+  },
+  {
+   "id": "write",
+   "lane": "file",
+   "col": 1,
+   "type": "backend",
+   "label": "Write compose copy",
+   "sublabel": "named by test, pid, random, time",
+   "width": 176
+  },
+  {
+   "id": "up",
+   "lane": "project",
+   "col": 2,
+   "type": "cloud",
+   "label": "compose -p up",
+   "sublabel": "prefixes all resources",
+   "width": 136
+  },
+  {
+   "id": "journeys",
+   "lane": "project",
+   "col": 3,
+   "type": "external",
+   "label": "Run journeys",
+   "sublabel": "ports on 127.0.0.1",
+   "width": 120
+  },
+  {
+   "id": "down",
+   "lane": "project",
+   "col": 4,
+   "type": "cloud",
+   "label": "compose -p down",
+   "sublabel": "-v --remove-orphans",
+   "width": 136
+  },
+  {
+   "id": "gone",
+   "lane": "volumes",
+   "col": 5,
+   "type": "database",
+   "label": "Volumes removed",
+   "sublabel": "the project's named volumes",
+   "width": 152
+  },
+  {
+   "id": "rm",
+   "lane": "file",
+   "col": 4,
+   "type": "backend",
+   "label": "rm -f compose file",
+   "width": 136
+  }
+ ],
+ "edges": [
+  {
+   "id": "name-alloc",
+   "from": "name",
+   "to": "alloc",
+   "variant": "emphasis"
+  },
+  {
+   "id": "alloc-write",
+   "from": "alloc",
+   "to": "write",
+   "label": "ports",
+   "variant": "emphasis"
+  },
+  {
+   "id": "write-up",
+   "from": "write",
+   "to": "up",
+   "label": "-f file",
+   "variant": "emphasis"
+  },
+  {
+   "id": "up-journeys",
+   "from": "up",
+   "to": "journeys",
+   "variant": "emphasis"
+  },
+  {
+   "id": "journeys-down",
+   "from": "journeys",
+   "to": "down",
+   "variant": "emphasis"
+  },
+  {
+   "id": "down-rm",
+   "from": "down",
+   "to": "rm",
+   "label": "then",
+   "variant": "emphasis"
+  },
+  {
+   "id": "down-gone",
+   "from": "down",
+   "to": "gone",
+   "label": "-v",
+   "role": "branch"
+  }
+ ],
+ "cards": [
+  {
+   "dot": "rose",
+   "title": "Do not",
+   "items": [
+    "Set a fixed container_name: Compose cannot prefix it",
+    "Hardcode ports such as 3000, 5432, 6379",
+    "Share volumes between runs",
+    "Publish test ports on all interfaces"
+   ]
+  },
+  {
+   "dot": "amber",
+   "title": "Docker resource exhaustion",
+   "items": [
+    "Each project uses at least one network",
+    "Subnets come from a finite default address pool",
+    "down -v --remove-orphans and docker network prune keep runs under it"
+   ]
+  }
+ ]
+}

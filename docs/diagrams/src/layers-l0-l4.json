@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pattern Layers L0 to L4",
+    "output": "docs/diagrams/src/layers-l0-l4.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Layer on the path to verified or unattended work"
+        },
+        "external": {
+          "label": "Optional layer"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "l3",
+      "type": "external",
+      "icon": "none",
+      "label": "L3 Optimization (optional)",
+      "sublabel": "token cost; model and effort per task",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "l2",
+      "type": "backend",
+      "icon": "none",
+      "label": "L2 Behavioral Guardrails",
+      "sublabel": "where each rule is enforced",
+      "pos": [
+        40,
+        184
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "l1",
+      "type": "backend",
+      "icon": "none",
+      "label": "L1 Closed Loop Design and Verification",
+      "sublabel": "the agent proves its own change works",
+      "pos": [
+        40,
+        328
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "l0",
+      "type": "backend",
+      "icon": "none",
+      "label": "L0 Foundation",
+      "sublabel": "a codebase an agent can navigate",
+      "pos": [
+        40,
+        472
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "l4",
+      "type": "backend",
+      "icon": "none",
+      "label": "L4 Standards and Measurement",
+      "sublabel": "evidence, metrics, CI checks, run records",
+      "pos": [
+        450,
+        184
+      ],
+      "size": [
+        200,
+        352
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "l2-needs-l1",
+      "from": "l2",
+      "to": "l1",
+      "label": "needs L1's checks"
+    },
+    {
+      "id": "l1-needs-l0",
+      "from": "l1",
+      "to": "l0",
+      "label": "needs L0's navigable structure"
+    },
+    {
+      "id": "l3-uses-l2",
+      "from": "l3",
+      "to": "l2",
+      "label": "uses L2 hooks",
+      "variant": "dashed"
+    },
+    {
+      "id": "l4-checks-l2",
+      "from": "l4",
+      "to": "l2",
+      "label": "checks, measures",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "l4-checks-l1",
+      "from": "l4",
+      "to": "l1",
+      "label": "checks, measures",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "l4-checks-l0",
+      "from": "l4",
+      "to": "l0",
+      "label": "checks, measures",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "l4-measures-l3",
+      "from": "l4",
+      "to": "l3",
+      "label": "measures cost",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "How the layers relate",
+      "items": [
+        "L1 verification needs L0's navigable structure",
+        "L2 enforcement needs L1's checks",
+        "L4 checks that the other layers hold and measures what they change"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Optional and outside the layers",
+      "items": [
+        "L3 lowers token cost; it is not on the path to verified or unattended work",
+        "Finishing the layers grants nothing: the census cap and grants A1-A5 decide how far a workflow runs"
+      ]
+    }
+  ]
+}

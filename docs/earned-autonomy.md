@@ -55,6 +55,8 @@ The cap is the lowest position among those four, and no grant may exceed it: a r
 C2 on production ownership has a cap of C2. The cap has no exception field: a grant above it is a configuration
 error, and `autonomy check` fails the CI job ([Pattern A.3](#pattern-a3--promotion-demotion-and-the-cap-gate)).
 
+![The four capping dimensions set the cap at their lowest position, and a dimension without evidence counts as C1; the other three dimensions do not cap; each grant A1 to A5 needs a minimum cap, and a person merges every change below A4](diagrams/autonomy-cap-and-grants.png)
+
 The cap comes from the repository's own census and fails closed. A capping dimension that is absent from the profile,
 invalid or without evidence counts as C1. A missing profile, or one whose `generated` time is missing, not an ISO 8601
 date or time, or later than the current time, caps at C1. Only individual skill, which no file shows, can be `unknown`; it counts as C2 and does not cap.

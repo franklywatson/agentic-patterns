@@ -1,0 +1,7 @@
+# archify output: regenerate from the JSON sources with the archify skill:
+#   node <archify>/bin/archify.mjs finalize <type> docs/diagrams/src/<name>.json docs/diagrams/src/<name>.html --quality showcase
+#   (add --repo-root . when the JSON has meta.repository). Each PNG is a light-theme headless Chromium screenshot of that HTML.
+*.html
+*.delivery.json
+*.finalize*.json
+*.browser-check.json
