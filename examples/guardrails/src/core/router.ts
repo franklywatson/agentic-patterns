@@ -22,8 +22,9 @@ export type Resolution =
  * The router checks resolutions in priority order.
  */
 export interface RoutingRule {
-  /** Pattern to match commands ( RegExp ) */
-  match: RegExp;
+  /** Pattern to match commands (RegExp), or a predicate for rules that
+   *  need the quote-aware command scanner */
+  match: RegExp | ((command: string) => boolean);
   /** Intent type for this rule */
   intent: Intent;
   /** Resolution per environment/tool */

@@ -13,7 +13,7 @@ This example shows the core routing logic:
 
 ## Architecture
 
-![Guardrail middleware routing: findMatchingRule picks the first of eight rules for the whole Bash command, getEnvironment reports RTK and a jcodemunch index, and resolve returns block for sed -i or awk with a redirect, advise for grep, cat and find when a tool is present, or allow; classifyCommand runs separately and resolve does not read its result; the PreToolUse hook that exits 2 or denies for block or an advise that replaces the command, and otherwise exits 0, is not included](../../docs/diagrams/guardrail-middleware-architecture.png)
+![Guardrail middleware routing: findMatchingRule picks the first of eight rules for the whole Bash command, getEnvironment reports RTK and a jcodemunch index, and resolve returns block for sed -i or any command that redirects into a file, advise for grep, cat and find when a tool is present, or allow; classifyCommand runs separately and resolve does not read its result; the PreToolUse hook that exits 2 or denies for block or an advise that replaces the command, and otherwise exits 0, is not included](../../docs/diagrams/guardrail-middleware-architecture.png)
 
 ## File Structure
 
@@ -70,7 +70,7 @@ npm ci
 npm test        # runs `npm run build` (tsc) first, then node:test on dist/**/*.test.js
 ```
 
-Tests live in `src/__tests__/`. They cover intent classification, environment-aware resolution, the docker default-allow rule, and the known string-matching bypasses. Environment detection (`detectEnvironment`) shells out to `which rtk` and has no injectable seam, so the tests exercise `resolve()` with hand-built `Environment` values instead.
+Tests live in `src/__tests__/`. They cover intent classification, quote- and escape-aware splitting, redirect detection, the pipe rule, environment-aware resolution, the docker default-allow rule, and the known string-matching bypasses. Environment detection (`detectEnvironment`) shells out to `which rtk` and has no injectable seam, so the tests exercise `resolve()` with hand-built `Environment` values instead.
 
 ### String matching is a nudge, not a control
 
@@ -78,7 +78,8 @@ The classifier (`src/core/intent.ts`) and the router (`src/config/routing.config
 
 - The classifier is anchored to the start of each segment (`^\s*sed\s+(-i|--in-place)\b`). It misses `/usr/bin/sed -i` and `sed -E -i`.
 - The router rule is unanchored (`\bsed\s+(-i|--in-place)\b`). It catches `/usr/bin/sed -i` but also blocks harmless text such as `echo sed -i` (false positive). It misses `sed -E -i`.
-- Neither matches `perl -pi`, `python -c` file writes, or commands assembled at runtime (`$(echo sed) -i ...`).
+- Redirect detection is a quote-aware predicate, not a regex: a `>` inside an awk program is text, `2>&1` duplicates a descriptor, `/dev/null` writes no file and `>(cmd)` is process substitution, so none of the four is a write.
+- Neither matches `perl -pi`, `python -c` file writes, or commands assembled at runtime (`$(echo sed) -i ...`). The classifier does not split on a single `&`, so `sleep 5 & sed -i ...` passes as one segment.
 
 Use a containment boundary for limits that must hold.
 
@@ -90,7 +91,8 @@ discovery rules define no `general` entry, so they fall to `fallback` (allow) wh
 
 The intents and their rules are data in [`src/config/routing.config.ts`](src/config/routing.config.ts): `file_read`
 (advise the Read tool), `text_search` and `file_discovery` (advise an RTK or jcodemunch tool when present),
-`file_modify` (`sed -i`, `awk` with a redirect: block in every environment), `docker` and `pass_through` (allow).
+`file_modify` (`sed -i`, any command with a plain file redirect: block in every environment), `docker` and
+`pass_through` (allow).
 
 No rule advises Claude Code's Grep or Glob tools. On macOS, Linux and WSL Claude Code leaves both out of the default
 tool set and runs `grep` and `find` through Bash (see the
@@ -108,8 +110,9 @@ Relax](../../docs/L2-behavioral-guardrails.md#pattern-29--contain-before-you-rel
 
 ## Routing Rules
 
-Each rule in `src/config/routing.config.ts` has a `match` RegExp, an `intent` and per-environment `resolutions`
-(`rtk`, `jcodemunch`, `general`, `fallback`).
+Each rule in `src/config/routing.config.ts` has a `match` RegExp or predicate, an `intent` and per-environment
+`resolutions` (`rtk`, `jcodemunch`, `general`, `fallback`). The block rule for file redirects is a predicate: it
+reuses the classifier's quote-aware scanner, so `2>&1` and a quoted `>` do not trigger it.
 
 ## Integration with Claude Code
 

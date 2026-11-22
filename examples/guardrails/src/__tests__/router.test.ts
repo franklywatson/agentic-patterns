@@ -84,6 +84,21 @@ describe('block resolutions', () => {
   it('blocks awk with a redirect', () => {
     assert.equal(route("awk '{print}' in > out", env()).action, 'block');
   });
+
+  it('blocks a file redirect on any command, not only awk', () => {
+    assert.equal(route('echo x > f.txt', env()).action, 'block');
+    assert.equal(route('sort f >> out.txt', env()).action, 'block');
+    assert.equal(route('cat f | tee > out.txt', env()).action, 'block');
+  });
+
+  it('allows fd duplication and the /dev/null sink (no file is written)', () => {
+    assert.equal(route('awk -f p.awk in 2>&1', env()).action, 'allow');
+    assert.equal(route('grep x f.txt 2>/dev/null', env()).action, 'allow');
+  });
+
+  it('allows a quoted > inside an awk program', () => {
+    assert.equal(route(`awk '{print "a > b"}' f.txt`, env()).action, 'allow');
+  });
 });
 
 describe('docker is default-allow', () => {

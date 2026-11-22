@@ -11,6 +11,16 @@
 
 import type { RoutingRule } from '../core/router.js';
 import type { Intent } from '../core/intent.js';
+import { splitCompoundCommand, hasFileRedirect } from '../core/intent.js';
+
+/**
+ * True when any segment of the command redirects into a file. Quote-aware:
+ * fd duplication (`2>&1`), the `/dev/null` sink and process substitution do
+ * not match, so the block rule fires only when a file is written.
+ */
+function writesFile(command: string): boolean {
+  return splitCompoundCommand(command).some(({ text }) => hasFileRedirect(text));
+}
 
 /**
  * Routing rules checked in order.
@@ -29,12 +39,12 @@ export const ROUTING_RULES: readonly RoutingRule[] = [
     },
   },
   {
-    match: /\bawk\b.*>\s*\S+/,
+    match: writesFile,
     intent: 'file_modify',
     resolutions: {
       _: {
         action: 'block',
-        reason: 'awk with redirect is destructive. Use the Edit tool instead.',
+        reason: 'redirecting into a file is destructive. Use the Edit tool instead.',
       },
     },
   },
@@ -128,7 +138,8 @@ export const ROUTING_RULES: readonly RoutingRule[] = [
  */
 export function findMatchingRule(command: string): RoutingRule | null {
   for (const rule of ROUTING_RULES) {
-    if (rule.match.test(command)) {
+    const matched = typeof rule.match === 'function' ? rule.match(command) : rule.match.test(command);
+    if (matched) {
       return rule;
     }
   }
