@@ -1,6 +1,6 @@
 ---
-last-validated-model: claude-opus-5-5
-reviewed: 2026-11-19
+last-validated-model: glm-5.3
+reviewed: 2026-11-22
 ---
 
 # L3: Optimization (optional)
@@ -39,7 +39,7 @@ symbol-search server, or a file reader that takes a line range.
 | `grep`, `rg` | an indexed symbol or text search tool | allow |
 | `cat` | a file reader that takes a line range | allow |
 | `find` | an indexed file or symbol listing | allow |
-| `sed -i`, `awk ... > file` | not applicable | block |
+| `sed -i`, any command redirecting into a file | not applicable | block |
 | anything else | not applicable | allow |
 
 Do not advise a tool the session lacks. In Claude Code, the Grep and Glob tools are absent by default on macOS,
@@ -49,8 +49,10 @@ Linux and WSL. Claude searches with `find` and `grep` through the Bash tool, whe
 Grep tool" there points at a tool that is not present. The same page lists an `LSP` tool for jumping to
 definitions and finding references; it is a candidate target when the session has it.
 
-Classify each segment of a compound command (split on `&&`, `||`, `;`, `|`). Check destructive patterns first,
-so `sed -i` is never classified as a text search.
+Classify each segment of a compound command. The split on `&&`, `||`, `;` and `|` is quote- and escape-aware, so
+separators inside quotes and find's `-exec \;` terminator stay data. A segment after a `|` filters upstream output:
+drop its advisory intents, because a post-pipe `grep` reads the pipe, not files, but still check it for writes, because
+`true | echo x > f` writes a file. Check destructive patterns first, so `sed -i` is never classified as a text search.
 
 Detect the available tools once per session, write the result to a file (a hook process starts fresh for each
 call), and fall back to allow when a specialized tool is missing.
@@ -61,12 +63,15 @@ call), and fall back to allow when a specialized tool is missing.
 // Patterns ordered by precedence: destructive first
 const INTENT_PATTERNS = [
   { pattern: /^\s*sed\s+(-i|--in-place)\b/, type: 'file_modify' },
-  { pattern: /^\s*awk\b.*>\s*\S+/, type: 'file_modify' },
+  { predicate: hasFileRedirect, type: 'file_modify' },
   { pattern: /^\s*cat\s+\S+/, type: 'file_read' },
   { pattern: /^\s*(grep[rx]?|rg)\b/, type: 'text_search' },
   { pattern: /^\s*find\s+/, type: 'file_discovery' },
 ];
 ```
+
+`hasFileRedirect` is a predicate, not a regex, because a redirect check must scan quotes: a `>` inside an awk program
+is text, `2>&1` duplicates a file descriptor, and `/dev/null` writes no file, so none of the three is a write.
 
 Structured tools return typed records instead of text to parse:
 
@@ -79,8 +84,10 @@ search_symbols("process", kind="function")
 ```
 
 String matching is a nudge, not a control. The classifier matches strings and misses other spellings
-(`/usr/bin/sed -i`, `sed -E -i`, `perl -pi`) and blocks harmless text such as `echo sed -i`. Limits that must hold go in
-a sandbox or credential scope ([Pattern 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
+(`/usr/bin/sed -i`, `sed -E -i`, `perl -pi`), a single `&` between two commands, and writes that use no redirect
+(`cp`, `tee`). The router's unanchored `sed` rule blocks harmless text such as `echo sed -i`; the classifier's
+anchored patterns do not. Limits that must hold go in a sandbox or credential scope
+([Pattern 2.9](L2-behavioral-guardrails.md#pattern-29--contain-before-you-relax)).
 
 The [guardrails example](../examples/guardrails/) implements the classifier, the tool detection
 (`src/core/environment.ts`, an in-process cache) and a data-driven routing table in TypeScript, with tests. A fuller

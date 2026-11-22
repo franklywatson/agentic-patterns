@@ -1,6 +1,12 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyCommand, isDangerous, hasSaferAlternative } from '../core/intent.js';
+import {
+  classifyCommand,
+  isDangerous,
+  hasSaferAlternative,
+  splitCompoundCommand,
+  hasFileRedirect,
+} from '../core/intent.js';
 
 describe('classifyCommand', () => {
   it('classifies each simple command into its intent', () => {
@@ -25,6 +31,12 @@ describe('classifyCommand', () => {
     assert.deepEqual(classifyCommand("awk '{print $1}' in.txt > out.txt"), ['file_modify']);
   });
 
+  it('classifies awk without an unquoted redirect as pass_through', () => {
+    assert.deepEqual(classifyCommand("awk '{print $1}' in.txt"), ['pass_through']);
+    assert.deepEqual(classifyCommand(`awk '{print "a > b"}' f.txt`), ['pass_through']);
+    assert.deepEqual(classifyCommand('awk -f p.awk in 2>&1'), ['pass_through']);
+  });
+
   it('classifies sed without -i as pass_through', () => {
     assert.deepEqual(classifyCommand("sed 's/a/b/g' file.txt"), ['pass_through']);
   });
@@ -38,11 +50,105 @@ describe('classifyCommand', () => {
       classifyCommand("ls; sed -i 's/a/b/' f || docker ps"),
       ['pass_through', 'file_modify', 'docker'],
     );
-    assert.deepEqual(classifyCommand('cat f | grep x'), ['file_read', 'text_search']);
+  });
+
+  it('does not flag an advisory segment that only filters piped output', () => {
+    assert.deepEqual(classifyCommand('git log | grep fix'), ['pass_through']);
+    assert.deepEqual(classifyCommand('cat f | grep x'), ['file_read']);
+  });
+
+  it('still checks post-pipe segments for writes', () => {
+    assert.deepEqual(classifyCommand('true | echo x > f.txt'), ['pass_through', 'file_modify']);
+    assert.deepEqual(
+      classifyCommand("cat f | sed -i 's/a/b/' g"),
+      ['file_read', 'file_modify'],
+    );
+  });
+
+  it('keeps non-advisory post-pipe intents such as docker', () => {
+    assert.deepEqual(classifyCommand('curl -s x | docker load'), ['pass_through', 'docker']);
   });
 
   it('returns no intents for an empty command', () => {
     assert.deepEqual(classifyCommand('   '), []);
+  });
+});
+
+describe('splitCompoundCommand', () => {
+  it('splits on unquoted &&, ||, ; and | and marks pipeline members', () => {
+    assert.deepEqual(splitCompoundCommand('a && b || c; d | e'), [
+      { text: 'a', viaPipe: false },
+      { text: 'b', viaPipe: false },
+      { text: 'c', viaPipe: false },
+      { text: 'd', viaPipe: false },
+      { text: 'e', viaPipe: true },
+    ]);
+  });
+
+  it('treats separators inside quotes as data', () => {
+    assert.deepEqual(
+      splitCompoundCommand('echo "a; b"'),
+      [{ text: 'echo "a; b"', viaPipe: false }],
+    );
+    assert.deepEqual(
+      splitCompoundCommand("grep 'a|b' f"),
+      [{ text: "grep 'a|b' f", viaPipe: false }],
+    );
+    assert.deepEqual(
+      splitCompoundCommand('echo "a && b"'),
+      [{ text: 'echo "a && b"', viaPipe: false }],
+    );
+  });
+
+  it('treats a backslash-escaped ; as data (find -exec terminator)', () => {
+    assert.deepEqual(
+      splitCompoundCommand('find . -name "*.py" -exec rm {} \\;'),
+      [{ text: 'find . -name "*.py" -exec rm {} \\;', viaPipe: false }],
+    );
+  });
+
+  it('treats a backslash-escaped pipe as data', () => {
+    assert.deepEqual(
+      splitCompoundCommand('grep foo \\| bar f'),
+      [{ text: 'grep foo \\| bar f', viaPipe: false }],
+    );
+  });
+
+  it('drops empty segments', () => {
+    assert.deepEqual(splitCompoundCommand('a;; b'), [
+      { text: 'a', viaPipe: false },
+      { text: 'b', viaPipe: false },
+    ]);
+  });
+});
+
+describe('hasFileRedirect', () => {
+  it('detects an unquoted redirect that writes a file', () => {
+    assert.equal(hasFileRedirect('echo x > f.txt'), true);
+    assert.equal(hasFileRedirect('sort f >> out.txt'), true);
+    assert.equal(hasFileRedirect('awk -f p in 2> err.txt'), true);
+    assert.equal(hasFileRedirect('cmd >&both.txt'), true);
+    assert.equal(hasFileRedirect('>out.txt'), true);
+  });
+
+  it('ignores fd duplication, sinks and process substitution', () => {
+    assert.equal(hasFileRedirect('awk -f p.awk in 2>&1'), false);
+    assert.equal(hasFileRedirect('cmd >&2'), false);
+    assert.equal(hasFileRedirect('cmd 2>&-'), false);
+    assert.equal(hasFileRedirect('grep x f.txt 2>/dev/null'), false);
+    assert.equal(hasFileRedirect('cmd > /dev/null 2>&1'), false);
+    assert.equal(hasFileRedirect('tee >(md5sum)'), false);
+    assert.equal(hasFileRedirect('echo done >'), false);
+  });
+
+  it('ignores a > that is quoted or escaped data', () => {
+    assert.equal(hasFileRedirect(`awk '{print "a > b"}' f.txt`), false);
+    assert.equal(hasFileRedirect("echo 'a > b'"), false);
+    assert.equal(hasFileRedirect('echo \\> f'), false);
+  });
+
+  it('does not treat /dev/null with a suffix as the sink', () => {
+    assert.equal(hasFileRedirect('cmd 2>/dev/nullx'), true);
   });
 });
 
@@ -76,6 +182,10 @@ describe('known classifier bypasses (string matching is a nudge, not a control)'
 
   it('does not flag echo sed -i (anchoring avoids the router false positive)', () => {
     assert.deepEqual(classifyCommand('echo sed -i hi'), ['pass_through']);
+  });
+
+  it('does not split on a single & (background operator)', () => {
+    assert.deepEqual(classifyCommand("sleep 5 & sed -i 's/a/b/' f"), ['pass_through']);
   });
 });
 

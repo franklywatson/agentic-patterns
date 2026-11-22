@@ -9,7 +9,7 @@
   "repository": {
    "url": "https://github.com/franklywatson/agentic-patterns",
    "provider": "github",
-   "revision": "f367c87e2708efcb513e2e24889788296fb5df36"
+   "revision": "803509ca4de1f090bd4f8db8ed09571934e8c823"
   },
   "legend": {
    "mode": "hidden"
@@ -59,8 +59,8 @@
    "sources": [
     {
      "path": "examples/guardrails/README.md",
-     "line": 116,
-     "end_line": 120
+     "line": 119,
+     "end_line": 123
     }
    ],
    "width": 150
@@ -75,13 +75,13 @@
    "sources": [
     {
      "path": "examples/guardrails/src/config/routing.config.ts",
-     "line": 19,
-     "end_line": 121
+     "line": 29,
+     "end_line": 133
     },
     {
      "path": "examples/guardrails/src/config/routing.config.ts",
-     "line": 129,
-     "end_line": 136
+     "line": 139,
+     "end_line": 147
     }
    ],
    "width": 164
@@ -96,13 +96,13 @@
    "sources": [
     {
      "path": "examples/guardrails/src/core/intent.ts",
-     "line": 32,
-     "end_line": 51
+     "line": 41,
+     "end_line": 60
     },
     {
      "path": "examples/guardrails/src/core/intent.ts",
-     "line": 90,
-     "end_line": 93
+     "line": 257,
+     "end_line": 263
     }
    ],
    "width": 164
@@ -138,8 +138,8 @@
    "sources": [
     {
      "path": "examples/guardrails/src/core/router.ts",
-     "line": 47,
-     "end_line": 77
+     "line": 49,
+     "end_line": 79
     }
    ],
    "width": 216
@@ -150,12 +150,12 @@
    "col": 0,
    "type": "security",
    "label": "block",
-   "sublabel": "sed -i, awk > file",
+   "sublabel": "sed -i, > file",
    "sources": [
     {
      "path": "examples/guardrails/src/config/routing.config.ts",
-     "line": 20,
-     "end_line": 40
+     "line": 30,
+     "end_line": 50
     }
    ],
    "width": 150
@@ -170,8 +170,8 @@
    "sources": [
     {
      "path": "examples/guardrails/src/config/routing.config.ts",
-     "line": 42,
-     "end_line": 92
+     "line": 52,
+     "end_line": 103
     }
    ],
    "width": 150
@@ -186,8 +186,8 @@
    "sources": [
     {
      "path": "examples/guardrails/src/config/routing.config.ts",
-     "line": 93,
-     "end_line": 121
+     "line": 104,
+     "end_line": 132
     }
    ],
    "width": 150
@@ -202,8 +202,8 @@
    "sources": [
     {
      "path": "examples/guardrails/README.md",
-     "line": 124,
-     "end_line": 127
+     "line": 127,
+     "end_line": 131
     }
    ],
    "width": 150
@@ -301,7 +301,7 @@
    "dot": "cyan",
    "title": "Routing table (routing.config.ts)",
    "items": [
-    "sed -i and awk with a redirect: block in every environment",
+    "sed -i and any plain file redirect: block in every environment",
     "grep, rg: rtk grep if RTK is installed, jcodemunch search_text if the repo is indexed, else allow",
     "cat: the Read tool; find: jcodemunch get_file_tree if indexed, else allow",
     "fd, docker and every other command: allow"
